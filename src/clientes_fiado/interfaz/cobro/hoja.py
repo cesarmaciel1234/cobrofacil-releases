@@ -349,9 +349,11 @@ class HojaCuentaCobro(QFrame):
     def _pasar(self, cliente, ref):
         self._cliente = cliente
         self._ref = ref
-        self._paso = 2
-        self._pintar_paso()
-        self.ubicar()
+        cliente_id = dict(cliente or {}).get("id")
+        self.ocultar()
+        if cliente_id:
+            self.listo.emit(int(cliente_id))
+
 
     def _cargar(self):
         texto = self.caja.text()

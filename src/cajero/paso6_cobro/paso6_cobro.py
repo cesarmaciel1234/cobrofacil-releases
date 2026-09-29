@@ -329,10 +329,11 @@ class Paso6Cobro(QDialog):
         self.aviso_toast = AvisoCobro(left_panel)
         self.espera_point = EsperaPoint(left_panel)
         self.pantalla_mp = PantallaMP(self)
-        from src.clientes_fiado.interfaz.cobro.hoja import HojaCuentaCobro
-        self.hoja_cuenta = HojaCuentaCobro(left_panel)
-        self.hoja_cuenta.listo.connect(self._cuenta_lista)
-        self.hoja_cuenta.cancelado.connect(self._cuenta_cancelada)
+        from src.cajero.paso6_cobro.fiado_en_cobro.panel import PanelFiadoCobro
+        self.panel_fiado = PanelFiadoCobro(self)
+        self.panel_fiado.pago_listo.connect(self._cuenta_lista)
+        self.panel_fiado.cancelado.connect(self._cuenta_cancelada)
+        content_lay.addWidget(self.panel_fiado, 0)
         self._point_en_curso = False
         self._emergencia_pendiente = False
         self._atajo_f9 = QShortcut(QKeySequence(Qt.Key.Key_F9), self)
@@ -796,8 +797,8 @@ class Paso6Cobro(QDialog):
                 QTimer.singleShot(0, self._cobrar_tarjeta_point)
         elif hasattr(self, "panel_tarjeta"):
             self.panel_tarjeta.ocultar()
-        if key not in ("Fiado", "Clientes") and hasattr(self, "hoja_cuenta"):
-            self.hoja_cuenta.ocultar()
+        if key not in ("Fiado", "Clientes") and hasattr(self, "panel_fiado"):
+            self.panel_fiado.ocultar()
         if key != "Transferencia" and hasattr(self, "btn_aviso_mp"):
             self.btn_aviso_mp.hide()
         if key != "Transferencia" and hasattr(self, "panel_alias"):
@@ -892,12 +893,12 @@ class Paso6Cobro(QDialog):
         self._fiado_flujo_activo = True
         self._fiado_cliente_id = None
         self.stack.setCurrentIndex(1)
-        self.hoja_cuenta.abrir(modo, self.total_final)
+        self.panel_fiado.mostrar(self.total_final, modo)
 
     def _hoja_cuenta_al_frente(self):
         return (
-            hasattr(self, "hoja_cuenta")
-            and self.hoja_cuenta.isVisible()
+            hasattr(self, "panel_fiado")
+            and self.panel_fiado.hoja_cuenta.isVisible()
             and (
                 self.current_metodo in ("Fiado", "Clientes")
                 or getattr(self, "_mixto_espera_cuenta", False)
@@ -911,20 +912,20 @@ class Paso6Cobro(QDialog):
             self.cmb_cliente.setCurrentIndex(idx)
         if getattr(self, "_mixto_espera_cuenta", False):
             self._mixto_espera_cuenta = False
-            self.hoja_cuenta.ocultar()
+            self.panel_fiado.ocultar()
             self.panel_mixto.show()
             self._mixto_i += 1
             self._seguir_mixto()
             return
         self.txt_pago.setText(self._monto(self.total_final))
         self._fiado_flujo_activo = False
-        QTimer.singleShot(80, lambda: self.finalizar(imprimir=True))
+        self.finalizar(imprimir=True)
 
     def _cuenta_cancelada(self):
         if getattr(self, "_mixto_espera_cuenta", False):
             self._mixto_espera_cuenta = False
             self._fiado_cliente_id = None
-            self.hoja_cuenta.ocultar()
+            self.panel_fiado.ocultar()
             self._mixto_pasos = None
             self.panel_mixto.show()
             if getattr(self, "_mixto_vivo_hecho", None):
@@ -939,7 +940,7 @@ class Paso6Cobro(QDialog):
             rev = getattr(self, "_revertir_tras_fiado", "Efectivo") or "Efectivo"
             if rev in ("Fiado", "Clientes"):
                 rev = "Efectivo"
-            self.hoja_cuenta.ocultar()
+            self.panel_fiado.ocultar()
             self.stack.setCurrentIndex(0)
             self.set_metodo(rev)
             self.setFocus()
@@ -1164,8 +1165,8 @@ class Paso6Cobro(QDialog):
         oferta = abs(float(getattr(self, "descuentaso_oferta", 0.0) or 0.0))
         lista = redondear_dinero(self.total_original + oferta)
         self.lbl_total.setText(self._monto(self.total_final))
-        if hasattr(self, "hoja_cuenta") and self.hoja_cuenta.isVisible():
-            self.hoja_cuenta.fijar_monto(self.total_final)
+        if hasattr(self, "panel_fiado") and self.panel_fiado.hoja_cuenta.isVisible():
+            self.panel_fiado.hoja_cuenta.fijar_monto(self.total_final)
         if abs(lista - self.total_final) > 0.009:
             self.lbl_precio_real.setText(
                 f'<span style="color:#EF4444; text-decoration:line-through;">{self._monto(lista)}</span>'
@@ -1823,8 +1824,8 @@ class Paso6Cobro(QDialog):
             self.pantalla_mp.ubicar()
         if hasattr(self, "espera_point") and self.espera_point.isVisible():
             self.espera_point.ubicar()
-        if hasattr(self, "hoja_cuenta") and self.hoja_cuenta.isVisible():
-            self.hoja_cuenta.ubicar()
+        if hasattr(self, "panel_fiado") and self.panel_fiado.hoja_cuenta.isVisible():
+            self.panel_fiado.hoja_cuenta.ubicar()
 
     def _reparto_mixto(self, valores):
         from src.utils.dinero import redondear_dinero
@@ -1936,7 +1937,7 @@ class Paso6Cobro(QDialog):
             self._mixto_espera_cuenta = True
             self.panel_mixto.ocultar()
             self._asegurar_lista_clientes()
-            self.hoja_cuenta.abrir("Clientes", monto)
+            self.panel_fiado.mostrar(monto, "Clientes")
             return
         if tipo == "transferencia":
             self._mixto_espera_transferencia = float(monto)
@@ -2146,17 +2147,20 @@ class Paso6Cobro(QDialog):
             self._tecla_f12()
         elif k == Qt.Key.Key_Escape:
             if self._hoja_cuenta_al_frente():
-                self.hoja_cuenta._cancelar()
+                self.panel_fiado.hoja_cuenta._cancelar()
                 return
             self.reject()
         elif k in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             foco = self.focusWidget()
+            if self.panel_fiado.bloquea_enter():
+                self.panel_fiado.procesar_enter()
+                return
             if self._hoja_cuenta_al_frente():
-                self.hoja_cuenta.confirmar()
+                self.panel_fiado.hoja_cuenta.confirmar()
                 return
             if self.current_metodo in ("Fiado", "Clientes"):
-                if self.hoja_cuenta.isVisible():
-                    self.hoja_cuenta.confirmar()
+                if self.panel_fiado.hoja_cuenta.isVisible():
+                    self.panel_fiado.hoja_cuenta.confirmar()
                     return
                 if getattr(self, "_fiado_cliente_id", None):
                     self.finalizar(imprimir=True) # <-- Fiado SIEMPRE imprime por ley
@@ -2193,15 +2197,18 @@ class Paso6Cobro(QDialog):
             return
         if self._hoja_cuenta_al_frente():
             if key == "ENTER":
-                self.hoja_cuenta.confirmar()
+                self.panel_fiado.hoja_cuenta.confirmar()
                 return
             if key == "⌫":
-                self.hoja_cuenta.borrar()
+                self.panel_fiado.hoja_cuenta.borrar()
                 return
             if len(str(key)) == 1:
-                self.hoja_cuenta.escribir(key)
+                self.panel_fiado.hoja_cuenta.escribir(key)
                 return
         if key == "ENTER":
+            if self.panel_fiado.bloquea_enter():
+                self.panel_fiado.procesar_enter()
+                return
             self._enter_cobro()
             return
             

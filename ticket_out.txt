@@ -1,0 +1,37 @@
+========================================
+@aEPUNPRO BUSINESS
+ECUIT: 00-00000000-0
+Dirección Local
+--------------------------------
+Ticket Nro: 00009999
+Fecha: 29/09/2026 10:20
+--------------------------------
+aDetalle / Cant x Unit.      Total
+COCA COLA 2.25L
+  2 x $2000.00          $4000.00
+PAN FRANCES 1KG
+  1.5 x $1000.00        $1500.00
+--------------------------------
+a--------------------------------
+ETOTAL A PAGAR: $5500.00
+EaPago: $5500.00
+Vuelto: $0.00
+Forma Pago: Cuenta Corriente
+
+--------------------------------
+aECUENTA CORRIENTE
+EaCliente: CESAR DE PRUEBA
+Saldo anterior:   $10000.00
+Compra actual:    $5500.00
+ESaldo disponible: $50000.00
+E--------------------------------
+a
+  NO VALIDO COMO FACTURA  
+*** GRACIAS POR SU COMPRA ***
+
+
+
+
+
+VAp╚╚
+========================================
