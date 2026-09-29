@@ -101,13 +101,14 @@ class CobroController:
 
         if imprimir:
             try:
-                printer_manager.imprimir_ticket_venta(
-                    id_v, items_carrito, total_final,
-                    resultado_venta['pago_con'], resultado_venta['cambio'],
-                    abrir_cajon=debe_abrir, discount_amount=descuento_total, surcharge_amount=monto_recargo,
-                    cajero=cajero_nombre, metodo_pago=metodo_pago,
-                    force_fiscal=force_fiscal
-                )
+                if metodo_pago not in ("Fiado", "Cuenta Corriente"):
+                    printer_manager.imprimir_ticket_venta(
+                        id_v, items_carrito, total_final,
+                        resultado_venta['pago_con'], resultado_venta['cambio'],
+                        abrir_cajon=debe_abrir, discount_amount=descuento_total, surcharge_amount=monto_recargo,
+                        cajero=cajero_nombre, metodo_pago=metodo_pago,
+                        force_fiscal=force_fiscal
+                    )
 
                 # Si es Fiado o Cuenta Corriente, imprimir el ticket secundario con saldos automáticos
                 if metodo_pago in ("Fiado", "Cuenta Corriente"):
