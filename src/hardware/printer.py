@@ -304,7 +304,8 @@ class PosPrinter:
 
         return neto_total, iva_total, iva_por_tasa
 
-    def imprimir_ticket_venta(self, num_venta, items, total, pago, cambio, abrir_cajon=True, estado='COMPLETADA', discount_amount=0, surcharge_amount=0, cajero='', cajero_secundario='', segunda_tiketera=False, metodo_pago='Efectivo', force_fiscal=False):
+    def imprimir_ticket_venta(self, num_venta, items, total, pago, cambio, abrir_cajon=True, estado='COMPLETADA', discount_amount=0, surcharge_amount=0, cajero='', cajero_secundario='', segunda_tiketera=False, metodo_pago='Efectivo', force_fiscal=False, cliente_nombre=None, saldo_anterior=None, saldo_disponible=None):
+
         """ Formatea e imprime un ticket de venta. Soporta dos cajeros y dos tiketeras. """
 
         afip_global_enabled = config.get("facturacion_afip_global", False)
@@ -431,6 +432,23 @@ class PosPrinter:
         data.extend(f"Pago: ${pago:.2f}\n".encode('cp850'))
         data.extend(f"Vuelto: ${cambio:.2f}\n".encode('cp850'))
         data.extend(f"Forma Pago: {metodo_pago}\n".encode('cp850', errors='replace'))
+
+        # Inyectar saldos de Cuenta Corriente si corresponde
+        if cliente_nombre and saldo_anterior is not None and saldo_disponible is not None:
+            data.extend(b"\n")
+            data.extend(b"--------------------------------\n")
+            data.extend(ALIGN_CENTER)
+            data.extend(BOLD_ON)
+            data.extend(b"CUENTA CORRIENTE\n")
+            data.extend(BOLD_OFF)
+            data.extend(ALIGN_LEFT)
+            data.extend(f"Cliente: {cliente_nombre}\n".encode('cp850', errors='replace'))
+            data.extend(f"Saldo anterior:   \\n".encode('cp850'))
+            data.extend(f"Compra actual:    \\n".encode('cp850'))
+            data.extend(BOLD_ON)
+            data.extend(f"Saldo disponible: \\n".encode('cp850'))
+            data.extend(BOLD_OFF)
+            data.extend(b"--------------------------------\n")
 
         # Footer y Firma Fiscal Electrónica ARCA
         data.extend(ALIGN_CENTER)

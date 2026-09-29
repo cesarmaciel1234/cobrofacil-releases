@@ -101,16 +101,11 @@ class CobroController:
 
         if imprimir:
             try:
-                if metodo_pago not in ("Fiado", "Cuenta Corriente"):
-                    printer_manager.imprimir_ticket_venta(
-                        id_v, items_carrito, total_final,
-                        resultado_venta['pago_con'], resultado_venta['cambio'],
-                        abrir_cajon=debe_abrir, discount_amount=descuento_total, surcharge_amount=monto_recargo,
-                        cajero=cajero_nombre, metodo_pago=metodo_pago,
-                        force_fiscal=force_fiscal
-                    )
+                cli_nombre = None
+                saldo_anterior = None
+                s_disp = None
 
-                # Si es Fiado o Cuenta Corriente, imprimir el ticket secundario con saldos automáticos
+                # Si es Fiado o Cuenta Corriente, cargar datos para inyectar en el ticket principal
                 if metodo_pago in ("Fiado", "Cuenta Corriente"):
                     cliente_id = resultado_venta.get("cliente_id")
                     if cliente_id:
@@ -123,14 +118,20 @@ class CobroController:
                                 compra = float(total_final)
                                 saldo_anterior = deuda_actual - compra
                                 s_disp = credito_disponible(cli)
-                                
-                                # Si no lo hizo la ticketera local, usamos el printer_manager para el ticket extra
-                                printer_manager.imprimir_ticket_saldos_compra(
-                                    cli_nombre, saldo_anterior, compra, s_disp
-                                )
                         except Exception as e_fiado:
                             import logging
-                            logging.error(f"Error al imprimir saldos de fiado automático: {e_fiado}")
+                            logging.error(f"Error al cargar saldos de fiado automático: {e_fiado}")
+
+                printer_manager.imprimir_ticket_venta(
+                    id_v, items_carrito, total_final,
+                    resultado_venta['pago_con'], resultado_venta['cambio'],
+                    abrir_cajon=debe_abrir, discount_amount=descuento_total, surcharge_amount=monto_recargo,
+                    cajero=cajero_nombre, metodo_pago=metodo_pago,
+                    force_fiscal=force_fiscal,
+                    cliente_nombre=cli_nombre,
+                    saldo_anterior=saldo_anterior,
+                    saldo_disponible=s_disp
+                )
                             
             except Exception as e:
                 import logging
