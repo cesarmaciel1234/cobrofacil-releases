@@ -75,7 +75,10 @@ class CerebroClientesFiado:
     def abonar(self, cliente_id, monto, descripcion, medio="", perfil="", quien=""):
         return self.cuenta.abonar(cliente_id, monto, descripcion, medio, perfil, quien)
 
-    def abonar_caja(self, cliente_id, monto, deuda_anterior, medio="Efectivo", perfil="Cajero", quien="", nota=""):
+    def abonar_caja(
+        self, cliente_id, monto, deuda_anterior, medio="Efectivo", perfil="Cajero",
+        quien="", nota="", imprimir_saldo=True,
+    ):
         """El abono del Centro de Cobranzas. Lo usan F6 y el botón Abonar del admin."""
         quien_limpio = " ".join(str(quien or "").split())
         medio_limpio = str(medio or "Efectivo").strip() or "Efectivo"
@@ -86,7 +89,7 @@ class CerebroClientesFiado:
         exito, nuevo_saldo, nombre = self.abonar(
             cliente_id, monto, descripcion, medio_limpio, perfil_limpio, quien_limpio
         )
-        if exito:
+        if exito and imprimir_saldo:
             try:
                 from src.hardware.printer import printer_manager
 

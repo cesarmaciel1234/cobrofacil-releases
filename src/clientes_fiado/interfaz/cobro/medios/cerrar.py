@@ -33,16 +33,18 @@ def avisar(nombre, monto, saldo):
     return texto
 
 
-def asentar(cliente_id, monto, deuda, perfil, quien, resultado):
+def asentar(cliente_id, monto, deuda, perfil, quien, resultado, imprimir_saldo=True):
     try:
         if resultado is None or not getattr(resultado, "ok", False):
             return {"ok": False, "aviso": "No se pudo cobrar la cuenta. La venta sigue."}
         from src.clientes_fiado.cerebro.cerebro import cerebro
 
+        opciones_impresion = {} if imprimir_saldo else {"imprimir_saldo": False}
         exito, saldo, nombre = cerebro.abonar_caja(
             cliente_id, monto, deuda,
             medio=resultado.medio, perfil=perfil, quien=quien,
             nota=getattr(resultado, "detalle", "") or "",
+            **opciones_impresion,
         )
         if not exito:
             return {"ok": False, "aviso": "No se pudo registrar el pago del cliente."}

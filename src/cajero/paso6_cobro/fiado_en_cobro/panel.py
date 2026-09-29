@@ -13,6 +13,7 @@ class PanelFiadoCobro(QFrame):
     pago_listo = pyqtSignal(int, float)
     cancelado = pyqtSignal()
     cambio = pyqtSignal(str)
+    abono_registrado = pyqtSignal(object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -36,6 +37,7 @@ class PanelFiadoCobro(QFrame):
         self.hoja_cuenta = HojaCuentaCobro(self)
         self.hoja_cuenta.listo.connect(self._al_cliente_encontrado)
         self.hoja_cuenta.cancelado.connect(self._al_cancelar_busqueda)
+        self.hoja_cuenta.abono_registrado.connect(self.abono_registrado.emit)
         lay.addWidget(self.hoja_cuenta)
 
         lay.addStretch(1)
@@ -98,14 +100,9 @@ class PanelFiadoCobro(QFrame):
         self.hoja_cuenta.ocultar()
         self.hide()
 
-    def _al_cliente_encontrado(self, cliente_id, abono=0.0):
+    def _al_cliente_encontrado(self, cliente_id, _abono=0.0):
         self._cliente_id = cliente_id
-        
-        if abono > 0.009:
-            self._modo = "listo"
-            self.pago_listo.emit(cliente_id, abono)
-            return
-            
+
         cliente = cerebro.cliente(cliente_id)
         if not cliente:
             self.cancelado.emit()

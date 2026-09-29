@@ -226,6 +226,10 @@ class CentroCobranzasPanel(QWidget):
         self._timer_buscar.setSingleShot(True)
         self._timer_buscar.setInterval(280)
         self._timer_buscar.timeout.connect(self._ejecutar_busqueda)
+        self._timer_foco_busqueda = QTimer(self)
+        self._timer_foco_busqueda.setSingleShot(True)
+        self._timer_foco_busqueda.setInterval(120)
+        self._timer_foco_busqueda.timeout.connect(self.focus_busqueda)
 
     def cargar_clientes_abono(self):
         self.reset()
@@ -238,7 +242,26 @@ class CentroCobranzasPanel(QWidget):
         self.lbl_lista.setText("")
         self.lbl_modo.setText("Escriba para buscar un cliente...")
         self._ejecutar_busqueda()
-        QTimer.singleShot(120, self.focus_busqueda)
+        self._timer_foco_busqueda.start()
+
+    def seleccionar_cliente_directo(self, cliente):
+        """Prepara el cobro de F6 para esta ficha sin volver a buscarla por nombre."""
+        self._timer_buscar.stop()
+        self._timer_foco_busqueda.stop()
+        self._cliente = dict(cliente or {})
+        self._deuda_actual = float(self._cliente.get("deuda_actual") or 0)
+        dni = str(self._cliente.get("dni") or "").strip()
+        self.txt_buscar.blockSignals(True)
+        self.txt_buscar.setText(dni)
+        self.txt_buscar.blockSignals(False)
+        self.lbl_cliente.setText(str(self._cliente.get("nombre") or "Cliente"))
+        self.lbl_info.setText(f"DNI {dni}" if dni else "Sin DNI registrado")
+        self.lbl_deuda.setText(f"Deuda: ${self._deuda_actual:,.2f}")
+        self.txt_monto.setText(f"{self._deuda_actual:.2f}")
+        self.zona_lista.hide()
+        self.ficha.show()
+        self.btn_imprimir.setVisible(False)
+        self.focus_monto()
 
     def focus_busqueda(self):
         self.txt_buscar.setFocus()

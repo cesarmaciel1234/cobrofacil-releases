@@ -82,7 +82,11 @@ class CobroController:
         return persistir_cobro(datos)
 
     @staticmethod
-    def procesar_cajon_impresion(metodo_pago, imprimir, id_v, items_carrito, total_final, resultado_venta, cajero_nombre, descuento_total, monto_recargo, force_fiscal=False):
+    def procesar_cajon_impresion(
+        metodo_pago, imprimir, id_v, items_carrito, total_final, resultado_venta,
+        cajero_nombre, descuento_total, monto_recargo, force_fiscal=False, abono_cuenta=0.0,
+        deuda_anterior_abono=None,
+    ):
         """
         Decide si debe abrir el cajón y llama al gestor de impresión.
         """
@@ -110,14 +114,20 @@ class CobroController:
                     cliente_id = resultado_venta.get("cliente_id")
                     if cliente_id:
                         try:
-                            from src.repositories.cliente_repository import obtener_por_id, credito_disponible
-                            cli = obtener_por_id(cliente_id)
+                            from src.repositories.cliente_repository import ClienteRepository
+                            cli = ClienteRepository.obtener_por_id(cliente_id)
                             if cli:
                                 cli_nombre = cli.get("nombre") or cli.get("nombre_completo") or "Cliente"
-                                deuda_actual = float(cli.get("deuda_total", 0.0))
+                                deuda_actual = float(
+                                    cli.get("deuda_actual", cli.get("deuda_total", 0.0))
+                                )
                                 compra = float(total_final)
-                                saldo_anterior = deuda_actual - compra
-                                s_disp = credito_disponible(cli)
+                                saldo_anterior = (
+                                    float(deuda_anterior_abono)
+                                    if deuda_anterior_abono is not None
+                                    else deuda_actual - compra
+                                )
+                                s_disp = ClienteRepository.credito_disponible(cli)
                         except Exception as e_fiado:
                             import logging
                             logging.error(f"Error al cargar saldos de fiado automático: {e_fiado}")
@@ -130,7 +140,8 @@ class CobroController:
                     force_fiscal=force_fiscal,
                     cliente_nombre=cli_nombre,
                     saldo_anterior=saldo_anterior,
-                    saldo_disponible=s_disp
+                    saldo_disponible=s_disp,
+                    abono_cuenta=abono_cuenta,
                 )
                             
             except Exception as e:

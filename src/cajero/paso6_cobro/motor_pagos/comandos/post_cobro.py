@@ -19,6 +19,8 @@ def post_cobro(datos, id_v, resultado_venta):
             descuento_total,
             datos.get("recargo") or 0,
             datos.get("force_fiscal", False),
+            datos.get("deuda_adicional") or 0,
+            datos.get("deuda_adicional_saldo_anterior"),
         )
     except Exception as e:
         logger.error(f"Error critico en impresion/cajon (ignorado por blindaje): {e}")

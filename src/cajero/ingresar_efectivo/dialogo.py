@@ -170,8 +170,7 @@ class DialogoIngresoEfectivo(QDialog):
         self._directo = True
         self._set_modo("FIADO")
         ficha = dict(cliente) if hasattr(cliente, "keys") else {}
-        clave = (ficha.get("dni") or "").strip() or (ficha.get("nombre") or "")
-        self.panel_fiado.txt_buscar.setText(clave)
+        self.panel_fiado.seleccionar_cliente_directo(ficha)
 
     def _set_modo(self, modo):
         self.tipo_ingreso = modo

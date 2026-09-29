@@ -54,6 +54,8 @@ class Paso6Cobro(QDialog):
         self.request_id = str(uuid.uuid4())
         self.total_original = total
         self.total_final = total
+        self.deuda_adicional_cobrada = 0.0
+        self.deuda_adicional_saldo_anterior = None
         self.items_carrito = items_carrito
         self.descuento_porcentaje = 0.0
         self.recargo_porcentaje = 0.0
@@ -333,6 +335,7 @@ class Paso6Cobro(QDialog):
         self.panel_fiado = PanelFiadoCobro(self)
         self.panel_fiado.pago_listo.connect(self._cuenta_lista)
         self.panel_fiado.cancelado.connect(self._cuenta_cancelada)
+        self.panel_fiado.abono_registrado.connect(self._abono_cuenta_registrado)
         content_lay.addWidget(self.panel_fiado, 0)
         self._point_en_curso = False
         self._emergencia_pendiente = False
@@ -905,21 +908,11 @@ class Paso6Cobro(QDialog):
             )
         )
 
-    def _cuenta_lista(self, cliente_id, abono=0.0):
+    def _cuenta_lista(self, cliente_id, _abono=0.0):
         self._fiado_cliente_id = int(cliente_id)
         idx = self.cmb_cliente.findData(self._fiado_cliente_id)
         if idx >= 0:
             self.cmb_cliente.setCurrentIndex(idx)
-            
-        if abono > 0.009:
-            self.deuda_adicional_cobrada = abono
-            self.total_final += abono
-            self.resumen_vuelto.lbl_total.setText(self._monto(self.total_final))
-            self.resumen_vuelto.lbl_total_tit.setText("TOTAL C/DEUDA")
-            self.txt_pago.setText(self._monto(self.total_final))
-            self.panel_fiado.ocultar()
-            self._volver_a_metodos()
-            return
             
         if getattr(self, "_mixto_espera_cuenta", False):
             self._mixto_espera_cuenta = False
@@ -931,6 +924,19 @@ class Paso6Cobro(QDialog):
         self.txt_pago.setText(self._monto(self.total_final))
         self._fiado_flujo_activo = False
         self.finalizar(imprimir=True)
+
+    def _abono_cuenta_registrado(self, resultado):
+        from src.utils.dinero import redondear_dinero
+
+        if self.deuda_adicional_saldo_anterior is None:
+            self.deuda_adicional_saldo_anterior = float(resultado.deuda_anterior or 0)
+        self.deuda_adicional_cobrada = redondear_dinero(
+            self.deuda_adicional_cobrada + float(resultado.monto or 0)
+        )
+        self._avisar(
+            f"Abono a cuenta registrado: ${float(resultado.monto):,.2f}. "
+            "La venta sigue a Fiado."
+        )
 
     def _cuenta_cancelada(self):
         if getattr(self, "_mixto_espera_cuenta", False):
@@ -1386,6 +1392,9 @@ class Paso6Cobro(QDialog):
                 "cliente_nombre": self.cmb_cliente.currentText() if cliente_id else "",
                 "fiado_parcial": (getattr(self, "valores_mixtos", None) or {}).get("cliente") or 0,
                 "deuda_adicional": getattr(self, "deuda_adicional_cobrada", 0.0),
+                "deuda_adicional_saldo_anterior": getattr(
+                    self, "deuda_adicional_saldo_anterior", None
+                ),
                 "imprimir": imprimir,
                 "force_fiscal": force_fiscal,
                 "request_id": getattr(self, "request_id", None),

@@ -6,6 +6,6 @@ Fiado solo acepta números. El primer Enter, si el cupo alcanza, muestra arriba 
 
 Desde Mixto, la misma hoja se abre por el resto, después de que el otro medio ya entró. El cupo se mira contra ese resto.
 
-`medio.py`, `pedir_medio`, queda por el nombre. F6 ya no lo abre. El clic está en `src/cajero/ingresar_efectivo/fiado/cobro/`: pide el PIN y llama a los motores. El QR se dibuja en esa hoja. Mixto reparte el abono en dos medios y, si uno es QR, tarjeta o transferencia, corre ese motor. `medios/cerrar.py` `asentar` escribe la cuenta. Si algo falla, avisa y no tira. La venta del cajero sigue. El paso 6 no importa esta carpeta.
+`medio.py`, `pedir_medio`, queda por el nombre. F6 y F5 de la confirmación Fiado en Paso 6 usan el Centro de Cobranza. `src/cajero/ingresar_efectivo/fiado/cobro/` pide el PIN y llama a los motores. El QR se dibuja en esa hoja. Mixto reparte el abono en dos medios y, si uno es QR, tarjeta o transferencia, corre ese motor. `medios/cerrar.py::asentar` escribe la cuenta. Permite omitir el comprobante de saldo cuando otra impresión incluirá el importe del abono. Si algo falla, avisa y no tira. La venta del cajero sigue.
 
 `fiado_express.py` y `cliente_express.py` quedan por el nombre viejo. El cobro ya no abre esas ventanas oscuras. El bip sigue en un hilo. La hoja no llama `entregar`. Al repetir bien, el paso 6 sigue con `finalizar` y el motor pide la orden ok.

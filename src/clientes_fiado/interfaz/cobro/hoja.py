@@ -46,6 +46,7 @@ class HojaCuentaCobro(QFrame):
 
     listo = pyqtSignal(int, float)
     cancelado = pyqtSignal()
+    abono_registrado = pyqtSignal(object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -216,53 +217,31 @@ class HojaCuentaCobro(QFrame):
         super().keyPressEvent(event)
 
     def _abrir_dialogo_cobranza(self):
-        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QHBoxLayout
-        from PyQt6.QtCore import Qt
-        d = QDialog(self)
-        d.setWindowTitle("Departamento de Cobranza")
-        d.setFixedSize(400, 260)
-        d.setStyleSheet("QDialog { background: #F8FAFC; } QLabel { font-size: 18px; font-weight: bold; color: #1E293B; }")
-        l = QVBoxLayout(d)
-        
+        if not self._cliente:
+            return
+        from src.cajero.paso6_cobro.fiado_en_cobro.cobranza import cobrar_deuda_previa
+
+        resultado = cobrar_deuda_previa(self, self._cliente)
+        if resultado.cancelado:
+            return
+        if not resultado.ok:
+            self.aviso.setStyleSheet("color: #B91C1C; font-size: 18px; font-weight: 800;")
+            self.aviso.setText(resultado.aviso)
+            return
+
+        self._cliente = cerebro.obtener(resultado.cliente_id) or self._cliente
+        self._deuda_actual = float(self._cliente.get("deuda_actual") or resultado.saldo)
         cartel = cerebro.cartel(self._cliente)
-        deuda = cartel.get("saldo", 0)
-        
-        l.addWidget(QLabel(f"Cliente: {self._cliente.get('nombre')}"))
-        lbl_deuda = QLabel(f"Deuda Total: $ {deuda:,.2f}")
-        lbl_deuda.setStyleSheet("color: #EF4444; font-size: 20px; font-weight: 900;")
-        l.addWidget(lbl_deuda)
-        l.addSpacing(10)
-        
-        l.addWidget(QLabel("¿Cuánto desea abonar ahora?"))
-        caja = QLineEdit(str(deuda))
-        caja.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        caja.setStyleSheet("background: white; font-size: 28px; font-weight: bold; padding: 10px; border: 2px solid #CBD5E1; border-radius: 8px;")
-        l.addWidget(caja)
-        
-        l.addStretch(1)
-        b = QHBoxLayout()
-        btn_cancel = QPushButton("[ ESC ] CANCELAR")
-        btn_cancel.setStyleSheet("background: #EF4444; color: white; font-size: 16px; font-weight: bold; padding: 10px; border-radius: 8px;")
-        btn_ok = QPushButton("[ ENTER ] CONFIRMAR PAGO")
-        btn_ok.setStyleSheet("background: #10B981; color: white; font-size: 16px; font-weight: bold; padding: 10px; border-radius: 8px;")
-        b.addWidget(btn_cancel)
-        b.addWidget(btn_ok)
-        l.addLayout(b)
-        
-        def on_ok():
-            try:
-                abono = float(caja.text().replace(',', ''))
-                d.accept()
-                self.listo.emit(int(self._cliente.get("id")), abono)
-            except:
-                pass
-                
-        btn_ok.clicked.connect(on_ok)
-        btn_cancel.clicked.connect(d.reject)
-        caja.returnPressed.connect(on_ok)
-        
-        caja.selectAll()
-        d.exec()
+        self._pintar_numeros(cartel.get("saldo"), cartel.get("disponible"))
+        self.aviso.setStyleSheet("color: #047857; font-size: 18px; font-weight: 800;")
+        self.aviso.setText(
+            f"Abono registrado: ${resultado.monto:,.2f}. "
+            "Presione Enter para continuar la venta a Fiado."
+            if not resultado.aviso
+            else resultado.aviso
+        )
+        self.abono_registrado.emit(resultado)
+        self.setFocus()
         
     def eventFilter(self, obj, event):
         if obj is self.caja and event.type() == QEvent.Type.KeyPress and getattr(self, "lista", None) and self.lista.isVisible():
