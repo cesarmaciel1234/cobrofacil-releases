@@ -108,6 +108,15 @@ class HojaCuentaCobro(QFrame):
         self.disponible.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.disponible.setStyleSheet("color: #047857; font-size: 28px; font-weight: 900;")
         lay.addWidget(self.disponible)
+        
+        # Boton F4
+        self.btn_f4 = QLabel("[ F4 ] PAGAR TODA LA DEUDA")
+        self.btn_f4.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.btn_f4.setStyleSheet("color: #FFFFFF; background: #3B82F6; font-size: 16px; font-weight: 800; border-radius: 8px; padding: 10px; margin-top: 10px;")
+        self.btn_f4.hide()
+        lay.addWidget(self.btn_f4)
+        
+        lay.addStretch(1)
         self._val_dni = QRegularExpressionValidator(QRegularExpression(r"\d{0,11}"))
         self._val_nombre = QRegularExpressionValidator(QRegularExpression(r"[^\d]{0,80}"))
         self._modo = "Clientes"
