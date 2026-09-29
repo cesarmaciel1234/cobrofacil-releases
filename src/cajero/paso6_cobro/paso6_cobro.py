@@ -918,7 +918,7 @@ class Paso6Cobro(QDialog):
             return
         self.txt_pago.setText(self._monto(self.total_final))
         self._fiado_flujo_activo = False
-        QTimer.singleShot(80, lambda: self.finalizar(imprimir=False))
+        QTimer.singleShot(80, lambda: self.finalizar(imprimir=True))
 
     def _cuenta_cancelada(self):
         if getattr(self, "_mixto_espera_cuenta", False):
@@ -1342,10 +1342,11 @@ class Paso6Cobro(QDialog):
         if getattr(self, '_procesando_pago', False):
             return
 
-        vals = self._validar_pago()
-        if not vals: return
-
         self._procesando_pago = True
+        vals = self._validar_pago()
+        if not vals:
+            self._procesando_pago = False
+            return
         p1, p2 = vals
 
         try:
@@ -2152,7 +2153,7 @@ class Paso6Cobro(QDialog):
                     self.hoja_cuenta.confirmar()
                     return
                 if getattr(self, "_fiado_cliente_id", None):
-                    self.finalizar(imprimir=False)
+                    self.finalizar(imprimir=True) # <-- Fiado SIEMPRE imprime por ley
                 else:
                     self._reabrir_cuenta()
                 return
