@@ -109,10 +109,8 @@ class PanelFiadoCobro(QFrame):
         # Cambiamos al estilo "Green Box" de confirmación
         self.setStyleSheet("QFrame#PanelFiadoCobro { background: #ECFDF5; border: 2px solid #34D399; border-radius: 16px; }")
         self.icono.show()
-        self.estado.setText(f"FIADO APROBADO
-{nombre}")
-        self.detalle.setText(f"Límite Disponible: ${disp:,.2f}
-Compra Actual: ${self._monto:,.2f}")
+        self.estado.setText(f"FIADO APROBADO\n{nombre}")
+        self.detalle.setText(f"Límite Disponible: \nCompra Actual: ")
         self.instruccion.show()
         self.cambio.emit("confirmando")
         
