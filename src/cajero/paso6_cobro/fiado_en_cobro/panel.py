@@ -10,7 +10,7 @@ class PanelFiadoCobro(QFrame):
     Encapsula la búsqueda de cliente y muestra una pantalla verde de confirmación
     estilo POS antes de cerrar la venta.
     """
-    pago_listo = pyqtSignal(int)
+    pago_listo = pyqtSignal(int, float)
     cancelado = pyqtSignal()
     cambio = pyqtSignal(str)
 
@@ -72,7 +72,7 @@ class PanelFiadoCobro(QFrame):
     def procesar_enter(self):
         if self._modo == "confirmando" and self._cliente_id:
             self._modo = "listo"
-            self.pago_listo.emit(self._cliente_id)
+            self.pago_listo.emit(self._cliente_id, 0.0)
 
     def mostrar(self, monto, modo="Fiado"):
         self._monto = float(monto or 0)
@@ -88,15 +88,21 @@ class PanelFiadoCobro(QFrame):
         self.show()
         
         self.cambio.emit("buscando")
-        self.hoja_cuenta.mostrar(self._monto, modo)
+        self.hoja_cuenta.abrir(modo, self._monto)
 
     def ocultar(self):
         self._modo = "oculto"
         self.hoja_cuenta.ocultar()
         self.hide()
 
-    def _al_cliente_encontrado(self, cliente_id):
+    def _al_cliente_encontrado(self, cliente_id, abono=0.0):
         self._cliente_id = cliente_id
+        
+        if abono > 0.009:
+            self._modo = "listo"
+            self.pago_listo.emit(cliente_id, abono)
+            return
+            
         cliente = cerebro.cliente(cliente_id)
         if not cliente:
             self.cancelado.emit()
@@ -118,3 +124,8 @@ class PanelFiadoCobro(QFrame):
         self._modo = "oculto"
         self.hide()
         self.cancelado.emit()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.hoja_cuenta.isVisible():
+            self.hoja_cuenta.ubicar()

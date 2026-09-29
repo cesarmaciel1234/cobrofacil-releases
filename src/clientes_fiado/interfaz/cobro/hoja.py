@@ -44,7 +44,7 @@ class _FilaNombre(QFrame):
 class HojaCuentaCobro(QFrame):
     """Cartel de fiado o cuenta corriente. Misma hoja que la espera de la tarjeta."""
 
-    listo = pyqtSignal(int)
+    listo = pyqtSignal(int, float)
     cancelado = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -257,9 +257,13 @@ class HojaCuentaCobro(QFrame):
             cartel = cerebro.cartel(self._cliente)
             self.texto.setText(str(cartel.get("saludo") or "Sin datos"))
             self.texto.setStyleSheet("color: #0F172A; font-size: 32px; font-weight: 900;")
-            self.subtitulo.setText(self._frase())
+            self.subtitulo.setText("Abonar a la deuda: (Deje en 0 para fiar)")
             self.subtitulo.show()
             self._pintar_numeros(cartel.get("saldo"), cartel.get("disponible"))
+            
+            self.caja.setValidator(None) # Allow numbers
+            self.caja.setText("0")
+            self.caja.selectAll()
         else:
             self.texto.setText(self._frase())
             self.texto.setStyleSheet("color: #1E3A8A; font-size: 28px; font-weight: 800;")
@@ -349,10 +353,9 @@ class HojaCuentaCobro(QFrame):
     def _pasar(self, cliente, ref):
         self._cliente = cliente
         self._ref = ref
-        cliente_id = dict(cliente or {}).get("id")
-        self.ocultar()
-        if cliente_id:
-            self.listo.emit(int(cliente_id))
+        self._paso = 2
+        self._pintar_paso()
+        self.ubicar()
 
 
     def _cargar(self):
@@ -456,28 +459,16 @@ class HojaCuentaCobro(QFrame):
             aviso.cerrar()
 
     def _repetir(self):
-        if self._modo == "Fiado":
-            otro = cerebro.normalizar_dni(self.caja.text())
-            if not otro:
-                self._fallo("Ingrese el DNI nuevamente.")
-                return
-            coincide = otro == self._ref
-            distinto = "El DNI no coincide. Pida que lo repita."
-        else:
-            otro = self.caja.text().strip()
-            if not otro:
-                self._fallo("Ingrese el nombre nuevamente.")
-                return
-            coincide = otro.lower() == str(self._ref or "").strip().lower()
-            distinto = "El nombre no coincide. Pida que lo repita."
-        if not coincide:
-            sonar_dni_no_coincide()
-            self._fallo(distinto)
-            return
+        texto = self.caja.text().replace("$", "").replace(",", "").strip()
+        try:
+            abono = float(texto)
+        except ValueError:
+            abono = 0.0
+            
         cliente_id = dict(self._cliente or {}).get("id")
         self.ocultar()
         if cliente_id:
-            self.listo.emit(int(cliente_id))
+            self.listo.emit(int(cliente_id), float(abono))
 
     def _cancelar(self):
         if self._pidiendo_pin:

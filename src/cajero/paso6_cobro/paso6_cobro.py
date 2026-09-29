@@ -905,11 +905,22 @@ class Paso6Cobro(QDialog):
             )
         )
 
-    def _cuenta_lista(self, cliente_id):
+    def _cuenta_lista(self, cliente_id, abono=0.0):
         self._fiado_cliente_id = int(cliente_id)
         idx = self.cmb_cliente.findData(self._fiado_cliente_id)
         if idx >= 0:
             self.cmb_cliente.setCurrentIndex(idx)
+            
+        if abono > 0.009:
+            self.deuda_adicional_cobrada = abono
+            self.total_final += abono
+            self.resumen_vuelto.lbl_total.setText(self._monto(self.total_final))
+            self.resumen_vuelto.lbl_total_tit.setText("TOTAL C/DEUDA")
+            self.txt_pago.setText(self._monto(self.total_final))
+            self.panel_fiado.ocultar()
+            self._volver_a_metodos()
+            return
+            
         if getattr(self, "_mixto_espera_cuenta", False):
             self._mixto_espera_cuenta = False
             self.panel_fiado.ocultar()
@@ -1374,6 +1385,7 @@ class Paso6Cobro(QDialog):
                 "cliente_id": cliente_id,
                 "cliente_nombre": self.cmb_cliente.currentText() if cliente_id else "",
                 "fiado_parcial": (getattr(self, "valores_mixtos", None) or {}).get("cliente") or 0,
+                "deuda_adicional": getattr(self, "deuda_adicional_cobrada", 0.0),
                 "imprimir": imprimir,
                 "force_fiscal": force_fiscal,
                 "request_id": getattr(self, "request_id", None),
