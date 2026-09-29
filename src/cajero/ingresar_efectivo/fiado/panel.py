@@ -131,6 +131,7 @@ class CentroCobranzasPanel(QWidget):
             }}
         """)
         self.lista.itemClicked.connect(self._on_item_seleccionado)
+        self.lista.itemActivated.connect(self._on_item_seleccionado)
         self.lista.itemDoubleClicked.connect(lambda _: self.focus_monto())
         zona_lay.addWidget(self.lista)
         lay.addWidget(self.zona_lista)
@@ -257,10 +258,16 @@ class CentroCobranzasPanel(QWidget):
         self.btn_imprimir.setVisible(False)
 
     def _on_enter_buscar(self):
+        if self._cliente:
+            self.focus_monto()
+            return
         if self.lista.count() == 1 and not self._cliente:
             self.lista.setCurrentRow(0)
             self._on_item_seleccionado(self.lista.item(0))
-            self.focus_monto()
+        elif self.lista.count() > 1:
+            if self.lista.currentRow() < 0:
+                self.lista.setCurrentRow(0)
+            self.lista.setFocus()
         else:
             self._ejecutar_busqueda()
 
@@ -307,10 +314,12 @@ class CentroCobranzasPanel(QWidget):
                 item.setFont(f)
             self.lista.addItem(item)
 
-        self.lbl_lista.setText(f"{len(resultados)} deudor(es) — seleccione uno")
         if len(resultados) == 1:
+            self.lbl_lista.setText("1 deudor — Enter para elegir")
             self.lista.setCurrentRow(0)
             self._on_item_seleccionado(self.lista.item(0))
+        else:
+            self.lbl_lista.setText(f"{len(resultados)} deudores — flechas y Enter para elegir")
 
     def _on_item_seleccionado(self, item: QListWidgetItem | None):
         if not item:
@@ -338,6 +347,7 @@ class CentroCobranzasPanel(QWidget):
         self.zona_lista.hide()
         self.ficha.show()
         self.btn_imprimir.setVisible(True)
+        self.focus_monto()
 
     def _imprimir_estado_deuda(self):
         if not self._cliente:

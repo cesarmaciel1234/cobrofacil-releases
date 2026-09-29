@@ -1572,6 +1572,8 @@ class Paso6Cobro(QDialog):
         self.content_lay.setStretch(self._idx_tarjeta, tarjeta)
         self.content_lay.setStretch(self._idx_monto, monto)
         self.content_lay.setStretch(self._idx_hueco, hueco)
+        if hasattr(self, "panel_fiado"):
+            self.content_lay.setStretch(self.content_lay.indexOf(self.panel_fiado), 0)
         if hueco:
             self.hueco_pie.setMaximumHeight(16777215)
         else:
@@ -1588,6 +1590,11 @@ class Paso6Cobro(QDialog):
         if self.current_metodo == "Tarjeta":
             self.panel_monto.hide()
             self._repartir_hueco(tarjeta=1)
+            return
+        if self.current_metodo in ("Fiado", "Clientes"):
+            self.panel_monto.hide()
+            self._repartir_hueco(hueco=0)
+            self.content_lay.setStretch(self.content_lay.indexOf(self.panel_fiado), 1)
             return
         llena = self.panel_monto.ajustar(self.current_metodo, foto)
         if llena:

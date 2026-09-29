@@ -39,7 +39,7 @@ class LienzoEfectivo(QWidget):
         self.txt.textChanged.connect(self._calcular)
         self.txt.returnPressed.connect(self._confirmar)
         lay.addWidget(self.txt)
-        self.lbl_vuelto_tit = QLabel("SU CAMBIO:")
+        self.lbl_vuelto_tit = QLabel("PENDIENTE:")
         self.lbl_vuelto_tit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_vuelto_tit.setStyleSheet(
             "color: #64748B; font-size: 16px; font-weight: 800; background: transparent; border: none;"
@@ -104,27 +104,27 @@ class LienzoEfectivo(QWidget):
             return None
 
     def _calcular(self):
+        if not self.txt.text().strip():
+            self._mostrar_diferencia("PENDIENTE:", f"${self._deuda:,.2f}", "#EF4444")
+            return
         recibido = self._numero()
         if recibido is None:
-            self.lbl_vuelto_tit.setText("FALTA:")
-            self.lbl_vuelto.setText("—")
-            self.lbl_vuelto.setStyleSheet(
-                "color: #EF4444; font-size: 36px; font-weight: 900; background: transparent; border: none;"
-            )
+            self._mostrar_diferencia("IMPORTE INVÁLIDO:", "—", "#EF4444")
             return
         vuelto = redondear_dinero(recibido - self._deuda)
         if vuelto < 0:
-            self.lbl_vuelto_tit.setText("FALTA:")
-            self.lbl_vuelto.setText(f"${abs(vuelto):,.2f}")
-            self.lbl_vuelto.setStyleSheet(
-                "color: #EF4444; font-size: 36px; font-weight: 900; background: transparent; border: none;"
-            )
+            self._mostrar_diferencia("FALTA:", f"${abs(vuelto):,.2f}", "#EF4444")
+        elif vuelto > 0:
+            self._mostrar_diferencia("SOBRA:", f"${vuelto:,.2f}", "#10B981")
         else:
-            self.lbl_vuelto_tit.setText("SU CAMBIO:")
-            self.lbl_vuelto.setText(f"${vuelto:,.2f}")
-            self.lbl_vuelto.setStyleSheet(
-                "color: #10B981; font-size: 36px; font-weight: 900; background: transparent; border: none;"
-            )
+            self._mostrar_diferencia("VUELTO:", "$0.00", "#10B981")
+
+    def _mostrar_diferencia(self, titulo, importe, color):
+        self.lbl_vuelto_tit.setText(titulo)
+        self.lbl_vuelto.setText(importe)
+        self.lbl_vuelto.setStyleSheet(
+            f"color: {color}; font-size: 36px; font-weight: 900; background: transparent; border: none;"
+        )
 
     def _confirmar(self):
         recibido = self._numero()

@@ -12,7 +12,7 @@ clientes_fiado/
     fiado/                 puerta por DNI
     cuenta_corriente/      puerta por nombre
   oficina/                 fichas, deudas, abonos, saldos
-    ticket/                lectura de ventas asociadas a cargos
+    ticket/                lectura del desglose de ventas asociadas a cargos
     cuenta/                MotorCuenta
     por_cobrar/            quién debe
     cobradas/              el abono
@@ -51,13 +51,15 @@ El paso 6 es el cobro. `MotorFiado.ejecutar` y `MotorClientes.ejecutar` solo hac
 
 `garante/fiado/motor.py`, `MotorFiadoExpress.autorizar`, y `garante/cuenta_corriente/motor.py`, `MotorClienteExpress.autorizar`, arman `OrdenCobro`. Si `ok` es falso, no hay venta. `garante/despacho/despacho.py`, `entregar`, llama `ejecutar_comun`. No abre Point, ni QR, ni la escucha de transferencia. El cargo de la deuda va en la misma transacción que el ticket, en `src/base_de_datos/repos/ventas.py`, `_aplicar_fiado`.
 
-La oficina no registra esa venta. `oficina/cuenta/motor.py`, `MotorCuenta`, lee y escribe `clientes` y `cuenta_corriente`. `oficina/cartel/motor.py`, `MotorCartel.armar`, llena el saludo. `SubmotorNombre` pone «Hola» o `Sin datos`. `SubmotorSaldos` pone la deuda y el disponible. Si uno falla, el otro igual devuelve. `por_cobrar` es `listar_con_deuda`, `ultimo_cargo` y `movimientos`. `cobradas` es `abonar`. `saldos` es `credito_disponible` y `limite_excedido`. El garante consulta esos saldos antes del ok.
+La oficina no registra esa venta. `oficina/cuenta/motor.py`, `MotorCuenta`, lee y escribe `clientes` y `cuenta_corriente`. `oficina/cartel/motor.py`, `MotorCartel.armar`, llena el saludo. `SubmotorNombre` pone «Hola» o `Sin datos`. `SubmotorSaldos` pone la deuda y el disponible. Si uno falla, el otro igual devuelve. `por_cobrar` es `listar_con_deuda`, `ultimo_cargo`, `ultimos_cargos` y `movimientos`. La cartera usa `ultimos_cargos` para obtener las fechas de deuda por lotes sin consultas por fila. `cobradas` es `abonar`. `saldos` es `credito_disponible` y `limite_excedido`. El garante consulta esos saldos antes del ok.
 
 El detalle de una venta enlazada a un cargo se lee por `oficina/ticket/motor.py`, clase `MotorTicket`. Consulta la base activa y luego las copias disponibles. No modifica ventas ni deuda.
 
 `abonar` lee la deuda y anota el `ABONO` en la misma transacción, con `medio_pago`, `perfil` y `registrado_por`. Si el movimiento no queda escrito, la deuda no cambia y devuelve `(False, 0.0, "")`. `abonar_caja` arma la descripción `Cajero Nombre (Efectivo)`. El efectivo se anota en `movimientos_caja` como `Pago de clientes`. Si ese ingreso no entra, el admin avisa que la cuenta sí bajó y la caja no. El corte lo muestra aparte, dentro del efectivo esperado.
 
 `oficina/cuenta/cuadre.py` lista las ventas `COMPLETADA` de Fiado o Clientes que no tienen `CARGO`. En admin, la franja ámbar abre esa lista. Cargar escribe el cargo en el cliente cuyo nombre coincide con uno solo. Si la venta quedó guardada como `Express` y el DNI, la carga en la ficha que ya tiene ese DNI. Cancelar el ticket llama `_anular_cargo` en la misma transacción: baja la deuda y deja una fila `ANULACION`. El cupo se vuelve a mirar dentro de la venta, con la ficha bloqueada. Si otra caja ya usó el cupo, la venta no se guarda. Una excepción de PIN o un ticket que ya se vendió (`ya_vendido`) no frena ese control.
+
+El desglose de un ticket es lectura separada del libro de deuda: `oficina/ticket/motor.py` consulta venta y productos en la base activa, el espejo portable o la SQLite local con una venta offline pendiente. El historial de admin abre ese detalle al pulsar el ticket de un `CARGO`. Si ninguna fuente conserva la venta, se informa y no se altera la cuenta.
 
 La tabla `clientes` no se lee al abrir el cobro. `Paso6Cobro._asegurar_lista_clientes` llama `cerebro.listar` la primera vez que se abre Fiado o Clientes.
 

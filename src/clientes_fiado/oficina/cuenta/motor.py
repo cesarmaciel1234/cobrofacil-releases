@@ -116,6 +116,31 @@ class MotorCuenta:
             (cliente_id,),
         )
 
+    def ultimos_cargos(self, cliente_ids):
+        """Última fecha de cargo para varias fichas, en una consulta por bloque."""
+        ids = list(dict.fromkeys(cliente_id for cliente_id in cliente_ids if cliente_id is not None))
+        fechas = {}
+        for inicio in range(0, len(ids), 500):
+            bloque = ids[inicio:inicio + 500]
+            placeholders = ", ".join("?" for _ in bloque)
+            filas = db_manager.execute_query(
+                f"""
+                SELECT cliente_id, MAX(fecha) AS fecha
+                FROM cuenta_corriente
+                WHERE tipo = 'CARGO' AND cliente_id IN ({placeholders})
+                GROUP BY cliente_id
+                """,
+                tuple(bloque),
+            ) or []
+            for fila in filas:
+                if hasattr(fila, "get"):
+                    cliente_id, fecha = fila.get("cliente_id"), fila.get("fecha")
+                else:
+                    cliente_id, fecha = fila[0], fila[1]
+                if cliente_id is not None and fecha is not None:
+                    fechas[cliente_id] = fecha
+        return fechas
+
     def movimientos(self, cliente_id):
         return db_manager.execute_query(
             "SELECT fecha, tipo, monto, saldo_resultante, descripcion, venta_id "

@@ -21,7 +21,7 @@ _hilo: threading.Thread | None = None
 _estado = {"cuando": "", "resultado": "", "detalle": ""}
 _salud = {"hasta": 0.0, "rota": ""}
 # Tablas que se leen enteras en cada vuelta, y su clave si no es `id`
-ENTERAS = ("productos", "clientes", "clientes_auditoria", "mp_pagos")
+ENTERAS = ("productos", "clientes", "clientes_auditoria", "mp_pagos", "gastos")
 CLAVE = {"clientes_auditoria": "evento", "mp_pagos": "payment_id"}
 # El resto de la tienda también se copia, para poder restaurarla desde acá. Estas no: son del momento.
 NO_COPIAR = ("terminales_activos",)
@@ -181,6 +181,8 @@ def _leer_resto(tienda, tabla: str, info: dict, local: sqlite3.Connection, compl
     """None = esta vuelta no se trae (tabla con archivos fuera de la copia completa del día)."""
     if info["blob"] and not completo:
         return None
+    if tabla in ENTERAS:
+        return _leer(tienda, f"SELECT * FROM `{tabla}`")
     desde_id = _max_id(local, tabla) if info["clave"] == ["id"] and not completo else 0
     if desde_id:
         n = int((_leer(tienda, f"SELECT COUNT(*) AS n FROM `{tabla}`")[0] or {}).get("n") or 0)

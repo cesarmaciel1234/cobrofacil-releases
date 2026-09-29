@@ -50,7 +50,7 @@ class HojaCuentaCobro(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("HojaCuenta")
-        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setStyleSheet(
             "QFrame#HojaCuenta {"
             " background: #F8FAFC; border: 2px solid #CBD5E1; border-radius: 22px;"
@@ -110,11 +110,17 @@ class HojaCuentaCobro(QFrame):
         lay.addWidget(self.disponible)
         
         # Boton F4
-        self.btn_f4 = QLabel("[ F4 ] PAGAR TODA LA DEUDA")
+        self.btn_f4 = QLabel("[ F4 ] PAGAR CUENTA")
         self.btn_f4.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.btn_f4.setStyleSheet("color: #FFFFFF; background: #3B82F6; font-size: 16px; font-weight: 800; border-radius: 8px; padding: 10px; margin-top: 10px;")
+        self.btn_f4.setStyleSheet("color: #FFFFFF; background: #3B82F6; font-size: 16px; font-weight: 800; border-radius: 8px; padding: 12px; margin-top: 10px;")
         self.btn_f4.hide()
         lay.addWidget(self.btn_f4)
+        
+        self.btn_enter = QLabel("[ ENTER ] FIAR COMPRA ACTUAL")
+        self.btn_enter.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.btn_enter.setStyleSheet("color: #FFFFFF; background: #10B981; font-size: 16px; font-weight: 800; border-radius: 8px; padding: 12px; margin-top: 6px;")
+        self.btn_enter.hide()
+        lay.addWidget(self.btn_enter)
         
         lay.addStretch(1)
         self._val_dni = QRegularExpressionValidator(QRegularExpression(r"\d{0,11}"))
@@ -198,17 +204,73 @@ class HojaCuentaCobro(QFrame):
     def _soltar(self):
         self._ignorar = False
 
-    def eventFilter(self, obj, event):
-        if obj is self.caja and event.type() == QEvent.Type.KeyPress:
+    def keyPressEvent(self, event):
+        if getattr(self, "_paso", 1) == 2:
             tecla = event.key()
-            if self._paso == 2 and tecla == Qt.Key.Key_F4:
-                cartel = cerebro.cartel(self._cliente)
-                deuda = cartel.get("saldo", 0)
-                self.caja.setText(str(deuda))
-                self.confirmar()
-                return True
+            if tecla == Qt.Key.Key_F4:
+                self._abrir_dialogo_cobranza()
+                return
+            elif tecla == Qt.Key.Key_Return or tecla == Qt.Key.Key_Enter:
+                self.listo.emit(int(self._cliente.get("id")), 0.0)
+                return
+        super().keyPressEvent(event)
+
+    def _abrir_dialogo_cobranza(self):
+        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QHBoxLayout
+        from PyQt6.QtCore import Qt
+        d = QDialog(self)
+        d.setWindowTitle("Departamento de Cobranza")
+        d.setFixedSize(400, 260)
+        d.setStyleSheet("QDialog { background: #F8FAFC; } QLabel { font-size: 18px; font-weight: bold; color: #1E293B; }")
+        l = QVBoxLayout(d)
+        
+        cartel = cerebro.cartel(self._cliente)
+        deuda = cartel.get("saldo", 0)
+        
+        l.addWidget(QLabel(f"Cliente: {self._cliente.get('nombre')}"))
+        lbl_deuda = QLabel(f"Deuda Total: $ {deuda:,.2f}")
+        lbl_deuda.setStyleSheet("color: #EF4444; font-size: 20px; font-weight: 900;")
+        l.addWidget(lbl_deuda)
+        l.addSpacing(10)
+        
+        l.addWidget(QLabel("¿Cuánto desea abonar ahora?"))
+        caja = QLineEdit(str(deuda))
+        caja.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        caja.setStyleSheet("background: white; font-size: 28px; font-weight: bold; padding: 10px; border: 2px solid #CBD5E1; border-radius: 8px;")
+        l.addWidget(caja)
+        
+        l.addStretch(1)
+        b = QHBoxLayout()
+        btn_cancel = QPushButton("[ ESC ] CANCELAR")
+        btn_cancel.setStyleSheet("background: #EF4444; color: white; font-size: 16px; font-weight: bold; padding: 10px; border-radius: 8px;")
+        btn_ok = QPushButton("[ ENTER ] CONFIRMAR PAGO")
+        btn_ok.setStyleSheet("background: #10B981; color: white; font-size: 16px; font-weight: bold; padding: 10px; border-radius: 8px;")
+        b.addWidget(btn_cancel)
+        b.addWidget(btn_ok)
+        l.addLayout(b)
+        
+        def on_ok():
+            try:
+                abono = float(caja.text().replace(',', ''))
+                d.accept()
+                self.listo.emit(int(self._cliente.get("id")), abono)
+            except:
+                pass
                 
-        if obj is self.caja and event.type() == QEvent.Type.KeyPress and self._pidiendo_pin:
+        btn_ok.clicked.connect(on_ok)
+        btn_cancel.clicked.connect(d.reject)
+        caja.returnPressed.connect(on_ok)
+        
+        caja.selectAll()
+        d.exec()
+        
+    def eventFilter(self, obj, event):
+        if obj is self.caja and event.type() == QEvent.Type.KeyPress and getattr(self, "lista", None) and self.lista.isVisible():
+            tecla = event.key()
+            if tecla == Qt.Key.Key_Down and self._filas:
+                self.lista.setFocus()
+                return True
+        if obj is self.caja and event.type() == QEvent.Type.KeyPress and getattr(self, "_pidiendo_pin", False):
             tecla = event.key()
             if tecla == Qt.Key.Key_Backspace:
                 self.borrar()
@@ -285,16 +347,19 @@ class HojaCuentaCobro(QFrame):
             cartel = cerebro.cartel(self._cliente)
             self.texto.setText(str(cartel.get("saludo") or "Sin datos"))
             self.texto.setStyleSheet("color: #0F172A; font-size: 32px; font-weight: 900;")
-            self.subtitulo.setText("Abonar a la deuda: (Deje en 0 para fiar)")
+            self.subtitulo.setText("¿Desea enviar la compra a la cuenta del cliente?")
             self.subtitulo.show()
             self._pintar_numeros(cartel.get("saldo"), cartel.get("disponible"))
             
-            self.caja.setValidator(None) # Allow numbers
-            self.caja.setText("0")
-            self.caja.selectAll()
+            self.caja.hide()
             self.btn_f4.show()
+            self.btn_enter.show()
+            self.setFocus()
         else:
+            self.caja.show()
             self.btn_f4.hide()
+            if hasattr(self, 'btn_enter'):
+                self.btn_enter.hide()
             self.texto.setText(self._frase())
             self.texto.setStyleSheet("color: #1E3A8A; font-size: 28px; font-weight: 800;")
             self.saldo.clear()

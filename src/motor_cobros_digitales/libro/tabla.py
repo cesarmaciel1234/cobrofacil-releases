@@ -6,7 +6,7 @@ import json
 import threading
 from datetime import datetime
 
-_creada = False
+_creada_en = None
 _candado = threading.Lock()
 
 COLUMNAS = (
@@ -19,6 +19,14 @@ def _db():
     from src.base_de_datos.database import db_manager
 
     return db_manager
+
+
+def _identidad_db(db):
+    return (
+        getattr(db, "db_engine_type", "sqlite"),
+        getattr(db, "db_path", None),
+        id(db),
+    )
 
 
 def _tiene(db, columna: str) -> bool:
@@ -54,13 +62,15 @@ def _llenar_venta_id(db):
 
 
 def crear() -> bool:
-    global _creada
-    if _creada:
+    global _creada_en
+    db = _db()
+    identidad = _identidad_db(db)
+    if _creada_en == identidad:
         return True
     with _candado:
-        if _creada:
+        identidad = _identidad_db(db)
+        if _creada_en == identidad:
             return True
-        db = _db()
         ok = db.execute_non_query(
             """
             CREATE TABLE IF NOT EXISTS mp_pagos (
@@ -96,7 +106,7 @@ def crear() -> bool:
         db.execute_non_query("CREATE INDEX IF NOT EXISTS idx_mp_pagos_venta ON mp_pagos (venta_id)")
         db.execute_non_query("CREATE INDEX IF NOT EXISTS idx_mp_pagos_ticket ON mp_pagos (ticket)")
         _llenar_venta_id(db)
-        _creada = True
+        _creada_en = _identidad_db(db)
         return True
 
 
@@ -168,6 +178,32 @@ def detalle(payment_id) -> dict:
         return json.loads(texto) if texto else {}
     except (TypeError, ValueError):
         return {}
+
+
+def tickets_por_pago(payment_ids) -> dict[str, str]:
+    """Tickets ya publicados en la base compartida, indexados por ID de pago."""
+    ids = list(dict.fromkeys(str(pid or "").strip() for pid in payment_ids or [] if str(pid or "").strip()))
+    if not ids or not crear():
+        return {}
+
+    resultado = {}
+    db = _db()
+    for inicio in range(0, len(ids), 500):
+        bloque = ids[inicio:inicio + 500]
+        placeholders = ", ".join("?" for _ in bloque)
+        filas = db.execute_query(
+            f"""
+            SELECT payment_id, ticket FROM mp_pagos
+            WHERE payment_id IN ({placeholders}) AND ticket IS NOT NULL AND ticket <> ''
+            """,
+            tuple(bloque),
+        ) or []
+        for fila in filas:
+            payment_id = fila.get("payment_id") if hasattr(fila, "get") else fila[0]
+            ticket = fila.get("ticket") if hasattr(fila, "get") else fila[1]
+            if payment_id and ticket:
+                resultado[str(payment_id)] = str(ticket)
+    return resultado
 
 
 def guardar(pagos) -> int:

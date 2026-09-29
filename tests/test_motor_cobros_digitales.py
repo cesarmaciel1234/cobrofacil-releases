@@ -4,9 +4,11 @@ from urllib.parse import unquote
 
 import pytest
 
+from src.cajero.paso6_cobro.vinculo_mp import libro as vinculo_caja
 from src.motor_cobros_digitales.bajada import mp as bajada
 from src.motor_cobros_digitales.enlace import automatico
 from src.motor_cobros_digitales.enlace.automatico import parejas
+from src.motor_cobros_digitales import empleado
 from src.motor_cobros_digitales.libro import tabla
 from src.motor_cobros_digitales.veredicto.conciliar import _clase, _rango
 
@@ -244,3 +246,128 @@ def test_bajada_forzada_no_mueve_la_marca_para_atras(mp_falso, marcas):
 
 def test_bajada_sin_token():
     assert bajada.ponerse_al_dia("") == 0
+
+
+def test_tabla_se_crea_de_nuevo_al_cambiar_de_sqlite_a_mariadb(monkeypatch):
+    class DB:
+        def __init__(self, motor, ruta):
+            self.db_engine_type = motor
+            self.db_path = ruta
+            self.creaciones = 0
+
+        def execute_non_query(self, query, params=()):
+            if "CREATE TABLE IF NOT EXISTS mp_pagos" in query:
+                self.creaciones += 1
+            return True
+
+        def execute_query(self, query, params=()):
+            return []
+
+    local = DB("sqlite", "punpro.db")
+    tienda = DB("mariadb", "mariadb://maestra")
+    monkeypatch.setattr(tabla, "_creada_en", None)
+    monkeypatch.setattr(tabla, "_db", lambda: local)
+    assert tabla.crear()
+    monkeypatch.setattr(tabla, "_db", lambda: tienda)
+    assert tabla.crear()
+    assert local.creaciones == 1
+    assert tienda.creaciones == 1
+
+
+def test_libro_de_caja_conserva_archivo_en_ruta_relativa_antigua(monkeypatch, tmp_path):
+    import json
+
+    nuevo = tmp_path / "app" / "reportes" / "mp_vinculos.json"
+    antiguo = tmp_path / "cwd" / "reportes" / "mp_vinculos.json"
+    antiguo.parent.mkdir(parents=True)
+    antiguo.write_text(
+        json.dumps({"2026-09": {"P1": {"ticket": "101", "monto": 10}}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vinculo_caja, "RUTA", str(nuevo))
+    monkeypatch.setattr(vinculo_caja, "_RUTA_LEGACY", str(antiguo))
+
+    assert vinculo_caja.asociado("P1")["ticket"] == "101"
+    assert vinculo_caja.asociar("P2", 20, "102")
+    guardado = json.loads(nuevo.read_text(encoding="utf-8"))
+    assert guardado["2026-09"]["P1"]["ticket"] == "101"
+    assert any("P2" in mes for mes in guardado.values())
+
+
+def test_asociar_despierta_motor_para_publicar_firma(monkeypatch, tmp_path):
+    import src.motor_cobros_digitales as motor
+
+    ruta = tmp_path / "reportes" / "mp_vinculos.json"
+    monkeypatch.setattr(vinculo_caja, "RUTA", str(ruta))
+    monkeypatch.setattr(vinculo_caja, "_RUTA_LEGACY", str(tmp_path / "legacy.json"))
+    despertados = []
+    monkeypatch.setattr(motor, "despertar", lambda: despertados.append(True))
+
+    assert vinculo_caja.asociar("P1", 10, "101")
+    assert despertados == [True]
+
+
+def test_tickets_por_pago_lee_firmas_compartidas(monkeypatch):
+    class DB:
+        def __init__(self):
+            self.consultas = []
+
+        def execute_query(self, query, params=()):
+            self.consultas.append((query, params))
+            return [("P1", "101"), ("P2", "102")]
+
+    db = DB()
+    monkeypatch.setattr(tabla, "crear", lambda: True)
+    monkeypatch.setattr(tabla, "_db", lambda: db)
+
+    assert tabla.tickets_por_pago(["P1", "P1", "P2", ""])
+    assert tabla.tickets_por_pago(["P1", "P2"]) == {"P1": "101", "P2": "102"}
+    assert db.consultas[-1][1] == ("P1", "P2")
+
+
+def test_turno_subir_firmas_aunque_falle_token(monkeypatch):
+    from src.motor_cobros_digitales.enlace import caja
+    from src.services.mp_escucha import EscuchaMP
+
+    def token_roto():
+        raise RuntimeError("configuración temporalmente inaccesible")
+
+    subidas = []
+    monkeypatch.setattr(EscuchaMP, "token", staticmethod(token_roto))
+    monkeypatch.setattr(caja, "subir_vinculos", lambda: subidas.append(True) or True)
+    monkeypatch.setattr(
+        bajada,
+        "ponerse_al_dia",
+        lambda token: pytest.fail("no debe bajar sin token"),
+    )
+    monkeypatch.setattr(
+        automatico,
+        "enlazar",
+        lambda: pytest.fail("no debe enlazar con una bajada omitida"),
+    )
+
+    resultado = empleado.turno()
+    assert subidas == [True]
+    assert resultado["firmas_caja"] is True
+    assert resultado["enlazados"] == 0
+    assert "token MP" in resultado["error"]
+
+
+def test_turno_no_enlaza_si_falla_bajada_o_firma(monkeypatch):
+    from src.motor_cobros_digitales.enlace import caja
+    from src.services.mp_escucha import EscuchaMP
+
+    monkeypatch.setattr(EscuchaMP, "token", staticmethod(lambda: "token"))
+    monkeypatch.setattr(bajada, "ponerse_al_dia", lambda token: -1)
+    monkeypatch.setattr(caja, "subir_vinculos", lambda: False)
+    monkeypatch.setattr(
+        automatico,
+        "enlazar",
+        lambda: pytest.fail("no debe enlazar con etapas previas fallidas"),
+    )
+
+    resultado = empleado.turno()
+    assert resultado["firmas_caja"] is False
+    assert resultado["enlazados"] == 0
+    assert "bajada MP" in resultado["error"]
+    assert "firmas de caja" in resultado["error"]

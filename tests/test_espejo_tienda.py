@@ -28,6 +28,7 @@ class TiendaFalsa:
             CREATE TABLE productos (id INTEGER PRIMARY KEY, nombre TEXT, precio REAL, costo REAL, stock REAL);
             CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT, deuda_actual REAL);
             CREATE TABLE movimientos_caja (id INTEGER PRIMARY KEY, fecha TEXT, tipo TEXT, monto REAL);
+            CREATE TABLE gastos (id INTEGER PRIMARY KEY, fecha TEXT, categoria TEXT, descripcion TEXT, monto REAL, status TEXT);
             CREATE TABLE cuenta_corriente (id INTEGER PRIMARY KEY, cliente_id INTEGER, tipo TEXT, monto REAL, fecha TEXT);
             CREATE TABLE mp_pagos (payment_id TEXT PRIMARY KEY, venta_id INTEGER, monto REAL);
             CREATE TABLE usuarios (id INTEGER PRIMARY KEY, nombre TEXT, rol TEXT);
@@ -107,6 +108,7 @@ def tienda(tmp_path, monkeypatch):
     t.db.execute("INSERT INTO detalles_ventas VALUES (1, 2, 'A1', 2, 125, 250)")
     t.db.execute("INSERT INTO productos VALUES (1, 'Pan', 125, 80, 10)")
     t.db.execute("INSERT INTO clientes VALUES (1, 'Ana', 500)")
+    t.db.execute("INSERT INTO gastos VALUES (1, ?, 'Mercadería / Stock', 'Proveedor: Frigorífico', 1000, 'Pendiente')", (_hoy(),))
     t.db.execute("INSERT INTO cuenta_corriente VALUES (1, 1, 'ABONO', 30, ?)", (_hoy(),))
     t.db.execute("INSERT INTO mp_pagos VALUES ('987654321', 2, 250)")
     t.db.execute("INSERT INTO usuarios VALUES (1, 'jefe', 'ADMIN')")
@@ -182,6 +184,21 @@ def test_incremental_trae_nuevas_y_cancelaciones(tienda, monkeypatch):
     assert c["cant"] == 1 and c["usuario"] == "jefe"
 
 
+def test_copia_actualiza_estado_de_gasto_viejo(tienda, monkeypatch):
+    monkeypatch.setattr(copia, "GRANDE", 0)
+    copia.refrescar()
+    tienda.db.execute("UPDATE gastos SET status='Pagado' WHERE id=1")
+    tienda.db.commit()
+
+    res = copia.refrescar()
+
+    assert not res["completo"]
+    assert res["gastos"] == 1
+    conn = sqlite3.connect(copia.ruta())
+    assert conn.execute("SELECT status FROM gastos WHERE id=1").fetchone()[0] == "Pagado"
+    conn.close()
+
+
 def test_tienda_rota_no_toca_la_copia(tienda):
     copia.refrescar()
     antes = copia.meta()["ultima_copia"]
@@ -249,9 +266,13 @@ def test_sin_tienda_no_crea_nada(tmp_path, monkeypatch):
 
 def test_pendrive_es_copia_y_guarda_eventos_sueltos(tienda, tmp_path, monkeypatch):
     from src.clientes_fiado.oficina.huella import absorber, tabla
+    from src.admin.mercadopago.historial import archivo
+    from src.cajero.paso6_cobro.vinculo_mp import libro
 
     monkeypatch.setattr(motor_nodo, "_hay_tienda", lambda: False)
     monkeypatch.setattr(absorber, "llevar_al_nodo", lambda *a, **k: 0)
+    monkeypatch.setattr(archivo, "RUTA", str(tmp_path / "local" / "reportes" / "mercado_pago_sync.csv"))
+    monkeypatch.setattr(libro, "RUTA", str(tmp_path / "local" / "reportes" / "mp_vinculos.json"))
     copia.refrescar()
 
     root = tmp_path / "USB" / "CobroFacil_Nodo"
@@ -272,6 +293,67 @@ def test_pendrive_es_copia_y_guarda_eventos_sueltos(tienda, tmp_path, monkeypatc
     assert conn.execute("SELECT COUNT(*) FROM ventas").fetchone()[0] == 2
     assert conn.execute("SELECT COUNT(*) FROM clientes_auditoria WHERE base='LOCAL'").fetchone()[0] == 1
     assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
+    conn.close()
+
+
+def test_nodo_actualiza_deudas_aplicadas_antes_de_volcar(tienda, tmp_path, monkeypatch):
+    from src.clientes_fiado.oficina.huella import absorber
+    from src.admin.mercadopago.historial import archivo
+    from src.cajero.paso6_cobro.vinculo_mp import libro
+
+    copia.refrescar()
+    monkeypatch.setattr(archivo, "RUTA", str(tmp_path / "local" / "reportes" / "mercado_pago_sync.csv"))
+    monkeypatch.setattr(libro, "RUTA", str(tmp_path / "local" / "reportes" / "mp_vinculos.json"))
+    root = tmp_path / "USB" / "CobroFacil_Nodo"
+    root.mkdir(parents=True)
+    nodo_db = root / "nodo_negocio.db"
+    copia.volcar_a(str(nodo_db))
+
+    def aplicar_movimiento_pendiente(_path):
+        tienda.db.execute("UPDATE clientes SET deuda_actual=650 WHERE id=1")
+        tienda.db.execute(
+            "INSERT INTO cuenta_corriente VALUES (2, 1, 'CARGO', 150, ?)",
+            (_hoy("11:00:00"),),
+        )
+        tienda.db.commit()
+        return {"aplicado": 1, "repetido": 0, "pendiente": 0, "error": 0}
+
+    monkeypatch.setattr(motor_nodo, "_chupar_antes", aplicar_movimiento_pendiente)
+    monkeypatch.setattr(absorber, "llevar_al_nodo", lambda *a, **k: 0)
+
+    motor_nodo._llevar_al_pendrive(str(root), None)
+
+    conn = sqlite3.connect(nodo_db)
+    assert conn.execute("SELECT deuda_actual FROM clientes WHERE id=1").fetchone()[0] == 650
+    assert conn.execute("SELECT monto FROM cuenta_corriente WHERE id=2").fetchone()[0] == 150
+    conn.close()
+
+
+def test_nodo_refresca_copia_si_movimiento_ya_se_habia_aplicado(tienda, tmp_path, monkeypatch):
+    from src.clientes_fiado.oficina.huella import absorber
+    from src.admin.mercadopago.historial import archivo
+    from src.cajero.paso6_cobro.vinculo_mp import libro
+
+    copia.refrescar()
+    monkeypatch.setattr(archivo, "RUTA", str(tmp_path / "local" / "reportes" / "mercado_pago_sync.csv"))
+    monkeypatch.setattr(libro, "RUTA", str(tmp_path / "local" / "reportes" / "mp_vinculos.json"))
+    root = tmp_path / "USB" / "CobroFacil_Nodo"
+    root.mkdir(parents=True)
+    nodo_db = root / "nodo_negocio.db"
+    copia.volcar_a(str(nodo_db))
+
+    def repetir_movimiento(_path):
+        tienda.db.execute("UPDATE clientes SET deuda_actual=725 WHERE id=1")
+        tienda.db.commit()
+        return {"aplicado": 0, "repetido": 1, "pendiente": 0, "error": 0}
+
+    monkeypatch.setattr(motor_nodo, "_chupar_antes", repetir_movimiento)
+    monkeypatch.setattr(absorber, "llevar_al_nodo", lambda *a, **k: 0)
+
+    motor_nodo._llevar_al_pendrive(str(root), None)
+
+    conn = sqlite3.connect(nodo_db)
+    assert conn.execute("SELECT deuda_actual FROM clientes WHERE id=1").fetchone()[0] == 725
     conn.close()
 
 

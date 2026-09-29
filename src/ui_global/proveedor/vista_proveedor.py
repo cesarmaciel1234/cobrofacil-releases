@@ -34,11 +34,21 @@ class VistaProveedor(QWidget):
     def _build_ui(self):
         lay = self.lay_container
         lay.addWidget(section_title("🚚  Proveedores — Frigorífico y Carga Rápida"))
+        self._lbl_estado_red = QLabel("")
+        self._lbl_estado_red.setWordWrap(True)
+        self._lbl_estado_red.setStyleSheet(
+            f"QLabel {{ background: {PAL['surface']}; color: {PAL['text']}; "
+            f"border: 1px solid {PAL['border']}; border-radius: 8px; padding: 9px 12px; "
+            "font-weight: 700; }}"
+        )
+        self._lbl_estado_red.hide()
+        lay.addWidget(self._lbl_estado_red)
 
         main_h = QHBoxLayout()
         main_h.setSpacing(20)
 
         left_panel = QFrame()
+        self._panel_carga = left_panel
         left_panel.setObjectName("Card")
         left_panel.setStyleSheet(f"""
             QFrame#Card {{
@@ -146,6 +156,7 @@ class VistaProveedor(QWidget):
         right_panel.addWidget(totals_card)
 
         action_card = QFrame()
+        self._panel_acciones = action_card
         action_card.setStyleSheet(f"QFrame {{ background: {PAL['surface']}; border: 1px solid {PAL['border']}; border-radius: 16px; }}")
         a_lay = QVBoxLayout(action_card)
         a_lay.setContentsMargins(20, 20, 20, 20)
@@ -277,6 +288,31 @@ class VistaProveedor(QWidget):
 
     def cargar_datos(self):
         """Carga el historial de compras utilizando el motor."""
+        tienda_online = MotorProveedor.tienda_disponible()
+        _db, modo = MotorProveedor._get_read_db(self.perfil, self._db_jefe)
+        self._solo_lectura = not tienda_online
+        self._panel_carga.setEnabled(tienda_online)
+        self._panel_acciones.setEnabled(tienda_online)
+        if self._solo_lectura and modo == "copia":
+            self._lbl_estado_red.setText(
+                "Sin conexión con la tienda. Consulta de solo lectura desde la última copia del nodo; "
+                "compras y pagos requieren conexión."
+            )
+            self._lbl_estado_red.show()
+        elif self._solo_lectura and modo == "sin_copia":
+            self._lbl_estado_red.setText(
+                "Sin conexión y sin copia del nodo disponible. No se muestra un historial local incompleto; "
+                "conecte la tienda o el nodo."
+            )
+            self._lbl_estado_red.show()
+        elif self._solo_lectura:
+            self._lbl_estado_red.setText(
+                "Consulta de solo lectura. Compras y pagos requieren conexión con la tienda."
+            )
+            self._lbl_estado_red.show()
+        else:
+            self._lbl_estado_red.hide()
+
         rows = MotorProveedor.load_proveedores(self.perfil, self._db_jefe)
         self._tbl_prov.setRowCount(0)
 
@@ -321,7 +357,7 @@ class VistaProveedor(QWidget):
         lay.addWidget(lbl_desc)
         lay.addSpacing(20)
 
-        if restante > 0:
+        if restante > 0 and not getattr(self, "_solo_lectura", False):
             btn_pagar = btn_primary(f"💳 Pagar Deuda (Falta ${restante:,.2f})")
             btn_pagar.clicked.connect(lambda: [dlg.accept(), self._pagar_proveedor(debt_id, restante)])
             lay.addWidget(btn_pagar)
@@ -332,6 +368,11 @@ class VistaProveedor(QWidget):
         qt_exec(dlg)
 
     def _pagar_proveedor(self, debt_id, restante):
+        if getattr(self, "_solo_lectura", False):
+            QMessageBox.warning(
+                self, "Sin conexión", "La consulta está disponible, pero los pagos requieren conexión con la tienda."
+            )
+            return
         if restante <= 0:
             QMessageBox.information(self, "Aviso", "Esta cuenta ya está saldada.")
             return
@@ -345,6 +386,11 @@ class VistaProveedor(QWidget):
                 QMessageBox.warning(self, "Error", f"No se pudo registrar el pago: {e}")
 
     def _save_proveedor(self):
+        if getattr(self, "_solo_lectura", False):
+            QMessageBox.warning(
+                self, "Sin conexión", "La consulta está disponible, pero las compras requieren conexión con la tienda."
+            )
+            return
         amount_text = self._prov_amount.text()
         if not amount_text or self._romaneo_table.rowCount() == 0:
             QMessageBox.warning(self, "Error", "Debe cargar ítems y un monto total.")

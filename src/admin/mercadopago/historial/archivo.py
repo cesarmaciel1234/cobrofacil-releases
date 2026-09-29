@@ -1,12 +1,25 @@
 import csv
 import os
+import threading
 from datetime import datetime, timedelta, timezone
+from functools import wraps
 
 from src.logger import logger
 
 ZONA_AR = timezone(timedelta(hours=-3))
+_LOCK = threading.RLock()
+
+
+def _proteger_archivo(funcion):
+    @wraps(funcion)
+    def ejecutar(*args, **kwargs):
+        with _LOCK:
+            return funcion(*args, **kwargs)
+
+    return ejecutar
 
 RUTA = os.path.join("reportes", "mercado_pago_sync.csv")
+COLUMNA_CAMBIO_ESTADO = "Fecha Modificacion Estado Local"
 COLUMNAS = [
     "Fecha Aprobacion",
     "ID de Pago",
@@ -18,6 +31,7 @@ COLUMNAS = [
     "Tipo Operacion",
     "Monto Neto",
     "Tarifa",
+    COLUMNA_CAMBIO_ESTADO,
 ]
 
 
@@ -77,6 +91,7 @@ def _rotulo(pago):
     return op, nombre
 
 
+@_proteger_archivo
 def _ids():
     if not os.path.exists(RUTA):
         return set()
@@ -108,8 +123,9 @@ def _fila_de(pago):
     except (TypeError, ValueError):
         neto = monto
     op, nombre = _rotulo(pago)
+    fecha_aprobacion = _fecha_ar(pago.get("date_approved"))
     return [
-        _fecha_ar(pago.get("date_approved")),
+        fecha_aprobacion,
         id_pago,
         f"{monto:.2f}",
         nombre,
@@ -119,9 +135,11 @@ def _fila_de(pago):
         op,
         f"{neto:.2f}",
         f"{monto - neto:.2f}",
+        fecha_aprobacion,
     ]
 
 
+@_proteger_archivo
 def _filas():
     if not os.path.exists(RUTA):
         return []
@@ -134,6 +152,7 @@ def _filas():
         return []
 
 
+@_proteger_archivo
 def guardar(pagos):
     """Agrega pagos nuevos y corrige hora, nombre y tipo de los que ya estaban. No repite un id."""
     os.makedirs(os.path.dirname(RUTA), exist_ok=True)
@@ -155,6 +174,10 @@ def guardar(pagos):
                 fila[5] = "OMITIDO"
             if len(vieja) > 6 and vieja[6].strip():
                 fila[6] = vieja[6]
+            if len(vieja) > 10:
+                fila[10] = vieja[10]
+            else:
+                fila[10] = vieja[6] if len(vieja) > 6 else fila[10]
             if vieja != fila:
                 filas[por_id[id_pago]] = fila
                 cambio = True
@@ -178,6 +201,7 @@ def guardar(pagos):
     return nuevas
 
 
+@_proteger_archivo
 def leer():
     """Pagos del CSV y los totales del mes y de hoy. Salta filas simuladas."""
     pagos = []
@@ -245,6 +269,7 @@ def leer():
     return _vacio(pagos, total_mes, neto_mes, total_hoy, cant_hoy)
 
 
+@_proteger_archivo
 def omitir(id_pago):
     """Pasa un pago de APPROVED a OMITIDO, o al revés. False si no hay archivo."""
     if not os.path.exists(RUTA):
@@ -257,8 +282,15 @@ def omitir(id_pago):
             for fila in lector:
                 if fila and len(fila) > 5 and fila[1].strip() == str(id_pago):
                     fila[5] = "APPROVED" if fila[5].strip() == "OMITIDO" else "OMITIDO"
-                if fila:
-                    filas.append(fila)
+                    marca = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                    if len(fila) > 10:
+                        fila[10] = marca
+                    else:
+                        fila.append(marca)
+                fila.extend([""] * (len(COLUMNAS) - len(fila)))
+                filas.append(fila)
+        if cabecera and COLUMNA_CAMBIO_ESTADO not in cabecera:
+            cabecera.append(COLUMNA_CAMBIO_ESTADO)
         with open(RUTA, mode="w", newline="", encoding="utf-8-sig") as archivo:
             escritor = csv.writer(archivo)
             if cabecera:

@@ -8,7 +8,7 @@
 
 `buscar` es la lista de admin. `sugerir_nombres` arma el listado del cobro: pliega tildes y mayúsculas, y devuelve hasta 8 fichas con el DNI. `listar` es la lista corta del cobro.
 
-`listar_con_deuda`, `ultimo_cargo` y `movimientos` son la mesa de por cobrar. `abonar` y `cargar_manual` escriben la deuda y el movimiento en una sola transacción. Si la fila no entra, la deuda queda como estaba. `abonar` guarda medio, perfil y quién cobró. `pagos_del_dia` y `deuda_total` alimentan las tarjetas del jefe. `credito_disponible` y `limite_excedido` son la mesa de saldos.
+`listar_con_deuda`, `ultimo_cargo`, `ultimos_cargos` y `movimientos` son la mesa de por cobrar. `ultimos_cargos` recibe varios IDs y devuelve la fecha más reciente por cliente en consultas agrupadas de hasta 500 IDs, para que la cartera no haga una ida y vuelta a MariaDB por cada fila. `abonar` y `cargar_manual` escriben la deuda y el movimiento en una sola transacción. Si la fila no entra, la deuda queda como estaba. `abonar` guarda medio, perfil y quién cobró. `pagos_del_dia` y `deuda_total` alimentan las tarjetas del jefe. `credito_disponible` y `limite_excedido` son la mesa de saldos.
 
 `cuadre.py` busca ventas a crédito sin cargo. `emparejar` junta la venta con un cliente solo cuando el nombre coincide con uno. Si la venta quedó como `Express` más el DNI, la junta con la ficha que ya tiene ese DNI. `anotar` escribe ese cargo con la nota cuadre. `ventas_sin_cargo` y `anotar_faltante` salen por el cerebro.
 

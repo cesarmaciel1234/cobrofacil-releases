@@ -19,7 +19,7 @@ Esta hoja vive dentro de F6. No abre la venta.
 
 `pagina.py`, `PaginaCobroAbono`. Orquesta PIN, cola y cierre. No importa `Paso6Cobro`.
 
-`lienzo_efectivo.py`. Solicita cuánto efectivo recibió el cajero y calcula el vuelto contra el monto a abonar; no vuelve a pedir el monto del abono, no abre el cajón ni registra. `pagina.py` pide PIN después de validar el recibido y abre el cajón únicamente al autorizar el abono. En Mixto, posterga la apertura hasta que los medios electrónicos hayan terminado correctamente.
+`lienzo_efectivo.py`. Solicita cuánto efectivo recibió el cajero y actualiza la diferencia al escribir: «Pendiente» al abrir, «Falta» si el efectivo no alcanza, «Vuelto» si coincide y «Sobra» si supera el abono. No vuelve a pedir el monto del abono, no abre el cajón ni registra. `pagina.py` pide PIN después de validar el recibido y abre el cajón únicamente al autorizar el abono. En Mixto, posterga la apertura hasta que los medios electrónicos hayan terminado correctamente.
 
 `lienzo_qr.py`. Pide el código con `pedir_qr_pos`. Asienta el id del pago.
 

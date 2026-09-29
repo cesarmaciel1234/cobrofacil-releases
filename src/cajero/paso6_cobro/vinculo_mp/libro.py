@@ -1,15 +1,21 @@
 import json
 import os
+import threading
 from datetime import datetime
 
-RUTA = os.path.join("reportes", "mp_vinculos.json")
+from src.utils.paths import get_base_path
+
+RUTA = os.path.join(get_base_path(), "reportes", "mp_vinculos.json")
+_RUTA_LEGACY = os.path.abspath(os.path.join("reportes", "mp_vinculos.json"))
+_LOCK = threading.RLock()
 
 
 def _leer():
-    if not os.path.exists(RUTA):
+    ruta = RUTA if os.path.exists(RUTA) else _RUTA_LEGACY
+    if not os.path.exists(ruta):
         return {}
     try:
-        with open(RUTA, encoding="utf-8") as archivo:
+        with open(ruta, encoding="utf-8") as archivo:
             datos = json.load(archivo)
         return datos if isinstance(datos, dict) else {}
     except Exception:
@@ -36,18 +42,29 @@ def asociado(payment_id):
 def asociar(payment_id, monto, ticket):
     """Guarda el id del mes junto al ticket. No pisa un vínculo que ya existe."""
     clave = str(payment_id or "").strip()
-    if not clave or asociado(clave):
+    if not clave:
         return False
-    datos = _leer()
-    mes = datetime.now().strftime("%Y-%m")
-    libro = datos.get(mes)
-    if not isinstance(libro, dict):
-        libro = {}
-    libro[clave] = {
-        "monto": float(monto or 0),
-        "ticket": str(ticket),
-        "cuando": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    }
-    datos[mes] = libro
-    _guardar(datos)
+    with _LOCK:
+        if asociado(clave):
+            return False
+        datos = _leer()
+        mes = datetime.now().strftime("%Y-%m")
+        vinculos_mes = datos.get(mes)
+        if not isinstance(vinculos_mes, dict):
+            vinculos_mes = {}
+        vinculos_mes[clave] = {
+            "monto": float(monto or 0),
+            "ticket": str(ticket),
+            "cuando": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        datos[mes] = vinculos_mes
+        _guardar(datos)
+    try:
+        from src.motor_cobros_digitales import despertar
+
+        despertar()
+    except Exception as error:
+        from src.logger import logger
+
+        logger.warning(f"[Cobros digitales] No se pudo despertar el motor tras asociar {clave}: {error}")
     return True

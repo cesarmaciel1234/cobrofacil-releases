@@ -13,16 +13,18 @@ Sin red, la vitrina muestra la franja ámbar «Sin red · datos de la tienda al 
 La maestra es dueña de todo.
 
 1. `espejo/` guarda en esta PC una copia de la tienda y la refresca sola cada 5 minutos mientras hay maestra (`espejo/README.md`). Si se pierde el pendrive o se borra su carpeta, la PC sigue teniendo todo.
-2. El pendrive (`nodo_negocio.db`) es una copia de ese archivo. Sincronizar: refresca la copia si hay maestra, la tienda toma los eventos de clientes que traía el pendrive (`_chupar_antes`), vuelca la copia (`espejo.volcar_a`) y vuelve a poner los eventos hechos sin red que traía (`_devolver_eventos`). Sin maestra lleva la última copia buena.
+2. El pendrive (`nodo_negocio.db`) es una copia de ese archivo. Sincronizar: une primero los archivos del monitor MP (`reportes/mercado_pago_sync.csv` y `reportes/mp_vinculos.json`) por ID de pago para llevar y traer pagos, marcas de omitido/restaurado y asociaciones a tickets. Luego refresca la copia si hay maestra, la tienda toma los eventos de clientes que traía el pendrive (`_chupar_antes`) y, si aplicó alguno, refresca otra vez antes de volcar (`espejo.volcar_a`). Así el saldo (`clientes.deuda_actual`) y los movimientos de `cuenta_corriente` de esos eventos ya quedan en el nodo en la misma vuelta. Después vuelve a poner los eventos hechos sin red que traía (`_devolver_eventos`). Si falla ese segundo refresco, no pisa el archivo anterior del nodo. Sin maestra lleva la última copia buena.
 3. Sin maestra, `espejo.fuente()` hace que vitrina, reportes financieros y auditoría lean la copia de esta PC; si no hay (otra PC en casa), la del pendrive.
 
-Viaja toda la tienda: ventas, detalle, movimientos de caja, productos, clientes (con huella), `clientes_auditoria`, `cuenta_corriente`, `mp_pagos` y el resto (usuarios, configuración, categorías…), con todas sus columnas. Menos `terminales_activos`.
+Viaja toda la tienda: ventas, detalle, movimientos de caja, productos, clientes (con huella), `clientes_auditoria`, `cuenta_corriente`, `mp_pagos` y el resto (usuarios, configuración, categorías, `gastos`, `romaneos`, `romaneo_items`…), con todas sus columnas. `gastos` se relee entera para mantener al día el estado de compras de proveedores. El módulo global de Proveedores puede consultar esas compras sin red; no crea compras ni pagos en la copia. Menos `terminales_activos`.
 
 4. El mismo pendrive, o la copia de esta PC, sirve para restaurar la tienda: Configuración → Mantenimiento → Respaldo → Importar / Restaurar. Es el motor de `src/base_de_datos/restaurar`, el mismo que usan los respaldos. El jefe copia cada 5 minutos y el respaldo guarda como siempre; ninguno sabe del otro.
 
 Para leer el pendrive hace falta el sistema instalado. La tienda trabaja con MariaDB; el pendrive es un SQLite de viaje y lleva usuarios y configuración: se cuida como una llave.
 
 Clientes cargados afuera: no se importan fichas; los lleva `src/clientes_fiado/oficina/huella` como eventos.
+
+Historial del monitor MP: viaja como archivos separados de `nodo_negocio.db`. Incluye nombres y emails devueltos por Mercado Pago; se trata con la misma reserva que el resto de los datos del nodo.
 
 Promover (si cayó el servidor) importa del nodo a la base local. Los PNG de productos se sincronizan aparte (`Catalogos/png_productos`).
 

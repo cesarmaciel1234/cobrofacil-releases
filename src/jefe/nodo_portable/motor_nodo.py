@@ -299,10 +299,26 @@ def _llevar_al_pendrive(root: str, progress_cb: ProgressCb | None) -> dict:
     from src.jefe.nodo_portable import espejo
 
     neg_path = _negocio_db_path(root)
+    _emit(progress_cb, 42, "Sincronizando historial del monitor de Mercado Pago…")
+    from src.admin.mercadopago.historial.nodo import sincronizar_nodo
+
+    sincronizar_nodo(root)
     tomados, sueltos = {}, []
     if os.path.isfile(neg_path):
         _emit(progress_cb, 45, "Tomando clientes cargados afuera…")
         tomados = _chupar_antes(neg_path)
+        if (
+            int(tomados.get("aplicado", 0) or 0) > 0
+            or int(tomados.get("repetido", 0) or 0) > 0
+        ):
+            # Include the just-applied debt movements in this node snapshot.
+            res = _copia_al_dia(progress_cb)
+            if res.get("estado") != "ok":
+                detalle = str(res.get("detalle") or res.get("estado") or "error desconocido")
+                raise RuntimeError(
+                    "Se aplicaron movimientos de clientes en la tienda, pero no se pudo "
+                    f"actualizar la copia del nodo. El archivo anterior se conserva. ({detalle})"
+                )
         try:
             from src.clientes_fiado.oficina.huella.absorber import leer_eventos
 

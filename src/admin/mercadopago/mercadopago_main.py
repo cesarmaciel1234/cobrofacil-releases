@@ -1,5 +1,6 @@
 from src.utils.qt_compat import qt_exec
 from datetime import datetime
+import time
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QDateEdit, QCheckBox,
@@ -11,10 +12,31 @@ from src.admin.mercadopago.historial.archivo import leer, omitir
 from src.admin.mercadopago.historial.sincronizar import bajar_mes
 
 
-class _BajadaMes(QThread):
-    """Baja el mes fuera de la ventana. listo trae cuántos pagos nuevos guardó."""
+class _CargarTickets(QThread):
+    """Lee en segundo plano los vínculos publicados en la base compartida."""
 
-    listo = pyqtSignal(int)
+    listo = pyqtSignal(dict)
+
+    def __init__(self, payment_ids, parent=None):
+        super().__init__(parent)
+        self.payment_ids = payment_ids
+
+    def run(self):
+        try:
+            from src.motor_cobros_digitales.libro.tabla import tickets_por_pago
+
+            self.listo.emit(tickets_por_pago(self.payment_ids))
+        except Exception as error:
+            from src.logger import logger
+
+            logger.warning(f"[Monitor MP] No se pudieron consultar tickets de la tienda: {error}")
+            self.listo.emit({})
+
+
+class _BajadaMes(QThread):
+    """Baja el mes y actualiza la copia portable fuera de la ventana."""
+
+    listo = pyqtSignal(int, str, bool)
 
     def __init__(self, token):
         super().__init__()
@@ -25,7 +47,30 @@ class _BajadaMes(QThread):
             cuantos = bajar_mes(self.token)
         except Exception:
             cuantos = -1
-        self.listo.emit(cuantos)
+        error_nodo = ""
+        nodo_actualizado = False
+        if cuantos >= 0:
+            try:
+                from src.admin.mercadopago.historial.nodo import sincronizar_nodo_configurado
+
+                nodo_actualizado = sincronizar_nodo_configurado()
+            except (OSError, ValueError, RuntimeError) as error:
+                error_nodo = str(error)
+        self.listo.emit(cuantos, error_nodo, nodo_actualizado)
+
+
+class _SincronizacionNodo(QThread):
+    listo = pyqtSignal(str, bool)
+
+    def run(self):
+        try:
+            from src.admin.mercadopago.historial.nodo import sincronizar_nodo_configurado
+
+            actualizado = sincronizar_nodo_configurado()
+        except Exception as error:
+            self.listo.emit(str(error), False)
+        else:
+            self.listo.emit("", actualizado)
 
 
 class Admin10MP(QWidget):
@@ -39,10 +84,19 @@ class Admin10MP(QWidget):
         self.todos_los_pagos = []
         Admin10MP.vista = self
         self._marcas_archivos = None
+        self._ultima_consulta_tickets = 0.0
+        self._tickets_db = {}
+        self._carga_tickets = None
         self._reloj_ticket = QTimer(self)
         self._reloj_ticket.timeout.connect(self._refrescar_si_cambio)
+        self._reloj_nodo = QTimer(self)
+        self._reloj_nodo.setSingleShot(True)
+        self._reloj_nodo.timeout.connect(self._iniciar_sincronizacion_nodo)
+        self._nodo_sync_pendiente = False
+        self._sync_nodo_thread = None
+        self._error_nodo = ""
         self.setup_ui()
-        self.cargar_datos_locales()
+        self.cargar_datos_locales(sincronizar_nodo=True)
         self.iniciar_monitor()
 
     def setup_ui(self):
@@ -303,7 +357,7 @@ class Admin10MP(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
-        self.cargar_datos_locales()
+        self.cargar_datos_locales(sincronizar_nodo=True)
         self._marcas_archivos = self._marcas()
         self._reloj_ticket.start(1000)
 
@@ -312,7 +366,7 @@ class Admin10MP(QWidget):
         super().hideEvent(event)
 
     def sincronizar_historico(self):
-        self.cargar_datos_locales()
+        self.cargar_datos_locales(sincronizar_nodo=True)
         self._marcas_archivos = self._marcas()
         bajada = getattr(self, "_bajando", None)
         if bajada is not None and bajada.isRunning():
@@ -320,34 +374,87 @@ class Admin10MP(QWidget):
         from src.services.mp_escucha import EscuchaMP
         token = EscuchaMP.token()
         if not token:
-            self.lbl_estado.setText("SIN TOKEN")
+            estado_local = "COPIA LOCAL · NODO PENDIENTE" if self._error_nodo else "SOLO COPIA LOCAL"
+            self.lbl_estado.setText(estado_local if self.todos_los_pagos else "SIN TOKEN")
+            self.lbl_estado.setToolTip(
+                (f"{self._error_nodo} " if self._error_nodo else "")
+                + ("Historial disponible sin conexión. Actualizar en línea requiere el token de Mercado Pago."
+                   if self.todos_los_pagos else "")
+            )
             self._avisar_esclava_sin_token()
             return
         self.lbl_aviso_esclava.hide()
+        self.lbl_estado.setToolTip("")
         self.lbl_estado.setText("ACTUALIZANDO")
         self._bajando = _BajadaMes(token)
         self._bajando.listo.connect(self._fin_bajada)
         self._bajando.start()
 
-    def _fin_bajada(self, cuantos):
+    def _fin_bajada(self, cuantos, error_nodo, nodo_actualizado):
         self.cargar_datos_locales()
         self._marcas_archivos = self._marcas()
         if cuantos < 0:
-            self.lbl_estado.setText("SIN DATOS")
+            self.lbl_estado.setText(
+                "COPIA LOCAL · NODO PENDIENTE"
+                if self._error_nodo and self.todos_los_pagos else
+                "SIN RED · COPIA LOCAL" if self.todos_los_pagos else "SIN DATOS"
+            )
+            self.lbl_estado.setToolTip(
+                (f"{self._error_nodo} " if self._error_nodo else "")
+                + (
+                    "No se pudo consultar Mercado Pago. Se muestran los pagos guardados en esta PC."
+                    if self.todos_los_pagos else "No se pudo consultar Mercado Pago y no hay historial local."
+                )
+            )
             return
-        self.lbl_estado.setText("ESCUCHANDO")
+        self._error_nodo = error_nodo
+        self.lbl_estado.setToolTip(error_nodo)
+        if error_nodo:
+            self.lbl_estado.setText("ACTUALIZADO · NODO PENDIENTE")
+        elif nodo_actualizado:
+            self.lbl_estado.setText("ACTUALIZADO · NODO OK")
+        else:
+            self.lbl_estado.setText("ESCUCHANDO")
 
     def _error_escucha(self, _texto):
-        self.lbl_estado.setText("DETENIDO")
+        self.lbl_estado.setText(
+            "SIN RED · COPIA LOCAL" if self.todos_los_pagos else "DETENIDO"
+        )
 
     def _guardar_llegada(self, pago):
         from src.admin.mercadopago.historial.archivo import guardar
-        guardar([pago])
+        if guardar([pago]):
+            self._programar_sincronizacion_nodo()
         self.cargar_datos_locales()
+
+    def _programar_sincronizacion_nodo(self):
+        self._nodo_sync_pendiente = True
+        self._reloj_nodo.start(300)
+
+    def _iniciar_sincronizacion_nodo(self):
+        hilo = self._sync_nodo_thread
+        if hilo is not None and hilo.isRunning():
+            self._nodo_sync_pendiente = True
+            return
+        self._nodo_sync_pendiente = False
+        hilo = _SincronizacionNodo(self)
+        hilo.listo.connect(self._fin_sincronizacion_nodo)
+        self._sync_nodo_thread = hilo
+        hilo.start()
+
+    def _fin_sincronizacion_nodo(self, error, actualizado):
+        if error:
+            self._error_nodo = error
+            self.lbl_estado.setText("PAGO LOCAL · NODO PENDIENTE")
+            self.lbl_estado.setToolTip(error)
+        elif actualizado:
+            self._error_nodo = ""
+            self.lbl_estado.setToolTip("")
+        if self._nodo_sync_pendiente:
+            self._reloj_nodo.start(0)
 
     def _marcas(self):
         import os
-
         from src.admin.mercadopago.historial.archivo import RUTA as csv_mp
         from src.cajero.paso6_cobro.vinculo_mp.libro import RUTA as vinculos
 
@@ -361,12 +468,35 @@ class Admin10MP(QWidget):
 
     def _refrescar_si_cambio(self):
         marcas = self._marcas()
-        if marcas == self._marcas_archivos:
-            return
-        self._marcas_archivos = marcas
-        self.cargar_datos_locales()
+        if marcas != self._marcas_archivos:
+            self._marcas_archivos = marcas
+            self.cargar_datos_locales()
+        ahora = time.monotonic()
+        hilo = self._carga_tickets
+        if ahora - self._ultima_consulta_tickets >= 5 and (hilo is None or not hilo.isRunning()):
+            self._ultima_consulta_tickets = ahora
+            payment_ids = [p["id"] for p in self.todos_los_pagos]
+            hilo = _CargarTickets(payment_ids, self)
+            hilo.listo.connect(self._tickets_tienda_listos)
+            self._carga_tickets = hilo
+            hilo.start()
 
-    def cargar_datos_locales(self):
+    def _tickets_tienda_listos(self, tickets):
+        self._tickets_db.update(tickets)
+        barra = self.tabla.verticalScrollBar()
+        puesto = barra.value()
+        self.aplicar_filtros()
+        barra.setValue(puesto)
+
+    def cargar_datos_locales(self, sincronizar_nodo=False):
+        if sincronizar_nodo:
+            self._error_nodo = ""
+            try:
+                from src.admin.mercadopago.historial.nodo import sincronizar_nodo_configurado
+
+                sincronizar_nodo_configurado()
+            except (OSError, ValueError, RuntimeError) as error:
+                self._error_nodo = str(error)
         barra = self.tabla.verticalScrollBar()
         puesto = barra.value()
         datos = leer()
@@ -431,6 +561,12 @@ class Admin10MP(QWidget):
 
         from src.cajero.paso6_cobro.vinculo_mp.libro import asociado
 
+        tickets = dict(self._tickets_db)
+        for pago in pagos_filtrados:
+            vinculo = asociado(pago["id"]) or {}
+            if vinculo.get("ticket"):
+                tickets[pago["id"]] = str(vinculo["ticket"])
+
         self.tabla.setRowCount(0)
         for p in pagos_filtrados:
             row = self.tabla.rowCount()
@@ -459,8 +595,7 @@ class Admin10MP(QWidget):
                 elif p["estado"].upper() == "OMITIDO":
                     item_estado.setForeground(QColor("#94A3B8"))
             self.tabla.setItem(row, 4, item_estado)
-            vinculo = asociado(p["id"]) or {}
-            self.tabla.setItem(row, 5, QTableWidgetItem(str(vinculo.get("ticket") or "—")))
+            self.tabla.setItem(row, 5, QTableWidgetItem(tickets.get(p["id"], "—")))
 
     def on_combo_fecha_changed(self, index):
         if self.cmb_fecha.currentText() == "Día Específico...":
@@ -499,7 +634,8 @@ class Admin10MP(QWidget):
 
 
     def toggle_omitir_pago(self, id_pago):
-        omitir(id_pago)
+        if omitir(id_pago):
+            self._programar_sincronizacion_nodo()
         self.cargar_datos_locales()
 
     def _alternar_aviso(self):

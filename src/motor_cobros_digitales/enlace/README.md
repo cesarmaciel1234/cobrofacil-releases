@@ -1,6 +1,8 @@
 # enlace — ticket ↔ id de pago
 
-`caja.py`, `subir_vinculos()`. Lee `reportes/mp_vinculos.json` de esta PC con `cajero/paso6_cobro/vinculo_mp/libro._leer` (solo lectura; el cajero no se toca) y pasa cada par a `tabla.firmar_caja`. Devuelve False si falló. Cada PC sube lo suyo: la esclava ve lo que firmó la maestra.
+`caja.py`, `subir_vinculos()`. Lee el libro local de esta PC con `cajero/paso6_cobro/vinculo_mp/libro._leer` (solo lectura; el cajero no se toca) y pasa cada par a `tabla.firmar_caja`. La ruta parte de la carpeta base de la app; si existe un libro en la ruta relativa antigua, se sigue leyendo para no perder asociaciones previas. Devuelve False si falló. El archivo no se borra al subir: si la tienda no está disponible, el siguiente turno reintenta. Cada PC sube lo suyo: la esclava ve lo que firmó la maestra.
+
+La subida de firmas se ejecuta aunque no haya token o falle la bajada de MP. Si la firma no se pudo subir, el enlace automático se omite para evitar competir con una asociación manual pendiente.
 
 `automatico.py`, `enlazar(desde=None)`. Para lo que el cajero no firmó.
 
@@ -11,6 +13,6 @@
 5. `tabla.firmar_motor` con `enlace='motor'`.
 6. `_correr_marca()`: `mp_enlace_hasta` pasa a `mp_historial_hasta` (hasta donde bajó MP). Nunca más allá ni para atrás. Sin bajada (sin token) no se mueve.
 
-Devuelve cuántos enlazó, -1 si falló (la marca no se mueve). Con `desde` forzado no toca la marca.
+Devuelve cuántos enlazó, -1 si falló (la marca no se mueve). Con `desde` forzado no toca la marca. El empleado solo lo ejecuta después de una bajada correcta y una subida de firmas correcta.
 
 No cambiar: ante la duda no enlaza. El veredicto la deja como `sin_cobro` y el jefe la revisa.

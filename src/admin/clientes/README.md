@@ -10,6 +10,8 @@ El guardado no está en esta carpeta. Entra por `src/clientes_fiado`, objeto `ce
 
 En el historial del cliente, pulsar el número azul de Ticket de una fila `CARGO` abre el desglose de la venta. La lectura va por un motor independiente y se ejecuta fuera del hilo de interfaz. Ver `componentes/README.md` y `plano.md`.
 
+La lista calcula los días de atraso con `cerebro.ultimos_cargos()` por lotes de hasta 500 IDs. Esto evita que, al abrir o filtrar la cartera desde una esclava, la pantalla espere una ida y vuelta a la maestra por cada cliente con deuda. No volver a llamar `ultimo_cargo()` dentro del ciclo que dibuja las filas: para esa lista se debe conservar la consulta agrupada.
+
 `dialogo_recalculo_fiado.py` solo analiza cargos. No escribe la deuda.
 
 Al pasar el mouse por el nombre se ve la huella: qué PC lo creó, quién y cuándo. El botón AUDITORÍA (`componentes/dialogo_auditoria_clientes.py`) lista cada alta, edición, límite, cargo, abono y fusión: fecha, PC, caja, usuario y por dónde llegó (directo, sin red, nodo). Solo lee `clientes_auditoria` (`src/clientes_fiado/oficina/huella/consulta.py`).

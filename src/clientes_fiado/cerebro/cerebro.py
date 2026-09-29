@@ -54,6 +54,9 @@ class CerebroClientesFiado:
     def ultimo_cargo(self, cliente_id):
         return self.cuenta.ultimo_cargo(cliente_id)
 
+    def ultimos_cargos(self, cliente_ids):
+        return self.cuenta.ultimos_cargos(cliente_ids)
+
     def movimientos(self, cliente_id):
         return self.cuenta.movimientos(cliente_id)
 

@@ -1,6 +1,6 @@
 # Vínculo de Mercado Pago con el ticket
 
-El historial del mes vive en `reportes/mp_vinculos.json`. Cada id de pago queda junto al ticket que lo usó.
+El historial del mes vive en `reportes/mp_vinculos.json`, bajo la carpeta base de la aplicación (no depende del directorio desde el que se abrió el TPV). Cada id de pago queda junto al ticket que lo usó. Si todavía existe un archivo en la ruta relativa antigua, se lee como compatibilidad y la próxima asociación lo guarda en la ruta estable.
 
 `libro.py`
 

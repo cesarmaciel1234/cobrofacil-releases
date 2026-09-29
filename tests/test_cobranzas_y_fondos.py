@@ -272,6 +272,93 @@ def test_efectivo_pide_recibido_antes_del_pin_y_abre_cajon_al_final(monkeypatch)
     assert eventos == ["pin", "autorizar_cajon", "abrir_cajon", "registrar"]
 
 
+def test_efectivo_muestra_en_vivo_falta_vuelto_o_sobra():
+    from src.cajero.ingresar_efectivo.fiado.cobro.lienzo_efectivo import LienzoEfectivo
+
+    lienzo = LienzoEfectivo()
+    lienzo.arrancar(100)
+    assert lienzo.lbl_vuelto_tit.text() == "PENDIENTE:"
+    assert lienzo.lbl_vuelto.text() == "$100.00"
+
+    lienzo.txt.setText("60")
+    assert lienzo.lbl_vuelto_tit.text() == "FALTA:"
+    assert lienzo.lbl_vuelto.text() == "$40.00"
+
+    lienzo.txt.setText("100")
+    assert lienzo.lbl_vuelto_tit.text() == "VUELTO:"
+    assert lienzo.lbl_vuelto.text() == "$0.00"
+
+    lienzo.txt.setText("125")
+    assert lienzo.lbl_vuelto_tit.text() == "SOBRA:"
+    assert lienzo.lbl_vuelto.text() == "$25.00"
+
+
+def test_f6_busqueda_unica_pasa_al_monto_y_enter_no_reinicia_busqueda(monkeypatch):
+    from src.cajero.ingresar_efectivo.fiado import panel as modulo_panel
+    from src.cajero.ingresar_efectivo.fiado.panel import CentroCobranzasPanel
+
+    cliente = {
+        "id": 3,
+        "nombre": "Ana",
+        "dni": "12345678",
+        "telefono": "",
+        "direccion": "",
+        "deuda_actual": 250.0,
+    }
+    monkeypatch.setattr(modulo_panel, "buscar_deudores", lambda _consulta: [cliente])
+    panel = CentroCobranzasPanel()
+    panel.show()
+    panel.txt_buscar.setText("Ana")
+    panel._timer_buscar.stop()
+    panel._ejecutar_busqueda()
+    QApplication.processEvents()
+
+    assert panel.cliente_actual() == cliente
+    assert panel.txt_monto.text() == "250.00"
+    assert panel.txt_monto.selectedText() == "250.00"
+    assert panel.txt_monto.hasFocus()
+
+    panel._on_enter_buscar()
+    assert panel.txt_monto.hasFocus()
+    assert panel.cliente_actual() == cliente
+    panel.close()
+
+
+def test_f6_varios_clientes_se_pueden_elegir_con_enter(monkeypatch):
+    from src.cajero.ingresar_efectivo.fiado import panel as modulo_panel
+    from src.cajero.ingresar_efectivo.fiado.panel import CentroCobranzasPanel
+
+    clientes = [
+        {
+            "id": cliente_id,
+            "nombre": nombre,
+            "dni": f"1234567{cliente_id}",
+            "telefono": "",
+            "direccion": "",
+            "deuda_actual": 100.0,
+        }
+        for cliente_id, nombre in ((1, "Ana Perez"), (2, "Ana Ruiz"))
+    ]
+    monkeypatch.setattr(modulo_panel, "buscar_deudores", lambda _consulta: clientes)
+    panel = CentroCobranzasPanel()
+    panel.show()
+    panel.txt_buscar.setText("Ana")
+    panel._timer_buscar.stop()
+    panel._ejecutar_busqueda()
+    assert "flechas y Enter" in panel.lbl_lista.text()
+    panel._on_enter_buscar()
+    QApplication.processEvents()
+
+    assert panel.cliente_actual() is None
+    assert panel.lista.hasFocus()
+    panel.lista.itemActivated.emit(panel.lista.currentItem())
+
+    assert panel.cliente_actual()["nombre"] == "Ana Perez"
+    assert panel.txt_monto.hasFocus()
+    assert panel.zona_lista.isHidden()
+    panel.close()
+
+
 def test_cancelar_pin_de_efectivo_no_abre_cajon_ni_registra(monkeypatch):
     from src.cajero.ingresar_efectivo.fiado.cobro.pagina import PaginaCobroAbono
     from src.hardware.cash_drawer import drawer_manager
@@ -507,6 +594,49 @@ def test_planilla_repite_la_lectura_si_falta_la_columna(monkeypatch):
     filas = MotorCuenta().listar_cobros()
     assert filas[0]["medio"] == "Efectivo"
     assert filas[0]["nombre"] == "Ana"
+
+
+def test_ultimos_cargos_consulta_fechas_en_lote(monkeypatch):
+    from src.base_de_datos.database import db_manager
+    from src.clientes_fiado.oficina.cuenta.motor import MotorCuenta
+
+    consultas = []
+
+    def query(sql, params=()):
+        consultas.append((sql, params))
+        return [
+            {"cliente_id": 2, "fecha": "2026-09-25 18:00:00"},
+            {"cliente_id": 7, "fecha": "2026-09-20 10:00:00"},
+        ]
+
+    monkeypatch.setattr(db_manager, "execute_query", query)
+
+    fechas = MotorCuenta().ultimos_cargos([2, 7, 2, None])
+
+    assert fechas == {
+        2: "2026-09-25 18:00:00",
+        7: "2026-09-20 10:00:00",
+    }
+    assert len(consultas) == 1
+    assert "GROUP BY cliente_id" in consultas[0][0]
+    assert consultas[0][1] == (2, 7)
+
+
+def test_ultimos_cargos_divide_listas_mayores_a_500(monkeypatch):
+    from src.base_de_datos.database import db_manager
+    from src.clientes_fiado.oficina.cuenta.motor import MotorCuenta
+
+    consultas = []
+
+    def query(_sql, params=()):
+        consultas.append(params)
+        return []
+
+    monkeypatch.setattr(db_manager, "execute_query", query)
+
+    MotorCuenta().ultimos_cargos(range(501))
+
+    assert [len(params) for params in consultas] == [500, 1]
 
 
 def test_emparejar_solo_cuando_el_nombre_es_unico():

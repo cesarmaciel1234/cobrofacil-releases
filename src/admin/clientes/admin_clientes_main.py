@@ -224,18 +224,26 @@ class AdminClientes(QWidget):
         self.tabla.setRowCount(0)
         busqueda = self.txt_buscar.text().strip()
         clientes = cerebro.buscar(busqueda)
+        fichas = [dict(c) for c in clientes]
+        fechas_cargo = cerebro.ultimos_cargos(
+            [
+                ficha["id"]
+                for ficha in fichas
+                if float(ficha.get("deuda_actual") or 0) > 0
+            ]
+        )
 
         total_deuda = 0
         deudores = 0
         max_deuda = 0
 
         if clientes:
-            for i, c in enumerate(clientes):
-                deuda = float(dict(c).get('deuda_actual') or 0)
-                limite = float(dict(c).get('limite_credito') or 0)
+            for i, c in enumerate(fichas):
+                deuda = float(c.get('deuda_actual') or 0)
+                limite = float(c.get('limite_credito') or 0)
                 disponible = cerebro.credito_disponible(c)
-                dni = (dict(c).get('dni') or '').strip()
-                tipo = (dict(c).get('tipo_cliente') or 'regular').lower()
+                dni = (c.get('dni') or '').strip()
+                tipo = (c.get('tipo_cliente') or 'regular').lower()
                 tipo_txt = "⚡ Express" if tipo == 'express' else "Regular"
                 if tipo == 'express' and limite <= 0:
                     limite = FIADO_EXPRESS_LIMITE_DEFAULT
@@ -277,7 +285,7 @@ class AdminClientes(QWidget):
 
                 dias_atraso = 0
                 if deuda > 0:
-                    ultima_compra = cerebro.ultimo_cargo(c["id"])
+                    ultima_compra = fechas_cargo.get(c["id"])
                     if ultima_compra:
                         try:
                             dt = datetime.strptime(str(ultima_compra).split('.')[0], "%Y-%m-%d %H:%M:%S")

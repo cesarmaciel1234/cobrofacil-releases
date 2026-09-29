@@ -6,7 +6,7 @@ Archivo SQLite en `%LOCALAPPDATA%\CobroFacil_PRO\espejo_tienda\espejo_tienda.db`
 
 - `refrescar()`: con la maestra conectada, lee su MariaDB con una conexión propia (pymysql, sin `db_manager`, nunca cae a SQLite) y escribe en la copia.
   - Copia **toda la tienda**, para que el pendrive sirva para restaurarla (`src/base_de_datos/restaurar`). Las 8 del jefe (`TABLAS_NEGOCIO`) más el resto que liste `information_schema` (usuarios, configuración, categorías, departamentos, combos, gastos, romaneos, cartelería…), cada una con su clave primaria. Queda afuera `terminales_activos` (`NO_COPIAR`): es del momento.
-  - Una vez por día, completa. El resto de las vueltas: productos, clientes, `clientes_auditoria` y `mp_pagos` (clave `payment_id`) enteras; ventas nuevas más las de los últimos 3 días (cancelaciones, cierres); detalle, caja y `cuenta_corriente` desde el último id.
+  - Una vez por día, completa. El resto de las vueltas: productos, clientes, `clientes_auditoria`, `mp_pagos` (clave `payment_id`) y `gastos` enteras; ventas nuevas más las de los últimos 3 días (cancelaciones, cierres); detalle, caja y `cuenta_corriente` desde el último id. `gastos` se trae entera porque el estado de pago de un proveedor puede cambiar en una fila vieja. Por eso el saldo actual de cada cliente siempre se actualiza desde la maestra, los movimientos nuevos de deuda se agregan al libro y el estado de proveedores sigue el de la tienda.
   - El resto de las tablas: enteras en cada vuelta. Si una pasa de `GRANDE` (5000) filas y su clave es `id`, desde el último id; enteras en la completa del día. Las que guardan archivos (columna blob, hoy `carteleria_media`) solo en la completa del día.
   - Una tabla sin clave primaria se reemplaza entera cuando la tienda la trae con filas.
   - En `espejo_meta` quedan `tablas` (cuántas) y `completa = 1`. Con eso el motor de restaurar sabe que la copia trae toda la tienda; un pendrive de antes (8 tablas) se muestra como «parcial».
@@ -39,4 +39,6 @@ La usan los `_db()` de `vitrina/metricas.py`, `reportes/financiero/consulta.py` 
 
 - No escribir en `punpro.db` desde acá, ni leer la tienda con `db_manager.execute_query`: se traga los errores y puede cambiar a la base local en medio de la copia.
 - No borrar filas de la copia por lo que diga la tienda: solo se agregan o se reemplazan.
+- No resolver la deuda por suma/resta de los saldos copiados: el saldo actual viene de `clientes` en la maestra; los movimientos viajan en `cuenta_corriente` o como eventos de huella.
+- Los `romaneos` y `romaneo_items` del módulo Proveedores se copian como parte del resto de tablas; `gastos` se copia entera en cada vuelta para traer también cambios de estado en compras viejas. Se leen offline solo como referencia. No registrar en el espejo una compra, un pago ni el desposte.
 - No sacar tablas del resto para achicar la copia: sin usuarios ni configuración el pendrive no levanta una tienda.

@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 
 from src.logger import logger
+from src.utils.paths import get_base_path
 
 CADA = 300
 DESPUES_DE_COBRO = 90
@@ -16,6 +17,12 @@ _arrancado = False
 _candado_pc = None
 _despertar = threading.Event()
 _estado = {"ultimo_turno": "", "bajados": 0, "firmas_caja": False, "enlazados": 0, "error": ""}
+
+
+def _fallo(etapa: str, error) -> None:
+    mensaje = f"{etapa}: {error}"
+    _estado["error"] = "; ".join(filter(None, (_estado["error"], mensaje)))
+    logger.warning(f"[Cobros digitales] {mensaje}")
 
 
 def estado() -> dict:
@@ -29,19 +36,40 @@ def turno() -> dict:
     from src.motor_cobros_digitales.enlace.automatico import enlazar
     from src.motor_cobros_digitales.enlace.caja import subir_vinculos
 
-    _estado["error"] = ""
+    _estado.update({"bajados": 0, "firmas_caja": False, "enlazados": 0, "error": ""})
+    token = ""
     try:
         from src.services.mp_escucha import EscuchaMP
 
         token = EscuchaMP.token()
-        _estado["bajados"] = ponerse_al_dia(token) if token else 0
-        if not token:
-            _estado["error"] = "sin token"
-        _estado["firmas_caja"] = subir_vinculos()
-        _estado["enlazados"] = enlazar()
     except Exception as error:
-        _estado["error"] = str(error)
-        logger.warning(f"[Cobros digitales] Turno fallido: {error}")
+        _fallo("token MP", error)
+
+    if token:
+        try:
+            _estado["bajados"] = ponerse_al_dia(token)
+            if _estado["bajados"] < 0:
+                _fallo("bajada MP", "no se pudo completar; se reintentará")
+        except Exception as error:
+            _estado["bajados"] = -1
+            _fallo("bajada MP", error)
+    elif not _estado["error"]:
+        _fallo("token MP", "sin token; se omite la bajada y el enlace automático")
+
+    try:
+        _estado["firmas_caja"] = subir_vinculos()
+        if not _estado["firmas_caja"]:
+            _fallo("firmas de caja", "no se pudieron subir; se reintentará")
+    except Exception as error:
+        _fallo("firmas de caja", error)
+
+    if token and _estado["bajados"] >= 0 and _estado["firmas_caja"]:
+        try:
+            _estado["enlazados"] = enlazar()
+            if _estado["enlazados"] < 0:
+                _fallo("enlace automático", "no se pudo completar; se reintentará")
+        except Exception as error:
+            _fallo("enlace automático", error)
     _estado["ultimo_turno"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     if _estado["bajados"] or _estado["enlazados"]:
         logger.info(
@@ -77,8 +105,9 @@ def _una_por_pc() -> bool:
     try:
         import msvcrt
 
-        os.makedirs("locks", exist_ok=True)
-        archivo = open(os.path.join("locks", "cobros_digitales.lock"), "a+")
+        ruta_lock = os.path.join(get_base_path(), "locks", "cobros_digitales.lock")
+        os.makedirs(os.path.dirname(ruta_lock), exist_ok=True)
+        archivo = open(ruta_lock, "a+")
         msvcrt.locking(archivo.fileno(), msvcrt.LK_NBLCK, 1)
         _candado_pc = archivo
         return True
