@@ -56,6 +56,7 @@ CARD_STYLE = {
     "admin":  ("#059669", "#DCFCE7", "FULL ACCESS",    "#047857"),  # verde templado
     "jefe":   ("#D97706", "#FEF3C7", "ACCESO GERENCIAL","#B45309"), # ámbar cálido
     "carteleria": ("#8B5CF6", "#EDE9FE", "MODO VISOR", "#6D28D9"), # púrpura vibrante
+    "contabilidad": ("#10B981", "#D1FAE5", "CONTABILIDAD", "#047857"), # esmeralda
 }
 
 
@@ -238,13 +239,13 @@ class ProfileCard(QFrame):
 class PerfilPantalla(QDialog):
     perfil_seleccionado = pyqtSignal(str)
 
-    _ROLES = ["cajero", "admin", "jefe", "carteleria"]
+    _ROLES = ["cajero", "admin", "jefe", "carteleria", "contabilidad"]
 
     def __init__(self, is_master_launcher=True, parent=None):
         super().__init__(parent)
         self.is_master_launcher = is_master_launcher
         self._subprocesos = {} # { "cajero": subprocess.Popen, ... }
-        self._reintentos = { "cajero": 0, "admin": 0, "jefe": 0, "carteleria": 0 }
+        self._reintentos = { "cajero": 0, "admin": 0, "jefe": 0, "carteleria": 0, "contabilidad": 0 }
         self._max_reintentos = 3
         self.selected_index = 0
         self._roles_bloqueados = set()
@@ -252,7 +253,7 @@ class PerfilPantalla(QDialog):
         self.setObjectName("PerfilPantalla")
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_StyledBackground, True)
-        self.setFixedSize(1080, 480)
+        self.setFixedSize(1330, 480)
         self.setStyleSheet(
             "QDialog#PerfilPantalla { background: #FEF8EF; border-radius: 28px; }"
             "QDialog#PerfilPantalla QLabel { background: transparent; }"
@@ -373,16 +374,19 @@ class PerfilPantalla(QDialog):
         self.btn_admin  = ProfileCard("admin",  "👔", "ADMINISTRADOR", "Gestión · Inventarios · Reportes")
         self.btn_jefe   = ProfileCard("jefe",   "👑", "JEFE / DUEÑO",  "Control total · Reportes · Cierres")
         self.btn_carteleria = ProfileCard("carteleria", "📺", "CARTELERÍA", "Pantalla Pública · Publicidad")
+        self.btn_contabilidad = ProfileCard("contabilidad", "💹", "CONTABILIDAD", "ERP · Finanzas")
 
         self.btn_cajero.clicked.connect(lambda: self._select_and_choose(0))
         self.btn_admin.clicked.connect(lambda: self._select_and_choose(1))
         self.btn_jefe.clicked.connect(lambda: self._select_and_choose(2))
         self.btn_carteleria.clicked.connect(lambda: self._select_and_choose(3))
+        self.btn_contabilidad.clicked.connect(lambda: self._select_and_choose(4))
 
         cards_lay.addWidget(self.btn_cajero)
         cards_lay.addWidget(self.btn_admin)
         cards_lay.addWidget(self.btn_jefe)
         cards_lay.addWidget(self.btn_carteleria)
+        cards_lay.addWidget(self.btn_contabilidad)
 
         content.addLayout(cards_lay)
         content.addSpacing(18)
@@ -407,6 +411,7 @@ class PerfilPantalla(QDialog):
         self.btn_admin.set_active(self.selected_index == 1)
         self.btn_jefe.set_active(self.selected_index == 2)
         self.btn_carteleria.set_active(self.selected_index == 3)
+        self.btn_contabilidad.set_active(self.selected_index == 4)
 
     def _refresh_server_badge(self):
         if not hasattr(self, "lbl_server_badge"):
@@ -465,7 +470,8 @@ class PerfilPantalla(QDialog):
             "cajero": self.btn_cajero,
             "admin": self.btn_admin,
             "jefe": self.btn_jefe,
-            "carteleria": self.btn_carteleria
+            "carteleria": self.btn_carteleria,
+            "contabilidad": self.btn_contabilidad
         }
 
         self._roles_bloqueados = set()
@@ -515,7 +521,7 @@ class PerfilPantalla(QDialog):
         if event.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right):
             delta = 1 if event.key() == Qt.Key.Key_Right else -1
             original_idx = self.selected_index
-            self.selected_index = (self.selected_index + delta) % 4
+            self.selected_index = (self.selected_index + delta) % 5
             if original_idx != self.selected_index:
                 self.update_selection_ui()
             event.accept()
@@ -566,7 +572,8 @@ class PerfilPantalla(QDialog):
             "cajero": self.btn_cajero,
             "admin": self.btn_admin,
             "jefe": self.btn_jefe,
-            "carteleria": self.btn_carteleria
+            "carteleria": self.btn_carteleria,
+            "contabilidad": self.btn_contabilidad
         }
 
         btn = buttons_map.get(rol)

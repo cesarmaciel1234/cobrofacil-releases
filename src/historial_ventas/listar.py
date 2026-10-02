@@ -17,6 +17,23 @@ def iso_dia(f_raw) -> str:
     return ""
 
 
+def _get_db():
+    from src.base_de_datos.database import db_manager
+    if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite":
+        return db_manager
+    if db_manager.is_connected():
+        return db_manager
+    try:
+        from src.jefe.nodo_portable import espejo
+        if espejo.en_copia():
+            return espejo.fuente()
+        if espejo.copia.existe():
+            from src.jefe.nodo_portable.espejo.lector import Lector
+            return Lector(espejo.copia.ruta())
+    except ImportError:
+        pass
+    return db_manager
+
 def listar_tickets(
     *,
     texto: str = "",
@@ -30,7 +47,7 @@ def listar_tickets(
     caja_id: int | None = None,
     caja_filtro: int | None = None,
 ):
-    from src.base_de_datos.database import db_manager
+    db = _get_db()
 
     sql_tail = " FROM ventas v LEFT JOIN detalles_ventas dv ON dv.id_venta = v.id "
     params: list = []
@@ -60,18 +77,27 @@ def listar_tickets(
         "SELECT v.id, v.fecha, v.total, v.usuario, v.estado, v.metodo_pago, "
         "v.descuento, v.recargo, v.pago_con, v.cambio, v.caja_id, v.cliente_nombre, "
         "v.cancelado_por, v.fecha_cancel, v.perfil_cancel, v.caja_cancel, "
+        "v.pago_efectivo, v.pago_otro, "
         "IFNULL(SUM(dv.cantidad), 0) as cant_arts, "
         "GROUP_CONCAT(dv.nombre_producto, ' ') as prod_names"
     )
     cols_min = (
         "SELECT v.id, v.fecha, v.total, v.usuario, v.estado, v.metodo_pago, "
         "v.descuento, v.recargo, v.pago_con, v.cambio, v.caja_id, v.cliente_nombre, "
+        "v.pago_efectivo, v.pago_otro, "
         "IFNULL(SUM(dv.cantidad), 0) as cant_arts, "
         "GROUP_CONCAT(dv.nombre_producto, ' ') as prod_names"
     )
-    rows = _traer(db_manager, cols_full, cols_min, sql_tail, where, group, params)
+    cols_fallback = (
+        "SELECT v.id, v.fecha, v.total, v.usuario, v.estado, v.metodo_pago, "
+        "v.descuento, v.recargo, v.pago_con, v.cambio, v.caja_id, v.cliente_nombre, "
+        "IFNULL(SUM(dv.cantidad), 0) as cant_arts, "
+        "GROUP_CONCAT(dv.nombre_producto, ' ') as prod_names"
+    )
+    
+    rows = _traer(db, cols_full, cols_min, cols_fallback, sql_tail, where, group, params)
     if usar_dia and not rows:
-        rows = _traer(db_manager, cols_full, cols_min, sql_tail, "", group, [])
+        rows = _traer(db, cols_full, cols_min, cols_fallback, sql_tail, "", group, [])
 
     txt = (texto or "").strip().lower()
     metodo_u = (metodo or "TODOS").upper()
@@ -95,6 +121,8 @@ def listar_tickets(
                 if not (m0 <= mins <= m1):
                     continue
         pago = str(r["metodo_pago"] or "").upper()
+        
+        aporte_parcial = None
         if metodo_u == "REDONDEO":
             try: desc = float(r["descuento"]) if r["descuento"] else 0.0
             except: desc = 0.0
@@ -103,8 +131,30 @@ def listar_tickets(
             try: rec = float(r["recargo"]) if r["recargo"] else 0.0
             except: rec = 0.0
             if rec <= 0: continue
-        elif metodo_u != "TODOS" and metodo_u not in pago:
-            continue
+        elif metodo_u != "TODOS":
+            if pago.startswith("MIXTO"):
+                # Si el filtro es Efectivo, se permite y suma la porción en efectivo.
+                # Si el filtro es distinto de Efectivo (ej. Transferencia, Tarjeta), suma la porción digital.
+                try: 
+                    pe = float(r.get("pago_efectivo") or 0.0)
+                    cambio = float(r.get("cambio") or 0.0)
+                    po = float(r.get("pago_otro") or 0.0)
+                except Exception:
+                    pe, cambio, po = 0.0, 0.0, 0.0
+                
+                if metodo_u == "EFECTIVO":
+                    aporte_parcial = pe - cambio
+                else:
+                    if metodo_u in ("FIADO", "CLIENTES") and "CLIENTE" not in pago:
+                        continue
+                    if metodo_u not in ("FIADO", "CLIENTES", "EFECTIVO", "TODOS") and "CLIENTE" in pago:
+                        continue
+                    aporte_parcial = po
+                
+                if aporte_parcial <= 0:
+                    continue  # Si no aporta nada a este filtro, se salta.
+            elif metodo_u not in pago:
+                continue
         if caja_filtro is not None:
             try:
                 if int(r["caja_id"] or 1) != int(caja_filtro):
@@ -120,7 +170,10 @@ def listar_tickets(
                 continue
         filtradas.append(r)
         if not str(r["estado"] or "").upper().startswith("CANCELAD"):
-            total_ok += float(r["total"] or 0)
+            if aporte_parcial is not None:
+                total_ok += aporte_parcial
+            else:
+                total_ok += float(r["total"] or 0)
     return filtradas, total_ok
 
 
@@ -134,11 +187,14 @@ def _a_minutos(hm: str | None):
         return None
 
 
-def _traer(db_manager, cols_full, cols_min, sql_tail, where, group, params):
+def _traer(db_manager, cols_full, cols_min, cols_fallback, sql_tail, where, group, params):
     rows = db_manager.execute_query(cols_full + sql_tail + where + group, tuple(params)) or []
     err = str(getattr(db_manager, "last_error", "") or "").lower()
     if (not rows) and ("cancelado" in err or "unknown column" in err or "no such column" in err):
         rows = db_manager.execute_query(cols_min + sql_tail + where + group, tuple(params)) or []
+        err = str(getattr(db_manager, "last_error", "") or "").lower()
+        if (not rows) and ("unknown column" in err or "no such column" in err):
+            rows = db_manager.execute_query(cols_fallback + sql_tail + where + group, tuple(params)) or []
     return rows
 
 

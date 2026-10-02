@@ -86,7 +86,7 @@ class MariaDBController:
             logger.error(f"Fallo al intentar auto-configurar firewall: {e}")
             return False
 
-    def start_server(self):
+    def start_server(self, _repair_attempt=0):
         """Inicia el servidor MariaDB en segundo plano si no está corriendo."""
         self._ensure_firewall()
 
@@ -241,7 +241,10 @@ class MariaDBController:
                             except:
                                 pass
                             logger.info("Reintentando iniciar MariaDB después de auto-reparación...")
-                            return self.start_server()
+                            if _repair_attempt > 2:
+                                logger.error("No se pudo reparar la base de datos de manera automatica.")
+                                return False
+                            return self.start_server(_repair_attempt + 1)
                     except Exception as ex:
                         logger.error(f"Error durante auto-reparacion de base de datos: {ex}")
                 return False

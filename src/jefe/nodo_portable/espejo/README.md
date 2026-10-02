@@ -1,4 +1,4 @@
-# espejo — copia de la tienda en esta PC
+﻿# espejo — copia de la tienda en esta PC
 
 Archivo SQLite en `%LOCALAPPDATA%\CobroFacil_PRO\espejo_tienda\espejo_tienda.db`. No es `punpro.db`: esa es la base de vender sin red y no se mezcla con la historia de la tienda.
 

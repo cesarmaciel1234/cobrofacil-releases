@@ -34,3 +34,9 @@ No devolver `9999999`. No borrar `request_id` del cobro ni del motor. No ignorar
 
 src/base_de_datos/repos/red.py (asegurar_lectura_tienda)
 Cuando una caja esclava pierde red, entra en SQLite local. Los intentos de reconexion al MariaDB de la Maestra (reconectar_mariadb) se realizan en un hilo asincrono (threading.Thread). Esto evita colgar la UI (2 a 5 segundos de timeout) cada vez que el cajero escanea o cobra mientras la red esta caida.
+
+## Autoblindaje de Base de Datos
+
+src/base_de_datos/autoblindaje_db.py gestiona los backups automáticos y recuperaciones. 
+- Al exportar MariaDB (_backup_mariadb), valida si el .sql generado pesa más de 500 bytes (asumiendo que una base en blanco pesa alrededor de 1.5KB). Si pesa menos, recién ahí hace fallback a un respaldo físico .zip. No subir este umbral, de lo contrario forzará backups .zip en bases pequeñas, corrompiendo InnoDB al comprimirlo en caliente.
+- Al restaurar (_aplicar_archivo_restore), si el motor destino es SQLite, se rechazan archivos .zip o .sql de MariaDB para no sobreescribir y corromper el archivo .db.

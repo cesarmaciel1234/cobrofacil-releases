@@ -154,8 +154,6 @@ class PanelClienteFiado(QWidget):
             return True, ""
         if monto <= 0:
             return False, "⚠️ Ingresa un abono mayor a 0"
-        if monto > self._deuda_actual + 0.01:
-            return False, "⚠️ El abono no puede superar la deuda"
         return True, ""
 
     def focus_monto(self):

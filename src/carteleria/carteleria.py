@@ -153,7 +153,7 @@ class CarteleriaApp(QStackedWidget):
 
     def lanzar_prov(self):
         if not self.prov:
-            from src.ui_global.proveedor.vista_proveedor import VistaProveedor
+            from src.proveedor_global.frontend.vista_proveedor import VistaProveedor
             self.prov = VistaProveedor()
             self.addWidget(self.prov)
             # Para proveedor, no hay señal back al dashboard estándar, usan su propio btn cerrar
@@ -263,5 +263,6 @@ def lanzar_app(app=None):
 
 if __name__ == "__main__":
     sys.exit(lanzar_app())
+
 
 

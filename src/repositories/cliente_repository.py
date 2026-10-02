@@ -11,6 +11,24 @@ class ClienteRepository:
     Aísla las consultas SQL de la Interfaz Gráfica.
     """
 
+    @classmethod
+    def _get_db(cls):
+        from src.base_de_datos.database import db_manager
+        if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite":
+            return db_manager
+        if db_manager.is_connected():
+            return db_manager
+        try:
+            from src.jefe.nodo_portable import espejo
+            if espejo.en_copia():
+                return espejo.fuente()
+            if espejo.copia.existe():
+                from src.jefe.nodo_portable.espejo.lector import Lector
+                return Lector(espejo.copia.ruta())
+        except ImportError:
+            pass
+        return db_manager
+
     @staticmethod
     def _limite_express_default() -> float:
         return float(config.get("fiado_express_limite", FIADO_EXPRESS_LIMITE_DEFAULT))
@@ -27,13 +45,13 @@ class ClienteRepository:
             "SELECT id, nombre, deuda_actual FROM clientes "
             "WHERE deuda_actual > 0 ORDER BY nombre ASC"
         )
-        return db_manager.execute_query(query)
+        return ClienteRepository._get_db().execute_query(query)
 
     @staticmethod
     def obtener_por_id(cliente_id) -> dict:
         """Devuelve un cliente por su ID o None si no existe."""
         query = "SELECT * FROM clientes WHERE id = ?"
-        resultados = db_manager.execute_query(query, (cliente_id,))
+        resultados = ClienteRepository._get_db().execute_query(query, (cliente_id,))
         return resultados[0] if resultados else None
 
     @staticmethod
@@ -42,7 +60,7 @@ class ClienteRepository:
         dni = (dni or "").strip()
         if not dni:
             return None
-        rows = db_manager.execute_query(
+        rows = ClienteRepository._get_db().execute_query(
             "SELECT id, nombre, limite_credito, deuda_actual, dni, tipo_cliente "
             "FROM clientes WHERE dni = ?",
             (dni,),
@@ -94,7 +112,7 @@ class ClienteRepository:
         nombre = (nombre or "").strip()
         if not nombre:
             return None
-        rows = db_manager.execute_query(
+        rows = ClienteRepository._get_db().execute_query(
             "SELECT id, nombre, limite_credito, deuda_actual, dni, tipo_cliente "
             "FROM clientes WHERE nombre = ?",
             (nombre,),

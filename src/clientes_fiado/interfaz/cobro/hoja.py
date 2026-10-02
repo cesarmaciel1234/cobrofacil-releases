@@ -18,20 +18,20 @@ class _FilaNombre(QFrame):
         super().__init__()
         self._hoja = hoja
         self._indice = indice
-        self.setMinimumHeight(62)
+        self.setMinimumHeight(76)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         caja = QVBoxLayout(self)
-        caja.setContentsMargins(14, 8, 14, 8)
-        caja.setSpacing(0)
+        caja.setContentsMargins(16, 14, 16, 14)
+        caja.setSpacing(4)
         nombre = QLabel(str(ficha.get("nombre") or ""))
         nombre.setStyleSheet(
-            "color: #0F172A; font-size: 18px; font-weight: 800; background: transparent; border: none;"
+            "color: #0F172A; font-size: 20px; font-weight: 900; background: transparent; border: none;"
         )
         caja.addWidget(nombre)
         dni = str(ficha.get("dni") or "").strip()
         linea = QLabel(f"DNI {dni}" if dni else "Sin DNI")
         linea.setStyleSheet(
-            "color: #1E293B; font-size: 14px; font-weight: 700; background: transparent; border: none;"
+            "color: #334155; font-size: 15px; font-weight: 700; background: transparent; border: none;"
         )
         caja.addWidget(linea)
         for etiqueta in (nombre, linea):
@@ -208,47 +208,13 @@ class HojaCuentaCobro(QFrame):
     def keyPressEvent(self, event):
         if getattr(self, "_paso", 1) == 2:
             tecla = event.key()
-            if tecla == Qt.Key.Key_F5:
-                self._abrir_dialogo_cobranza()
-                return
-            elif tecla == Qt.Key.Key_Return or tecla == Qt.Key.Key_Enter:
+            if tecla == Qt.Key.Key_Return or tecla == Qt.Key.Key_Enter:
+                event.accept()
                 self.listo.emit(int(self._cliente.get("id")), 0.0)
                 return
         super().keyPressEvent(event)
 
-    def _abrir_dialogo_cobranza(self):
-        if not self._cliente:
-            return
-        from src.cajero.paso6_cobro.fiado_en_cobro.cobranza import cobrar_deuda_previa
-
-        resultado = cobrar_deuda_previa(self, self._cliente)
-        if resultado.cancelado:
-            return
-        if not resultado.ok:
-            self.aviso.setStyleSheet("color: #B91C1C; font-size: 18px; font-weight: 800;")
-            self.aviso.setText(resultado.aviso)
-            return
-
-        self._cliente = cerebro.obtener(resultado.cliente_id) or self._cliente
-        self._deuda_actual = float(self._cliente.get("deuda_actual") or resultado.saldo)
-        cartel = cerebro.cartel(self._cliente)
-        self._pintar_numeros(cartel.get("saldo"), cartel.get("disponible"))
-        self.aviso.setStyleSheet("color: #047857; font-size: 18px; font-weight: 800;")
-        self.aviso.setText(
-            f"Abono registrado: ${resultado.monto:,.2f}. "
-            "Presione Enter para continuar la venta a Fiado."
-            if not resultado.aviso
-            else resultado.aviso
-        )
-        self.abono_registrado.emit(resultado)
-        self.setFocus()
-        
     def eventFilter(self, obj, event):
-        if obj is self.caja and event.type() == QEvent.Type.KeyPress and getattr(self, "lista", None) and self.lista.isVisible():
-            tecla = event.key()
-            if tecla == Qt.Key.Key_Down and self._filas:
-                self.lista.setFocus()
-                return True
         if obj is self.caja and event.type() == QEvent.Type.KeyPress and getattr(self, "_pidiendo_pin", False):
             tecla = event.key()
             if tecla == Qt.Key.Key_Backspace:
@@ -323,25 +289,53 @@ class HojaCuentaCobro(QFrame):
             self.caja.setValidator(self._val_nombre)
             self.caja.setPlaceholderText("Nombre")
         if self._paso == 2 and self._cliente:
+            self.setStyleSheet(
+                "QFrame#HojaCuenta {"
+                " background: #ECFDF5; border: 2px solid #34D399; border-radius: 22px;"
+                "}"
+                "QLabel { background: transparent; border: none; }"
+            )
             cartel = cerebro.cartel(self._cliente)
-            self.texto.setText(str(cartel.get("saludo") or "Sin datos"))
-            self.texto.setStyleSheet("color: #0F172A; font-size: 32px; font-weight: 900;")
-            self.subtitulo.setText("¿Desea enviar la compra a la cuenta del cliente?")
+            self.texto.setText("✔\n\nFIADO APROBADO")
+            self.texto.setStyleSheet("color: #047857; font-size: 26px; font-weight: 900;")
+            
+            saludo = str(cartel.get("saludo") or "")
+            nombre_cliente = saludo.replace("Hola, ", "")
+            self.subtitulo.setText(nombre_cliente)
+            self.subtitulo.setStyleSheet("color: #047857; font-size: 22px; font-weight: 800;")
             self.subtitulo.show()
-            self._pintar_numeros(cartel.get("saldo"), cartel.get("disponible"))
+            
+            disp = cartel.get("disponible") or 0.0
+            self.saldo.setText(f"Límite Disponible: ${float(disp):,.2f}")
+            self.saldo.setStyleSheet("color: #047857; font-size: 16px; font-weight: 700;")
+            
+            self.disponible.setText(f"Compra Actual: ${float(self._monto):,.2f}")
+            self.disponible.setStyleSheet("color: #047857; font-size: 16px; font-weight: 700;")
             
             self.caja.hide()
             self.caja.clearFocus()
-            self.btn_f4.show()
+            self.btn_f4.hide()
+            self.btn_enter.setText("[ ENTER ] CONFIRMAR FIADO")
+            self.btn_enter.setStyleSheet("color: #FFFFFF; background: #10B981; font-size: 18px; font-weight: 900; border-radius: 8px; padding: 14px; margin-top: 10px;")
             self.btn_enter.show()
             self.setFocus()
         else:
+            self.setStyleSheet(
+                "QFrame#HojaCuenta {"
+                " background: #F8FAFC; border: 2px solid #CBD5E1; border-radius: 22px;"
+                "}"
+                "QLabel { background: transparent; border: none; }"
+            )
             self.caja.show()
             self.btn_f4.hide()
             if hasattr(self, 'btn_enter'):
+                self.btn_enter.setText("[ ENTER ] FIAR COMPRA ACTUAL")
+                self.btn_enter.setStyleSheet("color: #FFFFFF; background: #10B981; font-size: 16px; font-weight: 800; border-radius: 8px; padding: 12px; margin-top: 6px;")
                 self.btn_enter.hide()
             self.texto.setText(self._frase())
             self.texto.setStyleSheet("color: #1E3A8A; font-size: 28px; font-weight: 800;")
+            self.saldo.setStyleSheet("color: #0F172A; font-size: 28px; font-weight: 900;")
+            self.disponible.setStyleSheet("color: #047857; font-size: 28px; font-weight: 900;")
             self.saldo.clear()
             self.disponible.clear()
             self.caja.setFocus()

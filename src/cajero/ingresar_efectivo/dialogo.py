@@ -143,7 +143,7 @@ class DialogoIngresoEfectivo(QDialog):
         return hoja
 
     def _pagina_cobro(self):
-        from src.cajero.ingresar_efectivo.fiado.cobro.pagina import PaginaCobroAbono
+        from src.cajero.ingresar_efectivo.medios.pagina import PaginaCobroAbono
 
         self.pagina_cobro = PaginaCobroAbono(self)
         return self.pagina_cobro
@@ -165,12 +165,12 @@ class DialogoIngresoEfectivo(QDialog):
             return
         self._mostrar_opciones()
 
-    def abrir_para_cliente(self, cliente):
+    def abrir_para_cliente(self, cliente, monto_sugerido=None):
         """Deja el Centro de Cobranzas parado en esa ficha."""
         self._directo = True
         self._set_modo("FIADO")
         ficha = dict(cliente) if hasattr(cliente, "keys") else {}
-        self.panel_fiado.seleccionar_cliente_directo(ficha)
+        self.panel_fiado.seleccionar_cliente_directo(ficha, monto_sugerido)
 
     def _set_modo(self, modo):
         self.tipo_ingreso = modo

@@ -42,7 +42,7 @@ class MotorMayoreo:
     def obtener_por_nombre(self, nombre: str) -> dict:
         try:
             res = self.db.execute_query(
-                "SELECT id, precio, costo, cant_mayoreo, precio_mayoreo FROM productos WHERE nombre=?",
+                "SELECT id, precio, costo, cant_mayoreo, precio_mayoreo FROM productos WHERE LOWER(nombre)=LOWER(?)",
                 (nombre,),
             )
             if res:
@@ -91,10 +91,10 @@ class MotorMayoreo:
         if precio <= 0 and precio_mayoreo <= 0:
             return False
         try:
-            res = self.db.execute_query("SELECT id FROM productos WHERE nombre=?", (nombre,))
+            res = self.db.execute_query("SELECT id FROM productos WHERE LOWER(nombre)=LOWER(?)", (nombre,))
             if res:
                 return bool(self.db.execute_non_query(
-                    "UPDATE productos SET precio=?, costo=?, cant_mayoreo=?, precio_mayoreo=? WHERE nombre=?",
+                    "UPDATE productos SET precio=?, costo=?, cant_mayoreo=?, precio_mayoreo=? WHERE LOWER(nombre)=LOWER(?)",
                     (precio, costo, cant_mayoreo, precio_mayoreo, nombre),
                 ))
             import random

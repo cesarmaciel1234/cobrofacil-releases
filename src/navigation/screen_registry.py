@@ -37,7 +37,7 @@ def build_screen_factories(main_window):
             "src.admin.etiquetas_panel_ui.etiquetas_panel_main", fromlist=["AdminEtiquetas"]
         ).AdminEtiquetas(),
         Screen.CONTABILIDAD: lambda: _imp(
-            "src.jefe.contabilidad.jefe_contabilidad", fromlist=["JefeContabilidad"]
+            "src.contabilidad.jefe_contabilidad", fromlist=["JefeContabilidad"]
         ).JefeContabilidad(),
         Screen.MERCADO_PAGO: lambda: _imp(
             "src.admin.mercadopago.mercadopago_main", fromlist=["Admin10MP"]

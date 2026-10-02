@@ -19,9 +19,15 @@ def buscar_productos_en_db(buscar="", depto="", limite=50, offset=0):
 
     # Filtro de busqueda de texto
     if buscar:
-        # Nota: Evitamos CAST AS TEXT para que no falle en MariaDB. Usamos CAST AS CHAR.
-        query += " AND (p.nombre LIKE ? OR CAST(p.id AS CHAR) LIKE ? OR COALESCE(p.codigo,'') LIKE ?)"
-        params += [f"%{buscar}%"] * 3
+        # Optimizacion: Si es solo numeros, buscamos por ID exacto, o coincidencias en codigo/nombre.
+        # Evitamos CAST(id AS CHAR) porque rompe los indices de la base de datos y fuerza un full scan, 
+        # lo que pone re lento el buscador por red.
+        if buscar.isdigit():
+            query += " AND (p.id = ? OR COALESCE(p.codigo,'') LIKE ? OR p.nombre LIKE ?)"
+            params += [int(buscar), f"%{buscar}%", f"%{buscar}%"]
+        else:
+            query += " AND (p.nombre LIKE ? OR COALESCE(p.codigo,'') LIKE ?)"
+            params += [f"%{buscar}%", f"%{buscar}%"]
 
     # Filtro de departamento
     if depto:

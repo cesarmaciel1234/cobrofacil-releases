@@ -1,4 +1,4 @@
-# Plano — monitor de Mercado Pago
+﻿# Plano — monitor de Mercado Pago
 
 La rama arranca en esta carpeta. La base es `src/admin` y no lleva plano.
 
@@ -18,7 +18,7 @@ El token es `mp_access_token` de la configuración del TPV. Lo lee `EscuchaMP.to
 
 **Fuera de red:** el nodo portable lleva también `reportes/mercado_pago_sync.csv` y `reportes/mp_vinculos.json`. Al abrir el monitor o pulsar **Actualizar**, la copia del nodo se combina antes de pintar. **Actualizar** luego baja el mes actual vía API y sincroniza por ID al nodo; cada pago que llega en vivo también queda copiado. Se combinan pagos nuevos, cambios de omitido/restaurado y tickets asociados. Si no hay token o la API no responde, el monitor muestra la copia local; si el nodo configurado está desconectado, informa que la sincronización quedó pendiente.
 
-La columna **Ticket** prioriza el archivo local/nodo para conservar lo recién asociado y complementa los pagos con `mp_pagos.ticket` de la base compartida. De ese modo la asociación que subió otra PC de la LAN se ve en esta caja también. La consulta se ejecuta en segundo plano cada 5 segundos. Asociar en caja o sincronizar el nodo despierta el motor para que publique los vínculos sin esperar los 5 minutos del ciclo normal.
+La columna **Ticket** prioriza el archivo local/nodo para conservar lo recién asociado y complementa los pagos con `mp_pagos.ticket` de la base compartida. De ese modo la asociación que subió otra PC de la LAN se ve en esta caja también. El monitor lee la asociación puramente del archivo JSON estático local (vinculo_mp) para evitar el bloqueo y saturación de consultas a la base de datos. Asociar en caja o sincronizar el nodo despierta el motor para que publique los vínculos sin esperar los 5 minutos del ciclo normal.
 
 **Esclava:** ventas/stock = MariaDB. El historial MP (CSV) se baja con ese token vía API cuando hay conexión. `mp_vinculos.json` se mantiene local hasta sincronizar el nodo, que permite llevarlo y traerlo junto al historial.
 

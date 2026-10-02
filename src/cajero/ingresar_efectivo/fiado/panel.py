@@ -9,7 +9,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QFont
 
 from src.cajero.ingresar_efectivo.fiado.paleta import PALETA
-from src.cajero.ingresar_efectivo.fiado.consulta import parse_consulta_cobranza, buscar_deudores
+from src.clientes_fiado.oficina.cobranza.consulta import parse_consulta_cobranza, buscar_deudores
 
 _EXEC = PALETA
 
@@ -244,7 +244,7 @@ class CentroCobranzasPanel(QWidget):
         self._ejecutar_busqueda()
         self._timer_foco_busqueda.start()
 
-    def seleccionar_cliente_directo(self, cliente):
+    def seleccionar_cliente_directo(self, cliente, monto_sugerido=None):
         """Prepara el cobro de F6 para esta ficha sin volver a buscarla por nombre."""
         self._timer_buscar.stop()
         self._timer_foco_busqueda.stop()
@@ -257,7 +257,10 @@ class CentroCobranzasPanel(QWidget):
         self.lbl_cliente.setText(str(self._cliente.get("nombre") or "Cliente"))
         self.lbl_info.setText(f"DNI {dni}" if dni else "Sin DNI registrado")
         self.lbl_deuda.setText(f"Deuda: ${self._deuda_actual:,.2f}")
-        self.txt_monto.setText(f"{self._deuda_actual:.2f}")
+        
+        monto_a_cobrar = monto_sugerido if monto_sugerido is not None else self._deuda_actual
+        self.txt_monto.setText(f"{monto_a_cobrar:.2f}")
+        
         self.zona_lista.hide()
         self.ficha.show()
         self.btn_imprimir.setVisible(False)
@@ -399,6 +402,4 @@ class CentroCobranzasPanel(QWidget):
         monto = self.monto()
         if monto <= 0:
             return False, "⚠️ Ingresa un abono mayor a 0"
-        if monto > self._deuda_actual + 0.01:
-            return False, "⚠️ El abono no puede superar la deuda"
         return True, ""

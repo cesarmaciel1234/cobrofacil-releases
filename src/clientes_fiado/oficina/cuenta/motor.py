@@ -44,6 +44,42 @@ def _confirmar(trabajo, fallo):
                 pass
 
 
+class _DbWrapper:
+    def __init__(self, db):
+        self.db = db
+
+    def execute_query(self, sql, params=()):
+        return self.db.execute_query(sql, params)
+
+    def execute_scalar(self, sql, params=()):
+        if hasattr(self.db, "execute_scalar"):
+            return self.db.execute_scalar(sql, params)
+        rows = self.execute_query(sql, params)
+        if rows and len(rows) > 0:
+            row = rows[0]
+            if isinstance(row, dict):
+                return list(row.values())[0] if row else None
+            return row[0]
+        return None
+
+def _get_read_db():
+    from src.base_de_datos.database import db_manager
+    if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite":
+        return db_manager
+    if db_manager.is_connected():
+        return db_manager
+    try:
+        from src.jefe.nodo_portable import espejo
+        if espejo.en_copia():
+            return _DbWrapper(espejo.fuente())
+        if espejo.copia.existe():
+            from src.jefe.nodo_portable.espejo.lector import Lector
+            return _DbWrapper(Lector(espejo.copia.ruta()))
+    except ImportError:
+        pass
+    return db_manager
+
+
 class MotorCuenta:
     """Lectura y escritura de la ficha. No cobra la venta."""
 
@@ -81,7 +117,7 @@ class MotorCuenta:
         busqueda = _plegar(texto)
         if len(busqueda) < 2:
             return []
-        filas = db_manager.execute_query(
+        filas = _get_read_db().execute_query(
             "SELECT id, nombre, dni, limite_credito, deuda_actual FROM clientes ORDER BY nombre ASC"
         ) or []
         salida = []
@@ -95,14 +131,14 @@ class MotorCuenta:
 
     def buscar(self, texto):
         busqueda = (texto or "").strip()
-        return db_manager.execute_query(
+        return _get_read_db().execute_query(
             "SELECT * FROM clientes WHERE nombre LIKE ? OR COALESCE(dni, '') LIKE ? "
             "ORDER BY deuda_actual DESC, nombre ASC",
             (f"%{busqueda}%", f"%{busqueda}%"),
         ) or []
 
     def listar(self):
-        return db_manager.execute_query(
+        return _get_read_db().execute_query(
             "SELECT id, nombre, limite_credito, deuda_actual FROM clientes ORDER BY nombre ASC"
         ) or []
 
@@ -110,7 +146,7 @@ class MotorCuenta:
         return ClienteRepository.obtener_clientes_con_deuda()
 
     def ultimo_cargo(self, cliente_id):
-        return db_manager.execute_scalar(
+        return _get_read_db().execute_scalar(
             "SELECT fecha FROM cuenta_corriente WHERE cliente_id = ? AND tipo = 'CARGO' "
             "ORDER BY fecha DESC LIMIT 1",
             (cliente_id,),
@@ -123,7 +159,7 @@ class MotorCuenta:
         for inicio in range(0, len(ids), 500):
             bloque = ids[inicio:inicio + 500]
             placeholders = ", ".join("?" for _ in bloque)
-            filas = db_manager.execute_query(
+            filas = _get_read_db().execute_query(
                 f"""
                 SELECT cliente_id, MAX(fecha) AS fecha
                 FROM cuenta_corriente
@@ -142,7 +178,7 @@ class MotorCuenta:
         return fechas
 
     def movimientos(self, cliente_id):
-        return db_manager.execute_query(
+        return _get_read_db().execute_query(
             "SELECT fecha, tipo, monto, saldo_resultante, descripcion, venta_id "
             "FROM cuenta_corriente WHERE cliente_id = ? ORDER BY fecha DESC, id DESC",
             (cliente_id,),
@@ -232,7 +268,7 @@ class MotorCuenta:
     def total_cobros(self):
         try:
             return float(
-                db_manager.execute_scalar(
+                _get_read_db().execute_scalar(
                     "SELECT SUM(monto) FROM cuenta_corriente WHERE tipo = 'ABONO'"
                 )
                 or 0.0
@@ -249,10 +285,10 @@ class MotorCuenta:
             "FROM cuenta_corriente cc LEFT JOIN clientes c ON c.id = cc.cliente_id "
             "WHERE cc.tipo = 'ABONO' ORDER BY cc.fecha DESC, cc.id DESC"
         )
-        filas = db_manager.execute_query(sql) or []
+        filas = _get_read_db().execute_query(sql) or []
         err = str(getattr(db_manager, "last_error", "") or "").lower()
         if "medio_pago" in err or "unknown column" in err or "1054" in err:
-            filas = db_manager.execute_query(
+            filas = _get_read_db().execute_query(
                 "SELECT cc.fecha, cc.monto, cc.saldo_resultante, cc.descripcion, "
                 "c.nombre, c.dni FROM cuenta_corriente cc "
                 "LEFT JOIN clientes c ON c.id = cc.cliente_id "
@@ -266,7 +302,7 @@ class MotorCuenta:
         hoy = datetime.now().strftime("%Y-%m-%d")
         try:
             return float(
-                db_manager.execute_scalar(
+                _get_read_db().execute_scalar(
                     "SELECT SUM(monto) FROM cuenta_corriente "
                     "WHERE tipo = 'ABONO' AND fecha >= ?",
                     (f"{hoy} 00:00:00",),
@@ -279,7 +315,7 @@ class MotorCuenta:
     def deuda_total(self):
         try:
             return float(
-                db_manager.execute_scalar(
+                _get_read_db().execute_scalar(
                     "SELECT SUM(deuda_actual) FROM clientes"
                 )
                 or 0.0

@@ -207,7 +207,7 @@ class Admin0Dashboard(QWidget):
         ]
 
         # Módulos visibles si el jefe entra al dashboard admin (F11 / escalada)
-        self.JEFE_MODULES = {"nexus_pro", "contabilidad", "proveedores", "red_lan", "cierre"}
+        self.JEFE_MODULES = {"nexus_pro", "proveedores", "red_lan", "cierre"}
 
         self.cards = {}
         for m_id, title, icon, palette, sub, screen_idx in self.modules_info:

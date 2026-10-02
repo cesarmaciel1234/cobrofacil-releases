@@ -132,6 +132,8 @@ class CobroController:
                             import logging
                             logging.error(f"Error al cargar saldos de fiado automático: {e_fiado}")
 
+                from src.motor_condiciones.ticket import MotorCondicionesTicket
+                mensaje_condiciones = MotorCondicionesTicket.evaluar(metodo_pago, abono_cuenta, total_final, items_carrito)
                 printer_manager.imprimir_ticket_venta(
                     id_v, items_carrito, total_final,
                     resultado_venta['pago_con'], resultado_venta['cambio'],
@@ -142,6 +144,7 @@ class CobroController:
                     saldo_anterior=saldo_anterior,
                     saldo_disponible=s_disp,
                     abono_cuenta=abono_cuenta,
+                    mensaje_extra_condiciones=mensaje_condiciones,
                 )
                             
             except Exception as e:

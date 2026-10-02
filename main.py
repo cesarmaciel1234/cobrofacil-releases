@@ -288,6 +288,7 @@ def launch_app(direct_role=None):
     update_status("Cargando perfiles de acceso...", 80)
     from src.inicio_y_perfiles.logica.auth_controller import AuthController
     AuthController().ensure_default_jefe()
+    AuthController().ensure_default_contabilidad()
 
     from src.inicio_y_perfiles.perfil_pantalla import PerfilPantalla
     from src.inicio_y_perfiles.login_pantalla import LoginPantalla
@@ -445,7 +446,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="CobroFacil PRO 2026")
     parser.add_argument(
         "--role", "--profile", type=str, default=None,
-        choices=["cajero", "admin", "jefe", "carteleria"],
+        choices=["cajero", "admin", "jefe", "carteleria", "contabilidad"],
         help="Ejecutar rol autÃ³nomo (terminal)",
     )
     parser.add_argument(

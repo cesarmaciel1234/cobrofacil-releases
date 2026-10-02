@@ -10,10 +10,10 @@ def persistir_cobro(datos):
     metodo = datos.get("metodo") or ""
     fiado = None
     parte = redondear_dinero(datos.get("fiado_parcial") or 0)
-    if metodo in ("Fiado", "Clientes") or (metodo == "Mixto" and parte > 0.009):
+    if metodo in ("Fiado", "Clientes") or (metodo.startswith("Mixto") and parte > 0.009):
         fiado = {
             "cliente_id": datos.get("cliente_id"),
-            "total": parte if metodo == "Mixto" else redondear_dinero(resultado.get("total")),
+            "total": parte if metodo.startswith("Mixto") else redondear_dinero(resultado.get("total")),
             "excepcion": datos.get("excepcion") or "",
         }
         resultado["cliente_id"] = datos.get("cliente_id")

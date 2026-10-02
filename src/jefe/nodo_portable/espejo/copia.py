@@ -21,7 +21,7 @@ _hilo: threading.Thread | None = None
 _estado = {"cuando": "", "resultado": "", "detalle": ""}
 _salud = {"hasta": 0.0, "rota": ""}
 # Tablas que se leen enteras en cada vuelta, y su clave si no es `id`
-ENTERAS = ("productos", "clientes", "clientes_auditoria", "mp_pagos", "gastos")
+ENTERAS = ("productos", "clientes", "clientes_auditoria", "mp_pagos")
 CLAVE = {"clientes_auditoria": "evento", "mp_pagos": "payment_id"}
 # El resto de la tienda también se copia, para poder restaurarla desde acá. Estas no: son del momento.
 NO_COPIAR = ("terminales_activos",)

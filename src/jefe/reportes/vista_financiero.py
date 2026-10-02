@@ -787,7 +787,9 @@ class VistaFinanciero(QWidget):
                             depto_prev_map[nom] = {'tot': float(r['tot'] or 0.0), 'costo': float(r['costo'] or 0.0)}
 
                     res_pago_prev = db_manager.execute_query(
-                        "SELECT COALESCE(v.metodo_pago, 'Efectivo') as pago, SUM(v.total) as tot "
+                        "SELECT COALESCE(v.metodo_pago, 'Efectivo') as pago, SUM(v.total) as tot, "
+                        "SUM(COALESCE(v.pago_efectivo, 0) - COALESCE(v.cambio, 0)) as m_efe, "
+                        "SUM(COALESCE(v.pago_otro, 0)) as m_otro "
                         "FROM ventas v "
                         "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                         "GROUP BY pago",
@@ -795,7 +797,12 @@ class VistaFinanciero(QWidget):
                     )
                     if res_pago_prev:
                         for r in res_pago_prev:
-                            pago_prev_map[str(r['pago'])] = float(r['tot'] or 0.0)
+                            p = str(r['pago'])
+                            if p == 'Mixto':
+                                pago_prev_map['Efectivo'] = pago_prev_map.get('Efectivo', 0.0) + float(r['m_efe'] or 0.0)
+                                pago_prev_map['Digital (Mixto)'] = pago_prev_map.get('Digital (Mixto)', 0.0) + float(r['m_otro'] or 0.0)
+                            else:
+                                pago_prev_map[p] = pago_prev_map.get(p, 0.0) + float(r['tot'] or 0.0)
                 except Exception as e:
                     print("Error getting prev depto/pago data:", e)
 
@@ -892,7 +899,9 @@ class VistaFinanciero(QWidget):
                 self.tabla_pago.horizontalHeader().setVisible(False)
 
             res_pago = db_manager.execute_query(
-                "SELECT COALESCE(NULLIF(v.metodo_pago, ''), 'Efectivo') as pago, substr(v.fecha, 1, 10) as dia, SUM(v.total) as tot "
+                "SELECT COALESCE(NULLIF(v.metodo_pago, ''), 'Efectivo') as pago, substr(v.fecha, 1, 10) as dia, SUM(v.total) as tot, "
+                "SUM(COALESCE(v.pago_efectivo, 0) - COALESCE(v.cambio, 0)) as m_efe, "
+                "SUM(COALESCE(v.pago_otro, 0)) as m_otro "
                 "FROM ventas v "
                 "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                 "GROUP BY pago, dia ORDER BY dia ASC", (start_str, end_str)
@@ -903,11 +912,21 @@ class VistaFinanciero(QWidget):
                 for r in res_pago:
                     p = str(r['pago'])
                     d = str(r['dia'])
-                    v = float(r['tot'] or 0.0)
                     short_d = d[-2:] if "-" in d else d
                     if short_d not in bar_data: bar_data[short_d] = {}
-                    bar_data[short_d][p] = v
-                    pago_sum[p] = pago_sum.get(p, 0.0) + v
+                    
+                    if p == 'Mixto':
+                        v_efe = float(r['m_efe'] or 0.0)
+                        v_otro = float(r['m_otro'] or 0.0)
+                        
+                        bar_data[short_d]['Efectivo'] = bar_data[short_d].get('Efectivo', 0.0) + v_efe
+                        bar_data[short_d]['Digital (Mixto)'] = bar_data[short_d].get('Digital (Mixto)', 0.0) + v_otro
+                        pago_sum['Efectivo'] = pago_sum.get('Efectivo', 0.0) + v_efe
+                        pago_sum['Digital (Mixto)'] = pago_sum.get('Digital (Mixto)', 0.0) + v_otro
+                    else:
+                        v = float(r['tot'] or 0.0)
+                        bar_data[short_d][p] = bar_data[short_d].get(p, 0.0) + v
+                        pago_sum[p] = pago_sum.get(p, 0.0) + v
 
             self.pago_chart.data = bar_data
             self.pago_chart.update()

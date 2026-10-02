@@ -1,4 +1,4 @@
-# Centro de cobranza
+﻿# Centro de cobranza
 
 La oficina de los créditos. La venta no se decide acá: el paso 5 vende, el paso 6 cobra, y este módulo es el garante que le dice al cobro si esa venta a cuenta puede registrarse.
 

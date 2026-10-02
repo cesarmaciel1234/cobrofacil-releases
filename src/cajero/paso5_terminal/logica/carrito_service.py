@@ -3,35 +3,37 @@ from src.utils.barcode_parser import BarcodeParser
 
 class CarritoService:
     def buscar_productos(self, txt):
-        """Busca productos por ID o aproximación de nombre. Retorna lista de diccionarios."""
-        res = db_manager.execute_query(
-            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
-            "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago, "
-            "es_pesable, unidad, departamento FROM productos WHERE id = ? OR nombre LIKE ? LIMIT 5",
-            (txt, f"%{txt}%"),
-        )
-        if res:
-            return res
-        return db_manager.execute_query(
-            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
-            "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago "
-            "FROM productos WHERE id = ? OR nombre LIKE ? LIMIT 5",
-            (txt, f"%{txt}%"),
-        ) or []
-
-    def buscar_producto_exacto(self, txt):
-        """Busca un producto exactamente por su ID."""
-        res = db_manager.execute_query(
-            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
-            "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago, "
-            "es_pesable, unidad, departamento FROM productos WHERE id = ?",
-            (txt,),
-        )
-        if not res:
+        """Busca productos por ID o aproximacion de nombre. Retorna lista de diccionarios."""
+        if txt.isdigit():
             res = db_manager.execute_query(
                 "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
-                "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago "
-                "FROM productos WHERE id = ?",
+                "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago, "
+                "es_pesable, unidad, departamento FROM productos WHERE id = ? OR COALESCE(codigo,'') LIKE ? OR nombre LIKE ? LIMIT 5",
+                (int(txt), f"%{txt}%", f"%{txt}%"),
+            )
+        else:
+            res = db_manager.execute_query(
+                "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
+                "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago, "
+                "es_pesable, unidad, departamento FROM productos WHERE nombre LIKE ? OR COALESCE(codigo,'') LIKE ? LIMIT 5",
+                (f"%{txt}%", f"%{txt}%"),
+            )
+        return res or []
+
+    def buscar_producto_exacto(self, txt):
+        """Busca un producto exactamente por su ID o codigo de barras."""
+        if txt.isdigit():
+            res = db_manager.execute_query(
+                "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
+                "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago, "
+                "es_pesable, unidad, departamento FROM productos WHERE id = ? OR codigo = ?",
+                (int(txt), txt),
+            )
+        else:
+            res = db_manager.execute_query(
+                "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
+                "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago, "
+                "es_pesable, unidad, departamento FROM productos WHERE codigo = ?",
                 (txt,),
             )
         return res[0] if res else None

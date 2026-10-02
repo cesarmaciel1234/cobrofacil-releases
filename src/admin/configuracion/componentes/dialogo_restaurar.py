@@ -99,7 +99,7 @@ class DialogoRestaurar(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Restaurar la tienda")
-        self.setMinimumSize(780, 540)
+        self.setMinimumSize(900, 600)
         self.setStyleSheet("QDialog { background: white; font-family: 'Segoe UI'; } QLabel { border: none; }")
         self.destino = None
         self.fuentes = []
@@ -294,9 +294,57 @@ class DialogoRestaurar(QDialog):
     def _terminado(self, res: dict):
         self._liberar()
         self.lbl_estado.setText("Restauración terminada.")
+        
+        # Generar script de auto-reinicio
+        import os
+        import sys
+        import subprocess
+        import tempfile
+        from src.utils.paths import get_base_path
+        
+        exe = sys.executable
+        pid = os.getpid()
+        workdir = get_base_path()
+        
+        ps1 = os.path.join(tempfile.gettempdir(), f"cobrofacil_restart_{pid}.ps1")
+        exe_q = exe.replace("'", "''")
+        wd_q = workdir.replace("'", "''")
+        
+        if getattr(sys, "frozen", False):
+            start_ps = "Start-Process -FilePath $exe -WorkingDirectory $wd"
+            alive_ps = "Get-Process -Name 'CobroFacil_POS' -ErrorAction SilentlyContinue"
+        else:
+            main_py = os.path.join(workdir, "main.py").replace("'", "''")
+            start_ps = f"Start-Process -FilePath $exe -WorkingDirectory $wd -ArgumentList @('{main_py}')"
+            alive_ps = f"Get-Process -Id {pid} -ErrorAction SilentlyContinue"
+            
+        script = f"""
+$exe = '{exe_q}'
+$wd = '{wd_q}'
+$retries = 30
+while ($retries -gt 0) {{
+    $proc = {alive_ps}
+    if (-not $proc) {{ break }}
+    Start-Sleep -Milliseconds 500
+    $retries--
+}}
+{start_ps}
+Remove-Item -Path $PSCommandPath -Force -ErrorAction SilentlyContinue
+"""
+        try:
+            with open(ps1, "w", encoding="utf-8") as f:
+                f.write(script)
+            subprocess.Popen(
+                ["powershell", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", ps1],
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+            )
+        except Exception:
+            pass
+            
         QMessageBox.information(
-            self, "Listo", resumen(res) + "\n\nReiniciá el programa en todas las PCs para ver los datos."
+            self, "Listo", resumen(res) + "\n\nLa restauración se completó. El sistema se reiniciará automáticamente."
         )
+        sys.exit(0)
 
     def _fallo(self, error: str):
         self._liberar()

@@ -78,8 +78,8 @@ def buscar_deudores(consulta: str) -> list:
         base += " AND c.deuda_actual > 0.01"
     else:
         v = str(p["valor"]).strip()
-        base += (" AND (c.nombre LIKE ? OR COALESCE(c.dni, '') LIKE ?"
-                 " OR COALESCE(c.telefono, '') LIKE ? OR COALESCE(c.direccion, '') LIKE ?)")
+        # Optimizacion de busqueda para fiado (no usamos COALESCE que rompe los indices)
+        base += (" AND (c.nombre LIKE ? OR c.dni LIKE ? OR c.telefono LIKE ? OR c.direccion LIKE ?)")
         params.extend([f"%{v}%", f"%{v}%", f"%{v}%", f"%{v}%"])
 
     base += " ORDER BY c.deuda_actual DESC, c.nombre ASC LIMIT 50"

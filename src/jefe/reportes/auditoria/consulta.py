@@ -17,7 +17,8 @@ _COLS = """
         v.id AS id_venta, v.fecha, v.usuario, dv.id_producto,
         dv.nombre_producto, dv.cantidad, dv.precio_unitario, dv.subtotal,
         v.metodo_pago, v.estado, COALESCE(p.departamento, p.categoria) as departamento,
-        p.unidad AS unidad_medida, p.es_pesable
+        p.unidad AS unidad_medida, p.es_pesable,
+        v.total, v.pago_efectivo, v.cambio, v.pago_otro
     FROM detalles_ventas dv
     JOIN ventas v ON dv.id_venta = v.id
     LEFT JOIN productos p ON dv.id_producto = p.id
@@ -46,9 +47,11 @@ def filtro(texto: str = "", metodo: str = "") -> tuple[str, list]:
     m = (metodo or "").strip()
     if m and m.upper() != "TODOS":
         if m.upper() == "EFECTIVO":
-            sql += " AND (v.metodo_pago IS NULL OR TRIM(v.metodo_pago) = '' OR UPPER(TRIM(v.metodo_pago)) = ?)"
+            sql += " AND (v.metodo_pago IS NULL OR TRIM(v.metodo_pago) = '' OR UPPER(TRIM(v.metodo_pago)) = ? OR UPPER(TRIM(v.metodo_pago)) LIKE 'MIXTO%')"
+        elif m.upper() in ("FIADO", "CLIENTES"):
+            sql += " AND (UPPER(TRIM(v.metodo_pago)) = ? OR UPPER(TRIM(v.metodo_pago)) LIKE '%MIXTO (CLIENTE)%')"
         else:
-            sql += " AND UPPER(TRIM(v.metodo_pago)) = ?"
+            sql += " AND (UPPER(TRIM(v.metodo_pago)) = ? OR (UPPER(TRIM(v.metodo_pago)) LIKE 'MIXTO%' AND UPPER(TRIM(v.metodo_pago)) NOT LIKE '%CLIENTE%'))"
         params.append(m.upper())
     return sql, params
 
@@ -120,8 +123,19 @@ def totales(filas: list[dict]) -> dict:
 def _suma(db, start_str: str, end_str: str, texto: str, metodo: str) -> float:
     w, p = where_ventas("v", start_str, end_str)
     extra, pf = filtro(texto, metodo)
+    
+    m = (metodo or "").strip().upper()
+    if m and m != "TODOS" and m != "MIXTO":
+        # Proporción para MIXTO
+        if m == "EFECTIVO":
+            sum_expr = "SUM(CASE WHEN UPPER(TRIM(v.metodo_pago)) LIKE 'MIXTO%' THEN dv.subtotal * ((COALESCE(v.pago_efectivo, 0) - COALESCE(v.cambio, 0)) / CASE WHEN COALESCE(v.total, 1) = 0 THEN 1 ELSE v.total END) ELSE dv.subtotal END)"
+        else:
+            sum_expr = "SUM(CASE WHEN UPPER(TRIM(v.metodo_pago)) LIKE 'MIXTO%' THEN dv.subtotal * (COALESCE(v.pago_otro, 0) / CASE WHEN COALESCE(v.total, 1) = 0 THEN 1 ELSE v.total END) ELSE dv.subtotal END)"
+    else:
+        sum_expr = "SUM(dv.subtotal)"
+        
     q = (
-        "SELECT SUM(dv.subtotal) as tot FROM detalles_ventas dv "
+        f"SELECT {sum_expr} as tot FROM detalles_ventas dv "
         "JOIN ventas v ON dv.id_venta = v.id "
         "LEFT JOIN productos p ON dv.id_producto = p.id "
         f"WHERE {w}{extra}"
@@ -140,3 +154,7 @@ def comparativa(start_str: str, end_str: str, texto: str = "", metodo: str = "")
     else:
         diff = ((curr_m - prev_m) / prev_m) * 100.0
     return curr_m, diff
+
+
+
+

@@ -12,25 +12,7 @@ from src.admin.mercadopago.historial.archivo import leer, omitir
 from src.admin.mercadopago.historial.sincronizar import bajar_mes
 
 
-class _CargarTickets(QThread):
-    """Lee en segundo plano los vínculos publicados en la base compartida."""
 
-    listo = pyqtSignal(dict)
-
-    def __init__(self, payment_ids, parent=None):
-        super().__init__(parent)
-        self.payment_ids = payment_ids
-
-    def run(self):
-        try:
-            from src.motor_cobros_digitales.libro.tabla import tickets_por_pago
-
-            self.listo.emit(tickets_por_pago(self.payment_ids))
-        except Exception as error:
-            from src.logger import logger
-
-            logger.warning(f"[Monitor MP] No se pudieron consultar tickets de la tienda: {error}")
-            self.listo.emit({})
 
 
 class _BajadaMes(QThread):
@@ -471,22 +453,8 @@ class Admin10MP(QWidget):
         if marcas != self._marcas_archivos:
             self._marcas_archivos = marcas
             self.cargar_datos_locales()
-        ahora = time.monotonic()
-        hilo = self._carga_tickets
-        if ahora - self._ultima_consulta_tickets >= 5 and (hilo is None or not hilo.isRunning()):
-            self._ultima_consulta_tickets = ahora
-            payment_ids = [p["id"] for p in self.todos_los_pagos]
-            hilo = _CargarTickets(payment_ids, self)
-            hilo.listo.connect(self._tickets_tienda_listos)
-            self._carga_tickets = hilo
-            hilo.start()
 
-    def _tickets_tienda_listos(self, tickets):
-        self._tickets_db.update(tickets)
-        barra = self.tabla.verticalScrollBar()
-        puesto = barra.value()
-        self.aplicar_filtros()
-        barra.setValue(puesto)
+
 
     def cargar_datos_locales(self, sincronizar_nodo=False):
         if sincronizar_nodo:
@@ -561,7 +529,7 @@ class Admin10MP(QWidget):
 
         from src.cajero.paso6_cobro.vinculo_mp.libro import asociado
 
-        tickets = dict(self._tickets_db)
+        tickets = {}
         for pago in pagos_filtrados:
             vinculo = asociado(pago["id"]) or {}
             if vinculo.get("ticket"):

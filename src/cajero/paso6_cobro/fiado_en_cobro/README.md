@@ -1,20 +1,21 @@
 # Fiado en Paso 6
 
-`panel.py`, clase `PanelFiadoCobro`, contiene la selección del cliente y confirma que la compra actual se cargue a su cuenta. `HojaCuentaCobro` conserva el flujo normal: elegir cliente, revisar saldo y presionar Enter. Ese Enter muestra la confirmación verde. El siguiente Enter, en el teclado o en la pantalla, llama `procesar_enter` y cierra la venta con `pago_listo`. Si el campo de texto oculto vuelve a emitir `listo`, esa repetición también cierra la venta.
+`panel.py`, clase `PanelFiadoCobro`, contiene la selección del cliente y confirma que la compra actual se cargue a su cuenta. `HojaCuentaCobro` conserva el flujo normal: elegir cliente, revisar saldo y presionar Enter. Ese Enter muestra la confirmación verde. El siguiente Enter cierra la venta con `pago_listo`.
 
-## Abono previo opcional
+## Cobranza Integrada (F5)
 
-En la pantalla de confirmación, F5 abre `cobranza.py::cobrar_deuda_previa` para la ficha ya seleccionada. El motor abre el Centro de Cobranza F6 directamente en ese cliente, deja elegir el abono y el medio, y espera el resultado autorizado.
+Cuando un cliente quiere pagar su deuda o no tiene crédito suficiente, F5 transforma el panel verde en una interfaz de cobro.
+- Muestra el monto sugerido: **Deuda Actual + Venta Actual**.
+- El panel verde embebe los lienzos nativos de cobro (`LienzoQr`, `LienzoEfectivo`, etc.) sin abrir ventanas de diálogo externas.
+- El panel reacciona en vivo a los cambios de F3 (Redondeo) y F4 (Recargo) de la ventana principal, ajustando el monto sugerido automáticamente.
 
-Si el cobro se confirma, `medios/cerrar.py::asentar` registra el abono en `cuenta_corriente`. Si una parte fue efectivo, `MovimientosCajaService.registrar_ingreso_efectivo` registra solo esa parte en `movimientos_caja`; la ventana F6 ya abrió el cajón. No se imprime un comprobante aparte porque el ticket de la venta actual incluirá el importe del abono.
+### Contabilidad y Cierre ("Cuenta Corriente Mercantil")
 
-El abono no modifica `total_final`, los medios ni la transacción de la venta. La pantalla regresa a la confirmación Fiado; Enter sigue autorizando la compra normal. Si se cancela el abono, la compra sigue pendiente sin cambios. Si el abono ya se registró pero falla la anotación del efectivo en caja, se informa el problema y se conserva el abono: no se revierte una operación ya asentada.
-
-`post_cobro.py` pasa `deuda_adicional` y el saldo previo al primer abono a `CobroController.procesar_cajon_impresion`, que los entrega a `imprimir_ticket_venta`. La impresión muestra el saldo previo, el abono, la compra y el disponible dentro del bloque de Cuenta Corriente. Es una sola impresión de venta y una sola escritura de venta + deuda para la compra actual.
+Si el cliente paga este monto, el sistema opera en dos fases:
+1. **Recibo de Pago**: `PanelFiadoCobro` llama a `asentar()`, reduciendo la deuda del cliente (generando un saldo temporal a favor si paga la deuda más la venta actual) y registrando el ingreso de caja.
+2. **Ticket de Venta**: Inmediatamente se emite `pago_listo`, y `Paso6Cobro` procesa los artículos del carrito cerrando la venta como "Fiado". Esto suma el total del carrito a la cuenta del cliente, contrarrestando el saldo a favor y dejando la deuda exacta, al mismo tiempo que imprime un ticket fiscalmente válido detallando los artículos, recargos y redondeos.
 
 ## Qué no cambiar
 
-- No sumar el abono previo a `total_final` ni a los pagos de la compra.
-- No guardar el abono dentro de `persistir_cobro`: ya se registró por el motor de Cobranza.
-- No reabrir ni imprimir una segunda copia del ticket de saldo desde este flujo.
-- Si se cancela la venta después de un abono confirmado, el abono conserva su registro independiente.
+- El motor de cobranza dentro de `PanelFiadoCobro` asienta el pago mediante `asentar()`. Nunca debe llamar al cierre de la venta general; debe emitir `pago_listo` y dejar que `Paso6Cobro.finalizar()` lo haga en su propio flujo de Fiado.
+- No restablezca las validaciones de sobrepago, el saldo a favor temporal es el mecanismo central de este diseño.

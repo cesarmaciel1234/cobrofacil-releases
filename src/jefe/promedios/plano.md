@@ -1,21 +1,4 @@
-# Plano — promedios
+# Plano de Módulo Promedios
 
-## Frente
-
-Carne, cerdo y pollo. Kilos, merma, precio y la tabla de cortes. Columnas de volumen: **P. mayoreo** y **Cant. may.** Exportar / sincronizar pide la clave del jefe.
-
-## Fondo
-
-`VistaPromediosMixin` pinta. `MotorPromedios.calcular_media_res` saca merma y costo por kilo.
-
-Exportar → `MotorMayoreo.aplicar_desde_promedios` (rama `src/motor_descuentos/mayoreo/`). Escribe `precio`, `costo`, `cant_mayoreo`, `precio_mayoreo`.
-
-Sincronizar → `MotorMayoreo.obtener_por_nombre`.
-
-Ya no usa `precio_oferta_promedio`. Oferta de cartelería se carga en Ofertas (admin).
-
-Si el texto no es un número, queda `0` y esa fila no sale si precio y mayoreo siguen en cero.
-
-## Qué no cambiar
-
-No cambiar esos `except` por un log que invente un precio. El tema de los botones sale de `PAL`, el tema global. No de `theme_pro.py`.
+**Frente:** El usuario entra desde el Dashboard del Jefe a Costos y Promedios. Hay pestañas independientes para Carne (con submódulos Mocho, Pecho, Media Res), Cerdo y Pollo.
+**Fondo:** Cada categoría tiene su propia carpeta, su propio archivo de Interfaz de Usuario (UI) y su propio Motor Lógico. Esto permite que el pollo pueda tener lógicas de despiece totalmente diferentes al cerdo o la carne sin causar conflictos en el código.

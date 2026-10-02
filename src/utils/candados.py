@@ -185,7 +185,7 @@ def get_store_server_pid() -> int | None:
             pid = int(f.read().strip() or "0")
     except Exception:
         return None
-    if pid > 0 and _pid_alive(pid):
+    if pid > 0 and _pid_alive(pid) and _is_our_process(pid):
         return pid
     try:
         os.remove(STORE_SERVER_LOCK_PATH)

@@ -6,9 +6,9 @@ def armar_resultado_venta(datos):
     total_final = redondear_dinero(datos.get("total_final"))
     p1 = redondear_dinero(datos.get("p1"))
     p2 = redondear_dinero(datos.get("p2"))
-    es_caja = metodo in ("Efectivo", "Mixto")
+    es_caja = metodo == "Efectivo" or metodo.startswith("Mixto")
     pago_efectivo = p1 if es_caja else 0.0
-    pago_otro = p2 if metodo == "Mixto" else (p1 if metodo != "Efectivo" else 0.0)
+    pago_otro = p2 if metodo.startswith("Mixto") else (p1 if metodo != "Efectivo" else 0.0)
     overpay = redondear_dinero((p1 + p2) - total_final)
     cambio = redondear_dinero(max(0.0, overpay)) if es_caja else 0.0
     estado = "COMPLETADA"

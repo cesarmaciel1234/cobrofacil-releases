@@ -5,7 +5,7 @@ Módulo Unificado
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal
 from src.utils.theme_manager import theme_manager
-from src.ui_global.proveedor.vista_proveedor import VistaProveedor
+from src.proveedor_global.frontend.vista_proveedor import VistaProveedor
 
 class Admin11Proveedores(QWidget):
     request_dashboard = pyqtSignal()
@@ -69,3 +69,4 @@ class Admin11Proveedores(QWidget):
         c_lay.addWidget(self.modulo_unificado)
 
         root.addWidget(content_area)
+

@@ -56,6 +56,7 @@ class Paso6Cobro(QDialog):
         self.total_final = total
         self.deuda_adicional_cobrada = 0.0
         self.deuda_adicional_saldo_anterior = None
+        self._deuda_adicional_incluida = 0.0
         self.items_carrito = items_carrito
         self.descuento_porcentaje = 0.0
         self.recargo_porcentaje = 0.0
@@ -419,10 +420,10 @@ class Paso6Cobro(QDialog):
         lay_lbl_desc.setContentsMargins(0,0,0,0)
         self.lbl_desc = QLabel("Redondeo:")
         self.lbl_desc.setObjectName("InputLabel")
-        self.btn_tipo_desc = QPushButton("$")
+        self.btn_tipo_desc = QPushButton("$ ▾")
         self.btn_tipo_desc.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_tipo_desc.setFixedSize(32, 32)
-        self.btn_tipo_desc.setStyleSheet("QPushButton { background: #E2E8F0; color: #1E293B; border-radius: 6px; font-weight: bold; } QPushButton:hover { background: #CBD5E1; }")
+        self.btn_tipo_desc.setFixedSize(48, 32)
+        self.btn_tipo_desc.setStyleSheet("QPushButton { background: #E2E8F0; color: #1E293B; border-radius: 6px; font-weight: bold; border: 1px solid #CBD5E1; } QPushButton:hover { background: #CBD5E1; border: 1px solid #94A3B8; }")
         self.btn_tipo_desc.clicked.connect(self._toggle_tipo_desc)
         lay_lbl_desc.addWidget(self.lbl_desc)
         lay_lbl_desc.addWidget(self.btn_tipo_desc)
@@ -443,10 +444,10 @@ class Paso6Cobro(QDialog):
         lay_lbl_rec.setContentsMargins(0,0,0,0)
         self.lbl_rec = QLabel("Recargo:")
         self.lbl_rec.setObjectName("InputLabel")
-        self.btn_tipo_rec = QPushButton("$")
+        self.btn_tipo_rec = QPushButton("$ ▾")
         self.btn_tipo_rec.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_tipo_rec.setFixedSize(32, 32)
-        self.btn_tipo_rec.setStyleSheet("QPushButton { background: #E2E8F0; color: #1E293B; border-radius: 6px; font-weight: bold; } QPushButton:hover { background: #CBD5E1; }")
+        self.btn_tipo_rec.setFixedSize(48, 32)
+        self.btn_tipo_rec.setStyleSheet("QPushButton { background: #E2E8F0; color: #1E293B; border-radius: 6px; font-weight: bold; border: 1px solid #CBD5E1; } QPushButton:hover { background: #CBD5E1; border: 1px solid #94A3B8; }")
         self.btn_tipo_rec.clicked.connect(self._toggle_tipo_rec)
         lay_lbl_rec.addWidget(self.lbl_rec)
         lay_lbl_rec.addWidget(self.btn_tipo_rec)
@@ -604,6 +605,8 @@ class Paso6Cobro(QDialog):
         self.pila_point.addWidget(self.btn_f11)
         self.pila_point.addWidget(QWidget())
         lay_registra.addWidget(self.pila_point, 1)
+        
+        self.btn_f5 = create_action_btn("F5", "pagar cuenta", self._f5_pagar_cuenta, style="default")
         self.pila_extra = QStackedWidget()
         self.pila_extra.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.pila_extra.setMinimumHeight(78)
@@ -612,6 +615,7 @@ class Paso6Cobro(QDialog):
         self.pila_extra.addWidget(self.btn_f12)
         self.pila_extra.addWidget(self.btn_ultimo)
         self.pila_extra.addWidget(QWidget())
+        self.pila_extra.addWidget(self.btn_f5)
         lay_ajuste.addWidget(self.pila_extra, 1)
 
         right_lay.addLayout(fila_acciones, 2)
@@ -909,13 +913,25 @@ class Paso6Cobro(QDialog):
         )
 
     def _f5_pagar_cuenta(self):
-        """F5 cobra deuda previa con la ficha ya elegida, sin cerrar la venta."""
+        """F5 abre el diálogo de cobranza para cobrar la venta actual + deuda previa de una vez."""
         if self.current_metodo not in ("Fiado", "Clientes") or not hasattr(self, "panel_fiado"):
             return False
         hoja = self.panel_fiado.hoja_cuenta
         if getattr(hoja, "_paso", 1) != 2 or not hoja._cliente:
             return False
-        hoja._abrir_dialogo_cobranza()
+            
+        from src.clientes_fiado.cerebro.cerebro import cerebro
+        cliente = cerebro.obtener(hoja._cliente.get("id"))
+        monto_sugerido = self.total_final
+        if cliente:
+            try:
+                cliente_dict = dict(cliente) if hasattr(cliente, 'keys') else cliente
+                deuda_actual = float(cliente_dict.get("deuda_actual", 0) or 0)
+            except (TypeError, AttributeError):
+                deuda_actual = float(cliente["deuda_actual"] if "deuda_actual" in cliente.keys() else 0)
+            monto_sugerido += deuda_actual
+            
+        self.panel_fiado.activar_cobranza(monto_sugerido, deuda_actual)
         return True
 
     def _cuenta_lista(self, cliente_id, _abono=0.0):
@@ -943,10 +959,10 @@ class Paso6Cobro(QDialog):
         self.deuda_adicional_cobrada = redondear_dinero(
             self.deuda_adicional_cobrada + float(resultado.monto or 0)
         )
-        self._avisar(
-            f"Abono a cuenta registrado: ${float(resultado.monto):,.2f}. "
-            "La venta sigue a Fiado."
-        )
+        self._avisar(f"Abono a cuenta registrado: ${float(resultado.monto):,.2f}.")
+        # El abono ya entró a la cuenta, ahora finalizamos la venta actual enviándola a Fiado
+        # para que se descuente del saldo a favor o se sume a la deuda que quede.
+        self._cuenta_lista(resultado.cliente_id)
 
     def _cuenta_cancelada(self):
         if getattr(self, "_mixto_espera_cuenta", False):
@@ -1197,8 +1213,11 @@ class Paso6Cobro(QDialog):
         oferta = abs(float(getattr(self, "descuentaso_oferta", 0.0) or 0.0))
         lista = redondear_dinero(self.total_original + oferta)
         self.lbl_total.setText(self._monto(self.total_final))
-        if hasattr(self, "panel_fiado") and self.panel_fiado.hoja_cuenta.isVisible():
-            self.panel_fiado.hoja_cuenta.fijar_monto(self.total_final)
+        if hasattr(self, "panel_fiado"):
+            if self.panel_fiado.hoja_cuenta.isVisible():
+                self.panel_fiado.hoja_cuenta.fijar_monto(self.total_final)
+            if hasattr(self.panel_fiado, "actualizar_monto"):
+                self.panel_fiado.actualizar_monto(self.total_final)
         if abs(lista - self.total_final) > 0.009:
             self.lbl_precio_real.setText(
                 f'<span style="color:#EF4444; text-decoration:line-through;">{self._monto(lista)}</span>'
@@ -1246,17 +1265,17 @@ class Paso6Cobro(QDialog):
         self.calcular_vuelto()
 
     def _toggle_tipo_desc(self):
-        if self.btn_tipo_desc.text() == "$":
-            self.btn_tipo_desc.setText("%")
+        if "$" in self.btn_tipo_desc.text():
+            self.btn_tipo_desc.setText("% ▾")
         else:
-            self.btn_tipo_desc.setText("$")
+            self.btn_tipo_desc.setText("$ ▾")
         self.on_descuento_changed(self.txt_desc.text())
 
     def _toggle_tipo_rec(self):
-        if self.btn_tipo_rec.text() == "$":
-            self.btn_tipo_rec.setText("%")
+        if "$" in self.btn_tipo_rec.text():
+            self.btn_tipo_rec.setText("% ▾")
         else:
-            self.btn_tipo_rec.setText("$")
+            self.btn_tipo_rec.setText("$ ▾")
         self.on_recargo_changed(self.txt_rec.text())
 
     def on_descuento_changed(self, text):
@@ -1264,7 +1283,7 @@ class Paso6Cobro(QDialog):
             txt = text.strip()
             if not txt:
                 self.descuento_monto = 0.0
-            elif txt.endswith('%') or (hasattr(self, 'btn_tipo_desc') and self.btn_tipo_desc.text() == "%"):
+            elif txt.endswith('%') or (hasattr(self, 'btn_tipo_desc') and "%" in self.btn_tipo_desc.text()):
                 val = float(txt.replace('%', ''))
                 self.descuento_monto = self.total_original * (max(0, min(100, val)) / 100.0)
             else:
@@ -1279,7 +1298,7 @@ class Paso6Cobro(QDialog):
             txt = text.strip()
             if not txt:
                 self.recargo_monto = 0.0
-            elif txt.endswith('%') or (hasattr(self, 'btn_tipo_rec') and self.btn_tipo_rec.text() == "%"):
+            elif txt.endswith('%') or (hasattr(self, 'btn_tipo_rec') and "%" in self.btn_tipo_rec.text()):
                 val = float(txt.replace('%', ''))
                 self.recargo_monto = self.total_original * (max(0, val) / 100.0)
             else:
@@ -1696,6 +1715,13 @@ class Paso6Cobro(QDialog):
             return
         if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
             return
+            
+        if getattr(self, "_fiado_flujo_activo", False):
+            if hasattr(self, "panel_fiado") and self.panel_fiado.isVisible():
+                if hasattr(self.panel_fiado, "procesar_f9"):
+                    if self.panel_fiado.procesar_f9():
+                        return # El lienzo absorbió el F9
+
         if getattr(self, "_point_en_curso", False):
             self._emergencia_pendiente = True
             self.espera_point.soltar()
@@ -2104,8 +2130,11 @@ class Paso6Cobro(QDialog):
             self.pila_extra.setCurrentIndex(0)
         elif metodo == "Transferencia":
             self.pila_extra.setCurrentIndex(1)
+        elif metodo in ("Fiado", "Clientes"):
+            self.pila_extra.setCurrentIndex(3)
         else:
             self.pila_extra.setCurrentIndex(2)
+        
         self._pintar_boton_fiscal()
 
     def _pintar_boton_fiscal(self):
@@ -2135,6 +2164,7 @@ class Paso6Cobro(QDialog):
 
     def procesar_pago_mercadopago_point(self):
         if getattr(self, 'stack', None) and self.stack.currentIndex() == 0: return
+        if getattr(self, '_fiado_flujo_activo', False): return
         if self.current_metodo == "QR":
             return
         if self.current_metodo == "Mixto":
@@ -2159,6 +2189,7 @@ class Paso6Cobro(QDialog):
 
     def verificar_transferencia_mp(self):
         if getattr(self, 'stack', None) and self.stack.currentIndex() == 0: return
+        if getattr(self, '_fiado_flujo_activo', False): return
         from src.cajero.paso6_cobro.mercadopago_core.polling_service import PollingService
         PollingService(self).verificar_transferencia_mp()
 

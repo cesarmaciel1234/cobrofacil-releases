@@ -6,8 +6,10 @@ class MotorMixto:
         from src.utils.dinero import redondear_dinero
 
         datos = dict(datos)
-        datos["metodo"] = "Mixto"
         parte = redondear_dinero(datos.get("fiado_parcial") or 0)
+        
+        datos["metodo"] = "Mixto (Cliente)" if parte > 0.009 else "Mixto"
+        
         if parte > 0.009:
             from src.clientes_fiado.cerebro.cerebro import cerebro
 

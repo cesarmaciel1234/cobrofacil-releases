@@ -675,7 +675,7 @@ class AutoBlindajeDB:
             flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
             result = subprocess.run(cmd, capture_output=True, text=True, creationflags=flags, timeout=90)
 
-            if result.returncode == 0 and result.stdout and len(result.stdout) >= 5000:
+            if result.returncode == 0 and result.stdout and len(result.stdout) >= 500:
                 with open(target_local, "w", encoding="utf-8") as f:
                     f.write(result.stdout)
                 with open(target_os, "w", encoding="utf-8") as f:
@@ -1050,7 +1050,10 @@ class AutoBlindajeDB:
             logger.error("Un respaldo SQLite (.db) no reemplaza la MariaDB: se suma con src/base_de_datos/restaurar.")
             return False
 
-        if engine_type == "sqlite" or latest_backup.lower().endswith(".db"):
+        if engine_type == "sqlite":
+            if not latest_backup.lower().endswith(".db"):
+                logger.error("No se puede restaurar un respaldo de MariaDB sobre SQLite.")
+                return False
             db_file = os.path.join(base_dir, "punpro.db")
             try:
                 shutil.copy2(latest_backup, db_file)

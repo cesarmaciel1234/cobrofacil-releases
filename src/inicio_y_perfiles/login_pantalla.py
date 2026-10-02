@@ -193,6 +193,9 @@ class LoginPantalla(QDialog):
         elif self.role == "jefe":
             role_icon = "👑"
             role_label = "JEFE / DUEÑO"
+        elif self.role == "contabilidad":
+            role_icon = "💹"
+            role_label = "CONTABILIDAD"
         else:
             role_icon = "🛒"
             role_label = "CAJERO / POS"

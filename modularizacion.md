@@ -55,3 +55,9 @@ No se copia el plano entero. El README es de esa subcarpeta.
 3. Aplicarla en el mismo cambio. Si el módulo era un solo archivo en la base, pasa a su carpeta. Si ya estaba en carpeta, se actualizan el plano y el README de lo que se tocó.
 4. No crear `regla_*.md` en la raíz.
 5. Decir en qué carpeta quedó la nota.
+
+## Aislamiento de Perfiles (Motores de Transporte)
+
+1. **Sin cruce directo de datos:** Ningún perfil (Jefe, Cajero, Admin) debe cruzar información leyendo la memoria o el estado en vivo de otro perfil directamente.
+2. **Motores de transporte:** Si un perfil genera información que otro necesita (ej. *Promedios* del Jefe genera precios que el *Cajero* debe usar), deben comunicarse enviando los datos a un "Motor de Transporte" intermedio (ej. Motor de Base de Datos SQLite/MariaDB, Motor de Mayoreo, etc.).
+3. **Resiliencia ante fallos:** Al estar desacoplados, si el motor de un perfil colapsa o entra en error, los demás perfiles siguen operando con normalidad porque leen la última verdad consolidada desde el motor de transporte. Nunca se deben acoplar las interfaces visuales de diferentes perfiles.

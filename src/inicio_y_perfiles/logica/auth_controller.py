@@ -65,3 +65,13 @@ class AuthController:
                 "INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)",
                 ("jefe1", pwd_hash, "jefe")
             )
+
+    def ensure_default_contabilidad(self):
+        """Asegura que exista al menos un usuario con rol 'contabilidad'. Si no hay ninguno, crea 'contabilidad' (pass: contabilidad)."""
+        res = db_manager.execute_query("SELECT COUNT(*) as count FROM usuarios WHERE rol = 'contabilidad'")
+        if res and res[0]['count'] == 0:
+            pwd_hash = hashlib.sha256("contabilidad".encode()).hexdigest()
+            db_manager.execute_non_query(
+                "INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)",
+                ("contabilidad", pwd_hash, "contabilidad")
+            )

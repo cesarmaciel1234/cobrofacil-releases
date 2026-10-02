@@ -304,7 +304,7 @@ class PosPrinter:
 
         return neto_total, iva_total, iva_por_tasa
 
-    def imprimir_ticket_venta(self, num_venta, items, total, pago, cambio, abrir_cajon=True, estado='COMPLETADA', discount_amount=0, surcharge_amount=0, cajero='', cajero_secundario='', segunda_tiketera=False, metodo_pago='Efectivo', force_fiscal=False, cliente_nombre=None, saldo_anterior=None, saldo_disponible=None, abono_cuenta=0.0):
+    def imprimir_ticket_venta(self, num_venta, items, total, pago, cambio, abrir_cajon=True, estado='COMPLETADA', discount_amount=0, surcharge_amount=0, cajero='', cajero_secundario='', segunda_tiketera=False, metodo_pago='Efectivo', force_fiscal=False, cliente_nombre=None, saldo_anterior=None, saldo_disponible=None, abono_cuenta=0.0, mensaje_extra_condiciones=None):
 
         """ Formatea e imprime un ticket de venta. Soporta dos cajeros y dos tiketeras. """
 
@@ -451,6 +451,14 @@ class PosPrinter:
             data.extend(f"Compra actual:    ${total:.2f}\n".encode('cp850'))
             data.extend(BOLD_ON)
             data.extend(f"Saldo disponible: ${saldo_disponible:.2f}\n".encode('cp850'))
+            data.extend(BOLD_OFF)
+            data.extend(b"--------------------------------\n")
+
+        if mensaje_extra_condiciones:
+            data.extend(ALIGN_CENTER)
+            data.extend(BOLD_ON)
+            for linea in mensaje_extra_condiciones.split("\n"):
+                data.extend(f"{linea}\n".encode("cp850"))
             data.extend(BOLD_OFF)
             data.extend(b"--------------------------------\n")
 

@@ -430,7 +430,7 @@ class MainWindow(QMainWindow):
             6:  lambda: __import__('src.admin.legacy.admin6_red_lan',    fromlist=['Admin6RedLan']).Admin6RedLan(),
             7:  lambda: __import__('src.admin.cierre.cierre_main',     fromlist=['Admin7Cierre']).Admin7Cierre(self),
             8:  lambda: __import__('src.admin.etiquetas_panel_ui.etiquetas_panel_main', fromlist=['AdminEtiquetas']).AdminEtiquetas(),
-            9:  lambda: __import__('src.jefe.contabilidad.jefe_contabilidad',  fromlist=['JefeContabilidad']).JefeContabilidad(),
+            9:  lambda: __import__('src.contabilidad.jefe_contabilidad',  fromlist=['JefeContabilidad']).JefeContabilidad(),
             10: lambda: __import__('src.admin.mercadopago.mercadopago_main', fromlist=['Admin10MP']).Admin10MP(),
             11: lambda: __import__('src.admin.proveedores.proveedores_main', fromlist=['Admin11Proveedores']).Admin11Proveedores(),
             13: lambda: __import__('src.admin.hardware.hardware_main', fromlist=['Admin13Hardware']).Admin13Hardware(),
@@ -627,6 +627,8 @@ class MainWindow(QMainWindow):
         """Conecta las señales de navegación de un widget recién creado."""
         if hasattr(s, 'request_dashboard'):
             s.request_dashboard.connect(self._handle_global_dashboard_return)
+        if hasattr(s, 'request_logout'):
+            s.request_logout.connect(self._logout_to_selector)
         if hasattr(s, 'turno_cerrado'):
             s.turno_cerrado.connect(self._on_turno_cerrado_global)
 
@@ -889,7 +891,7 @@ class MainWindow(QMainWindow):
         if not user: return
         # Aceptar tanto 'rol' (DB) como 'role' (Config manual)
         role = (user.get("role") or user.get("rol") or "cajero").lower()
-        # Cajero → terminal. Jefe → panel exclusivo (19). Admin → dashboard (0).
+        # Cajero → terminal. Jefe → panel exclusivo (19). Admin → dashboard (0). Contabilidad → ERP (9).
         if role == "cajero":
             self.switch_tab(1)
         elif role == "jefe":
@@ -897,6 +899,10 @@ class MainWindow(QMainWindow):
                 self._build_lazy_screen(19)
             self.switch_tab(19)
             QTimer.singleShot(2500, lambda: self._pregwarm_screens_for_role("jefe"))
+        elif role == "contabilidad":
+            if self.screens[9] is None:
+                self._build_lazy_screen(9)
+            self.switch_tab(9)
         else:
             if self.screens[0] is None:
                 self._build_lazy_screen(0)
