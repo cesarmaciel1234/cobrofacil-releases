@@ -87,7 +87,7 @@ class PanelPublicidad(QWidget):
 
         kpis = QHBoxLayout()
         kpis.setSpacing(10)
-        self.lbl_gan = self._chip("Ganancia de hoy", "—")
+        self.lbl_gan = self._chip("Ganancia parcial", "—")
         self.lbl_inv = self._chip("Inventario al costo", "—")
         kpis.addWidget(self.lbl_gan, 1)
         kpis.addWidget(self.lbl_inv, 1)
@@ -119,7 +119,7 @@ class PanelPublicidad(QWidget):
 
         # (chip, título en Hoy, título con período). Inventario y deuda son foto del momento.
         self._periodales = (
-            (self.lbl_gan, "Ganancia de hoy", "Ganancia"),
+            (self.lbl_gan, "Ganancia parcial", "Ganancia"),
             (self.lbl_pagos, "Pagos clientes", "Pagos clientes"),
             (self.lbl_redondeo, "Redondeo del día", "Redondeo"),
             (self.lbl_digitales, "Digitales sin firmar / total", "Digitales sin firmar / total"),
