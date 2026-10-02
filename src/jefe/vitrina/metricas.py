@@ -34,17 +34,14 @@ def _val(fila, clave, indice=0):
 
 
 def ganancia(desde=None, hasta=None):
-    """Ganancia firmada por reportes (`financiero.kpis_rango`). None si no hay costo cargado."""
+    """Ganancia parcial: solo productos con costo (aislado en motor separado)."""
     try:
-        from src.jefe.reportes.financiero.consulta import kpis_rango
-
+        from src.jefe.vitrina.motor_ganancia_parcial import calcular_ganancia_parcial
         d0 = (desde or _hoy())[:10]
         d1 = (hasta or d0)[:10]
-        return kpis_rango(f"{d0} 00:00:00", f"{d1} 23:59:59").get("ganancia")
+        return calcular_ganancia_parcial(f"{d0} 00:00:00", f"{d1} 23:59:59")
     except Exception:
         return None
-
-
 def redondeo(desde=None, hasta=None) -> float:
     """Suma de `descuento` (F3 redondeo + oferta en ticket) de ventas vigentes del rango."""
     try:
