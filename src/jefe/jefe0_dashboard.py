@@ -1,6 +1,6 @@
-"""
-jefe0_dashboard.py — Dashboard exclusivo del JEFE / DUEÑO
-Paleta: Light Soft 2026 — blanco puro, acentos suaves, tarjetas con gradientes claros.
+﻿"""
+jefe0_dashboard.py â€” Dashboard exclusivo del JEFE / DUEÃ‘O
+Paleta: Light Soft 2026 â€” blanco puro, acentos suaves, tarjetas con gradientes claros.
 """
 import datetime
 from PyQt6.QtWidgets import (
@@ -20,32 +20,32 @@ try:
 except ImportError:
     config = None
 
-# ── Paleta global Light Soft ──────────────────────────────────────────────────
+# â”€â”€ Paleta global Light Soft â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-# ── Componentes importados ────────────────────────────────────────────────────
+# â”€â”€ Componentes importados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 from src.jefe.componentes_visuales.jefe_card import JefeCard
 from src.jefe.vitrina import PanelPublicidad
 from src.cerebro_global.cerebro_jefe.analitica_jefe import WorkerAnaliticaJefe
 from src.jefe.reportes.letra import fuente_limpia
 
-# ── Módulos del Jefe ──────────────────────────────────────────────────────────
+# â”€â”€ MÃ³dulos del Jefe â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 JEFE_MODULES = [
-    ("reportes",     "Reportes\ny Ventas",       "📊", "#10B981", "#D1FAE5", "#065F46", 20,  None),
-    ("nexus_pro",    "Nexus Pro\nControl",        "🌌", "#6366F1", "#EEF2FF", "#3730A3", 18, None),
-    ("corte_caja",   "Corte y\nCierre Global",    "💵", "#34D399", "#ECFDF5", "#047857", 7,  None),
-    ("red_lan",      "Servidor LAN\nMaestra/Esclava", "🌐", "#0EA5E9", "#E0F2FE", "#075985", 6, None),
+    ("reportes",     "Reportes\ny Ventas",       "ðŸ“Š", "#10B981", "#D1FAE5", "#065F46", 20,  None),
+    ("nexus_pro",    "Nexus Pro\nControl",        "ðŸŒŒ", "#6366F1", "#EEF2FF", "#3730A3", 18, None),
+    ("corte_caja",   "Corte y\nCierre Global",    "ðŸ’µ", "#34D399", "#ECFDF5", "#047857", 7,  None),
+    ("red_lan",      "Servidor LAN\nMaestra/Esclava", "ðŸŒ", "#0EA5E9", "#E0F2FE", "#075985", 6, None),
     
-    ("proveedores",  "Proveedores\nERP",          "🚚", "#0EA5E9", "#E0F2FE", "#075985", 9,  3),
-    ("promedios",    "Costos y\nPromedios",       "⚖️", "#EC4899", "#FDF2F8", "#831843", 24, None),
-    ("ia_proactiva", "IA\nProactiva",             "🧠", "#8B5CF6", "#F5F3FF", "#4C1D95", 23, None),
-    ("personal",     "Personal y\nUsuarios",      "👥", "#F43F5E", "#FFE4E6", "#9F1239", -1, None),
+    ("proveedores",  "Proveedores\nERP",          "ðŸšš", "#0EA5E9", "#E0F2FE", "#075985", 26, None),
+    ("promedios",    "Costos y\nPromedios",       "âš–ï¸", "#EC4899", "#FDF2F8", "#831843", 24, None),
+    ("ia_proactiva", "IA\nProactiva",             "ðŸ§ ", "#8B5CF6", "#F5F3FF", "#4C1D95", 23, None),
+    ("personal",     "Personal y\nUsuarios",      "ðŸ‘¥", "#F43F5E", "#FFE4E6", "#9F1239", -1, None),
 ]
-# (id, título, icon, accent_hex, bg_suave, text_dark, screen, tab)
+# (id, tÃ­tulo, icon, accent_hex, bg_suave, text_dark, screen, tab)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 #  DASHBOARD PRINCIPAL
-# ─────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class Jefe0Dashboard(QWidget):
     request_screen = pyqtSignal(int)
     request_tab    = pyqtSignal(int)
@@ -121,7 +121,7 @@ class Jefe0Dashboard(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── NAV BAR ──────────────────────────────────────────────────────────
+        # â”€â”€ NAV BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.nav = QFrame()
         self.nav.setObjectName("JefeNav")
         self.nav.setFixedHeight(64)
@@ -130,7 +130,7 @@ class Jefe0Dashboard(QWidget):
         nav_lay.setSpacing(16)
 
         # Brand
-        brand = QLabel("TPV PRO 2026  ·  Panel del Jefe")
+        brand = QLabel("TPV PRO 2026  Â·  Panel del Jefe")
         brand.setFont(fuente_limpia(14))
         brand.setStyleSheet(
             "font-size: 15px; font-weight: 400; color: #334155;"
@@ -164,7 +164,7 @@ class Jefe0Dashboard(QWidget):
         nav_lay.addWidget(self.btn_portabilidad)
         QTimer.singleShot(0, self._refresh_nodo_button)
 
-        self.btn_tema = QPushButton("🌙 Noche")
+        self.btn_tema = QPushButton("ðŸŒ™ Noche")
         self.btn_tema.setCursor(Qt.PointingHandCursor)
         self.btn_tema.setFixedHeight(34)
         self.btn_tema.setStyleSheet("""
@@ -178,7 +178,7 @@ class Jefe0Dashboard(QWidget):
         """)
         self.btn_tema.clicked.connect(self._toggle_theme)
 
-        self.btn_perfiles = QPushButton("👥 Personal")
+        self.btn_perfiles = QPushButton("ðŸ‘¥ Personal")
         self.btn_perfiles.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_perfiles.setFixedHeight(34)
         self.btn_perfiles.setStyleSheet("""
@@ -196,12 +196,12 @@ class Jefe0Dashboard(QWidget):
         try:
             from src.config import config
             if config and config.get("theme", "light") == "dark":
-                self.btn_tema.setText("☀️ Día")
+                self.btn_tema.setText("â˜€ï¸ DÃ­a")
         except: pass
 
         nav_lay.addWidget(self.btn_tema)
 
-        self.btn_logout = QPushButton("Cerrar Sesión")
+        self.btn_logout = QPushButton("Cerrar SesiÃ³n")
         self.btn_logout.setCursor(Qt.PointingHandCursor)
         self.btn_logout.setFixedHeight(34)
         self.btn_logout.setStyleSheet("""
@@ -217,7 +217,7 @@ class Jefe0Dashboard(QWidget):
         nav_lay.addWidget(self.btn_logout)
         root.addWidget(self.nav)
 
-        # ── SCROLL ───────────────────────────────────────────────────────────
+        # â”€â”€ SCROLL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
@@ -263,7 +263,7 @@ class Jefe0Dashboard(QWidget):
         self.right_lay.addWidget(lbl_sec)
         self.right_lay.addSpacing(18)
 
-        # ── GRID ─────────────────────────────────────────────────────────────
+        # â”€â”€ GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.cards = {}
         grid_container = QHBoxLayout()
         grid_container.addStretch()
@@ -293,8 +293,8 @@ class Jefe0Dashboard(QWidget):
         self.right_lay.addLayout(grid_container)
         self.right_lay.addStretch()
 
-        # ── FOOTER ────────────────────────────────────────────────────────────
-        self.lbl_footer = QLabel("Cobro Facil POS  ·  TPV Pro 2026  ·  Panel Jefe")
+        # â”€â”€ FOOTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        self.lbl_footer = QLabel("Cobro Facil POS  Â·  TPV Pro 2026  Â·  Panel Jefe")
         self.lbl_footer.setFont(fuente_limpia(10))
         self.lbl_footer.setAlignment(Qt.AlignCenter)
         self.lbl_footer.setStyleSheet(
@@ -327,7 +327,7 @@ class Jefe0Dashboard(QWidget):
         self.btn_export_ganancias.setText("Exportar ganancias")
         self.btn_export_ganancias.setEnabled(True)
         if success:
-            QMessageBox.information(self, "Exportación Exitosa", msg)
+            QMessageBox.information(self, "ExportaciÃ³n Exitosa", msg)
         else:
             QMessageBox.critical(self, "Error al Exportar", msg)
 
@@ -384,7 +384,7 @@ class Jefe0Dashboard(QWidget):
             qss = "estilo_noche.qss" if nuevo == "dark" else "estilo_dia.qss"
             aplicar_tema(QApplication.instance(), qss)
 
-            self.btn_tema.setText("☀️ Día" if nuevo == "dark" else "🌙 Noche")
+            self.btn_tema.setText("â˜€ï¸ DÃ­a" if nuevo == "dark" else "ðŸŒ™ Noche")
         except Exception as e:
             from src.logger import logger
             logger.error(f"Error alternando tema en Jefe: {e}")
@@ -430,15 +430,15 @@ class Jefe0Dashboard(QWidget):
             box.setWindowTitle("Nodo portable")
             box.setIcon(QMessageBox.Icon.Question)
             box.setText(
-                "Ya tenés un nodo en USB/OneDrive.\n\n"
-                "• Esta PC guarda sola una copia de la tienda mientras está en la red. "
+                "Ya tenÃ©s un nodo en USB/OneDrive.\n\n"
+                "â€¢ Esta PC guarda sola una copia de la tienda mientras estÃ¡ en la red. "
                 "Sin red, el panel la muestra con la fecha arriba.\n"
-                "• Sincronizar: pasa esa copia al pendrive (ventas, cancelaciones, cierres, "
-                "caja, clientes y su auditoría) para revisar en otra PC.\n"
-                "• Clientes cargados afuera: no hay que apretar nada. La maestra los toma sola, "
-                "con su ID único, PC, usuario y hora.\n"
-                "• Promover: usá este nodo si la PC del negocio cayó.\n"
-                "• Reemplazar: elige otra carpeta y hace copia completa 0–100%."
+                "â€¢ Sincronizar: pasa esa copia al pendrive (ventas, cancelaciones, cierres, "
+                "caja, clientes y su auditorÃ­a) para revisar en otra PC.\n"
+                "â€¢ Clientes cargados afuera: no hay que apretar nada. La maestra los toma sola, "
+                "con su ID Ãºnico, PC, usuario y hora.\n"
+                "â€¢ Promover: usÃ¡ este nodo si la PC del negocio cayÃ³.\n"
+                "â€¢ Reemplazar: elige otra carpeta y hace copia completa 0â€“100%."
             )
             btn_sync = box.addButton("Sincronizar", QMessageBox.ButtonRole.AcceptRole)
             btn_promo = box.addButton("Promover", QMessageBox.ButtonRole.ActionRole)
@@ -458,13 +458,13 @@ class Jefe0Dashboard(QWidget):
             return
 
         msg = (
-            "Se creará un NODO portable (carpeta CobroFacil_Nodo) en USB u OneDrive:\n"
-            "• Contabilidad del jefe\n"
-            "• Espejo del negocio (ventas, productos, clientes…)\n\n"
-            "Mostrará progreso hasta 100%. Después este botón pasará a «Sincronizar».\n"
+            "Se crearÃ¡ un NODO portable (carpeta CobroFacil_Nodo) en USB u OneDrive:\n"
+            "â€¢ Contabilidad del jefe\n"
+            "â€¢ Espejo del negocio (ventas, productos, clientesâ€¦)\n\n"
+            "MostrarÃ¡ progreso hasta 100%. DespuÃ©s este botÃ³n pasarÃ¡ a Â«SincronizarÂ».\n"
             "Lleva la copia de la tienda que guarda esta PC. Si nunca estuvo en la red, "
             "conectate antes como Esclava (Servidor LAN).\n\n"
-            "¿Continuar?"
+            "Â¿Continuar?"
         )
         if QMessageBox.question(
             self, "Copiar nodo", msg, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
@@ -479,8 +479,8 @@ class Jefe0Dashboard(QWidget):
         if QMessageBox.question(
             self,
             "Promover nodo",
-            f"¿Usar el nodo como base local?\n\n{path}\n\n"
-            "Sirve si la PC del negocio está caída. Se importarán tickets faltantes.",
+            f"Â¿Usar el nodo como base local?\n\n{path}\n\n"
+            "Sirve si la PC del negocio estÃ¡ caÃ­da. Se importarÃ¡n tickets faltantes.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         ) != QMessageBox.StandardButton.Yes:
             return
@@ -488,7 +488,7 @@ class Jefe0Dashboard(QWidget):
         self._run_nodo_job("promote")
 
     def _run_nodo_job(self, mode: str):
-        """mode: 'full' | 'sync'. Muestra progreso 0–100% en hilo aparte."""
+        """mode: 'full' | 'sync'. Muestra progreso 0â€“100% en hilo aparte."""
         dest = None
         if mode == "full":
             dest = QFileDialog.getExistingDirectory(
@@ -510,15 +510,15 @@ class Jefe0Dashboard(QWidget):
         dlg.setFixedSize(460, 160)
         lay = QVBoxLayout(dlg)
         lay.setContentsMargins(24, 20, 24, 20)
-        title_text = "Copiando nodo…"
+        title_text = "Copiando nodoâ€¦"
         if mode == "sync":
-            title_text = "Sincronizando hacia el nodo…"
+            title_text = "Sincronizando hacia el nodoâ€¦"
         elif mode == "promote":
-            title_text = "Promoviendo nodo (Rescatando datos)…"
+            title_text = "Promoviendo nodo (Rescatando datos)â€¦"
         title = QLabel(title_text)
         title.setStyleSheet("font-size: 15px; font-weight: 400; letter-spacing: 0px; color: #0F172A;")
         lay.addWidget(title)
-        subtitle = QLabel("Preparando…")
+        subtitle = QLabel("Preparandoâ€¦")
         subtitle.setStyleSheet("font-size: 12px; color: #64748B;")
         subtitle.setWordWrap(True)
         lay.addWidget(subtitle)
@@ -577,7 +577,7 @@ class Jefe0Dashboard(QWidget):
                     self,
                     "Nodo listo",
                     f"Copia al 100%.\n\n{payload.get('root')}\n\n"
-                    "La próxima vez este botón será «Sincronizar nodo».",
+                    "La prÃ³xima vez este botÃ³n serÃ¡ Â«Sincronizar nodoÂ».",
                 )
             elif payload.get("mode") == "promote":
                 QMessageBox.information(
@@ -585,17 +585,17 @@ class Jefe0Dashboard(QWidget):
                     "Nodo promovido",
                     f"Nodo activo:\n{payload.get('root')}\n\n"
                     "Contabilidad y datos del negocio apuntan al pendrive/carpeta.\n"
-                    "Reiniciá el perfil para aplicar del todo.",
+                    "ReiniciÃ¡ el perfil para aplicar del todo.",
                 )
                 self.request_logout.emit()
             else:
                 stats = dict(payload.get("stats") or {})
                 tomados = int(stats.get("clientes_tomados", 0) or 0)
-                texto = f"El pendrive tiene la tienda al {stats.get('copia_de') or '—'}."
+                texto = f"El pendrive tiene la tienda al {stats.get('copia_de') or 'â€”'}."
                 if stats.get("aviso"):
                     texto += f"\n\n{stats['aviso']}"
                 if tomados:
-                    texto += f"\n\nLa maestra tomó {tomados} movimiento(s) de clientes cargados afuera."
+                    texto += f"\n\nLa maestra tomÃ³ {tomados} movimiento(s) de clientes cargados afuera."
                 QMessageBox.information(self, "Sincronizado", texto)
 
         def on_fail(err):
@@ -608,3 +608,4 @@ class Jefe0Dashboard(QWidget):
         worker.start()
         qt_exec(dlg)
         worker.wait(120000)
+

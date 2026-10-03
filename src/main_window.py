@@ -416,7 +416,8 @@ class MainWindow(QMainWindow):
             None,    # 21 — CarteleriaMain           (lazy)
             None,    # 23 — JefeIAProactiva          (lazy)
             None,    # 24 — PromediosMain            (lazy)
-            None,    # 25 — AuditoriaMain            (lazy)
+            None,    # 25
+            None,    # 26 -> JefeProveedores — AuditoriaMain            (lazy)
         ]
 
         # Fábricas: callable que crea el widget cuando se necesita
