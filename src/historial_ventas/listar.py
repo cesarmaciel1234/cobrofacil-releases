@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import datetime
 
@@ -18,11 +18,6 @@ def iso_dia(f_raw) -> str:
 
 
 def _get_db():
-    from src.base_de_datos.database import db_manager
-    if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite":
-        return db_manager
-    if db_manager.is_connected():
-        return db_manager
     try:
         from src.jefe.nodo_portable import espejo
         if espejo.en_copia():
@@ -32,7 +27,9 @@ def _get_db():
             return Lector(espejo.copia.ruta())
     except ImportError:
         pass
+    from src.base_de_datos.database import db_manager
     return db_manager
+
 
 def listar_tickets(
     *,
@@ -133,8 +130,8 @@ def listar_tickets(
             if rec <= 0: continue
         elif metodo_u != "TODOS":
             if pago.startswith("MIXTO"):
-                # Si el filtro es Efectivo, se permite y suma la porción en efectivo.
-                # Si el filtro es distinto de Efectivo (ej. Transferencia, Tarjeta), suma la porción digital.
+                # Si el filtro es Efectivo, se permite y suma la porciÃ³n en efectivo.
+                # Si el filtro es distinto de Efectivo (ej. Transferencia, Tarjeta), suma la porciÃ³n digital.
                 try: 
                     pe = float(r.get("pago_efectivo") or 0.0)
                     cambio = float(r.get("cambio") or 0.0)
@@ -213,3 +210,4 @@ def _parse_fecha(f_str: str):
         except ValueError:
             continue
     return None
+

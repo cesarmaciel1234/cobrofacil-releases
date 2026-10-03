@@ -28,14 +28,17 @@ class SincronizadorMaestra:
 
         try:
             # 1. Limpiar ingresos y costos previos de la misma fecha importados automaticamente
-            self.db_contabilidad.execute_query(
-                "DELETE FROM income WHERE date = ? AND source = 'Ventas TPV'",
-                (fecha_str,)
-            )
-            self.db_contabilidad.execute_query(
-                "DELETE FROM expenses WHERE date = ? AND description = 'Costo de Ventas TPV'",
-                (fecha_str,)
-            )
+            with self.db_contabilidad.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "DELETE FROM income WHERE date = ? AND source = 'Ventas TPV'",
+                    (fecha_str,)
+                )
+                cursor.execute(
+                    "DELETE FROM expenses WHERE date = ? AND description = 'Costo de Ventas TPV'",
+                    (fecha_str,)
+                )
+                conn.commit()
 
             # 2. Traer Ventas (Ingresos)
             query_ventas = """

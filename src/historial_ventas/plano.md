@@ -13,10 +13,10 @@ Muestra la lista de ventas completadas o anuladas (grilla).
 
 El modulo centraliza las lecturas para evitar la duplicacion de codigo en las distintas pantallas de la app.
 
-- **listar.py**: Ejecuta el `SELECT` principal a la tabla `ventas` (con paginacion y filtros). Utiliza `_get_db()` para acceder a MariaDB o enrutar de forma silenciosa al espejo/punpro.db segun la disponibilidad de red.
+- **listar.py**: Ejecuta el `SELECT` principal a la tabla `ventas` (con paginacion y filtros). Utiliza `_get_db(ver_todo)` para acceder a MariaDB o enrutar de forma silenciosa al espejo/punpro.db segun la disponibilidad de red y perfil.
 - **desglose.py**: Trae el detalle de los productos vendidos (`detalles_ventas`) asociados a un id de venta especifico, tambien usando `_get_db()`.
 - **acciones.py**: Contiene los metodos para reimprimir y obtener el detalle crudo de un ticket (`_get_db()`).
 
 ## Que no cambiar
 
-- No cambiar la logica de `_get_db()`: es lo que permite que el jefe y admin puedan consultar las ventas en la notebook al quedarse sin red, leyendo directamente de `Lector` (espejo).
+- No cambiar la logica de `_get_db(ver_todo)` ni acoplarla estáticamente a MariaDB. Si se solicita `ver_todo=True` (Perfil Jefe), se debe enrutar la lectura al motor `espejo.fuente()` (SQLite espejo_tienda.db) cuando está offline. Si `ver_todo=False` (Perfil Cajero), se debe consultar el motor `db_manager` (SQLite punpro.db) local para permitir devoluciones sobre ventas hechas sin conexión. Esto garantiza el Aislamiento de Perfiles y Motores dictado en la raíz.

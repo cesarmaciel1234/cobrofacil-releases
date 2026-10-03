@@ -1,4 +1,4 @@
-# -*- mode: python ; coding: utf-8 -*-
+﻿# -*- mode: python ; coding: utf-8 -*-
 
 
 a = Analysis(
@@ -15,6 +15,10 @@ a = Analysis(
         'src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.hoja',
         'src.cajero.paso6_cobro.mercadopago_core',
         'src.reportes_core',
+          'src.contabilidad.database',
+          'src.contabilidad.integracion_maestra.motor_sync_conta',
+          'src.contabilidad.integracion_maestra.sincronizador',
+          'src.jefe.reportes.periodo',
         'src.services.db_network_service',
         'src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.atajos',
         'src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.bloquear',
@@ -84,3 +88,5 @@ coll = COLLECT(
     upx_exclude=[],
     name='CobroFacil_POS',
 )
+
+

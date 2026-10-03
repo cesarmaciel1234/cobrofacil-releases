@@ -1284,11 +1284,14 @@ class Paso6Cobro(QDialog):
             if not txt:
                 self.descuento_monto = 0.0
             elif txt.endswith('%') or (hasattr(self, 'btn_tipo_desc') and "%" in self.btn_tipo_desc.text()):
-                val = float(txt.replace('%', ''))
+                from src.utils.parser import parse_float_regional
+                val = parse_float_regional(txt.replace('%', ''))
                 self.descuento_monto = self.total_original * (max(0, min(100, val)) / 100.0)
             else:
-                val = float(txt.replace('$', '').strip())
-                self.descuento_monto = max(0.0, val)
+                from src.utils.parser import parse_float_regional
+                val = parse_float_regional(txt)
+                # No permitir redondeo mayor al total
+                self.descuento_monto = min(max(0.0, val), self.total_original)
             self.recargar_total_final()
         except ValueError:
             pass

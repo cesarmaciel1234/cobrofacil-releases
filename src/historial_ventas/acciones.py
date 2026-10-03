@@ -1,9 +1,4 @@
 def _get_db():
-    from src.base_de_datos.database import db_manager
-    if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite":
-        return db_manager
-    if db_manager.is_connected():
-        return db_manager
     try:
         from src.jefe.nodo_portable import espejo
         if espejo.en_copia():
@@ -13,7 +8,9 @@ def _get_db():
             return Lector(espejo.copia.ruta())
     except ImportError:
         pass
+    from src.base_de_datos.database import db_manager
     return db_manager
+
 
 def detalle(id_venta: int):
     db = _get_db()

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Any, Optional
+﻿from typing import List, Tuple, Any, Optional
 import sqlite3
 import os
 import sys
@@ -20,7 +20,7 @@ class ConnectionMixin:
         return cls._instance
 
     def _attach_local_store_client(self) -> None:
-        """Conexión rápida al MariaDB del proceso --server (sin start_server ni backup)."""
+        """ConexiÃ³n rÃ¡pida al MariaDB del proceso --server (sin start_server ni backup)."""
         from src.db_engines.mariadb_engine import MariaDBEngine
 
         self.is_master = True
@@ -38,7 +38,7 @@ class ConnectionMixin:
             except Exception:
                 pass
         logger.info(
-            "Conectado al Servidor de Tienda (cliente local — MariaDB ya en marcha)."
+            "Conectado al Servidor de Tienda (cliente local â€” MariaDB ya en marcha)."
         )
 
     def _normalize_db_path(self, path: str, base_app_path: str) -> str:
@@ -79,7 +79,7 @@ class ConnectionMixin:
         es_esclava_cfg, host_esclava = self._leer_rol_red_desde_config(config_data_early)
 
         # Lanzador / terminales: adjuntar Servidor local SOLO si esta PC es maestra.
-        # Si config pide ESCLAVA, nunca pisar con 127.0.0.1 (bug: al reiniciar volvía maestra).
+        # Si config pide ESCLAVA, nunca pisar con 127.0.0.1 (bug: al reiniciar volvÃ­a maestra).
         if "--server" not in sys.argv and not es_esclava_cfg:
             try:
                 from src.central_red_global.store_server import is_store_server_online
@@ -100,7 +100,7 @@ class ConnectionMixin:
 
             self.db_engine_type = str(config_data.get("db_engine", "sqlite")).strip().lower()
 
-            # Sesión ya en fallback offline: no reintentar una maestra caída en cada _init_db()
+            # SesiÃ³n ya en fallback offline: no reintentar una maestra caÃ­da en cada _init_db()
             if getattr(self, "_forced_local_offline", False):
                 # Mantener identidad esclava si la config lo pide (solo BD local temporal)
                 es_off, _ = self._leer_rol_red_desde_config(config_data)
@@ -109,7 +109,7 @@ class ConnectionMixin:
                 db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
                 self.db_path = os.path.join(base_app_path, db_name)
                 self.is_master = not es_off
-                logger.info("Modo local offline de sesión activo (SQLite). Se omite reintento a la Maestra.")
+                logger.info("Modo local offline de sesiÃ³n activo (SQLite). Se omite reintento a la Maestra.")
                 self._create_tables()
                 self._ensure_test_users()
                 return
@@ -134,15 +134,15 @@ class ConnectionMixin:
                     host = host_remoto or custom_ip
                     if not host or host.lower() in ("localhost", "127.0.0.1"):
                         logger.error(
-                            "Config ESCLAVA sin IP de maestra válida. "
-                            "Quedá offline local sin promover a maestra."
+                            "Config ESCLAVA sin IP de maestra vÃ¡lida. "
+                            "QuedÃ¡ offline local sin promover a maestra."
                         )
                         self._activar_sqlite_offline(base_app_path, config_data)
                         self._ensure_test_users()
                         return
 
                     if puerto_mariadb_abierto(host, 2.0):
-                        logger.info(f"Servidor MariaDB en {host} es accesible, forzando conexión")
+                        logger.info(f"Servidor MariaDB en {host} es accesible, forzando conexiÃ³n")
                     else:
                         logger.warning(f"Servidor MariaDB en {host} no responde, modo offline")
                         self._activar_sqlite_offline(base_app_path, config_data)
@@ -159,7 +159,7 @@ class ConnectionMixin:
                         except Exception:
                             pass
                     self.is_master = False
-                    logger.info(f"MariaDB modo ESCLAVA → {host}")
+                    logger.info(f"MariaDB modo ESCLAVA â†’ {host}")
                 else:
                     host = custom_ip if custom_ip else "127.0.0.1"
                     import socket
@@ -183,20 +183,20 @@ class ConnectionMixin:
                         if puerto_mariadb_abierto(host, 1.5):
                             conn = self.mariadb_engine.get_connection()
                             conn._conn.ping()
-                            logger.info("Conexión OK a la PC Maestra.")
+                            logger.info("ConexiÃ³n OK a la PC Maestra.")
                             master_ok = True
                     except Exception:
                         master_ok = False
 
                     if not master_ok:
-                        logger.error(f"Fallo de conexión a la Maestra en {host}")
+                        logger.error(f"Fallo de conexiÃ³n a la Maestra en {host}")
                         logger.info(
                             "Esclava offline temporal (SQLite local). "
-                            "Se conserva is_master=false en config para el próximo arranque."
+                            "Se conserva is_master=false en config para el prÃ³ximo arranque."
                         )
                         self._activar_sqlite_offline(base_app_path, config_data)
                         # Sin migrate faltan columnas (precio_oferta_relampago, etc.)
-                        # y la TV de cartelería se rompe / parece congelada.
+                        # y la TV de cartelerÃ­a se rompe / parece congelada.
                         try:
                             self._migrate_db()
                         except Exception as mig_e:
@@ -217,7 +217,7 @@ class ConnectionMixin:
                     self._migrate_db()
                     self._ensure_test_users()
 
-                    # Migración transparente si MariaDB está vacía pero SQLite tiene datos
+                    # MigraciÃ³n transparente si MariaDB estÃ¡ vacÃ­a pero SQLite tiene datos
                     try:
                         conn = self.get_connection()
                         cursor = conn.cursor()
@@ -238,10 +238,10 @@ class ConnectionMixin:
                                 count_s = sq_cur.fetchone()[0]
                                 sq_c.close()
                                 if count_s > 0:
-                                    logger.info(f"Detectada base de datos MariaDB vacía. Migrando {count_s} productos desde SQLite...")
+                                    logger.info(f"Detectada base de datos MariaDB vacÃ­a. Migrando {count_s} productos desde SQLite...")
                                     self.migrar_de_sqlite_a_mariadb()
                             except Exception as ex_mig:
-                                logger.error(f"Fallo al validar migración: {ex_mig}")
+                                logger.error(f"Fallo al validar migraciÃ³n: {ex_mig}")
                 # Diario externo: reinyectar tickets faltantes (maestra o esclava online)
                 try:
                     from src.base_de_datos.diario_ventas_externo import schedule_hidratar_faltantes
@@ -253,7 +253,7 @@ class ConnectionMixin:
             # --- FIN INTEGRACION MARIADB ---
 
             custom_path = str(config_data.get("db_path", "") or "").strip()
-            # Detección de bucle infinito (Loopback)
+            # DetecciÃ³n de bucle infinito (Loopback)
             is_loopback = False
             if custom_path.startswith("\\\\") or custom_path.startswith("//"):
                 import socket
@@ -268,7 +268,7 @@ class ConnectionMixin:
             if custom_path and not is_loopback:
                 tentative_path = self._normalize_db_path(custom_path, base_app_path)
 
-                # Probar conexión LAN antes de asignarla (Fail-Safe)
+                # Probar conexiÃ³n LAN antes de asignarla (Fail-Safe)
                 is_reachable = False
                 try:
                     test_conn = sqlite3.connect(tentative_path, uri=True)
@@ -298,7 +298,7 @@ class ConnectionMixin:
                 self.is_master = True
                 db_name = str(config_data.get("db_name", "") or "").strip() or "punpro.db"
 
-                # Expresión regular para validar exactamente 5 caracteres alfanuméricos + .db
+                # ExpresiÃ³n regular para validar exactamente 5 caracteres alfanumÃ©ricos + .db
                 es_valido = bool(re.match(r"^[A-Z0-9]{5}\.db$", db_name))
 
                 if not es_valido:
@@ -332,19 +332,19 @@ class ConnectionMixin:
 
         logger.info(f"DatabaseManager initialized with path: {self.db_path}")
 
-        # Intentar conectar. Si falla (ej. red caída), mostrar alerta y volver a local.
+        # Intentar conectar. Si falla (ej. red caÃ­da), mostrar alerta y volver a local.
         import sqlite3
         import threading
 
         try:
             if not self.is_master:
-                # Para evitar congelamiento de UI en rutas de red caídas (UNC o letras mapeadas),
-                # intentamos hacer un stat rápido en un hilo con timeout.
+                # Para evitar congelamiento de UI en rutas de red caÃ­das (UNC o letras mapeadas),
+                # intentamos hacer un stat rÃ¡pido en un hilo con timeout.
                 reachable = False
                 def check_access():
                     nonlocal reachable
                     try:
-                        # Sólo abre el archivo rápido a nivel OS
+                        # SÃ³lo abre el archivo rÃ¡pido a nivel OS
                         with open(self.db_path, 'rb') as f:
                             pass
                         reachable = True
@@ -358,12 +358,12 @@ class ConnectionMixin:
                 if not reachable:
                     raise sqlite3.OperationalError(f"La ruta de red {self.db_path} no responde.")
 
-            # Prueba de conexión rápida
+            # Prueba de conexiÃ³n rÃ¡pida
             conn = sqlite3.connect(self.db_path, timeout=15.0)
             conn.close()
 
-            # Solo el Master (dueño de la BD) debe crear tablas y migrar la estructura.
-            # Los clientes de red solo leen/escriben datos, así evitamos colapsar los bloqueos.
+            # Solo el Master (dueÃ±o de la BD) debe crear tablas y migrar la estructura.
+            # Los clientes de red solo leen/escriben datos, asÃ­ evitamos colapsar los bloqueos.
             if self.is_master:
                 self._create_tables()
                 self._migrate_db()
@@ -373,21 +373,21 @@ class ConnectionMixin:
             from PyQt6.QtWidgets import QApplication, QMessageBox
 
             # Asegurar QApplication para poder mostrar la alerta bonita
-            # (sys ya importado a nivel de módulo — no reimportar aquí)
+            # (sys ya importado a nivel de mÃ³dulo â€” no reimportar aquÃ­)
             if not QApplication.instance():
                 app = QApplication(sys.argv)
             else:
                 app = QApplication.instance()
 
-            msg = (f"🚨 ERROR CRÍTICO DE RED LAN 🚨\n\n"
+            msg = (f"ðŸš¨ ERROR CRÃTICO DE RED LAN ðŸš¨\n\n"
                    f"No se pudo contactar con la base de datos en la PC Principal:\n{self.db_path}\n\n"
-                   f"¿Qué deseas hacer?\n\n"
-                   f"► COBRO LOCAL: Desvincula esta PC de la red para que puedas cobrar localmente.\n"
-                   f"► SALIR Y REINTENTAR: Cierra el programa para intentar reconectar cuando la PC Principal esté lista.")
+                   f"Â¿QuÃ© deseas hacer?\n\n"
+                   f"â–º COBRO LOCAL: Desvincula esta PC de la red para que puedas cobrar localmente.\n"
+                   f"â–º SALIR Y REINTENTAR: Cierra el programa para intentar reconectar cuando la PC Principal estÃ© lista.")
 
             box = QMessageBox()
             box.setIcon(QMessageBox.Critical)
-            box.setWindowTitle("Conexión Perdida")
+            box.setWindowTitle("ConexiÃ³n Perdida")
             box.setText(msg)
 
             btn_local = box.addButton("Cobro Local", QMessageBox.AcceptRole)
@@ -398,7 +398,7 @@ class ConnectionMixin:
             if box.clickedButton() == btn_salir:
                 sys.exit(1)
 
-            # Eligió COBRO LOCAL, procedemos a borrar configuración y volver a local
+            # EligiÃ³ COBRO LOCAL, procedemos a borrar configuraciÃ³n y volver a local
             base_path = get_base_path()
             cfg_path = os.path.join(base_path, "config.json")
             try:
@@ -418,8 +418,8 @@ class ConnectionMixin:
 
         # [AUTO-RECOVERY PARA ACTUALIZACIONES Y REINSTALACIONES]
         # Si la maestra arranca con la BD en cero (0 productos, 0 ventas),
-        # asume que se actualizó instalando en una carpeta limpia (se perdió la DB local).
-        # Los backups de %LOCALAPPDATA% siguen intactos y se auto-restauran aquí.
+        # asume que se actualizÃ³ instalando en una carpeta limpia (se perdiÃ³ la DB local).
+        # Los backups de %LOCALAPPDATA% siguen intactos y se auto-restauran aquÃ­.
         if getattr(self, "is_master", False):
             try:
                 conn = self.get_connection()
@@ -428,7 +428,7 @@ class ConnectionMixin:
                 row = cur.fetchone()
                 total = row['t'] if isinstance(row, dict) else row[0]
                 if total == 0:
-                    logger.warning("¡ALERTA! Base de datos maestra completamente vacía. Iniciando auto-recovery desde %LOCALAPPDATA%...")
+                    logger.warning("Â¡ALERTA! Base de datos maestra completamente vacÃ­a. Iniciando auto-recovery desde %LOCALAPPDATA%...")
                     from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
                     restaurado = AutoBlindajeDB.restaurar_ultimo_backup_valido(
                         engine_type=getattr(self, "db_engine_type", "sqlite"),
@@ -438,13 +438,13 @@ class ConnectionMixin:
                         merge_today=False
                     )
                     if restaurado:
-                        logger.info("✨ BACKUP RECUPERADO CON ÉXITO TRAS ACTUALIZACIÓN/LIMPIEZA ✨")
+                        logger.info("âœ¨ BACKUP RECUPERADO CON Ã‰XITO TRAS ACTUALIZACIÃ“N/LIMPIEZA âœ¨")
             except Exception as e:
-                logger.debug(f"Auto-recovery BD vacía omitido: {e}")
+                logger.debug(f"Auto-recovery BD vacÃ­a omitido: {e}")
 
     def reload_config(self):
         """Re-initializes the database connection and configuration dynamically without restarting."""
-        logger.info("Recargando configuracion de base de datos dinámicamente...")
+        logger.info("Recargando configuracion de base de datos dinÃ¡micamente...")
         # Check current engine and master state
         was_master = getattr(self, "is_master", True)
 
@@ -469,13 +469,13 @@ class ConnectionMixin:
         self._init_db()
 
     def _puerto_maestra_vivo(self, host: str) -> bool:
-        """True si 3306 de la maestra acepta conexión. El sí se recuerda 8s para no frenar cada lectura."""
+        """True si 3306 de la maestra acepta conexiÃ³n. El sÃ­ se recuerda 8s para no frenar cada lectura."""
         import time
 
         ahora = time.monotonic()
         if ahora < float(getattr(self, "_maestra_viva_hasta", 0) or 0):
             return True
-        if puerto_mariadb_abierto(host, 0.6):
+        if puerto_mariadb_abierto(host, 2.0):
             self._maestra_viva_hasta = ahora + 8.0
             return True
         self._maestra_viva_hasta = 0.0
@@ -509,7 +509,7 @@ class ConnectionMixin:
 
             local_path = os.path.join(base_path, db_name)
 
-            # Cerrar engine MariaDB si había
+            # Cerrar engine MariaDB si habÃ­a
             if getattr(self, "db_engine_type", "sqlite") == "mariadb":
                 try:
                     if hasattr(self, "mariadb_engine") and self.mariadb_engine:
@@ -574,7 +574,7 @@ class ConnectionMixin:
             raise
 
     def is_connected(self) -> bool:
-        """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
+        """Devuelve True si el motor actual estÃ¡ instanciado y puede ejecutar una consulta simple."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "mariadb_engine", None):
             return False
         try:
@@ -587,9 +587,9 @@ class ConnectionMixin:
         """Returns a new connection to the database (SQLite o MariaDB).
 
         Si esta PC es esclava y la maestra no contesta, pasa a SQLite local
-        y devuelve esa conexión. caer_si_maestra_caida=False lo usa la sync,
+        y devuelve esa conexiÃ³n. caer_si_maestra_caida=False lo usa la sync,
         que tiene que fallar y reintentar: no debe dar por subida una venta
-        que solo se escribió en el respaldo.
+        que solo se escribiÃ³ en el respaldo.
         """
         if self._host_tienda() and getattr(self, "db_engine_type", "sqlite") != "mariadb":
             if not getattr(self, "_reconectando_local", False):
@@ -636,4 +636,5 @@ class ConnectionMixin:
         except sqlite3.Error as e:
             logger.error(f"Error connecting to database: {e}")
             raise
+
 

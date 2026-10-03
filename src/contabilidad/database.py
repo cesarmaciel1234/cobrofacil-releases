@@ -1,4 +1,4 @@
-import sqlite3
+﻿import sqlite3
 import datetime
 import os
 import calendar
@@ -7,13 +7,13 @@ from typing import List, Dict, Any, Optional
 import logging
 
 class Database:
-    """Clase encargada de toda la comunicación con la base de datos SQLite."""
+    """Clase encargada de toda la comunicaciÃ³n con la base de datos SQLite."""
     def __init__(self, db_name="database.db"):
         self.db_name = db_name
         self.init_db()
 
     def get_connection(self):
-        """Crea una conexión a la base de datos permitiendo buscar datos por nombre de columna."""
+        """Crea una conexiÃ³n a la base de datos permitiendo buscar datos por nombre de columna."""
         conn = sqlite3.connect(self.db_name)
         conn.row_factory = sqlite3.Row  # Permite acceso por nombre de columna
         conn.execute("PRAGMA foreign_keys = ON")
@@ -186,7 +186,7 @@ class Database:
             conn.commit()
 
     def log_audit(self, user, action, table, record_id, details):
-        """Registra una acción de auditoría avanzada."""
+        """Registra una acciÃ³n de auditorÃ­a avanzada."""
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
@@ -248,7 +248,7 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             if month and year:
-                month_str = f"{year}-{month:02d}-%"
+                month_str = f"{year}-{int(month):02d}-%"
                 cursor.execute('SELECT * FROM income WHERE date LIKE ? ORDER BY date DESC', (month_str,))
             else:
                 cursor.execute('SELECT * FROM income ORDER BY date DESC')
@@ -273,7 +273,7 @@ class Database:
             cursor.execute('INSERT INTO investments (date, name, amount, category) VALUES (?, ?, ?, ?)',
                            (date, name, amount, category))
             cursor.execute('INSERT INTO activity_log (company, action, details) VALUES (?, ?, ?)',
-                           (self.db_name.replace(".db", "").upper(), "INVERSIÓN", f"${amount:,.2f} - {name}"))
+                           (self.db_name.replace(".db", "").upper(), "INVERSIÃ“N", f"${amount:,.2f} - {name}"))
             conn.commit()
 
     def get_investments(self):
@@ -365,7 +365,7 @@ class Database:
             conn.commit()
 
     def pay_installment(self, inst_id, payment_amount=None):
-        """Marca una cuota de préstamo como pagada (total o parcial) y genera automáticamente un gasto de salida."""
+        """Marca una cuota de prÃ©stamo como pagada (total o parcial) y genera automÃ¡ticamente un gasto de salida."""
         with self.get_connection() as conn:
             try:
                 cursor = conn.cursor()
@@ -485,7 +485,7 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             # Check if any expense of type 'fijo' exists for this month/year
-            month_str = f"{year}-{month:02d}-%"
+            month_str = f"{year}-{int(month):02d}-%"
             cursor.execute("SELECT id FROM expenses WHERE type = 'fijo' AND date LIKE ?", (month_str,))
             return cursor.fetchone() is not None
 
@@ -500,7 +500,7 @@ class Database:
     def delete_fixed_costs_for_period(self, month, year):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            month_str = f"{year}-{month:02d}-%"
+            month_str = f"{year}-{int(month):02d}-%"
             cursor.execute("DELETE FROM expenses WHERE type = 'fijo' AND date LIKE ?", (month_str,))
             conn.commit()
 
@@ -516,13 +516,13 @@ class Database:
             return cursor.fetchall()
 
     def get_trend_data(self, year: int):
-        """Extrae la tendencia anual para analítica visual."""
+        """Extrae la tendencia anual para analÃ­tica visual."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             income_data = []
             expense_data = []
             for month in range(1, 13):
-                period = f"{year}-{month:02d}-%"
+                period = f"{year}-{int(month):02d}-%"
                 cursor.execute("SELECT SUM(amount) FROM income WHERE date LIKE ?", (period,))
                 income_data.append(cursor.fetchone()[0] or 0.0)
                 cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ?", (period,))
@@ -629,9 +629,9 @@ class Database:
                 if not month or not year:
                     today = datetime.date.today()
                     month, year = today.month, today.year
-                period_str = f"{year}-{month:02d}-%"
-                desde = f"{year}-{month:02d}-01 00:00:00"
-                hasta = f"{year}-{month:02d}-31 23:59:59"
+                period_str = f"{year}-{int(month):02d}-%"
+                desde = f"{year}-{int(month):02d}-01 00:00:00"
+                hasta = f"{year}-{int(month):02d}-31 23:59:59"
                 date_filter = "date LIKE ?"
                 params_filter = (period_str,)
             else:
@@ -685,7 +685,7 @@ class Database:
                 "total_income": total_income,
                 "categories": categories,
                 "balances": {
-                    "Préstamos": loan_balance,
+                    "PrÃ©stamos": loan_balance,
                     "Cheques": check_balance,
                     "Tarjetas": card_balance,
                     "Proveedores": prov_balance
@@ -694,7 +694,7 @@ class Database:
             }
 
     def get_pure_accounting_stats(self, date_obj=None):
-        """Obtiene métricas de contabilidad pura: Total del día, mes y año acumulado."""
+        """Obtiene mÃ©tricas de contabilidad pura: Total del dÃ­a, mes y aÃ±o acumulado."""
         if not date_obj:
             date_obj = datetime.date.today()
 
@@ -734,7 +734,7 @@ class Database:
             cursor = conn.cursor()
             
             if desde is None and hasta is None:
-                period_str = f"{year}-{month:02d}-%" if month and year else "%"
+                period_str = f"{year}-{int(month):02d}-%" if month and year else "%"
                 date_filter = "date LIKE ?"
                 date_filter_due = "due_date LIKE ?"
                 params_filter = (period_str, period_str, period_str, period_str, period_str)
@@ -763,7 +763,7 @@ class Database:
                 FROM checks
                 WHERE {date_filter_due} AND status != 'paid'
                 UNION ALL
-                SELECT i.due_date as date, 'PRÉSTAMO' as type, l.category as cat, 'Cuota ' || i.number || ' - ' || l.name as description, -i.amount as amount, i.id,
+                SELECT i.due_date as date, 'PRÃ‰STAMO' as type, l.category as cat, 'Cuota ' || i.number || ' - ' || l.name as description, -i.amount as amount, i.id,
                        CASE WHEN i.status = 'pending' THEN 'Pendiente'
                             WHEN i.status = 'partial' THEN 'Parcial'
                             ELSE 'Pagado' END as status
@@ -773,3 +773,5 @@ class Database:
                 ORDER BY date DESC
             ''', params_filter)
             return cursor.fetchall()
+
+
