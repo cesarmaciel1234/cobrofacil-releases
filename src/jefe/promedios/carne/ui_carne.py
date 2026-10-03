@@ -5,7 +5,8 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from src.contabilidad.shared_globals import PAL, btn_primary, build_table
-from .motor_carne import MotorCarne
+from .motor_carne import MotorCarne, ColumnasCarne
+from src.utils.parser import parse_float_regional
 from src.jefe.promedios.motor_global_promedios import MotorPromedios
 from src.base_de_datos.database import DatabaseManager
 
@@ -49,9 +50,9 @@ class UICarne(QWidget):
             for col in range(13):
                 val = str(row_data[col]) if col < len(row_data) else "0.00"
                 it = QTableWidgetItem(val)
-                if col in [2, 8, 9, 10, 11, 12]:
+                if col in [ColumnasCarne.COSTO, ColumnasCarne.VALOR_COSTO, ColumnasCarne.VENTA_NORMAL, ColumnasCarne.VENTA_MAYOREO, ColumnasCarne.GANANCIA_N, ColumnasCarne.GANANCIA_M]:
                     it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    if col == 2: it.setForeground(QColor(PAL['text3']))
+                    if col == ColumnasCarne.COSTO: it.setForeground(QColor(PAL['text3']))
                 self._prom_tabla.setItem(i, col, it)
         self._add_empty_row()
         self._prom_tabla.blockSignals(False)
@@ -66,7 +67,7 @@ class UICarne(QWidget):
                 if precio_actual > 0:
                     redondeado = math.ceil(precio_actual / 500) * 500
                     self._prom_tabla.setItem(r, 3, QTableWidgetItem(f"{redondeado:,.2f}"))
-            except: pass
+            except ValueError: pass
         self._prom_tabla.blockSignals(False)
         self._on_tabla_changed(None)
 
@@ -132,7 +133,7 @@ class UICarne(QWidget):
                         # El input proveedor y fecha
                         self._input_proveedor.setText(r.get('proveedor', ''))
                         self.set_state(estado)
-                    except: pass
+                    except ValueError: pass
                     break
 
     def _build_ui(self):
@@ -260,25 +261,25 @@ class UICarne(QWidget):
     def _sync_costo_total(self):
         if self._prom_costo_total.signalsBlocked(): return
         try:
-            k = float(self._prom_kilos.text().replace(',', '.') or 0)
-            p = float(self._prom_precio.text().replace(',', '.') or 0)
+            k = parse_float_regional(self._prom_kilos.text())
+            p = parse_float_regional(self._prom_precio.text())
             if k > 0:
                 self._prom_costo_total.blockSignals(True)
                 self._prom_costo_total.setText(f"{k*p:.2f}")
                 self._prom_costo_total.blockSignals(False)
-        except: pass
+        except ValueError: pass
         self._sync_calc()
 
     def _sync_precio(self):
         if self._prom_precio.signalsBlocked(): return
         try:
-            k = float(self._prom_kilos.text().replace(',', '.') or 0)
-            ct = float(self._prom_costo_total.text().replace(',', '.') or 0)
+            k = parse_float_regional(self._prom_kilos.text())
+            ct = parse_float_regional(self._prom_costo_total.text())
             if k > 0:
                 self._prom_precio.blockSignals(True)
                 self._prom_precio.setText(f"{ct/k:.2f}")
                 self._prom_precio.blockSignals(False)
-        except: pass
+        except ValueError: pass
         self._sync_calc()
 
     def _load_defaults(self):
@@ -287,13 +288,13 @@ class UICarne(QWidget):
         cortes = MotorCarne.get_cortes(self._sub_tipo)
         for i, (corte, kilos) in enumerate(cortes):
             self._prom_tabla.insertRow(i)
-            self._prom_tabla.setItem(i, 0, QTableWidgetItem(corte))
-            self._prom_tabla.setItem(i, 1, QTableWidgetItem(str(kilos)))
-            for col in range(2, 13):
-                it = QTableWidgetItem("0.00" if col != 6 else "")
-                if col in [2, 8, 9, 10, 11, 12]:
+            self._prom_tabla.setItem(i, ColumnasCarne.CORTE, QTableWidgetItem(corte))
+            self._prom_tabla.setItem(i, ColumnasCarne.KILOS, QTableWidgetItem(str(kilos)))
+            for col in range(ColumnasCarne.COSTO, ColumnasCarne.GANANCIA_M + 1):
+                it = QTableWidgetItem("0.00" if col != ColumnasCarne.VACIO_6 else "")
+                if col in [ColumnasCarne.COSTO, ColumnasCarne.VALOR_COSTO, ColumnasCarne.VENTA_NORMAL, ColumnasCarne.VENTA_MAYOREO, ColumnasCarne.GANANCIA_N, ColumnasCarne.GANANCIA_M]:
                     it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    if col == 2: it.setForeground(QColor(PAL['text3']))
+                    if col == ColumnasCarne.COSTO: it.setForeground(QColor(PAL['text3']))
                 self._prom_tabla.setItem(i, col, it)
         
         self._add_empty_row()
@@ -303,18 +304,18 @@ class UICarne(QWidget):
     def _add_empty_row(self):
         i = self._prom_tabla.rowCount()
         self._prom_tabla.insertRow(i)
-        self._prom_tabla.setItem(i, 0, QTableWidgetItem(""))
-        self._prom_tabla.setItem(i, 1, QTableWidgetItem(""))
-        for col in range(2, 13):
-            it = QTableWidgetItem("0.00" if col != 6 else "")
-            if col in [2, 8, 9, 10, 11, 12]:
+        self._prom_tabla.setItem(i, ColumnasCarne.CORTE, QTableWidgetItem(""))
+        self._prom_tabla.setItem(i, ColumnasCarne.KILOS, QTableWidgetItem(""))
+        for col in range(ColumnasCarne.COSTO, ColumnasCarne.GANANCIA_M + 1):
+            it = QTableWidgetItem("0.00" if col != ColumnasCarne.VACIO_6 else "")
+            if col in [ColumnasCarne.COSTO, ColumnasCarne.VALOR_COSTO, ColumnasCarne.VENTA_NORMAL, ColumnasCarne.VENTA_MAYOREO, ColumnasCarne.GANANCIA_N, ColumnasCarne.GANANCIA_M]:
                 it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                if col == 2: it.setForeground(QColor(PAL['text3']))
+                if col == ColumnasCarne.COSTO: it.setForeground(QColor(PAL['text3']))
             self._prom_tabla.setItem(i, col, it)
 
     def _repartir_kilos(self):
         try:
-            kt = float(self._prom_kilos.text().replace(',', '.') or 0)
+            kt = parse_float_regional(self._prom_kilos.text())
             if kt <= 0: return
             cortes = MotorCarne.get_cortes(self._sub_tipo)
             if not cortes: return
@@ -324,18 +325,18 @@ class UICarne(QWidget):
             self._prom_tabla.blockSignals(True)
             for r in range(min(len(cortes), self._prom_tabla.rowCount())):
                 k_nuevo = (cortes[r][1] / sd) * kt
-                self._prom_tabla.setItem(r, 1, QTableWidgetItem(f"{k_nuevo:.2f}"))
+                self._prom_tabla.setItem(r, ColumnasCarne.KILOS, QTableWidgetItem(f"{k_nuevo:.2f}"))
             self._prom_tabla.blockSignals(False)
             self._sync_calc()
-        except: pass
+        except ValueError: pass
 
     def _sync_calc(self):
-        kt = float(self._prom_kilos.text().replace(',', '.') or 0)
-        pt = float(self._prom_precio.text().replace(',', '.') or 0)
+        kt = parse_float_regional(self._prom_kilos.text())
+        pt = parse_float_regional(self._prom_precio.text())
         sk = 0.0
         for r in range(self._prom_tabla.rowCount()):
-            try: sk += float(self._prom_tabla.item(r, 1).text() or 0)
-            except: pass
+            try: sk += parse_float_regional(self._prom_tabla.item(r, ColumnasCarne.KILOS).text())
+            except ValueError: pass
         
         merma = kt - sk
         k_utiles = kt - merma
@@ -357,14 +358,14 @@ class UICarne(QWidget):
             c_ed = item.column() if item else -1
             r_ed = item.row() if item else -1
 
-            if item and c_ed in [1, 3, 4, 5, 6, 7]:
-                t = item.text().replace(',', '.')
-                ct = ''.join(c for c in t if c.isdigit() or c in '.-')
+            if item and c_ed in [ColumnasCarne.KILOS, ColumnasCarne.PV_KG, ColumnasCarne.MARGEN_V, ColumnasCarne.PM_KG, ColumnasCarne.VACIO_6, ColumnasCarne.MARGEN_M]:
+                t = item.text()
+                ct = ''.join(c for c in t if c.isdigit() or c in '.,-')
                 if ct != t: item.setText(ct)
 
-            if item and c_ed == 0 and r_ed == self._prom_tabla.rowCount() - 1 and item.text().strip():
+            if item and c_ed == ColumnasCarne.CORTE and r_ed == self._prom_tabla.rowCount() - 1 and item.text().strip():
                 self._add_empty_row()
-            if item and c_ed == 1:
+            if item and c_ed == ColumnasCarne.KILOS:
                 self._is_updating = False
                 self._prom_tabla.blockSignals(False)
                 self._sync_calc()
@@ -374,64 +375,41 @@ class UICarne(QWidget):
             
             for r in range(self._prom_tabla.rowCount()):
                 try:
-                    k_str = self._prom_tabla.item(r, 1).text()
-                    kilos = float(k_str) if k_str else 0.0
-                    costo_tot = kilos * self._costo_real_kg
-                    self._prom_tabla.setItem(r, 2, QTableWidgetItem(f"{self._costo_real_kg:,.2f}"))
-
-                    pv = float(self._prom_tabla.item(r, 3).text() or 0)
-                    pg = float(self._prom_tabla.item(r, 4).text() or 0)
-                    pm = float(self._prom_tabla.item(r, 5).text() or 0)
-                    pmg = float(self._prom_tabla.item(r, 7).text() or 0)
-
-                    if self._costo_real_kg > 0:
-                        if c_ed == 4 and r == r_ed:
-                            pv = self._costo_real_kg * (1 + pg / 100)
-                            self._prom_tabla.setItem(r, 3, QTableWidgetItem(f"{pv:,.2f}"))
-                        else:
-                            pg = ((pv / self._costo_real_kg) - 1) * 100 if pv > 0 else 0.0
-                            self._prom_tabla.setItem(r, 4, QTableWidgetItem(f"{pg:.2f}"))
-                        
-                        if c_ed == 7 and r == r_ed:
-                            pm = self._costo_real_kg * (1 + pmg / 100)
-                            self._prom_tabla.setItem(r, 5, QTableWidgetItem(f"{pm:,.2f}"))
-                        else:
-                            pmg = ((pm / self._costo_real_kg) - 1) * 100 if pm > 0 else 0.0
-                            self._prom_tabla.setItem(r, 7, QTableWidgetItem(f"{pmg:.2f}"))
-                    else:
-                        if from_calc:
-                            # Do not clear pv or pm if they manually loaded them.
-                            # Just set the percentages to 0 since we can't calculate margin.
-                            pg = 0.0
-                            pmg = 0.0
-                            self._prom_tabla.setItem(r, 4, QTableWidgetItem("0.00"))
-                            self._prom_tabla.setItem(r, 7, QTableWidgetItem("0.00"))
-
-                    v_costo = kilos * self._costo_real_kg
-                    if pv > 0:
-                        vn = kilos * pv
-                        gn = vn - v_costo
-                    else:
-                        vn = 0.0
-                        gn = 0.0
-                    t_vn += vn
-                    t_gn += gn
+                    k_str = self._prom_tabla.item(r, ColumnasCarne.KILOS).text()
+                    kilos = parse_float_regional(k_str)
                     
-                    if pm > 0:
-                        vo = kilos * pm
-                        go = vo - v_costo
-                    else:
-                        vo = 0.0
-                        go = 0.0
-                    t_vo += vo
-                    t_go += go
+                    self._prom_tabla.setItem(r, ColumnasCarne.COSTO, QTableWidgetItem(f"{self._costo_real_kg:,.2f}"))
 
-                    self._prom_tabla.setItem(r, 8, QTableWidgetItem(f"{v_costo:,.2f}"))
-                    self._prom_tabla.setItem(r, 9, QTableWidgetItem(f"{vn:,.2f}"))
-                    self._prom_tabla.setItem(r, 10, QTableWidgetItem(f"{vo:,.2f}"))
-                    self._prom_tabla.setItem(r, 11, QTableWidgetItem(f"{gn:,.2f}"))
-                    self._prom_tabla.setItem(r, 12, QTableWidgetItem(f"{go:,.2f}"))
-                except: pass
+                    pv = parse_float_regional(self._prom_tabla.item(r, ColumnasCarne.PV_KG).text() if self._prom_tabla.item(r, ColumnasCarne.PV_KG) else "0")
+                    pg = parse_float_regional(self._prom_tabla.item(r, ColumnasCarne.MARGEN_V).text() if self._prom_tabla.item(r, ColumnasCarne.MARGEN_V) else "0")
+                    pm = parse_float_regional(self._prom_tabla.item(r, ColumnasCarne.PM_KG).text() if self._prom_tabla.item(r, ColumnasCarne.PM_KG) else "0")
+                    pmg = parse_float_regional(self._prom_tabla.item(r, ColumnasCarne.MARGEN_M).text() if self._prom_tabla.item(r, ColumnasCarne.MARGEN_M) else "0")
+
+                    r_calc = MotorCarne.calcular_fila(
+                        costo_real_kg=self._costo_real_kg,
+                        kilos=kilos,
+                        pv=pv, pg=pg, pm=pm, pmg=pmg,
+                        c_ed=c_ed if r == r_ed else -1,
+                        from_calc=from_calc
+                    )
+
+                    self._prom_tabla.setItem(r, ColumnasCarne.PV_KG, QTableWidgetItem(f"{r_calc['pv']:,.2f}"))
+                    self._prom_tabla.setItem(r, ColumnasCarne.MARGEN_V, QTableWidgetItem(f"{r_calc['pg']:.2f}"))
+                    self._prom_tabla.setItem(r, ColumnasCarne.PM_KG, QTableWidgetItem(f"{r_calc['pm']:,.2f}"))
+                    self._prom_tabla.setItem(r, ColumnasCarne.MARGEN_M, QTableWidgetItem(f"{r_calc['pmg']:.2f}"))
+
+                    t_vn += r_calc["vn"]
+                    t_gn += r_calc["gn"]
+                    t_vo += r_calc["vo"]
+                    t_go += r_calc["go"]
+
+                    self._prom_tabla.setItem(r, ColumnasCarne.VALOR_COSTO, QTableWidgetItem(f"{r_calc['v_costo']:,.2f}"))
+                    self._prom_tabla.setItem(r, ColumnasCarne.VENTA_NORMAL, QTableWidgetItem(f"{r_calc['vn']:,.2f}"))
+                    self._prom_tabla.setItem(r, ColumnasCarne.VENTA_MAYOREO, QTableWidgetItem(f"{r_calc['vo']:,.2f}"))
+                    self._prom_tabla.setItem(r, ColumnasCarne.GANANCIA_N, QTableWidgetItem(f"{r_calc['gn']:,.2f}"))
+                    self._prom_tabla.setItem(r, ColumnasCarne.GANANCIA_M, QTableWidgetItem(f"{r_calc['go']:,.2f}"))
+                except ValueError:
+                    pass
 
             ku = getattr(self, '_kilos_utiles', 0.0)
             cr = getattr(self, '_costo_real_kg', 0.0)

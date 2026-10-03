@@ -16,6 +16,7 @@ a = Analysis(
         'src.cajero.paso6_cobro.mercadopago_core',
         'src.reportes_core',
           'src.contabilidad.database',
+          'src.contabilidad.jefe_contabilidad',
           'src.contabilidad.integracion_maestra.motor_sync_conta',
           'src.contabilidad.integracion_maestra.sincronizador',
           'src.jefe.reportes.periodo',
@@ -88,5 +89,6 @@ coll = COLLECT(
     upx_exclude=[],
     name='CobroFacil_POS',
 )
+
 
 
