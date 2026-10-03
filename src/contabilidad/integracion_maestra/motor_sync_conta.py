@@ -1,4 +1,4 @@
-import sqlite3
+﻿import sqlite3
 from typing import Optional
 from PyQt6.QtCore import QThread, pyqtSignal
 from src.base_de_datos.database import db_manager
@@ -78,7 +78,7 @@ class MotorSyncConta(QThread):
         while self.running:
             time.sleep(10)
             try:
-                # Verificar conexión a Maestra
+                # Verificar conexiÃ³n a Maestra
                 if not db_manager.get_connection():
                     continue
 
@@ -87,11 +87,16 @@ class MotorSyncConta(QThread):
                 try:
                     from src.contabilidad.integracion_maestra.sincronizador import SincronizadorMaestra
                     sinc = SincronizadorMaestra(self.db_conta)
-                    if sinc.traer_ventas_del_dia():
-                        # Notificar refresco de UI si trajo algo nuevo (el sincr devuelve True si no hay error)
-                        # Idealmente, checkeamos si hubo cambios, pero traer_ventas_del_dia hace insert... 
-                        # el loop normal despues hace emit de sync_finished
-                        pass
+                    
+                    # ENTERPRISE: Usar sincronizaciÃ³n con detalle si el modo estÃ¡ activo
+                    if self.db_conta.is_enterprise_mode():
+                        # Genera asientos contables y comprobantes fiscales automÃ¡ticamente
+                        if sinc.traer_ventas_con_detalle_enterprise():
+                            print('[MotorConta] SincronizaciÃ³n enterprise completada con asientos y comprobantes')
+                    else:
+                        # Modo legacy normal
+                        if sinc.traer_ventas_del_dia():
+                            pass
                 except Exception as e:
                     print(f'[MotorConta] Error importando ventas auto: {e}')
 
@@ -183,3 +188,4 @@ class MotorSyncConta(QThread):
     def stop(self):
         self.running = False
         self.wait()
+
