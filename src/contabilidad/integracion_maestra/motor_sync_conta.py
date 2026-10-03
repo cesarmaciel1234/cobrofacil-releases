@@ -78,6 +78,7 @@ class MotorSyncConta(QThread):
         while self.running:
             time.sleep(10)
             try:
+                pulled_algo = False
                 # Verificar conexiÃ³n a Maestra
                 if not db_manager.get_connection():
                     continue
@@ -92,10 +93,25 @@ class MotorSyncConta(QThread):
                     if self.db_conta.is_enterprise_mode():
                         # Genera asientos contables y comprobantes fiscales automÃ¡ticamente
                         if sinc.traer_ventas_con_detalle_enterprise():
+                            pulled_algo = True
+                            print('[MotorConta] Sincronizacion enterprise completada')
+                        if sinc.traer_compras_con_detalle_enterprise():
+                            pulled_algo = True
+                            print('[MotorConta] Sincronizacion enterprise compras completada')
+                        try:
+                            from datetime import date
+                            hoy = date.today()
+                            from src.contabilidad.integracion_iva import IntegracionIVA
+                            integ_iva = IntegracionIVA(self.db_conta.db_name)
+                            integ_iva.obtener_resumen_iva_mes(hoy.month, hoy.year)
+                        except:
+                            pass
+                            pulled_algo = True
                             print('[MotorConta] SincronizaciÃ³n enterprise completada con asientos y comprobantes')
                     else:
                         # Modo legacy normal
                         if sinc.traer_ventas_del_dia():
+                            pulled_algo = True
                             pass
                 except Exception as e:
                     print(f'[MotorConta] Error importando ventas auto: {e}')
@@ -176,7 +192,7 @@ class MotorSyncConta(QThread):
                             )
                         pulled += 1
 
-                if pushed > 0 or pulled > 0:
+                if pushed > 0 or pulled > 0 or pulled_algo:
                     self.sync_finished.emit(pushed, pulled)
 
             except Exception as e:
@@ -188,4 +204,6 @@ class MotorSyncConta(QThread):
     def stop(self):
         self.running = False
         self.wait()
+
+
 
