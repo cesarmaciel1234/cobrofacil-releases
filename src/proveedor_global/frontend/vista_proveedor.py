@@ -14,9 +14,9 @@ from src.proveedor_global.backend.motor_proveedor import MotorProveedor
 
 class VistaProveedor(QWidget):
     """
-    Vista unificada de Proveedores (Romaneo y Compras Rápidas).
-    Delega la lógica al MotorProveedor (cerebro).
+    Vista unificada de Proveedores (Romaneo y Compras Rǭpidas).
     """
+    request_dashboard = pyqtSignal()
     def __init__(self, parent=None, perfil="admin", db_jefe=None):
         super().__init__(parent)
         self.perfil = perfil.lower()
@@ -24,10 +24,37 @@ class VistaProveedor(QWidget):
 
         # Layout principal
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
+        if self.perfil != "contabilidad":
+            lay.setContentsMargins(24, 24, 24, 24)
+            self.setStyleSheet("background: #F8FAFC;")
+        else:
+            lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(20)
 
         self.lay_container = lay
+
+        if self.perfil != "contabilidad":
+            nav = QFrame()
+            nav.setFixedHeight(50)
+            nav.setStyleSheet("background: transparent; border-bottom: 1px solid #E2E8F0;")
+            n_lay = QHBoxLayout(nav)
+            n_lay.setContentsMargins(0, 0, 0, 0)
+            btn_volver = QPushButton("← Volver")
+            btn_volver.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn_volver.setFixedHeight(34)
+            btn_volver.setStyleSheet("""
+                QPushButton {
+                    background: #F8FAFC; color: #475569;
+                    border: 1px solid #E2E8F0; border-radius: 8px;
+                    padding: 0 16px; font-weight: 700; font-size: 12px;
+                }
+                QPushButton:hover { background: #CBD5E1; color: #0F172A; }
+            """)
+            btn_volver.clicked.connect(self.request_dashboard.emit)
+            n_lay.addWidget(btn_volver)
+            n_lay.addStretch()
+            lay.addWidget(nav)
+
         self._build_ui()
         self.cargar_datos()
 

@@ -1,4 +1,4 @@
-"""Fábricas lazy-load de pantallas para MainWindow."""
+﻿"""FÃ¡bricas lazy-load de pantallas para MainWindow."""
 
 from src.navigation.screen_indices import Screen
 
@@ -7,7 +7,7 @@ FREE_SCREEN_SLOTS = Screen.FREE
 
 
 def build_screen_factories(main_window):
-    """Retorna {índice: callable} que instancia cada pantalla bajo demanda."""
+    """Retorna {Ã­ndice: callable} que instancia cada pantalla bajo demanda."""
     mw = main_window
     _imp = __import__
 
@@ -43,8 +43,8 @@ def build_screen_factories(main_window):
             "src.admin.mercadopago.mercadopago_main", fromlist=["Admin10MP"]
         ).Admin10MP(),
         Screen.PROVEEDORES: lambda: _imp(
-            "src.admin.admin11_proveedores", fromlist=["Admin11Proveedores"]
-        ).Admin11Proveedores(),
+            "src.proveedor_global.frontend.vista_proveedor", fromlist=["VistaProveedor"]
+        ).VistaProveedor(perfil='admin'),
         Screen.HARDWARE: lambda: _imp(
             "src.admin.hardware.hardware_main", fromlist=["Admin13Hardware"]
         ).Admin13Hardware(),
@@ -73,4 +73,5 @@ def build_screen_factories(main_window):
             "src.admin.admin12_ai_boss", fromlist=["Admin12AIBoss"]
         ).Admin12AIBoss(),
     }
+
 
