@@ -495,6 +495,7 @@ class Paso5Terminal(QWidget):
             elif tecla_str == "F12": self.finalizar_venta()
             elif tecla_str == "F5": self.abrir_retiro_efectivo()
             elif tecla_str == "F6": self.abrir_ingreso_efectivo("FIADO")
+            elif tecla_str == "F2": self.abrir_ingreso_efectivo("OTROS")
             elif tecla_str == "F7": self._leer_bascula()
             elif tecla_str == "F8": self._swap_ticket_espera()
             elif tecla_str == "F4": self.abrir_cierre_caja()
