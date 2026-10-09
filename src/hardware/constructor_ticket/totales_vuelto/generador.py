@@ -58,6 +58,6 @@ def generar_totales(columnas, total, pago, cambio, metodo_pago, items, discount_
     
     # Conteo de articulos
     cant_articulos = sum(it['cant'] for it in items)
-i i i i idiaitiai.ieixitieinidi(ifi"iCiainiti.i iAiritiíiciuilioisi:i i{iciainiti_iairitiiiciuilioisi:igi}i\ini"i.ieinicioidiei(i'icipi8i5i0i'i)i)i
-i    
+    data.extend(f"Cant. Articulos: {cant_articulos:g}\n".encode('cp850'))
+    
     return data
