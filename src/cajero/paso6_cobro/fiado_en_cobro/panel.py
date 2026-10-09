@@ -31,6 +31,9 @@ class HojaCuentaProxy:
 
     def isVisible(self):
         return self.panel.isVisible()
+        
+    def isActiveWindow(self):
+        return self.panel.isActiveWindow()
 
     def ubicar(self):
         pass
