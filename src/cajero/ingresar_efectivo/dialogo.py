@@ -128,8 +128,15 @@ class DialogoIngresoEfectivo(QDialog):
         self.panel_fiado = CentroCobranzasPanel()
         self.panel_otros = PanelOtrosIngresos()
         self.panel_cambio.txt_monto.returnPressed.connect(self._procesar)
-        self.panel_fiado.txt_monto.returnPressed.connect(self._procesar)
+        if hasattr(self.panel_fiado, 'txt_monto'):
+            self.panel_fiado.txt_monto.returnPressed.connect(self._procesar)
         self.panel_otros.txt_monto.returnPressed.connect(self._procesar)
+        
+        # Conectar senales del nuevo ecosistema
+        if hasattr(self.panel_fiado, 'abono_registrado'):
+            self.panel_fiado.abono_registrado.connect(self._on_abono_registrado)
+        if hasattr(self.panel_fiado, 'cancelado'):
+            self.panel_fiado.cancelado.connect(self.reject)
         self.stack.addWidget(self.panel_cambio)
         self.stack.addWidget(self.panel_fiado)
         self.stack.addWidget(self.panel_otros)
@@ -182,10 +189,19 @@ class DialogoIngresoEfectivo(QDialog):
             self.panel_cambio.reset()
         elif modo == "FIADO":
             self.stack.setCurrentIndex(1)
-            self.panel_fiado.cargar_clientes_abono()
+            if hasattr(self.panel_fiado, 'mostrar'):
+                self.panel_fiado.mostrar()
         elif modo == "OTROS":
             self.stack.setCurrentIndex(2)
             self.panel_otros.reset()
+
+    def _on_abono_registrado(self, resultado):
+        self.resultado = resultado
+        self.monto_ingresado = getattr(resultado, 'monto', 0.0)
+        self.cliente_id = getattr(resultado, 'cliente_id', None)
+        self.cliente_nombre = getattr(resultado, 'nombre', '')
+        self.motivo = f"Abono Fiado: {self.cliente_nombre}"
+        self.accept()
 
     def _procesar(self):
         try:
@@ -197,22 +213,11 @@ class DialogoIngresoEfectivo(QDialog):
                 self.monto_ingresado = self.panel_cambio.monto()
                 self.motivo = "Ingreso de Cambio / Fondo Fijo"
             elif self.tipo_ingreso == "FIADO":
-                ok, err = self.panel_fiado.validar()
-                if not ok:
-                    self.lbl_err.setText(err)
-                    return
-                data = self.panel_fiado.cliente_actual()
-                self.monto_ingresado = self.panel_fiado.monto()
-                self.deuda_actual = self.panel_fiado.deuda_actual()
-                self.cliente_id = data["id"]
-                self.cliente_nombre = data["nombre"]
-                self.motivo = f"Abono Fiado: {self.cliente_nombre}"
-                self.resultado = None
-                self.pagina_cobro.abrir(
-                    self.monto_ingresado,
-                    self._quien_pin(),
-                    self.cliente_nombre,
-                )
+                # El ecosistema Fiado se maneja a si mismo ahora.
+                # Si presionan el boton inferior Confirmar, lo derivamos al panel fiado.
+                if hasattr(self.panel_fiado, 'procesar_enter'):
+                    self.panel_fiado.procesar_enter()
+                return
                 self.paginas.setCurrentIndex(2)
                 return
             elif self.tipo_ingreso == "OTROS":
