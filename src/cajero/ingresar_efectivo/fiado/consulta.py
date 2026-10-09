@@ -62,7 +62,7 @@ def parse_consulta_cobranza(texto: str) -> dict:
 
     return {"tipo": "nombre", "valor": raw, "etiqueta": f"Nombre «{raw}»"}
 
-def buscar_deudores(consulta: str) -> list:
+def buscar_deudores(consulta: str, limite: int = 50) -> list:
     p = parse_consulta_cobranza(consulta)
     base = """
         SELECT c.id, c.nombre, c.dni, c.telefono, c.direccion,
@@ -82,7 +82,7 @@ def buscar_deudores(consulta: str) -> list:
         base += (" AND (c.nombre LIKE ? OR c.dni LIKE ? OR c.telefono LIKE ? OR c.direccion LIKE ?)")
         params.extend([f"%{v}%", f"%{v}%", f"%{v}%", f"%{v}%"])
 
-    base += " ORDER BY c.deuda_actual DESC, c.nombre ASC LIMIT 50"
+    base += f" ORDER BY c.deuda_actual DESC, c.nombre ASC LIMIT {limite}"
     rows = db_manager.execute_query(base, tuple(params)) or []
 
     result = []

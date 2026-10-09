@@ -6,12 +6,12 @@ from src.utils.dinero import redondear_dinero
 # Nuevos componentes modulares del ecosistema local
 from src.cajero.paso6_cobro.fiado_en_cobro.ui.buscador_clientes.panel_buscador import PanelBuscadorClientes
 from src.cajero.paso6_cobro.fiado_en_cobro.ui.credito_aprobado.panel_aprobado import PanelCreditoAprobado
-from src.cajero.paso6_cobro.fiado_en_cobro.componentes_fiado.motor.motor_busqueda import MotorBusquedaLocal
+from src.motores_empresariales.motor_busqueda_clientes.motor_busqueda import MotorBusquedaClientes
 
 # Componentes de cobranza existentes
 from src.cajero.paso6_cobro.fiado_en_cobro.componentes_fiado.estado_credito.panel_estado import PanelEstadoCredito
 from src.cajero.paso6_cobro.fiado_en_cobro.componentes_fiado.selector_cobranza.panel_selector import PanelSelectorCobranza
-from src.cajero.paso6_cobro.fiado_en_cobro.componentes_fiado.motor.motor_cobranza import MotorCobranza, ResultadoAbonoPrevio
+from src.motores_empresariales.motor_cobranzas_medios.motor_cobranza import MotorCobranzaMedios, ResultadoAbonoPrevio
 
 class HojaCuentaProxy:
     """Proxi para engañar a paso6_cobro.py que espera el viejo componente hoja_cuenta."""
@@ -88,9 +88,13 @@ class PanelFiadoCobro(QFrame):
         self.stack = QStackedWidget()
         lay.addWidget(self.stack)
 
-        # --- Instanciar los motores locales ---
-        self.motor_busqueda = MotorBusquedaLocal(self)
-        self.motor_cobranza = MotorCobranza(self)
+        # --- Instanciar los motores globales ---
+        self.motor_busqueda = MotorBusquedaClientes(self)
+        self.motor_cobranza = MotorCobranzaMedios(self)
+        self.motor_cobranza.set_pedir_pin_callback(self._pin)
+        self.motor_cobranza.abono_registrado.connect(self.abono_registrado.emit)
+        self.motor_cobranza.pago_listo.connect(lambda cid, m: self._finalizado_ok(cid, m))
+        self.motor_cobranza.error_cobranza.connect(lambda e: self._volver_de_lienzo())
         self.motor = self.motor_cobranza  # Aliasing para no romper código externo
 
         # --- 1. Buscador (Paso 1) ---
@@ -238,6 +242,15 @@ class PanelFiadoCobro(QFrame):
         self.txt_monto_abono.setFocus()
         self.txt_monto_abono.selectAll()
 
+    def _pin(self):
+        try:
+            from src.cajero.paso5_terminal.dialogos.pin.dialogo_pin import DialogoPIN
+            from src.utils.qt_compat import qt_exec
+            dlg = DialogoPIN("Cajero", self.window())
+            return bool(qt_exec(dlg) and dlg.ok)
+        except Exception:
+            return False
+
     def _iniciar_cobranza(self, metodo="Efectivo"):
         texto = self.txt_monto_abono.text().replace('.', '').replace(',', '.')
         if not texto.strip(): return
@@ -283,8 +296,13 @@ class PanelFiadoCobro(QFrame):
                 pass
         self.cont_lienzos.hide()
 
+    def _finalizado_ok(self, cid, m):
+        self._cerrar_lienzos()
+        self._modo = "listo"
+        self.pago_listo.emit(cid, m)
+
     def _finalizar_cobranza_con_motor(self, monto, metodo, detalle):
-        self.motor.finalizar(monto, metodo, detalle)
+        self.motor.finalizar(self._cliente_id, monto, metodo, detalle)
 
     def ocultar(self):
         self._modo = "oculto"
