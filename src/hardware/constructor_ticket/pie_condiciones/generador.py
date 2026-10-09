@@ -44,10 +44,12 @@ def generar_pie(columnas, num_venta, total, cliente_nombre, saldo_anterior, sald
         data.extend(f"QR ARCA: {factura_electronica_data['qr_url'][:35]}...\n".encode('cp850'))
     else:
         data.extend(b"\n")
-    data.extend(f"{'NO VALIDO COMO FACTURA'.center(columnas)}\n".encode('cp850'))
-        data.extend(b"\n")
-    data.extend(f"{'Gracias por tu compra!'.center(columnas)}\n".encode('cp850'))
-    data.extend(f"{'Te esperamos pronto!'.center(columnas)}\n".encode('cp850'))
+    from src.hardware.printer import ALIGN_CENTER
+    data.extend(ALIGN_CENTER)
+    data.extend(b"NO VALIDO COMO FACTURA\n")
+    data.extend(b"\n")
+    data.extend(b"Gracias por tu compra!\n")
+    data.extend(b"Te esperamos pronto!\n")
 
     data.extend(b"\n\n\n")
 

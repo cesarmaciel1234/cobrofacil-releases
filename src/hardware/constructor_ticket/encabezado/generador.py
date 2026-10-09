@@ -4,6 +4,7 @@ from src.hardware.printer import ESC, ALIGN_CENTER, BOLD_ON, BOLD_OFF
 def generar_encabezado(columnas, empresa, cuit, direccion, telefono, estado, num_venta, cajero, cajero_secundario, factura_electronica_data=None):
     data = bytearray()
     data.extend(ESC + b'\x40') # Reset
+    data.extend(ALIGN_CENTER)
     
     # Header
     
@@ -15,17 +16,17 @@ def generar_encabezado(columnas, empresa, cuit, direccion, telefono, estado, num
     else:
         saludo = "Buenas noches!"
         
-    data.extend(f"{saludo.center(columnas)}\n".encode('cp850', errors='ignore'))
+    data.extend(f"{saludo}\n".encode('cp850', errors='ignore'))
     
     data.extend(BOLD_ON)
-    data.extend(f"{empresa.center(columnas)}\n".encode('cp850', errors='ignore'))
+    data.extend(f"{empresa}\n".encode('cp850', errors='ignore'))
     data.extend(BOLD_OFF)
     if cuit:
-        data.extend(f"{cuit.center(columnas)}\n".encode('cp850', errors='ignore'))
+        data.extend(f"{cuit}\n".encode('cp850', errors='ignore'))
     if direccion:
-        data.extend(f"{direccion.center(columnas)}\n".encode('cp850', errors='ignore'))
+        data.extend(f"{direccion}\n".encode('cp850', errors='ignore'))
     if telefono:
-        data.extend(f"Tel: {telefono}".center(columnas).encode('cp850', errors='ignore') + b"\n")
+        data.extend(f"Tel: {telefono}".encode('cp850', errors='ignore') + b"\n")
 
     if str(estado).upper() == "CANCELADA":
         data.extend(BOLD_ON)

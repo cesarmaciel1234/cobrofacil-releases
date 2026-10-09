@@ -46,11 +46,14 @@ def generar_totales(columnas, total, pago, cambio, metodo_pago, items, discount_
     data.extend((b"-" * columnas) + b"\n")
     
     # Total a Pagar en Fuente Doble Alto para resaltar
+    from src.hardware.printer import ALIGN_CENTER, ALIGN_LEFT
+    data.extend(ALIGN_CENTER)
     data.extend(DOUBLE_HEIGHT_ON)
     data.extend(BOLD_ON)
-    data.extend(f"TOTAL A PAGAR: ${total:.2f}".center(columnas).encode('cp850') + b"\n")
+    data.extend(f"TOTAL A PAGAR: ${total:.2f}\n".encode('cp850'))
     data.extend(DOUBLE_HEIGHT_OFF)
     data.extend(BOLD_OFF)
+    data.extend(ALIGN_LEFT)
     
     data.extend(f"Pago: ${pago:.2f}\n".encode('cp850'))
     data.extend(f"Vuelto: ${cambio:.2f}\n".encode('cp850'))
