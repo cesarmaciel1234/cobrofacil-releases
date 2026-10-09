@@ -144,7 +144,7 @@ class PanelFiadoCobro(QFrame):
         self.stack.addWidget(self.vista_cobranza)
 
         # Conexiones de los lienzos
-        self.lienzo_efectivo.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Efectivo", det))
+        self.lienzo_efectivo.listo.connect(lambda monto: self._finalizar_cobranza_con_motor(monto, "Efectivo", None))
         self.lienzo_efectivo.volver.connect(self._volver_de_lienzo)
         
         self.lienzo_qr.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "QR", det))
