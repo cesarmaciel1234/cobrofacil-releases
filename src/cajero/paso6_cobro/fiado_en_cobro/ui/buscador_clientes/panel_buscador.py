@@ -153,7 +153,9 @@ class PanelBuscadorClientes(QWidget):
         
         indice = 0 if self._indice_seleccionado < 0 else self._indice_seleccionado
         if indice < len(self._clientes_actuales):
-            self.cliente_elegido.emit(self._clientes_actuales[indice])
+            c = self._clientes_actuales[indice]
+            c_dict = dict(c) if hasattr(c, "keys") else (c if isinstance(c, dict) else {})
+            self.cliente_elegido.emit(c_dict)
             return True
             
         return False

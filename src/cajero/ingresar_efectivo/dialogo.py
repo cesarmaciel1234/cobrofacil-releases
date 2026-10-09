@@ -229,8 +229,11 @@ class DialogoIngresoEfectivo(QDialog):
                 self.monto_ingresado = self.panel_otros.monto()
                 self.motivo = self.panel_otros.descripcion()
             self.accept()
-        except Exception:
-            self.lbl_err.setText("⚠️ Error interno al procesar el ingreso")
+        except Exception as e:
+            import traceback
+            print("================ EXCEPTION ================")
+            traceback.print_exc()
+            self.lbl_err.setText("Error: " + str(e))
 
     def _quien_pin(self):
         if self._directo:
@@ -244,7 +247,7 @@ class DialogoIngresoEfectivo(QDialog):
             return
         try:
             self.pagina_cobro.tecla(Qt.Key.Key_F9)
-        except Exception:
+        except Exception as e:
             pass
 
     def keyPressEvent(self, event):
