@@ -53,15 +53,6 @@ class LienzoEfectivo(QWidget):
             "color: #B91C1C; font-weight: 800; background: transparent; border: none;"
         )
         lay.addWidget(self.aviso)
-        confirmar = QPushButton("Confirmar")
-        confirmar.setMinimumHeight(48)
-        confirmar.setCursor(Qt.CursorShape.PointingHandCursor)
-        confirmar.setStyleSheet(
-            "QPushButton { background: #0F172A; color: white; border: none; border-radius: 12px;"
-            " font-weight: 800; font-size: 14px; }"
-        )
-        confirmar.clicked.connect(self._confirmar)
-        lay.addWidget(confirmar)
 
     def arrancar(self, monto):
         self._deuda = redondear_dinero(monto)
