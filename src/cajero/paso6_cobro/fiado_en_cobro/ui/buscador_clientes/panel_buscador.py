@@ -145,14 +145,9 @@ class PanelBuscadorClientes(QWidget):
         if not hasattr(self, '_clientes_actuales') or not self._clientes_actuales:
             return False
         
-        # Regla: Si hay solo 1, pasa de largo (acepta directo)
-        if len(self._clientes_actuales) == 1:
-            self.cliente_elegido.emit(self._clientes_actuales[0])
-            return True
-            
-        # Regla: Si hay varios, solo acepta si se navego explicitamente
-        if self._indice_seleccionado >= 0 and self._indice_seleccionado < len(self._clientes_actuales):
-            self.cliente_elegido.emit(self._clientes_actuales[self._indice_seleccionado])
+        indice = 0 if self._indice_seleccionado < 0 else self._indice_seleccionado
+        if indice < len(self._clientes_actuales):
+            self.cliente_elegido.emit(self._clientes_actuales[indice])
             return True
             
         return False
