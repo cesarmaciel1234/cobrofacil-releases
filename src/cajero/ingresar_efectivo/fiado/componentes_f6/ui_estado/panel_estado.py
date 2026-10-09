@@ -29,7 +29,19 @@ class PanelEstadoCredito(QWidget):
         )
         lay.addWidget(self.detalle)
         
+        
+        self.btn_imprimir_resumen = QPushButton("Imprimir Resumen")
+        self.btn_imprimir_resumen.setFixedHeight(50)
+        self.btn_imprimir_resumen.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_imprimir_resumen.setStyleSheet(
+            "QPushButton { background: #E2E8F0; color: #475569; font-size: 18px; font-weight: 800; border-radius: 12px; border: 2px solid #CBD5E1; }"
+            "QPushButton:hover { background: #CBD5E1; color: #334155; border: 2px solid #94A3B8; }"
+        )
+        self.btn_imprimir_resumen.hide()
+        lay.addWidget(self.btn_imprimir_resumen, alignment=Qt.AlignmentFlag.AlignCenter)
+        
         lay_abono = QHBoxLayout()
+
         lay_abono.setContentsMargins(0, 0, 0, 0)
         lay_abono.setSpacing(15)
 

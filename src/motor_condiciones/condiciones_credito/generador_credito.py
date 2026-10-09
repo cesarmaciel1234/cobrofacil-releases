@@ -1,7 +1,16 @@
-def generar_texto(subcontexto: str = "", saldo_anterior: float = 0.0, monto_actual: float = 0.0, **kwargs) -> str:
+# -*- coding: utf-8 -*-
+def generar_texto(subcontexto: str = "", saldo_anterior: float = 0.0, monto_actual: float = 0.0, cliente_nombre: str = "", **kwargs) -> str:
+    nombre = cliente_nombre if cliente_nombre else "Cliente"
     if subcontexto == "abono":
-        return f"ABONO A CUENTA. Saldo anterior: ${saldo_anterior:.2f}. Monto abonado: ${monto_actual:.2f}. Nuevo saldo: ${(saldo_anterior - monto_actual):.2f}. Conserve este ticket como comprobante de pago."
+        nuevo_saldo = saldo_anterior - monto_actual
+        if nuevo_saldo <= 0.01:
+            return f"Hola {nombre}! Pagaste tu saldo pendiente y tu cuenta esta al dia. Muchas gracias por tu confianza! Conserva este ticket como comprobante de pago."
+        else:
+            return f"Hola {nombre}! Gracias por tu pago de ${monto_actual:.2f}. Tu nuevo saldo pendiente es de ${nuevo_saldo:.2f}. Conserva este ticket como comprobante."
     elif subcontexto == "estado_cuenta":
-        return f"ESTADO DE CUENTA. Saldo adeudado: ${saldo_anterior:.2f}. Favor de realizar su pago a la brevedad."
-    else: # Venta a crédito
-        return f"VENTA A CREDITO. Pagaré incondicional por la cantidad de ${monto_actual:.2f}. El cliente acepta los cargos y condiciones de crédito de la tienda."
+        if saldo_anterior <= 0.01:
+            return f"Hola {nombre}! Tu cuenta esta al dia y no registras deuda. Gracias por elegirnos!"
+        else:
+            return f"Hola {nombre}! Te acercamos tu estado de cuenta. Actualmente tenes un saldo pendiente de ${saldo_anterior:.2f}. Te esperamos pronto!"
+    else: # Venta a cr�dito
+        return f"VENTA A CREDITO. Pagare incondicional por la cantidad de ${monto_actual:.2f}. El cliente acepta los cargos y condiciones de credito de la tienda."

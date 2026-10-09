@@ -97,6 +97,8 @@ class CentroCobranzasPanel(QWidget):
         self.detalle = self.panel_estado.detalle
         self.txt_monto_abono = self.panel_estado.txt_monto_abono
         self.btn_abono_libre = self.panel_estado.btn_abono_libre
+        self.btn_imprimir_resumen = self.panel_estado.btn_imprimir_resumen
+        self.btn_imprimir_resumen.clicked.connect(self._imprimir_estado_cuenta)
         self.instruccion = self.panel_estado.instruccion
         self.cont_botones = self.panel_selector.cont_botones
         self.cont_lienzos = self.panel_selector.cont_lienzos
@@ -176,6 +178,7 @@ class CentroCobranzasPanel(QWidget):
         self.txt_monto_abono.setText(f"{self._deuda_actual:.2f}".replace('.', ','))
         self.txt_monto_abono.show()
         self.btn_abono_libre.show()
+        self.btn_imprimir_resumen.show()
         
         self.instruccion.hide()
         self.cont_botones.show()
@@ -184,6 +187,20 @@ class CentroCobranzasPanel(QWidget):
         self.stack.setCurrentWidget(self.vista_cobranza)
         self.txt_monto_abono.setFocus()
         self.txt_monto_abono.selectAll()
+
+    
+    def _imprimir_estado_cuenta(self):
+        try:
+            from src.hardware.printer import printer_manager
+            printer_manager.imprimir_saldo_fiado(self._cliente_nombre, self._deuda_actual, 0.0, self._deuda_actual)
+            
+            from src.notificaciones.motor.estado import publicar
+            publicar("cobro_ok", f"??? Estado de cuenta impreso: {self._cliente_nombre}", segundos=5)
+        except Exception as e:
+            import logging
+            logging.getLogger("PunPro").error(f"Error imprimiendo resumen: {e}")
+            from src.notificaciones.motor.estado import publicar
+            publicar("error", f"Error imprimiendo resumen: {e}", segundos=5)
 
     def _iniciar_cobranza(self, metodo="Efectivo"):
         texto = self.txt_monto_abono.text().replace('.', '').replace(',', '.')
@@ -218,6 +235,7 @@ class CentroCobranzasPanel(QWidget):
         self._cerrar_lienzos()
         self.txt_monto_abono.show()
         self.btn_abono_libre.show()
+        self.btn_imprimir_resumen.show()
         self.cont_botones.show()
         self.txt_monto_abono.setFocus()
         

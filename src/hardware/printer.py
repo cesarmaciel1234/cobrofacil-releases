@@ -503,7 +503,8 @@ class PosPrinter:
             condiciones = MotorCondiciones.obtener_condiciones(
                 "credito", subcontexto=subcontexto, 
                 saldo_anterior=float(saldo_anterior or 0), 
-                monto_actual=float(credito or 0)
+                monto_actual=float(credito or 0),
+                cliente_nombre=cliente_nombre
             )
             data.extend(b"\n")
             data.extend(ALIGN_CENTER)
