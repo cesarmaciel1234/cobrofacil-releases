@@ -2,7 +2,6 @@ from src.hardware.printer import ALIGN_CENTER, ALIGN_LEFT, BOLD_ON, BOLD_OFF, DO
 
 def generar_totales(columnas, total, pago, cambio, metodo_pago, items, discount_amount, surcharge_amount, factura_electronica_data, calcular_iva_func):
     data = bytearray()
-    data.extend(ALIGN_CENTER)
 
     # Extraer descuento de productos vs redondeo general
     desc_productos = 0.0
@@ -18,7 +17,6 @@ def generar_totales(columnas, total, pago, cambio, metodo_pago, items, discount_
 
     # Mostrar Descuento si existe
     if (discount_amount and discount_amount > 0) or (surcharge_amount and surcharge_amount > 0):
-        data.extend(ALIGN_LEFT)
         total_bruto = total + (discount_amount or 0) - (surcharge_amount or 0)
         
         bruto_str = f"${total_bruto:.2f}"
@@ -36,7 +34,6 @@ def generar_totales(columnas, total, pago, cambio, metodo_pago, items, discount_
             rec_str = f"+${surcharge_amount:.2f}"
             data.extend((f"Recargo:" + " " * max(1, columnas - 8 - len(rec_str)) + rec_str + "\n").encode('cp850'))
             
-        data.extend(ALIGN_CENTER)
 
     # Desglose de Neto e IVA en Factura Electronica ARCA
     if factura_electronica_data:
@@ -51,17 +48,16 @@ def generar_totales(columnas, total, pago, cambio, metodo_pago, items, discount_
     # Total a Pagar en Fuente Doble Alto para resaltar
     data.extend(DOUBLE_HEIGHT_ON)
     data.extend(BOLD_ON)
-    data.extend(f"TOTAL A PAGAR: ${total:.2f}\n".encode('cp850'))
+    data.extend(f"TOTAL A PAGAR: ${total:.2f}".center(columnas).encode('cp850') + b"\n")
     data.extend(DOUBLE_HEIGHT_OFF)
     data.extend(BOLD_OFF)
     
-    data.extend(ALIGN_LEFT)
     data.extend(f"Pago: ${pago:.2f}\n".encode('cp850'))
     data.extend(f"Vuelto: ${cambio:.2f}\n".encode('cp850'))
     data.extend(f"Forma Pago: {metodo_pago}\n".encode('cp850', errors='replace'))
     
     # Conteo de articulos
     cant_articulos = sum(it['cant'] for it in items)
-    data.extend(f"Cant. Artículos: {cant_articulos:g}\n".encode('cp850'))
-    
+i i i i idiaitiai.ieixitieinidi(ifi"iCiainiti.i iAiritiíiciuilioisi:i i{iciainiti_iairitiiiciuilioisi:igi}i\ini"i.ieinicioidiei(i'icipi8i5i0i'i)i)i
+i    
     return data

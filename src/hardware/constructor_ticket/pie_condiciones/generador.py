@@ -8,12 +8,10 @@ def generar_pie(columnas, num_venta, total, cliente_nombre, saldo_anterior, sald
         primer_nombre = cliente_nombre.split()[0] if cliente_nombre else ""
         data.extend(b"\n")
         data.extend((b"-" * columnas) + b"\n")
-        data.extend(ALIGN_CENTER)
         data.extend(BOLD_ON)
         data.extend(f"Hola {primer_nombre}\n".encode('cp850', errors='replace'))
         data.extend(BOLD_OFF)
         data.extend(b"Resumen:\n")
-        data.extend(ALIGN_LEFT)
         data.extend(f"Saldo anterior:   ${saldo_anterior:.2f}\n".encode('cp850'))
         if float(abono_cuenta or 0) > 0.009:
             data.extend(
@@ -26,7 +24,6 @@ def generar_pie(columnas, num_venta, total, cliente_nombre, saldo_anterior, sald
         data.extend((b"-" * columnas) + b"\n")
 
     if mensaje_extra_condiciones:
-        data.extend(ALIGN_CENTER)
         data.extend(BOLD_ON)
         for linea in mensaje_extra_condiciones.split("\n"):
             data.extend(f"{linea}\n".encode("cp850"))
@@ -34,7 +31,6 @@ def generar_pie(columnas, num_venta, total, cliente_nombre, saldo_anterior, sald
         data.extend((b"-" * columnas) + b"\n")
 
     # Footer y Firma Fiscal Electrónica ARCA
-    data.extend(ALIGN_CENTER)
     if factura_electronica_data:
         data.extend(b"\n")
         data.extend(f"Pto. Venta: {factura_electronica_data['pto_venta']:04d} | Comp: {num_venta:08d}\n".encode('cp850'))
@@ -48,12 +44,12 @@ def generar_pie(columnas, num_venta, total, cliente_nombre, saldo_anterior, sald
         data.extend(f"QR ARCA: {factura_electronica_data['qr_url'][:35]}...\n".encode('cp850'))
     else:
         data.extend(b"\n")
-        data.extend(f"{'NO VALIDO COMO FACTURA'.center(columnas)}\n".encode('cp850'))
+    data.extend(f"{'NO VALIDO COMO FACTURA'.center(columnas)}\n".encode('cp850'))
         data.extend(b"\n")
-        data.extend(f"{'¡Gracias por tu compra!'.center(columnas)}\n".encode('cp850'))
-        data.extend(f"{'¡Te esperamos pronto!'.center(columnas)}\n".encode('cp850'))
+    data.extend(f"{'Gracias por tu compra!'.center(columnas)}\n".encode('cp850'))
+    data.extend(f"{'Te esperamos pronto!'.center(columnas)}\n".encode('cp850'))
 
-    data.extend(b"\n\n\n\n\n")
+    data.extend(b"\n\n\n")
 
     # Cortar papel y opcionalmente abrir cajón
     data.extend(CUT_PAPER)

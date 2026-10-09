@@ -71,7 +71,8 @@ class PosPrinter:
         self._lock = threading.Lock()
         self.header_empresa = config.get('business_name', 'MI EMPRESA')
         self.header_cuit = config.get('business_cuit', 'CUIT: 00-00000000-0')
-        self.header_dir = config.get('business_address', 'Dirección Local')
+        self.header_dir = config.get('business_address', 'Direccion Local')
+        self.header_tel = config.get('business_phone', '')
         self._last_serial_error_time = 0.0
 
     def _send_raw_data(self, raw_data, printer_name_override=None):
@@ -362,6 +363,7 @@ class PosPrinter:
         ticket_bytes = ConstructorTicketVenta.construir(
             empresa=self.header_empresa,
             cuit=self.header_cuit,
+            telefono=self.header_tel,
             direccion=self.header_dir,
             num_venta=num_venta,
             items=items,

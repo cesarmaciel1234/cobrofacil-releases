@@ -7,7 +7,7 @@ from src.hardware.constructor_ticket.pie_condiciones.generador import generar_pi
 class ConstructorTicketVenta:
     @staticmethod
     def construir(
-        empresa, cuit, direccion,
+        empresa, cuit, direccion, telefono,
         num_venta, items, total, pago, cambio, estado,
         discount_amount, surcharge_amount,
         cajero, cajero_secundario,
@@ -25,7 +25,7 @@ class ConstructorTicketVenta:
         
         # 1. Encabezado
         data.extend(generar_encabezado(
-            columnas, empresa, cuit, direccion, estado, num_venta, 
+            columnas, empresa, cuit, direccion, telefono, estado, num_venta, 
             cajero, cajero_secundario, factura_electronica_data
         ))
         
