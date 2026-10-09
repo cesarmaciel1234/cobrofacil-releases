@@ -97,7 +97,7 @@ class PanelEstadoCredito(QWidget):
         self.instruccion = QLabel("?? Elige el metodo de pago o ajusta el monto ??")
         self.instruccion.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.instruccion.setStyleSheet(
-            "QLabel { color: #FFFFFF; background-color: #10B981; font-size: 26px; font-weight: 900; border-radius: 16px; padding: 18px; "
+            "QLabel { color: #FFFFFF; background-color: #10B981; font-size: 18px; font-weight: 900; border-radius: 16px; padding: 18px; "
             "border-bottom: 5px solid #047857; text-transform: uppercase; letter-spacing: 2px; }"
         )
         self.instruccion.hide()

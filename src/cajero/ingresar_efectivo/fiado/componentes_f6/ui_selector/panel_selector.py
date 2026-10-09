@@ -23,8 +23,8 @@ class PanelSelectorCobranza(QWidget):
                 background-color: #F8FAFC;
                 color: #1E3A8A;
                 border-radius: 12px;
-                padding: 20px;
-                font-size: 24px;
+                padding: 15px;
+                font-size: 20px;
                 font-weight: 900;
                 border: 3px solid #94A3B8;
             }

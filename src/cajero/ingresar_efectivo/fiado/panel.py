@@ -42,8 +42,8 @@ class CentroCobranzasPanel(QWidget):
         row_center = QHBoxLayout()
         row_center.addStretch(1)
         self.card = QFrame()
-        self.card.setMinimumWidth(600)
-        self.card.setMaximumWidth(760)
+        self.card.setMinimumWidth(850)
+        self.card.setMaximumWidth(950)
         self.card.setObjectName("PanelFiadoCobro")
         self.card.setStyleSheet(
             "QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }"

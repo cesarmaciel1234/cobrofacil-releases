@@ -56,8 +56,8 @@ class DialogoIngresoEfectivo(QDialog):
         self._mostrar_opciones()
 
     def _ajustar_pagina(self):
-        ancho = max(400, min(960, self.width() - 64))
-        alto = max(400, min(700, self.height() - 40))
+        ancho = max(400, min(1050, self.width() - 64))
+        alto = max(400, min(800, self.height() - 40))
         self.paginas.setFixedSize(ancho, alto)
 
     def _pagina_opciones(self):

@@ -39,7 +39,7 @@ class LienzoQr(QWidget):
         lay.addWidget(self.estado)
         self.imagen = QLabel()
         self.imagen.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.imagen.setMinimumHeight(450)
+        self.imagen.setMinimumHeight(350)
         self.imagen.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.imagen.setStyleSheet("background: transparent; border: none;")
         lay.addWidget(self.imagen, 1)
@@ -118,7 +118,7 @@ class LienzoQr(QWidget):
     def _pintar_imagen(self):
         if self._fuente.isNull():
             return
-        lado = max(450, min(self.imagen.width(), self.imagen.height()) - 8)
+        lado = min(self.imagen.width(), self.imagen.height()) - 16
         self.imagen.setPixmap(
             self._fuente.scaled(
                 lado, lado,
