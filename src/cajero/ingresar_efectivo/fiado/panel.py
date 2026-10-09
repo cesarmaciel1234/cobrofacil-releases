@@ -95,9 +95,12 @@ class CentroCobranzasPanel(QWidget):
         self.icono = self.panel_estado.icono
         self.estado = self.panel_estado.estado
         self.detalle = self.panel_estado.detalle
+        self.ultimo_pago_lbl = self.panel_estado.ultimo_pago_lbl
         self.txt_monto_abono = self.panel_estado.txt_monto_abono
         self.btn_abono_libre = self.panel_estado.btn_abono_libre
         self.btn_imprimir_resumen = self.panel_estado.btn_imprimir_resumen
+        self.btn_iniciar_pago = self.panel_estado.btn_iniciar_pago
+        self.btn_iniciar_pago.clicked.connect(self._mostrar_controles_pago)
         self.btn_imprimir_resumen.clicked.connect(self._imprimir_estado_cuenta)
         self.instruccion = self.panel_estado.instruccion
         self.cont_botones = self.panel_selector.cont_botones
@@ -163,32 +166,59 @@ class CentroCobranzasPanel(QWidget):
         self._cliente_nombre = datos['nombre']
         self._modo = "cobranza"
         
-        # En F6 no hay venta, el limite o disponible nos da la deuda a traves del 'cerebro', 
-        # pero para simplificar, buscaremos el cliente real de nuevo
         from src.clientes_fiado.cerebro.cerebro import cerebro
         cli = cerebro.obtener(self._cliente_id)
         cli_dict = dict(cli) if hasattr(cli, 'keys') else cli
         self._deuda_actual = float(cli_dict.get('deuda_actual', 0) or 0)
+        
+        # Consultar ultimo pago
+        try:
+            ultimo = cerebro.cuenta.ultimo_pago(self._cliente_id)
+            if ultimo:
+                # ultimo has fecha and monto
+                fecha = ultimo[0]
+                monto_ult = float(ultimo[1] or 0)
+                self.ultimo_pago_lbl.setText(f"Ultimo pago: ${monto_ult:,.2f} el {fecha}")
+                self.ultimo_pago_lbl.show()
+            else:
+                self.ultimo_pago_lbl.setText("No registra pagos anteriores.")
+                self.ultimo_pago_lbl.show()
+        except Exception:
+            self.ultimo_pago_lbl.hide()
         
         self.card.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
         self.estado.setText(f"Hola {self._cliente_nombre}")
         self.detalle.setText(f"Deuda actual: ${self._deuda_actual:,.2f}")
         self.icono.hide()
         
+        # Ocultar botones de pago por defecto
+        self.txt_monto_abono.hide()
+        self.btn_abono_libre.hide()
+        self.instruccion.hide()
+        self.cont_botones.hide()
+        self._cerrar_lienzos()
+        
+        # Mostrar botones de accion iniciales
+        self.btn_imprimir_resumen.show()
+        if self._deuda_actual > 0.01:
+            self.btn_iniciar_pago.show()
+        else:
+            self.btn_iniciar_pago.hide()
+        
+        self.stack.setCurrentWidget(self.vista_cobranza)
+
+    def _mostrar_controles_pago(self):
+        self.btn_iniciar_pago.hide()
+        self.btn_imprimir_resumen.hide()
+        
         self.txt_monto_abono.setText(f"{self._deuda_actual:.2f}".replace('.', ','))
         self.txt_monto_abono.show()
         self.btn_abono_libre.show()
-        self.btn_imprimir_resumen.show()
-        
-        self.instruccion.hide()
+        self.instruccion.show()
         self.cont_botones.show()
-        self._cerrar_lienzos()
-        
-        self.stack.setCurrentWidget(self.vista_cobranza)
         self.txt_monto_abono.setFocus()
         self.txt_monto_abono.selectAll()
 
-    
     def _imprimir_estado_cuenta(self):
         try:
             from src.hardware.printer import printer_manager

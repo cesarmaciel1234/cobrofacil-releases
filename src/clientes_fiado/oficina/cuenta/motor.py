@@ -147,6 +147,17 @@ class MotorCuenta:
     def listar_con_deuda(self):
         return ClienteRepository.obtener_clientes_con_deuda()
 
+
+    def ultimo_pago(self, cliente_id):
+        fila = _get_read_db().execute_query(
+            "SELECT fecha, monto FROM cuenta_corriente WHERE cliente_id = ? AND tipo = 'ABONO' "
+            "ORDER BY fecha DESC LIMIT 1",
+            (cliente_id,)
+        )
+        if fila and len(fila) > 0:
+            return fila[0]
+        return None
+
     def ultimo_cargo(self, cliente_id):
         return _get_read_db().execute_scalar(
             "SELECT fecha FROM cuenta_corriente WHERE cliente_id = ? AND tipo = 'CARGO' "
