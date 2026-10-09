@@ -71,6 +71,7 @@ class PanelBuscadorClientes(QWidget):
             "QLineEdit:focus { border: 3px solid #2563EB; background: #FFFFFF; }"
         )
         self.caja_busqueda.textChanged.connect(self.texto_cambiado.emit)
+        self.caja_busqueda.returnPressed.connect(self.aceptar_actual)
         lay_busq.addWidget(self.caja_busqueda)
         lay.addWidget(self.cont_busqueda)
 

@@ -103,6 +103,7 @@ class PanelFiadoCobro(QFrame):
         self.panel_buscador.texto_cambiado.connect(self.motor_busqueda.buscar_texto)
         self.motor_busqueda.sugerencias_listas.connect(self.panel_buscador.mostrar_sugerencias)
         self.panel_buscador.cliente_elegido.connect(self._al_seleccionar_cliente)
+        self.panel_buscador.creacion_solicitada.connect(self.motor_busqueda.identificar_o_crear)
         self.stack.addWidget(self.panel_buscador)
 
         # --- 2. Aprobado (Paso 2) ---
@@ -336,9 +337,6 @@ class PanelFiadoCobro(QFrame):
                 return True
             elif event.key() == Qt.Key.Key_Down:
                 self.panel_buscador.navegar("abajo")
-                return True
-            elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-                self.procesar_enter()
                 return True
         return super().eventFilter(obj, event)
 

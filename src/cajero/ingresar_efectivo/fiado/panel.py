@@ -80,6 +80,7 @@ class CentroCobranzasPanel(QWidget):
         self.panel_buscador.texto_cambiado.connect(self.motor_busqueda.buscar_texto)
         self.motor_busqueda.sugerencias_listas.connect(self.panel_buscador.mostrar_sugerencias)
         self.panel_buscador.cliente_elegido.connect(self._al_seleccionar_cliente)
+        self.panel_buscador.creacion_solicitada.connect(self.motor_busqueda.identificar_o_crear)
         self.motor_busqueda.limite_aprobado.connect(self._al_limite_aprobado)
         self.stack.addWidget(self.panel_buscador)
 
@@ -262,9 +263,6 @@ class CentroCobranzasPanel(QWidget):
                 return True
             elif event.key() == Qt.Key.Key_Down:
                 self.panel_buscador.navegar("abajo")
-                return True
-            elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-                self.panel_buscador.aceptar_actual()
                 return True
         return super().eventFilter(obj, event)
 

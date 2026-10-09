@@ -131,6 +131,7 @@ class DialogoIngresoEfectivo(QDialog):
         if hasattr(self.panel_fiado, 'txt_monto'):
             self.panel_fiado.txt_monto.returnPressed.connect(self._procesar)
         self.panel_otros.txt_monto.returnPressed.connect(self._procesar)
+        self.panel_otros.txt_desc.returnPressed.connect(self._procesar)
         
         # Conectar senales del nuevo ecosistema
         if hasattr(self.panel_fiado, 'abono_registrado'):
