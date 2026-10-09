@@ -1,21 +1,23 @@
-# Fiado en Paso 6
+# Fiado en Paso 6 (Proceso Piramidal de Crédito)
 
-`panel.py`, clase `PanelFiadoCobro`, contiene la selección del cliente y confirma que la compra actual se cargue a su cuenta. `HojaCuentaCobro` conserva el flujo normal: elegir cliente, revisar saldo y presionar Enter. Ese Enter muestra la confirmación verde. El siguiente Enter cierra la venta con `pago_listo`.
+La clase `PanelFiadoCobro` (`panel.py`) es el orquestador de un diseño piramidal donde los componentes visuales y lógicos están encarpetados en `componentes_fiado/` (Estado Crédito, Selector Cobranza y Motor).
 
-## Cobranza Integrada (F5)
+## Un proceso: el normal
+El cliente viene, pide fiado, y se carga a la cuenta.
+1. `HojaCuentaCobro` busca al cliente.
+2. Al seleccionarlo (Enter), el sub-módulo `estado_credito` muestra la confirmación verde (Crédito Aprobado).
+3. Un último Enter emite `pago_listo` al sistema principal (`Paso6Cobro`).
+4. El sistema cierra la venta como Fiado, incrementando la deuda del cliente por el valor del carrito.
 
-Cuando un cliente quiere pagar su deuda o no tiene crédito suficiente, F5 transforma el panel verde en una interfaz de cobro.
-- Muestra el monto sugerido: **Deuda Actual + Venta Actual**.
-- El panel verde embebe los lienzos nativos de cobro (`LienzoQr`, `LienzoEfectivo`, etc.) sin abrir ventanas de diálogo externas.
-- El panel reacciona en vivo a los cambios de F3 (Redondeo) y F4 (Recargo) de la ventana principal, ajustando el monto sugerido automáticamente.
-
-### Contabilidad y Cierre ("Cuenta Corriente Mercantil")
-
-Si el cliente paga este monto, el sistema opera en dos fases:
-1. **Recibo de Pago**: `PanelFiadoCobro` llama a `asentar()`, reduciendo la deuda del cliente (generando un saldo temporal a favor si paga la deuda más la venta actual) y registrando el ingreso de caja.
-2. **Ticket de Venta**: Inmediatamente se emite `pago_listo`, y `Paso6Cobro` procesa los artículos del carrito cerrando la venta como "Fiado". Esto suma el total del carrito a la cuenta del cliente, contrarrestando el saldo a favor y dejando la deuda exacta, al mismo tiempo que imprime un ticket fiscalmente válido detallando los artículos, recargos y redondeos.
+## Otro proceso: F5 (Cobranza Integrada)
+El cliente quiere pagar su deuda o abonar parte de ella en el mismo momento de la compra.
+1. El cajero presiona F5, lo que activa el sub-módulo `selector_cobranza` mostrando botones de métodos de pago.
+2. El monto sugerido suma la deuda previa y la venta actual, adaptándose en vivo a recargos o redondeos (F3/F4).
+3. Al seleccionar un método, un lienzo nativo se embebe en el panel verde.
+4. **Contabilidad en dos fases:**
+   - **Recibo de Pago:** El sub-módulo `motor` llama a `asentar()` con el monto pagado, ingresando el dinero a caja y reduciendo la deuda (dejando saldo a favor si cubrió la venta actual).
+   - **Ticket de Venta:** Inmediatamente emite `pago_listo`. `Paso6Cobro` procesa los artículos, cerrando la venta como "Fiado". Esto suma el total a la cuenta, contrarrestando el saldo a favor exacto.
 
 ## Qué no cambiar
-
-- El motor de cobranza dentro de `PanelFiadoCobro` asienta el pago mediante `asentar()`. Nunca debe llamar al cierre de la venta general; debe emitir `pago_listo` y dejar que `Paso6Cobro.finalizar()` lo haga en su propio flujo de Fiado.
-- No restablezca las validaciones de sobrepago, el saldo a favor temporal es el mecanismo central de este diseño.
+- El flujo piramidal expone las variables de los submódulos (`self.estado`, `self.lienzo_qr`, etc.) directamente en `PanelFiadoCobro` para mantener compatibilidad total con el exterior. No se debe cambiar esta firma.
+- El `MotorCobranza` nunca cierra la venta general; debe emitir `pago_listo` y dejar que `Paso6Cobro` lo haga. No restablezca validaciones de sobrepago.

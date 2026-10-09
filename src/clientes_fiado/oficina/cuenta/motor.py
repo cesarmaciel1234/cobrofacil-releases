@@ -123,7 +123,9 @@ class MotorCuenta:
         salida = []
         for fila in filas:
             ficha = _ficha(fila)
-            if busqueda in _plegar(ficha.get("nombre")):
+            n = _plegar(str(ficha.get("nombre") or ""))
+            d = _plegar(str(ficha.get("dni") or ""))
+            if busqueda in n or busqueda in d:
                 salida.append(ficha)
             if len(salida) >= 8:
                 break

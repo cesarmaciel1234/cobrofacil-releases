@@ -44,6 +44,7 @@ from src.jefe.reportes.financiero.paleta import (
     _unidad_clara,
 )
 from src.jefe.reportes.letra import fuente_limpia
+from src.utils.medio_pago import etiqueta_pago
 
 
 def _nombre_depto(raw) -> str:
@@ -804,7 +805,7 @@ class VistaFinanciero(QWidget):
                     )
                     if res_pago_prev:
                         for r in res_pago_prev:
-                            p = str(r['pago'])
+                            p = etiqueta_pago(str(r['pago']))
                             if p == 'Mixto':
                                 pago_prev_map['Efectivo'] = pago_prev_map.get('Efectivo', 0.0) + float(r['m_efe'] or 0.0)
                                 pago_prev_map['Digital (Mixto)'] = pago_prev_map.get('Digital (Mixto)', 0.0) + float(r['m_otro'] or 0.0)
@@ -917,7 +918,7 @@ class VistaFinanciero(QWidget):
             bar_data = {}
             if res_pago:
                 for r in res_pago:
-                    p = str(r['pago'])
+                    p = etiqueta_pago(str(r['pago']))
                     d = str(r['dia'])
                     short_d = d[-2:] if "-" in d else d
                     if short_d not in bar_data: bar_data[short_d] = {}
@@ -1506,7 +1507,7 @@ class VistaFinanciero(QWidget):
             it_subt.setFont(font_mono)
             it_subt.setForeground(trade_color)
 
-            it_pago = QTableWidgetItem(str(r.get('metodo_pago', '')).upper())
+            it_pago = QTableWidgetItem(etiqueta_pago(r.get('metodo_pago', '')).upper())
             it_pago.setForeground(col_gray)
             it_pago.setTextAlignment(Qt.AlignCenter)
 

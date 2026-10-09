@@ -10,10 +10,11 @@ from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_
 
 _TECLAS = (
     ("F1", "Buscar Producto (F1)"),
+    ("F2", "Ingreso Manual (F2)"),
     ("F3", "Ver Historial del Día (F3)"),
     ("F4", "Cierre de Turno / Caja (F4)"),
     ("F5", "Retiro de Efectivo (F5)"),
-    ("F6", "Ingreso de Efectivo (F6)"),
+    ("F6", "Cobranza de Cuentas (F6)"),
     ("F7", "Leer Báscula (F7)"),
     ("F8", "Ticket en Espera (F8)"),
     ("F11", "Llamar Supervisor (F11)"),

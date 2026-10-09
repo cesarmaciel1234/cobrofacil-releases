@@ -977,8 +977,21 @@ class MainWindow(QMainWindow):
 
 
     def mostrar_alerta_perimetral(self, visible, modo="security"):
-        """El cajÃ³n no usa este marco. El aviso es el punto rojo."""
-        self._punto_cajon()
+        """Activa o desactiva la alarma visual de seguridad global."""
+        if visible:
+            # Activar alarma: mostrar marco y iniciar parpadeo
+            if hasattr(self, "marco_alerta"):
+                self.marco_alerta.show()
+                self.marco_alerta.raise_()
+            if hasattr(self, "blink_timer"):
+                self.blink_timer.start(500)  # Parpadeo cada 500ms
+            # Refrescar notificaciones en ventas
+            ventas = self.screens[1] if getattr(self, "screens", None) else None
+            if ventas is not None and hasattr(ventas, "_refrescar_notificaciones"):
+                ventas._refrescar_notificaciones()
+        else:
+            # Desactivar alarma: ocultar marco y detener parpadeo
+            self._punto_cajon()
 
 
     def _auto_cerrar_chatbot(self, text=""):

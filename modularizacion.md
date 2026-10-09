@@ -61,3 +61,10 @@ No se copia el plano entero. El README es de esa subcarpeta.
 1. **Sin cruce directo de datos:** Ningún perfil (Jefe, Cajero, Admin) debe cruzar información leyendo la memoria o el estado en vivo de otro perfil directamente.
 2. **Motores de transporte:** Si un perfil genera información que otro necesita (ej. *Promedios* del Jefe genera precios que el *Cajero* debe usar), deben comunicarse enviando los datos a un "Motor de Transporte" intermedio (ej. Motor de Base de Datos SQLite/MariaDB, Motor de Mayoreo, etc.).
 3. **Resiliencia ante fallos:** Al estar desacoplados, si el motor de un perfil colapsa o entra en error, los demás perfiles siguen operando con normalidad porque leen la última verdad consolidada desde el motor de transporte. Nunca se deben acoplar las interfaces visuales de diferentes perfiles.
+
+## Ecosistemas Autónomos (Frontend y Backend Local)
+
+1. **Ecosistemas Cerrados:** Cuando se crea o modifica un módulo complejo dentro de un perfil (por ejemplo, paso6_cobro/fiado_en_cobro), tanto su Interfaz (Frontend) como su lógica de consultas (Backend) deben vivir en estado piramidal **dentro de su propia carpeta**.
+2. **Motores Locales:** En lugar de importar interfaces o lógicas desde módulos globales (como clientes_fiado/interfaz), el módulo local debe tener su propia carpeta ui/ con su diseño nativo y su propia carpeta motor/ con un 'motor local'.
+3. **Hilos Autónomos:** El motor local actúa como un hilo autónomo que simplemente le pregunta o le informa al motor global o base de datos externa, pero la resolución de qué hacer con ese dato y cómo dibujarlo pertenece exclusivamente al ecosistema de la rama.
+4. **Cero Dispersión:** No dispersar interfaces visuales de una misma función en rutas diferentes. Todo lo visual que ocurra en el Paso 5 vive en el Paso 5; todo lo del Paso 6, en el Paso 6.

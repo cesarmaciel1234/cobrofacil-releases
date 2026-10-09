@@ -7,7 +7,7 @@ import subprocess
 import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QFrame, QLineEdit, QScrollArea, QGridLayout,
-                             QMessageBox, QComboBox, QPlainTextEdit, QGroupBox)
+                             QMessageBox, QComboBox, QPlainTextEdit, QGroupBox, QCheckBox)
 from src.utils.qt_compat import invoke_method, pyqtSlot
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QIcon
@@ -138,6 +138,19 @@ class Admin13Hardware(QWidget):
         self.btn_test_alarm.clicked.connect(self.test_alarm)
         h_btns.addWidget(self.btn_open_p1); h_btns.addWidget(self.btn_test_alarm)
         sec_lay.addLayout(h_btns)
+
+        # Checkboxes para simular cajón virtual
+        self.chk_virtual_open = QCheckBox("CAJÓN VIRTUAL: ABIERTO")
+        self.chk_virtual_open.setCursor(Qt.PointingHandCursor)
+        self.chk_virtual_open.setStyleSheet("font-size: 10px; font-weight: bold; padding: 5px; color: #059669;")
+        self.chk_virtual_open.stateChanged.connect(self.toggle_virtual_open)
+        sec_lay.addWidget(self.chk_virtual_open)
+
+        self.chk_virtual_key = QCheckBox("CAJÓN VIRTUAL: APERTURA CON LLAVE (INTRUSIÓN)")
+        self.chk_virtual_key.setCursor(Qt.PointingHandCursor)
+        self.chk_virtual_key.setStyleSheet("font-size: 10px; font-weight: bold; padding: 5px; color: #dc2626;")
+        self.chk_virtual_key.stateChanged.connect(self.toggle_virtual_key)
+        sec_lay.addWidget(self.chk_virtual_key)
 
         self.btn_invert = QPushButton("🔄 INVERTIR POLARIDAD (NC/NO)")
         self.btn_invert.setCursor(Qt.PointingHandCursor)
@@ -377,6 +390,48 @@ class Admin13Hardware(QWidget):
         if not cmd: return
         self.txt_cmd_input.clear()
         self.txt_cmd_output.appendPlainText(f"C:\\TPV_PRO> {cmd}")
+
+        # Comandos especiales del sistema
+        cmd_lower = cmd.lower().strip()
+
+        if cmd_lower == "status_cajon" or cmd_lower == "drawer_status":
+            # Comando especial para verificar estado del cajón
+            try:
+                from src.hardware.cash_drawer import drawer_manager
+                estado = "ABIERTO" if drawer_manager.is_open else "CERRADO"
+                autorizado = "AUTORIZADA" if drawer_manager.is_authorized else "SIN AUTORIZACIÓN"
+                self.txt_cmd_output.appendPlainText(f"Estado del Cajón Virtual:")
+                self.txt_cmd_output.appendPlainText(f"  Estado: {estado}")
+                self.txt_cmd_output.appendPlainText(f"  Apertura: {autorizado}")
+                self.txt_cmd_output.appendPlainText(f"  Método: {drawer_manager._opos_active and 'OPOS' or 'GENÉRICO'}")
+            except Exception as e:
+                self.txt_cmd_output.appendPlainText(f"[ERROR] No se pudo leer estado del cajón: {e}")
+            return
+
+        elif cmd_lower == "abrir_cajon" or cmd_lower == "open_drawer":
+            # Comando especial para abrir cajón
+            try:
+                from src.hardware.cash_drawer import drawer_manager
+                self.txt_cmd_output.appendPlainText("Enviando señal de apertura de cajón...")
+                ok = drawer_manager.abrir(autorizada=True)
+                if ok:
+                    self.txt_cmd_output.appendPlainText("✅ Señal enviada correctamente")
+                else:
+                    self.txt_cmd_output.appendPlainText("❌ Fallo al enviar señal")
+            except Exception as e:
+                self.txt_cmd_output.appendPlainText(f"[ERROR] {e}")
+            return
+
+        elif cmd_lower == "alarma_test" or cmd_lower == "test_alarm":
+            # Comando especial para probar alarma
+            try:
+                from src.hardware.alarma_intrusion import mostrar_alarma_intrusion
+                self.txt_cmd_output.appendPlainText("Activando toast de alarma de intrusión...")
+                mostrar_alarma_intrusion(duracion_ms=3000)
+                self.txt_cmd_output.appendPlainText("✅ Toast activado por 3 segundos")
+            except Exception as e:
+                self.txt_cmd_output.appendPlainText(f"[ERROR] {e}")
+            return
 
         import subprocess
         try:
@@ -804,6 +859,50 @@ class Admin13Hardware(QWidget):
         val = self.btn_invert.isChecked()
         config.set("drawer_sensor_inverted", val)
         QMessageBox.information(self, "Polaridad", f"Polaridad del sensor {'INVERTIDA' if val else 'NORMAL'}.\n\nSi el cajón figura abierto estando cerrado, use esta opción.")
+
+    def toggle_virtual_open(self, state):
+        """Simula cajón virtual ABIERTO (apertura autorizada por sistema)."""
+        try:
+            from src.hardware.cash_drawer import drawer_manager
+
+            if state == 2:  # Qt.Checked
+                # Marcar como autorizada (como si el sistema lo abrió)
+                drawer_manager.set_authorized(True)
+                # Forzar estado abierto
+                drawer_manager._last_status = True
+                drawer_manager._process_status_change(True)
+                drawer_manager._is_checking = False
+                QMessageBox.information(self, "Cajón Virtual", "Cajón virtual: ABIERTO (apertura autorizada).\n\nEl cajero verá el cajón como abierto por el sistema.")
+            else:  # Qt.Unchecked
+                # Cerrar cajón virtual
+                drawer_manager._last_status = False
+                drawer_manager._process_status_change(False)
+                drawer_manager._is_checking = False
+                QMessageBox.information(self, "Cajón Virtual", "Cajón virtual: CERRADO.\n\nEl cajero dejará de ver la señal.")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"No se pudo simular el cajón virtual:\n{e}")
+
+    def toggle_virtual_key(self, state):
+        """Simula apertura con LLAVE (intrusión sin autorización)."""
+        try:
+            from src.hardware.cash_drawer import drawer_manager
+
+            if state == 2:  # Qt.Checked
+                # NO marcar como autorizada (como si el cajero usó la llave)
+                drawer_manager.set_authorized(False)
+                # Forzar estado abierto
+                drawer_manager._last_status = True
+                drawer_manager._process_status_change(True)
+                drawer_manager._is_checking = False
+                QMessageBox.information(self, "Cajón Virtual", "Cajón virtual: ABIERTO CON LLAVE (INTRUSIÓN).\n\nSe activará la alarma de intrusión en el cajero.")
+            else:  # Qt.Unchecked
+                # Cerrar cajón virtual
+                drawer_manager._last_status = False
+                drawer_manager._process_status_change(False)
+                drawer_manager._is_checking = False
+                QMessageBox.information(self, "Cajón Virtual", "Cajón virtual: CERRADO.\n\nLa alarma de intrusión se desactivará.")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"No se pudo simular la intrusión:\n{e}")
 
     def on_test_scan(self):
         code = self.txt_test.text()

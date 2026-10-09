@@ -58,6 +58,7 @@ from src.reportes_core.componentes.ai_assistant_widget import AIAssistantWidget
 from src.reportes_core.componentes.dialogo_ventas_por_hora import DialogoVentasPorHora
 from src.reportes_core.componentes.dialogo_inventario_bajo import DialogoInventarioBajo
 from src.reportes_core.componentes.data_loader_thread import DataLoaderThread
+from src.utils.medio_pago import etiqueta_pago
 
 class JefeReportes(QWidget):
 
@@ -769,7 +770,7 @@ class JefeReportes(QWidget):
                     )
                     if res_pago_prev:
                         for r in res_pago_prev:
-                            p = str(r['pago'])
+                            p = etiqueta_pago(str(r['pago']))
                             if p == 'Mixto':
                                 pago_prev_map['Efectivo'] = pago_prev_map.get('Efectivo', 0.0) + float(r['m_efe'] or 0.0)
                                 pago_prev_map['Digital (Mixto)'] = pago_prev_map.get('Digital (Mixto)', 0.0) + float(r['m_otro'] or 0.0)
@@ -883,7 +884,7 @@ class JefeReportes(QWidget):
             bar_data = {}
             if res_pago:
                 for r in res_pago:
-                    p = str(r['pago'])
+                    p = etiqueta_pago(str(r['pago']))
                     d = str(r['dia'])
                     short_d = d[-2:] if "-" in d else d
                     if short_d not in bar_data: bar_data[short_d] = {}
@@ -1494,7 +1495,7 @@ class JefeReportes(QWidget):
             cant = r['cantidad'] if r['cantidad'] is not None else 0.0
             precio = r['precio_unitario'] if r['precio_unitario'] is not None else 0.0
             subt = r['subtotal'] if r['subtotal'] is not None else 0.0
-            pago = r['metodo_pago'] or 'Efectivo'
+            pago = etiqueta_pago(r['metodo_pago'] or 'Efectivo')
             estado = r['estado'] or 'COMPLETADA'
             unidad = (r['unidad_medida'] or 'UN').strip().upper()
 
@@ -1930,7 +1931,7 @@ class JefeReportes(QWidget):
                 it_um = QTableWidgetItem(str(r.get('unidad_medida', 'UN')))
                 it_punit = QTableWidgetItem(f"{r.get('precio_unitario', 0):.2f}")
                 it_subt = QTableWidgetItem(f"{sign} {abs(subtotal_val):.2f}")
-                it_pago = QTableWidgetItem(str(r.get('metodo_pago', '')).upper())
+                it_pago = QTableWidgetItem(etiqueta_pago(r.get('metodo_pago', '')).upper())
                 it_estado = QTableWidgetItem(estado_val)
 
                 it_id.setTextAlignment(Qt.AlignCenter)

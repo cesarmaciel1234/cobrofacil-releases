@@ -33,7 +33,7 @@ PASOS_TUTOR = [
     {"msg": "👮 SUPERVISOR (F11): si necesitás ayuda, presioná F11 y llamá al supervisor.", "espera": 4},
     {"msg": "📋 HISTORIAL (F3): presioná F3 desde el terminal para ver las ventas del día.", "espera": 4},
     {"msg": "🏁 CIERRE DE TURNO (F4): contá el efectivo, ingresá el total y el sistema cerrará tu sesión.", "espera": 4},
-    {"msg": "⌨️ RESUMEN DE TECLAS:\nF1=Buscar · F3=Historial · F4=Cierre · F5=Retiro · F6=Ingreso · F7=Balanza · F8=Bloquear · F10=Chatbot · F12=Cobrar", "espera": 5},
+    {"msg": "⌨️ RESUMEN DE TECLAS:\nF1=Buscar · F3=Historial · F4=Cierre · F5=Retiro · F2=Ingreso | F6=Cobranza · F7=Balanza · F8=Bloquear · F10=Chatbot · F12=Cobrar", "espera": 5},
     {"msg": "✅ ¡Tutorial completo! Ahora podés consultarme cualquier duda escribiendo en el chat. 💬", "espera": 3},
 ]
 

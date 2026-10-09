@@ -7,10 +7,31 @@ from typing import List, Dict, Any, Optional
 import logging
 
 class Database:
-    """Clase encargada de toda la comunicaciÃ³n con la base de datos SQLite."""
+    """
+    Clase encargada de toda la comunicación con la base de datos SQLite.
+    
+    NIVEL ENTERPRISE: Este es un wrapper de compatibilidad que usa internamente
+    los nuevos motores enterprise (motor_asientos, motor_impuestos, etc.) pero
+    mantiene la API externa para no romper el código existente.
+    """
     def __init__(self, db_name="database.db"):
         self.db_name = db_name
+        self._enterprise_mode = False  # Se activará si se configuran los motores enterprise
+        self._motor_asientos = None
+        self._motor_impuestos = None
         self.init_db()
+        
+        # Intentar inicializar motores enterprise si están disponibles
+        try:
+            from src.contabilidad.motor_asientos import MotorAsientos
+            from src.contabilidad.motor_impuestos import MotorImpuestos
+            self._motor_asientos = MotorAsientos(db_name)
+            self._motor_impuestos = MotorImpuestos(db_name)
+            self._enterprise_mode = True
+            logging.info("Modo Enterprise activado: usando motores contables avanzados")
+        except Exception as e:
+            logging.warning(f"No se pudieron inicializar motores enterprise: {e}")
+            self._enterprise_mode = False
 
     def get_connection(self):
         """Crea una conexiÃ³n a la base de datos permitiendo buscar datos por nombre de columna."""
@@ -199,7 +220,11 @@ class Database:
 
 
     def add_expense(self, date: str, category: str, amount: float, description: str, expense_type: str = 'variable', tax_amount: float = 0.0, payment_method: str = 'Efectivo Caja', invoice_number: str = '', cursor: sqlite3.Cursor = None):
-        """Registra un nuevo gasto en la base de datos y lo anota en el historial de actividad."""
+        """
+        Registra un nuevo gasto en la base de datos y lo anota en el historial de actividad.
+        
+        ENTERPRISE: Si está activado el modo enterprise, también genera un asiento contable.
+        """
         if cursor:
             cursor.execute('INSERT INTO expenses (date, category, amount, description, type, tax_amount, payment_method, invoice_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                            (date, category, amount, description, expense_type, tax_amount, payment_method, invoice_number))
@@ -211,6 +236,55 @@ class Database:
                 cursor.execute('INSERT INTO activity_log (company, action, details) VALUES (?, ?, ?)',
                                (self.db_name.replace(".db", "").upper(), "GASTO", f"${amount:,.2f} - {category}"))
                 conn.commit()
+                
+                # ENTERPRISE: Generar asiento contable si está activado
+                if self._enterprise_mode and self._motor_asientos:
+                    try:
+                        from src.contabilidad.schema_fiscal import AsientoContable, LineaAsiento, TipoAsiento, Moneda, EstadoAsiento
+                        from datetime import datetime
+                        
+                        # Mapear categoría a cuenta del plan
+                        cuenta_map = {
+                            "Mercadería / Stock": "5.1.01.01",  # Costo de Ventas
+                            "Mercadería": "5.1.01.01",
+                            "Servicios": "5.1.03.02",  # Servicios
+                            "Sueldos": "5.1.02.01",  # Gastos de Personal
+                            "Alquiler": "5.1.03.01",  # Alquileres
+                            "Mantenimiento": "5.1.03.03",  # Mantenimiento
+                            "Impuestos": "5.1.06.01",  # Impuestos
+                        }
+                        cuenta_codigo = cuenta_map.get(category, "5.1.07.01")  # Otros Gastos por defecto
+                        
+                        # Determinar cuenta de activo según método de pago
+                        if payment_method in ['Efectivo', 'Caja']:
+                            cuenta_activo = "1.1.01.01"  # Caja
+                        elif payment_method in ['Tarjeta', 'Transferencia']:
+                            cuenta_activo = "1.1.01.02"  # Bancos
+                        else:
+                            cuenta_activo = "1.1.01.01"
+                        
+                        # Crear asiento de gasto
+                        lineas = [
+                            LineaAsiento(cuenta_codigo=cuenta_codigo, debe=amount, 
+                                        descripcion=f"{category} - {description}"),
+                            LineaAsiento(cuenta_codigo=cuenta_activo, haber=amount,
+                                        description=f"Pago {payment_method}")
+                        ]
+                        
+                        asiento = AsientoContable(
+                            fecha=datetime.strptime(date, "%Y-%m-%d").date(),
+                            tipo=TipoAsiento.MANUAL,
+                            descripcion=f"Gasto: {category}",
+                            lineas=lineas,
+                            moneda=Moneda.ARS,
+                            estado=EstadoAsiento.APROBADO,
+                            referencia=f"EXP-{invoice_number}" if invoice_number else "",
+                            usuario="sistema_database"
+                        )
+                        
+                        self._motor_asientos.crear_asiento(asiento)
+                    except Exception as e:
+                        logging.warning(f"Error generando asiento contable para gasto: {e}")
 
     def get_expenses(self, expense_type: Optional[str] = None) -> List[sqlite3.Row]:
         """Recupera la lista de gastos, pudiendo filtrar por fijos o variables."""
@@ -235,7 +309,12 @@ class Database:
                            (amount, description, category, id))
             conn.commit()
 
-    def add_income(self, date, amount, description, source):
+    def add_income(self, date, amount, description, source, tax_amount=0.0, payment_method='Efectivo', invoice_number=''):
+        """
+        Registra un nuevo ingreso.
+        
+        ENTERPRISE: Si está activado el modo enterprise, también genera un asiento contable.
+        """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('INSERT INTO income (date, amount, description, source, tax_amount, payment_method, invoice_number) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -243,6 +322,43 @@ class Database:
             cursor.execute('INSERT INTO activity_log (company, action, details) VALUES (?, ?, ?)',
                            (self.db_name.replace(".db", "").upper(), "INGRESO", f"${amount:,.2f} - {source}"))
             conn.commit()
+            
+            # ENTERPRISE: Generar asiento contable si está activado
+            if self._enterprise_mode and self._motor_asientos:
+                try:
+                    from src.contabilidad.schema_fiscal import AsientoContable, LineaAsiento, TipoAsiento, Moneda, EstadoAsiento
+                    from datetime import datetime
+                    
+                    # Determinar cuenta de activo según método de pago
+                    if payment_method in ['Efectivo', 'Caja']:
+                        cuenta_activo = "1.1.01.01"  # Caja
+                    elif payment_method in ['Tarjeta', 'Transferencia']:
+                        cuenta_activo = "1.1.01.02"  # Bancos
+                    else:
+                        cuenta_activo = "1.1.01.01"
+                    
+                    # Crear asiento de ingreso
+                    lineas = [
+                        LineaAsiento(cuenta_codigo=cuenta_activo, debe=amount,
+                                    description=f"Ingreso - {source}"),
+                        LineaAsiento(cuenta_codigo="4.1.01.01", haber=amount,  # Ventas Locales
+                                    description=f"{description} - {source}")
+                    ]
+                    
+                    asiento = AsientoContable(
+                        fecha=datetime.strptime(date, "%Y-%m-%d").date(),
+                        tipo=TipoAsiento.MANUAL,
+                        descripcion=f"Ingreso: {source}",
+                        lineas=lineas,
+                        moneda=Moneda.ARS,
+                        estado=EstadoAsiento.APROBADO,
+                        referencia=f"INC-{invoice_number}" if invoice_number else "",
+                        usuario="sistema_database"
+                    )
+                    
+                    self._motor_asientos.crear_asiento(asiento)
+                except Exception as e:
+                    logging.warning(f"Error generando asiento contable para ingreso: {e}")
 
     def get_income(self, month=None, year=None):
         with self.get_connection() as conn:
@@ -441,6 +557,196 @@ class Database:
             conn.commit()
 
     def get_general_debts(self):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM general_debts ORDER BY due_date")
+            return cursor.fetchall()
+
+    # ── MÉTODOS ENTERPRISE (Nivel Empresarial) ─────────────────────────────────────
+    
+    def is_enterprise_mode(self) -> bool:
+        """Verifica si el modo enterprise está activado"""
+        return self._enterprise_mode
+    
+    def get_balance_general(self, fecha: datetime.date) -> Dict:
+        """
+        Obtiene el balance general (estado de situación patrimonial)
+        
+        ENTERPRISE: Requiere modo enterprise activado
+        """
+        if not self._enterprise_mode or not self._motor_asientos:
+            raise RuntimeError("Modo enterprise no activado. Los motores contables no están disponibles.")
+        
+        return self._motor_asientos.obtener_balance_general(fecha)
+    
+    def get_estado_resultados(self, desde: datetime.date, hasta: datetime.date) -> Dict:
+        """
+        Obtiene el estado de resultados (P&L)
+        
+        ENTERPRISE: Requiere modo enterprise activado
+        """
+        if not self._enterprise_mode or not self._motor_asientos:
+            raise RuntimeError("Modo enterprise no activado. Los motores contables no están disponibles.")
+        
+        return self._motor_asientos.obtener_estado_resultados(desde, hasta)
+    
+    def get_mayor_general(self, cuenta_codigo: str = None, 
+                           desde: datetime.date = None, 
+                           hasta: datetime.date = None) -> List[Dict]:
+        """
+        Obtiene el mayor general
+        
+        ENTERPRISE: Requiere modo enterprise activado
+        """
+        if not self._enterprise_mode or not self._motor_asientos:
+            raise RuntimeError("Modo enterprise no activado. Los motores contables no están disponibles.")
+        
+        return self._motor_asientos.obtener_mayor_general(cuenta_codigo, desde, hasta)
+    
+    def get_plan_cuentas(self, tipo: str = None) -> List[Dict]:
+        """
+        Obtiene el plan de cuentas
+        
+        ENTERPRISE: Requiere modo enterprise activado
+        """
+        if not self._enterprise_mode or not self._motor_asientos:
+            raise RuntimeError("Modo enterprise no activado. Los motores contables no están disponibles.")
+        
+        from src.contabilidad.schema_fiscal import TipoCuenta
+        tipo_enum = TipoCuenta(tipo) if tipo else None
+        return self._motor_asientos.listar_cuentas(tipo_enum)
+    
+    def cargar_plan_cuentas_defecto(self):
+        """
+        Carga el plan de cuentas por defecto
+        
+        ENTERPRISE: Requiere modo enterprise activado
+        """
+        if not self._enterprise_mode or not self._motor_asientos:
+            raise RuntimeError("Modo enterprise no activado. Los motores contables no están disponibles.")
+        
+        self._motor_asientos.cargar_plan_cuentas_defecto()
+    
+    def get_stats(self, desde: datetime.date = None, hasta: datetime.date = None) -> Dict:
+        """
+        Obtiene estadísticas financieras (compatibilidad con código existente)
+        
+        Este método mantiene la API original pero puede usar datos enterprise
+        si está activado el modo.
+        """
+        if not self._enterprise_mode:
+            # Modo legacy: usar queries directos
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                # Total ingresos
+                cursor.execute('SELECT SUM(amount) as total FROM income')
+                total_income = cursor.fetchone()['total'] or 0.0
+                
+                # Total gastos
+                cursor.execute('SELECT SUM(amount) as total FROM expenses')
+                total_expenses = cursor.fetchone()['total'] or 0.0
+                
+                # Gastos por categoría
+                cursor.execute('''
+                    SELECT category, SUM(amount) as total 
+                    FROM expenses 
+                    GROUP BY category
+                ''')
+                categories = [(row['category'], row['total']) for row in cursor.fetchall()]
+                
+                # Gastos fijos
+                cursor.execute('SELECT SUM(amount) as total FROM fixed_costs')
+                fixed_expenses = cursor.fetchone()['total'] or 0.0
+                
+                # Inversiones
+                cursor.execute('SELECT SUM(amount) as total FROM investments')
+                investments_balance = cursor.fetchone()['total'] or 0.0
+                
+                # Balances de deudas
+                balances = {}
+                for table in ['loans', 'checks', 'general_debts']:
+                    cursor.execute(f'SELECT SUM(amount) as total FROM {table} WHERE status IN ("pending", "partial")')
+                    balances[table] = cursor.fetchone()['total'] or 0.0
+                
+                return {
+                    "total_income": total_income,
+                    "total_expenses": total_expenses,
+                    "categories": categories,
+                    "fixed_expenses": fixed_expenses,
+                    "investments_balance": investments_balance,
+                    "balances": balances
+                }
+        else:
+            # Modo enterprise: usar motor de asientos
+            if not desde or not hasta:
+                desde = datetime.date.today().replace(day=1)
+                hasta = datetime.date.today()
+            
+            er = self._motor_asientos.obtener_estado_resultados(desde, hasta)
+            balance = self._motor_asientos.obtener_balance_general(hasta)
+            
+            # Convertir al formato esperado por el código existente
+            categories = []
+            for fila in balance['filas']:
+                if fila['tipo'] == 'gasto' and fila['saldo'] > 0:
+                    categories.append((fila['nombre'], fila['saldo']))
+            
+            return {
+                "total_income": er.get('total_ingresos', 0),
+                "total_expenses": er.get('total_gastos', 0),
+                "categories": categories,
+                "fixed_expenses": 0,  # Se calcula separadamente
+                "investments_balance": 0,  # Se calcula separadamente
+                "balances": {}  # Se calcula separadamente
+            }
+    
+    def get_all_movements(self, desde: datetime.date = None, hasta: datetime.date = None) -> List:
+        """
+        Obtiene todos los movimientos (ingresos y gastos)
+        
+        Compatibilidad con código existente
+        """
+        movimientos = []
+        
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Ingresos
+            cursor.execute('SELECT date, "INGRESO" as tipo, source as categoria, description, amount FROM income ORDER BY date DESC')
+            for row in cursor.fetchall():
+                movimientos.append((row['date'], row['tipo'], row['categoria'], row['descripcion'], row['amount']))
+            
+            # Gastos
+            cursor.execute('SELECT date, "EGRESO" as tipo, category, description, amount FROM expenses ORDER BY date DESC')
+            for row in cursor.fetchall():
+                movimientos.append((row['date'], row['tipo'], row['category'], row['description'], row['amount']))
+        
+        # Ordenar por fecha
+        movimientos.sort(key=lambda x: x[0], reverse=True)
+        return movimientos
+    
+    def get_daily_drain(self) -> Dict:
+        """
+        Calcula el sangrado diario (gastos promedio por día)
+        
+        Compatibilidad con código existente
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Últimos 30 días
+            cursor.execute('''
+                SELECT AVG(amount) as avg_amount, SUM(amount) as total
+                FROM expenses
+                WHERE date >= date('now', '-30 days')
+            ''')
+            row = cursor.fetchone()
+            
+            return {
+                "total": row['total'] or 0.0,
+                "promedio": row['avg_amount'] or 0.0
+            }
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM general_debts WHERE status IN ("pending", "partial")')

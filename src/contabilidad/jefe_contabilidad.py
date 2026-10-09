@@ -68,10 +68,19 @@ from src.contabilidad.vista_costos_fijos import VistaCostosFijosMixin
 from src.contabilidad.vista_historial import VistaHistorialMixin
 from src.contabilidad.vista_reportes import VistaReportesMixin
 
-class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGastosMixin, VistaProveedoresMixin, VistaPrestamosMixin, VistaChequesMixin, VistaTarjetasMixin, VistaInversionesMixin, VistaCostosFijosMixin, VistaHistorialMixin, VistaReportesMixin):
+# ENTERPRISE: Nuevas vistas
+from src.contabilidad.vista_plan_cuentas import VistaPlanCuentasMixin
+from src.contabilidad.vista_asientos import VistaAsientosMixin
+from src.contabilidad.vista_impuestos import VistaImpuestosMixin
+from src.contabilidad.vista_activos import VistaActivosMixin
+from src.contabilidad.vista_ejercicios import VistaEjerciciosMixin
+
+class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGastosMixin, VistaProveedoresMixin, VistaPrestamosMixin, VistaChequesMixin, VistaTarjetasMixin, VistaInversionesMixin, VistaCostosFijosMixin, VistaHistorialMixin, VistaReportesMixin, VistaPlanCuentasMixin, VistaAsientosMixin, VistaImpuestosMixin, VistaActivosMixin, VistaEjerciciosMixin):
     """
     ERP Contable nativo — Perfil Jefe / Dueño
     Integrado 100% en el stacked widget de MainWindow.
+    
+    ENTERPRISE: Ahora incluye vistas de contabilidad fiscal (plan de cuentas, asientos, impuestos, activos fijos, ejercicios)
     """
     request_dashboard = pyqtSignal()
     request_logout = pyqtSignal()   # Volver al panel del jefe
@@ -88,6 +97,12 @@ class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGast
     IDX_COSTOS_F   = 8
     IDX_HISTORIAL  = 9
     IDX_REPORTES   = 10
+    # ENTERPRISE: Nuevas vistas
+    IDX_PLAN_CUENTAS = 11
+    IDX_ASIENTOS     = 12
+    IDX_IMPUESTOS    = 13
+    IDX_ACTIVOS      = 14
+    IDX_EJERCICIOS   = 15
 
 
     def __init__(self, parent=None):
@@ -333,6 +348,13 @@ class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGast
             ("🔒  Costos Fijos",       self.IDX_COSTOS_F),
             ("📜  Historial",          self.IDX_HISTORIAL),
             ("📄  Reportes PDF",       self.IDX_REPORTES),
+            (None, None),                              # ← espacio entre grupos
+            # ENTERPRISE: Nuevas vistas
+            ("📑  Plan de Cuentas",   self.IDX_PLAN_CUENTAS),
+            ("📝  Asientos Contables", self.IDX_ASIENTOS),
+            ("💵  Impuestos",         self.IDX_IMPUESTOS),
+            ("🏢  Activos Fijos",     self.IDX_ACTIVOS),
+            ("📅  Ejercicios",        self.IDX_EJERCICIOS),
         ]
 
         for label, idx in ALL_ITEMS:
@@ -405,6 +427,12 @@ class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGast
             self.IDX_INVERSIONES: self._load_inversiones,
             self.IDX_COSTOS_F:    self._load_costos_fijos,
             self.IDX_HISTORIAL:   self._load_historial,
+            # ENTERPRISE: Nuevos loaders
+            self.IDX_PLAN_CUENTAS: self._load_plan_cuentas,
+            self.IDX_ASIENTOS:     self._load_asientos,
+            self.IDX_IMPUESTOS:    self._load_impuestos,
+            self.IDX_ACTIVOS:      self._load_activos,
+            self.IDX_EJERCICIOS:   self._load_ejercicios,
         }
         if idx in loaders:
             loaders[idx]()
@@ -466,6 +494,12 @@ class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGast
         self._build_tab_costos_fijos()
         self._build_tab_historial()
         self._build_tab_reportes()
+        # ENTERPRISE: Nuevos tabs
+        self._build_tab_plan_cuentas()
+        self._build_tab_asientos()
+        self._build_tab_impuestos()
+        self._build_tab_activos()
+        self._build_tab_ejercicios()
 
     # ÔöÇÔöÇ P├ígina de contenido con scroll ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     def _page(self):

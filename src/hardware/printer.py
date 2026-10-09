@@ -53,6 +53,10 @@ ALIGN_CENTER = ESC + b'\x61\x01'
 ALIGN_LEFT = ESC + b'\x61\x00'
 BOLD_ON = ESC + b'\x45\x01'
 BOLD_OFF = ESC + b'\x45\x00'
+DOUBLE_HW_ON = ESC + b'\x21\x30'
+DOUBLE_HW_OFF = ESC + b'\x21\x00'
+DOUBLE_HEIGHT_ON = ESC + b'\x21\x10'
+DOUBLE_HEIGHT_OFF = ESC + b'\x21\x00'
 DLE_EOT_1 = b'\x10\x04\x01' # Consulta en tiempo real
 GS_R_2 = b'\x1D\x72\x02'    # Transmitir estado de cajón (más compatible)
 GS_A_1 = b'\x1D\x61\x01'    # Habilitar ASB
@@ -309,7 +313,14 @@ class PosPrinter:
         """ Formatea e imprime un ticket de venta. Soporta dos cajeros y dos tiketeras. """
 
         afip_global_enabled = config.get("facturacion_afip_global", False)
-        should_use_afip = afip_global_enabled and (force_fiscal or self._should_route_fiscal(metodo_pago))
+        
+        metodo_clean = str(metodo_pago).strip().upper()
+        is_credito = metodo_clean in ("FIADO", "CLIENTES", "CUENTA CORRIENTE")
+        is_digital = metodo_clean in ("TARJETA", "CREDITO", "DEBITO", "TRANSFERENCIA", "TRANSF.", "TRANSF", "QR", "MIXTO")
+        
+        should_use_afip = False
+        if not is_credito and afip_global_enabled:
+            should_use_afip = force_fiscal or is_digital or self._should_route_fiscal(metodo_pago)
 
         # 1. ROUTING FISCAL HARDWARE: Si el modo fiscal real está activo Y el método de pago está habilitado
         if self._is_fiscal_mode() and should_use_afip:
@@ -343,153 +354,38 @@ class PosPrinter:
             except Exception as e:
                 logger.error(f"Fallo al procesar Factura Electrónica ARCA: {e}")
 
-        data = bytearray()
-        data.extend(ESC + b'\x40') # Reset
+        from src.hardware.constructor_ticket.constructor import ConstructorTicketVenta
 
-        # Header
-        data.extend(ALIGN_CENTER)
-        data.extend(BOLD_ON)
-        data.extend(f"{self.header_empresa}\n".encode('cp850', errors='replace'))
-        data.extend(BOLD_OFF)
-        data.extend(f"{self.header_cuit}\n".encode('cp850', errors='replace'))
-        data.extend(f"{self.header_dir}\n".encode('cp850', errors='replace'))
+        config_drawer_pin = config.get("drawer_kick_pin", 0)
+        config_3nstar = config.get("printer_3nstar_mode", False)
 
-        if str(estado).upper() == "CANCELADA":
-            data.extend(BOLD_ON)
-            data.extend(b"*** VENTA CANCELADA ***\n")
-            data.extend(BOLD_OFF)
-
-        data.extend(b"--------------------------------\n")
-
-        # Cabecera de Factura Electrónica Oficial si corresponde
-        if factura_electronica_data:
-            data.extend(BOLD_ON)
-            data.extend(b"          FACTURA B          \n")
-            data.extend(b"    COMPROBANTE AUTORIZADO   \n")
-            data.extend(BOLD_OFF)
-            data.extend(b"--------------------------------\n")
-
-        data.extend(f"Ticket Nro: {num_venta:08d}\n".encode('cp850'))
-        data.extend(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n".encode('cp850'))
-        if cajero:
-            data.extend(f"Cajero:  {cajero}\n".encode('cp850', errors='replace'))
-        if cajero_secundario:
-            data.extend(f"Cobro:   {cajero_secundario}\n".encode('cp850', errors='replace'))
-        data.extend(b"--------------------------------\n")
-
-        # Items
-        data.extend(ALIGN_LEFT)
-        data.extend(b"Detalle / Cant x Unit.      Total\n")
-        for it in items:
-            clean_name = it['nombre'].replace("🏷️ ", "*OFER* ").replace("🔥 [OFERTA] ", "*OFER* ")
-            data.extend(f"{clean_name}\n".encode('cp850', errors='replace'))
-
-            cant_str = f"{it['cant']:g}"
-            unit_price = it.get('precio', 0.0)
-            if not unit_price and it['cant'] > 0:
-                unit_price = it['subtotal'] / it['cant']
-
-            calc_str = f"  {cant_str} x ${unit_price:.2f}"
-            subt_str = f"${it['subtotal']:.2f}"
-
-            espacios = 32 - len(calc_str) - len(subt_str)
-            if espacios < 1:
-                espacios = 1
-            linea_detalle = calc_str + (" " * espacios) + subt_str + "\n"
-            data.extend(linea_detalle.encode('cp850'))
-
-        data.extend(b"--------------------------------\n")
-
-        # Totales
-        data.extend(ALIGN_CENTER)
-
-        # Mostrar Descuento si existe
-        if (discount_amount and discount_amount > 0) or (surcharge_amount and surcharge_amount > 0):
-            total_bruto = total + (discount_amount or 0) - (surcharge_amount or 0)
-            data.extend(f"TOTAL BRUTO:   ${total_bruto:.2f}\n".encode('cp850'))
-
-            if discount_amount and discount_amount > 0:
-                data.extend(BOLD_ON)
-                data.extend(f"REDONDEO:     -${discount_amount:.2f}\n".encode('cp850'))
-                data.extend(BOLD_OFF)
-
-            if surcharge_amount and surcharge_amount > 0:
-                data.extend(f"RECARGO:      +${surcharge_amount:.2f}\n".encode('cp850'))
-
-        # Desglose de Neto e IVA en Factura Electrónica ARCA
-        if factura_electronica_data:
-            neto, iva_tot, iva_t_map = self._calcular_iva_desagregado(items, total)
-            data.extend(f"NETO GRAVADO:  ${neto:.2f}\n".encode('cp850'))
-            for tasa, m_iva in iva_t_map.items():
-                if m_iva > 0:
-                    data.extend(f"IVA ({tasa:.1f}%):    ${m_iva:.2f}\n".encode('cp850'))
-
-        data.extend(b"--------------------------------\n")
-        data.extend(BOLD_ON)
-        data.extend(f"TOTAL A PAGAR: ${total:.2f}\n".encode('cp850'))
-        data.extend(BOLD_OFF)
-        data.extend(ALIGN_LEFT)
-        data.extend(f"Pago: ${pago:.2f}\n".encode('cp850'))
-        data.extend(f"Vuelto: ${cambio:.2f}\n".encode('cp850'))
-        data.extend(f"Forma Pago: {metodo_pago}\n".encode('cp850', errors='replace'))
-
-        # Inyectar saldos de Cuenta Corriente si corresponde
-        if cliente_nombre and saldo_anterior is not None and saldo_disponible is not None:
-            data.extend(b"\n")
-            data.extend(b"--------------------------------\n")
-            data.extend(ALIGN_CENTER)
-            data.extend(BOLD_ON)
-            data.extend(b"CUENTA CORRIENTE\n")
-            data.extend(BOLD_OFF)
-            data.extend(ALIGN_LEFT)
-            data.extend(f"Cliente: {cliente_nombre}\n".encode('cp850', errors='replace'))
-            data.extend(f"Saldo anterior:   ${saldo_anterior:.2f}\n".encode('cp850'))
-            if float(abono_cuenta or 0) > 0.009:
-                data.extend(
-                    f"Abono a cuenta:   ${float(abono_cuenta):.2f}\n".encode('cp850')
-                )
-            data.extend(f"Compra actual:    ${total:.2f}\n".encode('cp850'))
-            data.extend(BOLD_ON)
-            data.extend(f"Saldo disponible: ${saldo_disponible:.2f}\n".encode('cp850'))
-            data.extend(BOLD_OFF)
-            data.extend(b"--------------------------------\n")
-
-        if mensaje_extra_condiciones:
-            data.extend(ALIGN_CENTER)
-            data.extend(BOLD_ON)
-            for linea in mensaje_extra_condiciones.split("\n"):
-                data.extend(f"{linea}\n".encode("cp850"))
-            data.extend(BOLD_OFF)
-            data.extend(b"--------------------------------\n")
-
-        # Footer y Firma Fiscal Electrónica ARCA
-        data.extend(ALIGN_CENTER)
-        if factura_electronica_data:
-            data.extend(b"\n")
-            data.extend(f"Pto. Venta: {factura_electronica_data['pto_venta']:04d} | Comp: {num_venta:08d}\n".encode('cp850'))
-            data.extend(BOLD_ON)
-            data.extend(f"CAE: {factura_electronica_data['cae']}\n".encode('cp850'))
-            data.extend(f"Vence: {factura_electronica_data['vencimiento']}\n".encode('cp850'))
-            data.extend(BOLD_OFF)
-            data.extend(b"--------------------------------\n")
-            data.extend(b" Comprobante Autorizado por ARCA\n")
-            # Enlace abreviado del QR oficial de ARCA para cumplimiento legal
-            data.extend(f"QR ARCA: {factura_electronica_data['qr_url'][:35]}...\n".encode('cp850'))
-        else:
-            data.extend(b"\n")
-            data.extend(b"  NO VALIDO COMO FACTURA  \n")
-            data.extend(b"*** GRACIAS POR SU COMPRA ***\n")
-
-        data.extend(b"\n\n\n\n\n")
-
-        # Cortar papel y opcionalmente abrir cajón
-        data.extend(CUT_PAPER)
-        if abrir_cajon:
-            pin = config.get("drawer_kick_pin", 0)
-            kick = KICK_DRAWER_P5 if pin == 1 else KICK_DRAWER
-            if config.get("printer_3nstar_mode", False):
-                data.extend(GS_A_1)
-            data.extend(kick)
+        ticket_bytes = ConstructorTicketVenta.construir(
+            empresa=self.header_empresa,
+            cuit=self.header_cuit,
+            direccion=self.header_dir,
+            num_venta=num_venta,
+            items=items,
+            total=total,
+            pago=pago,
+            cambio=cambio,
+            estado=estado,
+            discount_amount=discount_amount,
+            surcharge_amount=surcharge_amount,
+            cajero=cajero,
+            cajero_secundario=cajero_secundario,
+            metodo_pago=metodo_pago,
+            cliente_nombre=cliente_nombre,
+            saldo_anterior=saldo_anterior,
+            saldo_disponible=saldo_disponible,
+            abono_cuenta=abono_cuenta,
+            mensaje_extra_condiciones=mensaje_extra_condiciones,
+            factura_electronica_data=factura_electronica_data,
+            abrir_cajon=abrir_cajon,
+            config_drawer_pin=config_drawer_pin,
+            config_3nstar=config_3nstar,
+            calcular_iva_func=self._calcular_iva_desagregado
+        )
+        data = bytearray(ticket_bytes)
 
         p_principal = _impresora_cajero_activo()
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
@@ -545,7 +441,7 @@ class PosPrinter:
         data.extend(BOLD_ON)
         data.extend(f"{self.header_empresa}\n".encode('cp850', errors='replace'))
         data.extend(f"{cliente_nombre}\n".encode('cp850', errors='replace'))
-        data.extend(b"CUENTA CORRIENTE\n")
+        data.extend(b"CREDITO\n")
         data.extend(BOLD_OFF)
         data.extend(b"--------------------------------\n")
         data.extend(ALIGN_LEFT)
@@ -562,10 +458,15 @@ class PosPrinter:
         return self._send_raw_data(bytes(data), printer_name_override=p_principal)
 
     def imprimir_saldo_fiado(self, cliente_nombre, saldo_anterior, credito, saldo_restante):
-        """Ticket del cajero: saldo anterior, crédito y saldo restante."""
+        """Ticket del cajero: saldo anterior, crǸdito y saldo restante."""
+        from src.config import config
+        config._load_config()
+        ancho_mm = config.get("printer_paper_width_mm", 58)
+        columnas = 48 if ancho_mm == 80 else 32
+
         def linea(etiqueta, valor):
             monto = f"${float(valor or 0):,.2f}"
-            hueco = 32 - len(etiqueta) - len(monto)
+            hueco = columnas - len(etiqueta) - len(monto)
             if hueco < 1:
                 return f"{etiqueta}\n{monto}\n"
             return f"{etiqueta}{' ' * hueco}{monto}\n"
@@ -575,17 +476,42 @@ class PosPrinter:
         data.extend(ALIGN_CENTER)
         data.extend(BOLD_ON)
         data.extend(f"{self.header_empresa}\n".encode('cp850', errors='replace'))
-        data.extend(f"{cliente_nombre}\n".encode('cp850', errors='replace'))
+        data.extend(b"\n")
+        data.extend(b"*** ABONO DE CUENTA ***\n")
+        data.extend(f"Cliente: {cliente_nombre}\n".encode('cp850', errors='replace'))
+        data.extend(b"\n")
         data.extend(BOLD_OFF)
-        data.extend(b"--------------------------------\n")
+        data.extend((b"-" * columnas) + b"\n")
         data.extend(ALIGN_LEFT)
-        data.extend(linea("Saldo anterior", saldo_anterior).encode('cp850', errors='replace'))
-        data.extend(linea("Credito", credito).encode('cp850', errors='replace'))
+        data.extend(linea("Deuda Anterior", saldo_anterior).encode('cp850', errors='replace'))
+        data.extend(linea("Abono Entregado", credito).encode('cp850', errors='replace'))
+        data.extend((b"-" * columnas) + b"\n")
         data.extend(BOLD_ON)
-        data.extend(linea("Saldo", saldo_restante).encode('cp850', errors='replace'))
+        data.extend(linea("SALDO ACTUAL", saldo_restante).encode('cp850', errors='replace'))
         data.extend(BOLD_OFF)
-        data.extend(b"--------------------------------\n")
-        data.extend(b"\n\n\n\n\n")
+        data.extend((b"-" * columnas) + b"\n")
+        
+        # Uso del nuevo Motor Empresarial para condiciones globales
+        try:
+            from src.motor_condiciones.motor_central import MotorCondiciones
+            import textwrap
+            
+            # Si el abono es 0, es un Estado de Cuenta. Si es mayor a 0, es un Abono.
+            subcontexto = "abono" if float(credito or 0) > 0.009 else "estado_cuenta"
+            condiciones = MotorCondiciones.obtener_condiciones(
+                "credito", subcontexto=subcontexto, 
+                saldo_anterior=float(saldo_anterior or 0), 
+                monto_actual=float(credito or 0)
+            )
+            data.extend(b"\n")
+            data.extend(ALIGN_CENTER)
+            data.extend(b"\n".join(line.encode('cp850', errors='replace') for line in textwrap.wrap(condiciones, columnas)))
+            data.extend(b"\n")
+        except Exception as e:
+            import logging
+            logging.getLogger("PunPro").error(f"Fallo al cargar motor_condiciones en ticket fiado: {e}")
+
+        data.extend(b"\n\n\n\n")
         data.extend(CUT_PAPER)
 
         p_principal = _impresora_cajero_activo()
@@ -593,72 +519,34 @@ class PosPrinter:
         return result
 
     def imprimir_ticket_z(self, usuario, fisico, dif, datos_z):
-        """ Imprime el Cierre de Caja (Reporte Z) """
-        # Mapeo robusto de claves con soporte a ambos formatos de diccionario
-        fondo = float(datos_z.get('fondo') or 0.0)
-        t_efec = float(datos_z.get('turno_efectivo') or datos_z.get('t_efec') or 0.0)
-        t_tarj = float(datos_z.get('turno_tarjeta') or datos_z.get('t_tarj') or 0.0)
-        t_tot = float(datos_z.get('turno_total') or datos_z.get('t_total') or 0.0)
+        """Imprime el ticket de cierre de caja (Reporte Z) usando el módulo especializado.
 
-        d_tarj = float(datos_z.get('dia_tarjeta') or datos_z.get('d_tarj') or 0.0)
-        d_tot = float(datos_z.get('dia_total') or datos_z.get('d_total') or 0.0)
+        Args:
+            usuario: Nombre del cajero
+            fisico: Efectivo contado en caja
+            dif: Diferencia (físico - esperado)
+            datos_z: Diccionario con todos los datos del cierre
 
-        esp = float(datos_z.get('efectivo_esperado') or datos_z.get('esperado') or 0.0)
-        modo = datos_z.get('modo', 'turno')
+        Returns:
+            True si se imprimió correctamente, False en caso contrario
+        """
+        try:
+            from src.hardware.ticket_z import formatear_ticket_z
+        except ImportError:
+            from hardware.ticket_z import formatear_ticket_z
 
-        data = bytearray()
-        data.extend(ESC + b'\x40')
-        data.extend(ALIGN_CENTER)
-        data.extend(BOLD_ON)
+        # Generar contenido del ticket
+        ticket_bytes = formatear_ticket_z(usuario, fisico, dif, datos_z)
 
-        if modo == 'turno':
-            data.extend(b"REPORTE DE TURNO - CIERRE DE CAJA\n")
-        else:
-            data.extend(b"REPORTE Z - CIERRE DE CAJA\n")
-
-        data.extend(BOLD_OFF)
-        data.extend(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n".encode('cp850'))
-        data.extend(f"Cajero: {usuario}\n".encode('cp850'))
-        data.extend(b"--------------------------------\n")
-
-        data.extend(ALIGN_LEFT)
-        data.extend(b"--- TURNO CAJERO ---\n")
-        data.extend(f"Fondo Inicial:     ${fondo:.2f}\n".encode('cp850'))
-        data.extend(f"Ventas Efectivo:   ${t_efec:.2f}\n".encode('cp850'))
-        data.extend(f"Ventas Tarjeta:    ${t_tarj:.2f}\n".encode('cp850'))
-        data.extend(BOLD_ON)
-        data.extend(f"TOTAL TURNO:       ${t_tot:.2f}\n".encode('cp850'))
-        data.extend(BOLD_OFF)
-        data.extend(b"--------------------------------\n")
-
-        if modo != 'turno':
-            data.extend(b"--- GLOBAL DEL DIA ---\n")
-            data.extend(f"Ventas Tarjeta:    ${d_tarj:.2f}\n".encode('cp850'))
-            data.extend(BOLD_ON)
-            data.extend(f"TOTAL DIA:         ${d_tot:.2f}\n".encode('cp850'))
-            data.extend(BOLD_OFF)
-            data.extend(b"--------------------------------\n")
-
-        data.extend(b"--- CUADRE FISICO ---\n")
-        data.extend(f"Efectivo Esperado: ${esp:.2f}\n".encode('cp850'))
-        data.extend(f"Efectivo Contado:  ${fisico:.2f}\n".encode('cp850'))
-
-        if abs(dif) < 0.01: dif_txt = "CUADRE PERFECTO"
-        elif dif > 0: dif_txt = f"SOBRANTE: +${dif:.2f}"
-        else: dif_txt = f"FALTANTE: -${abs(dif):.2f}"
-
-        data.extend(f"Diferencia: {dif_txt}\n".encode('cp850'))
-        data.extend(b"\n\n\n\n\n")
-        data.extend(CUT_PAPER)
-
+        # Enviar a impresora principal
         p_principal = config.get('ticket_printer', config.get('printer_name', ''))
-        result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
+        result = self._send_raw_data(ticket_bytes, printer_name_override=p_principal)
 
         # Copia de seguridad en la Segunda Tiketera (Control de Cajeros Simultáneos)
         if datos_z.get('segunda_tiketera', False):
             printer2 = config.get('ticket_printer_2', '')
             if printer2:
-                self._send_raw_data(bytes(data), printer_name_override=printer2)
+                self._send_raw_data(ticket_bytes, printer_name_override=printer2)
 
         return result
 

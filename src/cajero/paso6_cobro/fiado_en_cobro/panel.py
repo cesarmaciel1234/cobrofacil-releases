@@ -1,26 +1,69 @@
-from dataclasses import dataclass
-
-@dataclass
-class ResultadoAbonoPrevio:
-    ok: bool
-    cliente_id: int
-    monto: float
-    nombre: str
-    saldo: float
-    deuda_anterior: float
-    aviso: str = ''
-
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QLabel, QLineEdit, QWidget, QHBoxLayout, QPushButton, QStackedWidget
+from PyQt6.QtWidgets import QFrame, QVBoxLayout, QWidget, QStackedWidget
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QDoubleValidator
-from src.clientes_fiado.interfaz.cobro.hoja import HojaCuentaCobro as HojaCuenta
-from src.clientes_fiado.cerebro.cerebro import cerebro
+
 from src.utils.dinero import redondear_dinero
 
-from src.cajero.ingresar_efectivo.medios.efectivo.lienzo import LienzoEfectivo
-from src.cajero.ingresar_efectivo.medios.qr.lienzo import LienzoQr
-from src.cajero.ingresar_efectivo.medios.tarjeta.lienzo import LienzoTarjeta
-from src.cajero.ingresar_efectivo.medios.transferencia.lienzo import LienzoTransferencia
+# Nuevos componentes modulares del ecosistema local
+from src.cajero.paso6_cobro.fiado_en_cobro.ui.buscador_clientes.panel_buscador import PanelBuscadorClientes
+from src.cajero.paso6_cobro.fiado_en_cobro.ui.credito_aprobado.panel_aprobado import PanelCreditoAprobado
+from src.cajero.paso6_cobro.fiado_en_cobro.componentes_fiado.motor.motor_busqueda import MotorBusquedaLocal
+
+# Componentes de cobranza existentes
+from src.cajero.paso6_cobro.fiado_en_cobro.componentes_fiado.estado_credito.panel_estado import PanelEstadoCredito
+from src.cajero.paso6_cobro.fiado_en_cobro.componentes_fiado.selector_cobranza.panel_selector import PanelSelectorCobranza
+from src.cajero.paso6_cobro.fiado_en_cobro.componentes_fiado.motor.motor_cobranza import MotorCobranza, ResultadoAbonoPrevio
+
+class HojaCuentaProxy:
+    """Proxi para engañar a paso6_cobro.py que espera el viejo componente hoja_cuenta."""
+    def __init__(self, panel):
+        self.panel = panel
+
+    @property
+    def _paso(self):
+        # 1: Buscando, 2: Cliente aprobado (esperando enter/monto)
+        return 1 if self.panel.stack.currentIndex() == 0 else 2
+
+    @property
+    def _cliente(self):
+        # Si estamos en paso 2, hay cliente
+        cliente_id = getattr(self.panel, '_cliente_id', None)
+        return {"id": cliente_id} if cliente_id else None
+
+    def isVisible(self):
+        return self.panel.isVisible()
+
+    def ubicar(self):
+        pass
+
+    def _cancelar(self):
+        if self.panel.stack.currentIndex() == 0:
+            self.panel._al_cancelar_busqueda()
+        elif getattr(self.panel, "_modo", "") == "cobrando_lienzo":
+            self.panel._volver_de_lienzo()
+        else:
+            self.panel.cancelado.emit()
+
+    def confirmar(self):
+        self.panel.procesar_enter()
+
+    def borrar(self):
+        if self.panel.stack.currentIndex() == 0:
+            txt = self.panel.panel_buscador.caja_busqueda.text()
+            self.panel.panel_buscador.caja_busqueda.setText(txt[:-1])
+        elif getattr(self.panel, 'txt_monto_abono', None) and self.panel.txt_monto_abono.hasFocus():
+            txt = self.panel.txt_monto_abono.text()
+            self.panel.txt_monto_abono.setText(txt[:-1])
+
+    def escribir(self, key):
+        if self.panel.stack.currentIndex() == 0:
+            txt = self.panel.panel_buscador.caja_busqueda.text()
+            self.panel.panel_buscador.caja_busqueda.setText(txt + key)
+        elif getattr(self.panel, 'txt_monto_abono', None) and self.panel.txt_monto_abono.hasFocus():
+            txt = self.panel.txt_monto_abono.text()
+            self.panel.txt_monto_abono.setText(txt + key)
+
+    def fijar_monto(self, monto):
+        self.panel.actualizar_monto(monto)
 
 class PanelFiadoCobro(QFrame):
     cambio = pyqtSignal(str)
@@ -30,115 +73,75 @@ class PanelFiadoCobro(QFrame):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.hoja_cuenta = HojaCuentaProxy(self)
         self.setObjectName("PanelFiadoCobro")
         self.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
 
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(16, 16, 16, 16)
-        lay.setSpacing(12)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
 
-        self.hoja_cuenta = HojaCuenta(self)
-        self.hoja_cuenta.listo.connect(self._al_cliente_encontrado)
-        self.hoja_cuenta.cancelado.connect(self._al_cancelar_busqueda)
-        self.hoja_cuenta.abono_registrado.connect(self.abono_registrado.emit)
-        lay.addWidget(self.hoja_cuenta)
+        # Usaremos un StackedWidget para alternar limpiamente entre las vistas locales
+        self.stack = QStackedWidget()
+        lay.addWidget(self.stack)
 
-        lay.addStretch(1)
+        # --- Instanciar los motores locales ---
+        self.motor_busqueda = MotorBusquedaLocal(self)
+        self.motor_cobranza = MotorCobranza(self)
+        self.motor = self.motor_cobranza  # Aliasing para no romper código externo
 
-        self.icono = QLabel("✓")
-        self.icono.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.icono.setStyleSheet("color: #10B981; font-size: 80px; font-weight: 900; background: transparent; border: none;")
-        lay.addWidget(self.icono)
+        # --- 1. Buscador (Paso 1) ---
+        self.panel_buscador = PanelBuscadorClientes()
+        self.panel_buscador.caja_busqueda.installEventFilter(self)
+        self.panel_buscador.texto_cambiado.connect(self.motor_busqueda.buscar_texto)
+        self.motor_busqueda.sugerencias_listas.connect(self.panel_buscador.mostrar_sugerencias)
+        self.panel_buscador.cliente_elegido.connect(self._al_seleccionar_cliente)
+        self.stack.addWidget(self.panel_buscador)
 
-        self.estado = QLabel("")
-        self.estado.setWordWrap(True)
-        self.estado.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.estado.setStyleSheet(
-            "color: #065F46; font-size: 32px; font-weight: 900; background: transparent; border: none;"
-        )
-        lay.addWidget(self.estado)
+        # --- 2. Aprobado (Paso 2) ---
+        self.panel_aprobado = PanelCreditoAprobado()
+        self.panel_aprobado.confirmado.connect(self.procesar_enter)
+        self.motor_busqueda.limite_aprobado.connect(self._al_limite_aprobado)
+        self.stack.addWidget(self.panel_aprobado)
 
-        self.detalle = QLabel("")
-        self.detalle.setWordWrap(True)
-        self.detalle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.detalle.setStyleSheet(
-            "color: #047857; font-size: 22px; font-weight: 700; background: transparent; border: none;"
-        )
-        lay.addWidget(self.detalle)
+        # --- 3. Cobranza (Paso 3 y 4) ---
+        self.vista_cobranza = QWidget()
+        lay_cob = QVBoxLayout(self.vista_cobranza)
+        lay_cob.setContentsMargins(16, 16, 16, 16)
         
-        self.txt_monto_abono = QLineEdit()
-        self.txt_monto_abono.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.txt_monto_abono.setFixedHeight(64)
-        # self.txt_monto_abono.setValidator(QDoubleValidator(0.0, 9999999.0, 2))
-        self.txt_monto_abono.setStyleSheet(
-            "QLineEdit { background: #FFFFFF; color: #065F46; border: 2px solid #10B981; border-radius: 12px; font-size: 32px; font-weight: 900; }"
-        )
-        self.txt_monto_abono.hide()
+        self.panel_estado = PanelEstadoCredito()
+        self.panel_selector = PanelSelectorCobranza()
+        
+        # Mapeo de estado viejo
+        self.icono = self.panel_estado.icono
+        self.estado = self.panel_estado.estado
+        self.detalle = self.panel_estado.detalle
+        self.txt_monto_abono = self.panel_estado.txt_monto_abono
+        self.btn_abono_libre = self.panel_estado.btn_abono_libre
+        self.instruccion = self.panel_estado.instruccion
+        self.cont_botones = self.panel_selector.cont_botones
+        self.cont_lienzos = self.panel_selector.cont_lienzos
+        
         self.txt_monto_abono.installEventFilter(self)
-        lay.addWidget(self.txt_monto_abono)
+        
+        self.lienzo_efectivo = self.panel_selector.lienzo_efectivo
+        self.lienzo_qr = self.panel_selector.lienzo_qr
+        self.lienzo_tarjeta = self.panel_selector.lienzo_tarjeta
+        self.lienzo_transferencia = self.panel_selector.lienzo_transferencia
+        
+        botones_selector = [self.panel_selector.btn_efectivo, self.panel_selector.btn_tarjeta, self.panel_selector.btn_qr, self.panel_selector.btn_transferencia]
+        for btn in botones_selector:
+            btn.clicked.connect(lambda ch, m=btn.text(): self._iniciar_cobranza(m))
 
-        self.instruccion = QLabel("[ ENTER ] CONFIRMAR FIADO")
-        self.instruccion.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.instruccion.setStyleSheet("color: #FFFFFF; background: #10B981; font-size: 24px; font-weight: 900; border-radius: 12px; padding: 14px;")
-        lay.addWidget(self.instruccion)
-        
-        self.cont_botones = QWidget()
-        h_lay = QHBoxLayout(self.cont_botones)
-        h_lay.setContentsMargins(0, 0, 0, 0)
-        h_lay.setSpacing(8)
-        
-        btn_style = """
-            QPushButton {
-                background-color: #E2E8F0;
-                color: #0F172A;
-                border-radius: 8px;
-                padding: 12px;
-                font-size: 18px;
-                font-weight: bold;
-                border: 2px solid #CBD5E1;
-            }
-            QPushButton:hover {
-                background-color: #CBD5E1;
-            }
-        """
-        
-        self.btn_efectivo = QPushButton("Efectivo")
-        self.btn_efectivo.setStyleSheet(btn_style)
-        self.btn_efectivo.clicked.connect(lambda: self._iniciar_cobranza("Efectivo"))
-        
-        self.btn_tarjeta = QPushButton("Tarjeta")
-        self.btn_tarjeta.setStyleSheet(btn_style)
-        self.btn_tarjeta.clicked.connect(lambda: self._iniciar_cobranza("Tarjeta"))
-        
-        self.btn_qr = QPushButton("QR")
-        self.btn_qr.setStyleSheet(btn_style)
-        self.btn_qr.clicked.connect(lambda: self._iniciar_cobranza("QR"))
-        
-        self.btn_transferencia = QPushButton("Transferencia")
-        self.btn_transferencia.setStyleSheet(btn_style)
-        self.btn_transferencia.clicked.connect(lambda: self._iniciar_cobranza("Transferencia"))
-        
-        h_lay.addWidget(self.btn_efectivo)
-        h_lay.addWidget(self.btn_tarjeta)
-        h_lay.addWidget(self.btn_qr)
-        h_lay.addWidget(self.btn_transferencia)
-        
-        lay.addWidget(self.cont_botones)
-        self.cont_botones.hide()
+        lay_cob.addStretch(1)
+        lay_cob.addWidget(self.panel_estado)
+        lay_cob.addSpacing(40)
+        lay_cob.addWidget(self.panel_selector)
+        lay_cob.addStretch(2)
+        self.stack.addWidget(self.vista_cobranza)
 
-        # LIENZOS PARA COBRO
-        self.cont_lienzos = QStackedWidget()
-        self.lienzo_efectivo = LienzoEfectivo()
-        self.lienzo_qr = LienzoQr()
-        self.lienzo_tarjeta = LienzoTarjeta()
-        self.lienzo_transferencia = LienzoTransferencia()
-        self.cont_lienzos.addWidget(self.lienzo_efectivo)
-        self.cont_lienzos.addWidget(self.lienzo_qr)
-        self.cont_lienzos.addWidget(self.lienzo_tarjeta)
-        self.cont_lienzos.addWidget(self.lienzo_transferencia)
-        
-        # Conexiones
-        self.lienzo_efectivo.listo.connect(lambda monto: self._finalizar_cobranza_con_motor(monto, "Efectivo", None))
+        # Conexiones de los lienzos
+        self.lienzo_efectivo.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Efectivo", det))
         self.lienzo_efectivo.volver.connect(self._volver_de_lienzo)
         
         self.lienzo_qr.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "QR", det))
@@ -150,11 +153,7 @@ class PanelFiadoCobro(QFrame):
         
         self.lienzo_transferencia.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Transferencia", det))
         self.lienzo_transferencia.volver.connect(self._volver_de_lienzo)
-        
-        self.cont_lienzos.hide()
-        lay.addWidget(self.cont_lienzos)
 
-        lay.addStretch(1)
         self.hide()
 
     def procesar_f9(self):
@@ -167,64 +166,75 @@ class PanelFiadoCobro(QFrame):
         return False
 
     def bloquea_enter(self):
-        return self.isVisible() and self._modo in ("confirmando", "cobranza", "cobrando_lienzo")
+        return self.isVisible() and self._modo in ("buscando", "confirmando", "cobranza", "cobrando_lienzo")
         
     def procesar_enter(self):
-        if self._modo == "confirmando" and self._cliente_id:
+        if self._modo == "buscando":
+            self.panel_buscador.aceptar_actual()
+        elif self._modo == "confirmando" and getattr(self, "_cliente_id", None):
             self._modo = "listo"
             self.pago_listo.emit(self._cliente_id, 0.0)
-        elif self._modo == "cobranza" and self._cliente_id:
+        elif self._modo == "cobranza" and getattr(self, "_cliente_id", None):
             self._iniciar_cobranza("Efectivo")
         elif self._modo == "cobrando_lienzo":
-            # Pasar enter al lienzo activo
             actual = self.cont_lienzos.currentWidget()
             if hasattr(actual, "tecla"):
                 actual.tecla(Qt.Key.Key_Return)
 
     def mostrar(self, monto, modo="Fiado"):
         self._monto = float(monto or 0)
+        self.motor_busqueda.set_monto_venta(self._monto)
         self._modo = "buscando"
         self._cliente_id = None
+        self._cliente_nombre = ""
         
         self.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
-        self.estado.setText("")
-        self.detalle.setText("")
-        self.icono.hide()
-        self.instruccion.hide()
-        self.txt_monto_abono.hide()
-        self.cont_botones.hide()
-        self._cerrar_lienzos()
+        self.panel_buscador.limpiar()
+        self.stack.setCurrentWidget(self.panel_buscador)
         self.show()
-        
+        self.panel_buscador.focus_caja()
         self.cambio.emit("buscando")
-        self.hoja_cuenta.abrir(modo, self._monto)
+
+    def _al_seleccionar_cliente(self, cliente):
+        # Cuando se hace clic en la lista de sugerencias o se acepta con enter
+        c = dict(cliente) if hasattr(cliente, "keys") else (cliente if isinstance(cliente, dict) else {})
+        self.motor_busqueda.aprobar_credito(c)
+
+    def _al_limite_aprobado(self, datos):
+        self._cliente_id = datos['id']
+        self._cliente_nombre = datos['nombre']
+        self._modo = "confirmando"
+        
+        self.setStyleSheet("QFrame#PanelFiadoCobro { background: #ECFDF5; border: 2px solid #34D399; border-radius: 16px; }")
+        self.panel_aprobado.poblar(datos['nombre'], datos['limite'], datos['compra'])
+        self.stack.setCurrentWidget(self.panel_aprobado)
+        
+        self.cambio.emit("confirmando")
+        self.panel_aprobado.btn_confirmar.setFocus()
 
     def activar_cobranza(self, monto_sugerido, deuda_actual):
         self._modo = "cobranza"
         self._deuda_actual = deuda_actual
         nombre = getattr(self, "_cliente_nombre", "Cliente")
+        
+        self.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
         self.estado.setText(f"Hola {nombre}")
-        self.detalle.setText(f"Saldo anterior: ${deuda_actual:,.2f}\nVenta actual: ${self._monto:,.2f}")
+        total_pagar = float(deuda_actual) + float(self._monto)
+        self.detalle.setText(f"Total a pagar: ${total_pagar:,.2f}")
         self.icono.hide()
         
         self.txt_monto_abono.setText(f"{monto_sugerido:.2f}".replace('.', ','))
         self.txt_monto_abono.show()
-        self.txt_monto_abono.setFocus()
-        self.txt_monto_abono.selectAll()
+        self.btn_abono_libre.show()
         
         self.instruccion.hide()
         self.cont_botones.show()
         self._cerrar_lienzos()
         
-    def _pin(self):
-        try:
-            from src.cajero.paso5_terminal.dialogos.pin.dialogo_pin import DialogoPIN
-            from src.utils.qt_compat import qt_exec
-            dlg = DialogoPIN("Cajero", self.window())
-            return bool(qt_exec(dlg) and dlg.ok)
-        except Exception:
-            return False
-            
+        self.stack.setCurrentWidget(self.vista_cobranza)
+        self.txt_monto_abono.setFocus()
+        self.txt_monto_abono.selectAll()
+
     def _iniciar_cobranza(self, metodo="Efectivo"):
         texto = self.txt_monto_abono.text().replace('.', '').replace(',', '.')
         if not texto.strip(): return
@@ -234,11 +244,9 @@ class PanelFiadoCobro(QFrame):
         self._monto_a_cobrar = monto
         self._metodo_elegido = metodo
         
-        # Pasamos al lienzo efectivo en vez de saltarlo
-
         self._modo = "cobrando_lienzo"
-        # Mantenemos estado y detalle visibles como pidio el usuario
         self.txt_monto_abono.hide()
+        self.btn_abono_libre.hide()
         self.cont_botones.hide()
         self.instruccion.hide()
         
@@ -248,10 +256,10 @@ class PanelFiadoCobro(QFrame):
             self.lienzo_efectivo.arrancar(monto)
         elif metodo == "QR":
             self.cont_lienzos.setCurrentWidget(self.lienzo_qr)
-            self.lienzo_qr.arrancar(monto)
+            self.lienzo_qr.arrancar(monto, title="Abono a Cuenta", description="Abono a cuenta corriente")
         elif metodo == "Tarjeta":
             self.cont_lienzos.setCurrentWidget(self.lienzo_tarjeta)
-            self.lienzo_tarjeta.arrancar(monto)
+            self.lienzo_tarjeta.arrancar(monto, descripcion="Abono a Cuenta Corriente")
         elif metodo == "Transferencia":
             self.cont_lienzos.setCurrentWidget(self.lienzo_transferencia)
             self.lienzo_transferencia.arrancar(monto)
@@ -260,6 +268,7 @@ class PanelFiadoCobro(QFrame):
         self._modo = "cobranza"
         self._cerrar_lienzos()
         self.txt_monto_abono.show()
+        self.btn_abono_libre.show()
         self.cont_botones.show()
         self.txt_monto_abono.setFocus()
         
@@ -272,115 +281,40 @@ class PanelFiadoCobro(QFrame):
         self.cont_lienzos.hide()
 
     def _finalizar_cobranza_con_motor(self, monto, metodo, detalle):
-        from src.clientes_fiado.interfaz.cobro.medios.resultado import ResultadoMedio
-        from src.clientes_fiado.interfaz.cobro.medios.cerrar import asentar
-        from src.cajero.cajero_activo import CajeroActivo
-        from src.config import config
-        
-        if metodo == "Efectivo":
-            if not self._pin():
-                self._volver_de_lienzo()
-                return
-        res = ResultadoMedio(True, metodo, (metodo == "Efectivo"), detalle)
-        
-        cliente = cerebro.obtener(self._cliente_id)
-        if not cliente: 
-            self._volver_de_lienzo()
-            return
-            
-        try:
-            cliente_dict = dict(cliente) if hasattr(cliente, 'keys') else cliente
-            deuda_actual = float(cliente_dict.get('deuda_actual', 0) or 0)
-        except:
-            deuda_actual = 0.0
-            
-        hecho = asentar(
-            self._cliente_id,
-            monto,
-            deuda_actual,
-            "Cajero",
-            CajeroActivo.nombre,
-            res,
-            imprimir_saldo=False,
-        )
-        if not hecho.get('ok'):
-            self._volver_de_lienzo()
-            return
-            
-        if hecho.get('entra_caja'):
-            from src.cajero.paso5_terminal.logica.movimientos_caja_service import MovimientosCajaService
-            MovimientosCajaService().registrar_ingreso_efectivo(
-                hecho['monto_caja'],
-                CajeroActivo.nombre,
-                hecho['motivo'],
-                config.get('caja_id', 1),
-                abrir_cajon=True,
-                imprimir=False,
-            )
-            
-
-        self.abono_registrado.emit(ResultadoAbonoPrevio(
-            ok=True,
-            cliente_id=self._cliente_id,
-            monto=monto,
-            nombre=str(hecho.get('nombre') or cliente.get('nombre') or 'Cliente'),
-            saldo=float(hecho.get('saldo') or 0.0),
-            deuda_anterior=deuda_actual
-        ))
-        
-        self._cerrar_lienzos()
-        self._modo = "listo"
-        self.pago_listo.emit(self._cliente_id, 0.0)
+        self.motor.finalizar(monto, metodo, detalle)
 
     def ocultar(self):
         self._modo = "oculto"
         self._cerrar_lienzos()
-        self.hoja_cuenta.ocultar()
         self.hide()
 
-    def _al_cliente_encontrado(self, cliente_id, _abono=0.0):
-        if self._modo == "confirmando" and int(self._cliente_id or 0) == int(cliente_id):
-            self.procesar_enter()
-            return
-        self._cliente_id = cliente_id
-
-        cliente = cerebro.obtener(cliente_id)
-        if not cliente:
-            self.cancelado.emit()
-            return
-            
-        nombre = cliente.get("nombre") or cliente.get("nombre_completo") or "Cliente"
-        self._cliente_nombre = nombre
-        
-        self._modo = "confirmando"
-        self.hoja_cuenta.ocultar()
-        self.hoja_cuenta.caja.clearFocus()
-        self.setStyleSheet("QFrame#PanelFiadoCobro { background: #ECFDF5; border: 2px solid #34D399; border-radius: 16px; }")
-        
-        self.icono.hide()
-        self.estado.setText(f"Hola {nombre}")
-        self.detalle.setText("Crédito Aprobado")
-        if hasattr(self, 'txt_monto_abono'):
-            self.txt_monto_abono.hide()
-        self.cont_botones.hide()
-        self._cerrar_lienzos()
-        self.instruccion.setText("[ ENTER ] PARA FINALIZAR VENTA")
-        self.instruccion.show()
-        
-        self.cambio.emit("confirmando")
-        ventana = self.window()
-        if ventana is not None:
-            ventana.setFocus()
-        
     def _al_cancelar_busqueda(self):
         self._modo = "oculto"
         self.hide()
         self.cancelado.emit()
 
     def eventFilter(self, obj, event):
-        if obj == self.txt_monto_abono and event.type() == event.Type.KeyPress:
+        txt_monto = getattr(self, 'txt_monto_abono', None)
+        caja_busq = getattr(self.panel_buscador, 'caja_busqueda', None) if hasattr(self, 'panel_buscador') else None
+
+        if txt_monto and obj == txt_monto and event.type() == event.Type.KeyPress:
             if event.key() == Qt.Key.Key_Escape:
-                self._al_cliente_encontrado(self._cliente_id)
+                # Volver a paso anterior, en este caso, se podria cancelar o volver a confirmando.
+                # Para simplificar y mantener la logica vieja:
+                self.cancelado.emit()
+                return True
+            elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                self.procesar_enter()
+                return True
+        elif caja_busq and obj == caja_busq and event.type() == event.Type.KeyPress:
+            if event.key() == Qt.Key.Key_Escape:
+                self._al_cancelar_busqueda()
+                return True
+            elif event.key() == Qt.Key.Key_Up:
+                self.panel_buscador.navegar("arriba")
+                return True
+            elif event.key() == Qt.Key.Key_Down:
+                self.panel_buscador.navegar("abajo")
                 return True
             elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                 self.procesar_enter()
@@ -389,17 +323,14 @@ class PanelFiadoCobro(QFrame):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if self.hoja_cuenta.isVisible():
-            self.hoja_cuenta.ubicar()
 
     def actualizar_monto(self, nuevo_monto_venta):
         self._monto = nuevo_monto_venta
+        self.motor_busqueda.set_monto_venta(self._monto)
         if getattr(self, "_modo", "") in ("cobranza", "cobrando_lienzo"):
             if getattr(self, "_modo", "") == "cobrando_lienzo":
-                # Si cambian el total (ej F3) mientras esta el QR/Tarjeta activo, abortamos el lienzo
-                # forzando a que vuelvan a generarlo con el monto correcto.
                 self._volver_de_lienzo()
             deuda = getattr(self, "_deuda_actual", 0.0)
             monto_sugerido = nuevo_monto_venta + deuda
-            self.detalle.setText(f"Saldo anterior: ${deuda:,.2f}\nVenta actual: ${self._monto:,.2f}")
+            self.detalle.setText(f"Total a pagar: ${monto_sugerido:,.2f}")
             self.txt_monto_abono.setText(f"{monto_sugerido:.2f}".replace('.', ','))

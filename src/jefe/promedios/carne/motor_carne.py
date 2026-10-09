@@ -44,7 +44,7 @@ class MotorCarne:
                 pv = costo_real_kg * (1 + pg / 100)
             else:
                 pg = ((pv / costo_real_kg) - 1) * 100 if pv > 0 else 0.0
-            
+
             # Venta Mayoreo
             if c_ed == ColumnasCarne.MARGEN_M:
                 pm = costo_real_kg * (1 + pmg / 100)
@@ -57,10 +57,10 @@ class MotorCarne:
 
         # Totales
         v_costo = kilos * costo_real_kg
-        
+
         vn = (kilos * pv) if pv > 0 else 0.0
         gn = vn - v_costo if pv > 0 else 0.0
-        
+
         vo = (kilos * pm) if pm > 0 else 0.0
         go = vo - v_costo if pm > 0 else 0.0
 
@@ -74,4 +74,65 @@ class MotorCarne:
             "gn": gn,
             "vo": vo,
             "go": go
+        }
+
+    @staticmethod
+    def recalcular_tabla(filas: list, costo_real_kg: float, col_editada: int = -1, fila_editada: int = -1, valor_editado: float = 0.0, from_calc: bool = False):
+        """
+        Recalcula todas las filas de la tabla de carnes.
+        Retorna lista de diccionarios con valores calculados y totales.
+        """
+        resultados = []
+        t_vn = 0.0
+        t_gn = 0.0
+        t_vo = 0.0
+        t_go = 0.0
+
+        for r_idx, fila in enumerate(filas):
+            if len(fila) < 13:
+                continue
+
+            try:
+                kilos = float(fila[ColumnasCarne.KILOS] or 0)
+                pv = float(fila[ColumnasCarne.PV_KG] or 0)
+                pg = float(fila[ColumnasCarne.MARGEN_V] or 0)
+                pm = float(fila[ColumnasCarne.PM_KG] or 0)
+                pmg = float(fila[ColumnasCarne.MARGEN_M] or 0)
+
+                # Si se editó una columna específica, actualizar el valor correspondiente
+                if r_idx == fila_editada:
+                    if col_editada == ColumnasCarne.MARGEN_V:
+                        pg = valor_editado
+                    elif col_editada == ColumnasCarne.PV_KG:
+                        pv = valor_editado
+                    elif col_editada == ColumnasCarne.MARGEN_M:
+                        pmg = valor_editado
+                    elif col_editada == ColumnasCarne.PM_KG:
+                        pm = valor_editado
+
+                c_ed = col_editada if r_idx == fila_editada else -1
+                calc = MotorCarne.calcular_fila(
+                    costo_real_kg, kilos, pv, pg, pm, pmg, c_ed, from_calc
+                )
+
+                t_vn += calc["vn"]
+                t_gn += calc["gn"]
+                t_vo += calc["vo"]
+                t_go += calc["go"]
+
+                resultados.append(calc)
+            except:
+                resultados.append({
+                    "pv": 0.0, "pg": 0.0, "pm": 0.0, "pmg": 0.0,
+                    "v_costo": 0.0, "vn": 0.0, "gn": 0.0, "vo": 0.0, "go": 0.0
+                })
+
+        return {
+            "filas": resultados,
+            "totales": {
+                "vn": t_vn,
+                "gn": t_gn,
+                "vo": t_vo,
+                "go": t_go
+            }
         }

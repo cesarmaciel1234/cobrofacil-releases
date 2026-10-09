@@ -16,11 +16,7 @@ class LienzoEfectivo(QWidget):
         lay.setContentsMargins(8, 8, 8, 8)
         lay.setSpacing(10)
         self.lbl_abono = QLabel("")
-        self.lbl_abono.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_abono.setStyleSheet(
-            "color: #64748B; font-size: 14px; font-weight: 700; background: transparent; border: none;"
-        )
-        lay.addWidget(self.lbl_abono)
+        self.lbl_abono.hide()
         self.lbl_tit = QLabel("MONTO RECIBIDO")
         self.lbl_tit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_tit.setStyleSheet(
@@ -66,15 +62,6 @@ class LienzoEfectivo(QWidget):
         )
         confirmar.clicked.connect(self._confirmar)
         lay.addWidget(confirmar)
-        volver = QPushButton("Volver")
-        volver.setMinimumHeight(40)
-        volver.setCursor(Qt.CursorShape.PointingHandCursor)
-        volver.setStyleSheet(
-            "QPushButton { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1;"
-            " border-radius: 10px; font-weight: 800; }"
-        )
-        volver.clicked.connect(self._al_volver)
-        lay.addWidget(volver)
 
     def arrancar(self, monto):
         self._deuda = redondear_dinero(monto)

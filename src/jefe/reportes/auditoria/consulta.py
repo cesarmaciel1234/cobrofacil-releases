@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from src.jefe.reportes.financiero.periodo_previo import rango_igual_anterior
 from src.jefe.reportes.periodo.sql import where_fecha, where_ventas
+from src.utils.medio_pago import es_filtro_credito, etiqueta_pago
 
 
 def _db():
@@ -24,7 +25,7 @@ _COLS = """
     LEFT JOIN productos p ON dv.id_producto = p.id
 """
 
-METODOS = ("Todos", "Efectivo", "Transferencia", "Tarjeta", "QR", "Mixto", "Fiado", "Clientes")
+METODOS = ("Todos", "Efectivo", "Transferencia", "Tarjeta", "QR", "Mixto", "Crédito")
 
 _BUSCA_EN = (
     "dv.nombre_producto", "dv.id_producto", "v.metodo_pago", "v.usuario",
@@ -48,8 +49,9 @@ def filtro(texto: str = "", metodo: str = "") -> tuple[str, list]:
     if m and m.upper() != "TODOS":
         if m.upper() == "EFECTIVO":
             sql += " AND (v.metodo_pago IS NULL OR TRIM(v.metodo_pago) = '' OR UPPER(TRIM(v.metodo_pago)) = ? OR UPPER(TRIM(v.metodo_pago)) LIKE 'MIXTO%')"
-        elif m.upper() in ("FIADO", "CLIENTES"):
-            sql += " AND (UPPER(TRIM(v.metodo_pago)) = ? OR UPPER(TRIM(v.metodo_pago)) LIKE '%MIXTO (CLIENTE)%')"
+        elif es_filtro_credito(m):
+            # Crédito = cuenta del cliente: guardado como Fiado, Clientes o Mixto (Cliente).
+            sql += " AND (UPPER(TRIM(v.metodo_pago)) IN ('FIADO', 'CLIENTES', ?) OR UPPER(TRIM(v.metodo_pago)) LIKE '%MIXTO (CLIENTE)%')"
         else:
             sql += " AND (UPPER(TRIM(v.metodo_pago)) = ? OR (UPPER(TRIM(v.metodo_pago)) LIKE 'MIXTO%' AND UPPER(TRIM(v.metodo_pago)) NOT LIKE '%CLIENTE%'))"
         params.append(m.upper())
@@ -80,7 +82,7 @@ def listar_lineas(start_str: str, end_str: str, texto: str = "", metodo: str = "
             "cantidad": float(r["cantidad"] or 0),
             "precio_unitario": float(r["precio_unitario"] or 0),
             "subtotal": float(r["subtotal"] or 0),
-            "metodo_pago": r["metodo_pago"] or "Efectivo",
+            "metodo_pago": etiqueta_pago(r["metodo_pago"] or "Efectivo"),
             "estado": r["estado"] or "COMPLETADA",
             "unidad": "KG" if pesable or unidad == "KG" else "UN",
         })

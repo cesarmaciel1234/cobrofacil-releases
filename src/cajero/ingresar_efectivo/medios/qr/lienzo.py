@@ -39,15 +39,14 @@ class LienzoQr(QWidget):
         lay.addWidget(self.estado)
         self.imagen = QLabel()
         self.imagen.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.imagen.setMinimumHeight(240)
+        self.imagen.setMinimumHeight(450)
         self.imagen.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.imagen.setStyleSheet("background: transparent; border: none;")
         lay.addWidget(self.imagen, 1)
         fila = QHBoxLayout()
         self.btn_imagen = QPushButton("Cargar imagen de QR")
         self.btn_registrar = QPushButton("Registrar abono")
-        self.btn_volver = QPushButton("Volver")
-        for boton in (self.btn_imagen, self.btn_registrar, self.btn_volver):
+        for boton in (self.btn_imagen, self.btn_registrar):
             boton.setCursor(Qt.CursorShape.PointingHandCursor)
             boton.setMinimumHeight(44)
             boton.setStyleSheet(
@@ -57,15 +56,13 @@ class LienzoQr(QWidget):
             )
         self.btn_imagen.clicked.connect(self._cargar_imagen)
         self.btn_registrar.clicked.connect(self._registrar_foto)
-        self.btn_volver.clicked.connect(self._al_volver)
         fila.addWidget(self.btn_imagen)
         fila.addWidget(self.btn_registrar)
-        fila.addWidget(self.btn_volver)
         lay.addLayout(fila)
         self.btn_imagen.hide()
         self.btn_registrar.hide()
 
-    def arrancar(self, monto):
+    def arrancar(self, monto, title="Compra en Punto de Venta", description="Cobro de ticket via sistema POS"):
         self._monto = float(monto or 0)
         self._generacion += 1
         self._manual = False
@@ -85,7 +82,7 @@ class LienzoQr(QWidget):
         def _trabajo():
             try:
                 from src.cajero.paso6_cobro.qr_en_cobro.pedido import pedir_qr_pos
-                pedido = pedir_qr_pos(self._monto)
+                pedido = pedir_qr_pos(self._monto, title, description)
             except Exception:
                 pedido = {"ok": False}
             self._senal.dato.emit({"generacion": generacion, "pedido": pedido})
@@ -121,7 +118,7 @@ class LienzoQr(QWidget):
     def _pintar_imagen(self):
         if self._fuente.isNull():
             return
-        lado = max(180, min(self.imagen.width(), self.imagen.height()) - 8)
+        lado = max(450, min(self.imagen.width(), self.imagen.height()) - 8)
         self.imagen.setPixmap(
             self._fuente.scaled(
                 lado, lado,
@@ -185,7 +182,7 @@ class LienzoQr(QWidget):
         self._token = pedido.get("token") or ""
         self._borrar_url = pedido.get("borrar_url") or ""
         self._modo = "esperando"
-        self.estado.setText("Que el cliente escanee. El abono se registra solo.")
+        self.estado.hide()
         self.btn_imagen.hide()
         self.btn_registrar.hide()
         self._reloj.start()

@@ -329,7 +329,7 @@ class UIPollo(QWidget):
         self._is_updating = True
         try:
             if not hasattr(self, '_costo_real_kg'): self._costo_real_kg = 0.0
-            
+
             c_ed = item.column() if item else -1
             r_ed = item.row() if item else -1
 
@@ -346,77 +346,53 @@ class UIPollo(QWidget):
                 self._sync_calc()
                 return
 
-            t_vn = 0.0; t_gn = 0.0; t_vo = 0.0; t_go = 0.0
-            
+            # Extraer filas de la tabla
+            filas = []
             for r in range(self._prom_tabla.rowCount()):
+                fila = []
+                for c in range(13):
+                    it = self._prom_tabla.item(r, c)
+                    fila.append(it.text() if it else "")
+                filas.append(fila)
+
+            # Obtener valor editado si aplica
+            valor_editado = 0.0
+            if item and c_ed != -1:
                 try:
-                    k_str = self._prom_tabla.item(r, 1).text()
-                    kilos = float(k_str) if k_str else 0.0
-                    costo_tot = kilos * self._costo_real_kg
-                    self._prom_tabla.setItem(r, 2, QTableWidgetItem(f"{self._costo_real_kg:,.2f}"))
+                    valor_editado = float(item.text().replace(',', '.') or 0)
+                except:
+                    pass
 
-                    pv = float(self._prom_tabla.item(r, 3).text() or 0)
-                    pg = float(self._prom_tabla.item(r, 4).text() or 0)
-                    pm = float(self._prom_tabla.item(r, 5).text() or 0)
-                    pmg = float(self._prom_tabla.item(r, 7).text() or 0)
+            # Llamar al motor para recalcular
+            resultado = MotorPollo.recalcular_tabla(
+                filas, self._costo_real_kg,
+                col_editada=c_ed, fila_editada=r_ed,
+                valor_editado=valor_editado, from_calc=from_calc
+            )
 
-                    if self._costo_real_kg > 0:
-                        if c_ed == 4 and r == r_ed:
-                            pv = self._costo_real_kg * (1 + pg / 100)
-                            self._prom_tabla.setItem(r, 3, QTableWidgetItem(f"{pv:,.2f}"))
-                        else:
-                            pg = ((pv / self._costo_real_kg) - 1) * 100 if pv > 0 else 0.0
-                            self._prom_tabla.setItem(r, 4, QTableWidgetItem(f"{pg:.2f}"))
-                        
-                        if c_ed == 7 and r == r_ed:
-                            pm = self._costo_real_kg * (1 + pmg / 100)
-                            self._prom_tabla.setItem(r, 5, QTableWidgetItem(f"{pm:,.2f}"))
-                        else:
-                            pmg = ((pm / self._costo_real_kg) - 1) * 100 if pm > 0 else 0.0
-                            self._prom_tabla.setItem(r, 7, QTableWidgetItem(f"{pmg:.2f}"))
-                    else:
-                        if from_calc:
-                            # Do not clear pv or pm if they manually loaded them.
-                            # Just set the percentages to 0 since we can't calculate margin.
-                            pg = 0.0
-                            pmg = 0.0
-                            self._prom_tabla.setItem(r, 4, QTableWidgetItem("0.00"))
-                            self._prom_tabla.setItem(r, 7, QTableWidgetItem("0.00"))
+            # Actualizar tabla con resultados
+            for r, calc in enumerate(resultado["filas"]):
+                self._prom_tabla.setItem(r, 2, QTableWidgetItem(f"{calc['costo_real_kg']:,.2f}"))
+                self._prom_tabla.setItem(r, 3, QTableWidgetItem(f"{calc['pv']:,.2f}"))
+                self._prom_tabla.setItem(r, 4, QTableWidgetItem(f"{calc['pg']:.2f}"))
+                self._prom_tabla.setItem(r, 5, QTableWidgetItem(f"{calc['pm']:,.2f}"))
+                self._prom_tabla.setItem(r, 7, QTableWidgetItem(f"{calc['pmg']:.2f}"))
+                self._prom_tabla.setItem(r, 8, QTableWidgetItem(f"{calc['v_costo']:,.2f}"))
+                self._prom_tabla.setItem(r, 9, QTableWidgetItem(f"{calc['vn']:,.2f}"))
+                self._prom_tabla.setItem(r, 10, QTableWidgetItem(f"{calc['vo']:,.2f}"))
+                self._prom_tabla.setItem(r, 11, QTableWidgetItem(f"{calc['gn']:,.2f}"))
+                self._prom_tabla.setItem(r, 12, QTableWidgetItem(f"{calc['go']:,.2f}"))
 
-                    v_costo = kilos * self._costo_real_kg
-                    if pv > 0:
-                        vn = kilos * pv
-                        gn = vn - v_costo
-                    else:
-                        vn = 0.0
-                        gn = 0.0
-                    t_vn += vn
-                    t_gn += gn
-                    
-                    if pm > 0:
-                        vo = kilos * pm
-                        go = vo - v_costo
-                    else:
-                        vo = 0.0
-                        go = 0.0
-                    t_vo += vo
-                    t_go += go
-
-                    self._prom_tabla.setItem(r, 8, QTableWidgetItem(f"{v_costo:,.2f}"))
-                    self._prom_tabla.setItem(r, 9, QTableWidgetItem(f"{vn:,.2f}"))
-                    self._prom_tabla.setItem(r, 10, QTableWidgetItem(f"{vo:,.2f}"))
-                    self._prom_tabla.setItem(r, 11, QTableWidgetItem(f"{gn:,.2f}"))
-                    self._prom_tabla.setItem(r, 12, QTableWidgetItem(f"{go:,.2f}"))
-                except: pass
-
+            # Actualizar totales
             ku = getattr(self, '_kilos_utiles', 0.0)
             cr = getattr(self, '_costo_real_kg', 0.0)
+            t = resultado["totales"]
             self._lbl_totales.setText(
                 f'<span style="color: #E11D48;">Kilos útiles: {ku:.2f} kg | Costo real kg: ${cr:,.2f}</span>'
                 f'&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;&nbsp;'
-                f'<span style="color: #10B981;">Normal =&gt; Venta: ${t_vn:,.2f} | Ganancia: ${t_gn:,.2f}</span>'
+                f'<span style="color: #10B981;">Normal =&gt; Venta: ${t["vn"]:,.2f} | Ganancia: ${t["gn"]:,.2f}</span>'
                 f'&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;&nbsp;'
-                f'<span style="color: #3B82F6;">Mayoreo =&gt; Venta: ${t_vo:,.2f} | Ganancia: ${t_go:,.2f}</span>'
+                f'<span style="color: #3B82F6;">Mayoreo =&gt; Venta: ${t["vo"]:,.2f} | Ganancia: ${t["go"]:,.2f}</span>'
             )
 
         finally:

@@ -210,13 +210,12 @@ class Paso6Cobro(QDialog):
             QMenu::item:selected { background-color: #F1F5F9; color: #0F172A; }
         """)
 
-        act_fiado = QAction("Fiado", self)
-        act_fiado.triggered.connect(lambda: self.procesar_click_metodo("Fiado"))
-        menu_otras.addAction(act_fiado)
-
-        act_clientes = QAction("Cuenta corriente", self)
-        act_clientes.triggered.connect(lambda: self.procesar_click_metodo("Clientes"))
-        menu_otras.addAction(act_clientes)
+        # Fiado y cuenta corriente son la misma cuenta: una sola entrada "Crédito".
+        # La hoja acepta DNI o nombre. La clave interna sigue siendo "Clientes":
+        # "crédito" en REGISTRO es la tarjeta de crédito.
+        act_credito = QAction("Crédito", self)
+        act_credito.triggered.connect(lambda: self.procesar_click_metodo("Clientes"))
+        menu_otras.addAction(act_credito)
 
         self.btn_otras.setMenu(menu_otras)
 
@@ -251,54 +250,24 @@ class Paso6Cobro(QDialog):
         left_lay.setContentsMargins(0, 0, 0, 0)
         left_lay.setSpacing(0)
 
-        # HEADER AZUL "COBRAR" (Estilo transparente premium)
-        barra_cobro = QFrame()
-        barra_cobro.setFixedHeight(64)
-        barra_cobro.setStyleSheet("background: transparent; border: none;")
-        lay_cobro = QHBoxLayout(barra_cobro)
-        lay_cobro.setContentsMargins(8, 0, 28, 0)
-        self.header = QLabel("COBRO")
-        self.header.setObjectName("CobroHeader")
-        lay_cobro.addWidget(self.header)
-        lay_cobro.addStretch()
-        self.lbl_tpv = QLabel("TPV")
-        self.lbl_tpv.setStyleSheet(
-            "color: #64748B; font-size: 16px; font-weight: 800; letter-spacing: 1.2px; "
-            "background: transparent; border: none;"
-        )
-        self.luz_tpv = QLabel()
-        self.luz_tpv.setFixedSize(16, 16)
-        lay_cobro.addWidget(self.lbl_tpv)
-        lay_cobro.addSpacing(8)
-        lay_cobro.addWidget(self.luz_tpv, 0, Qt.AlignmentFlag.AlignVCenter)
-        left_lay.addWidget(barra_cobro)
+        # HEADER AZUL "COBRAR" (Modularizado)
+        from src.cajero.paso6_cobro.componentes_paso6_cobro.encabezado.panel_encabezado import PanelEncabezado
+        self.panel_encabezado = PanelEncabezado(self)
+        self.header = self.panel_encabezado.header
+        self.lbl_tpv = self.panel_encabezado.lbl_tpv
+        self.luz_tpv = self.panel_encabezado.luz_tpv
+        left_lay.addWidget(self.panel_encabezado)
 
         # CONTENIDO IZQUIERDO
         content_lay = QVBoxLayout()
         content_lay.setContentsMargins(28, 8, 28, 8)
         content_lay.setSpacing(10)
 
-        self.lbl_precio_real = QLabel("")
-        self.lbl_precio_real.setObjectName("PrecioLista")
-        self.lbl_precio_real.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        fuente_lista = QFont("Segoe UI", 16)
-        fuente_lista.setBold(True)
-        fuente_lista.setStrikeOut(True)
-        self.lbl_precio_real.setFont(fuente_lista)
-        self.lbl_precio_real.setStyleSheet(
-            "color: #EF4444; font-size: 22px; font-weight: 800; background: transparent; border: none;"
-        )
-        self.lbl_precio_real.setTextFormat(Qt.TextFormat.RichText)
-        self.lbl_precio_real.setMinimumHeight(28)
-        self.lbl_precio_real.hide()
-        self.lbl_total = QLabel(self._monto(self.total_original))
-        self.lbl_total.setObjectName("CobroTotal")
-        self.lbl_total.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        caja_total = QVBoxLayout()
-        caja_total.setSpacing(0)
-        caja_total.addWidget(self.lbl_precio_real)
-        caja_total.addWidget(self.lbl_total)
-        content_lay.addLayout(caja_total)
+        from src.cajero.paso6_cobro.componentes_paso6_cobro.monto_total.panel_monto_total import PanelMontoTotal
+        self.panel_monto_total = PanelMontoTotal(self._monto(self.total_original), self)
+        self.lbl_precio_real = self.panel_monto_total.lbl_precio_real
+        self.lbl_total = self.panel_monto_total.lbl_total
+        content_lay.addWidget(self.panel_monto_total)
 
         from src.cajero.paso6_cobro.qr_en_cobro.panel import PanelQrCobro
         self.panel_qr = PanelQrCobro(self)
@@ -340,8 +309,9 @@ class Paso6Cobro(QDialog):
         content_lay.addWidget(self.panel_fiado, 0)
         self._point_en_curso = False
         self._emergencia_pendiente = False
-        self._atajo_f9 = QShortcut(QKeySequence(Qt.Key.Key_F9), self)
-        self._atajo_f9.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        from src.cajero.paso6_cobro.componentes_paso6_cobro.botones_atajo.panel_botones_atajo import PanelBotonesAtajo
+        self.panel_botones_atajo = PanelBotonesAtajo(self, self)
+        self._atajo_f9 = self.panel_botones_atajo.atajo_f9
         self._atajo_f9.activated.connect(self._emergencia)
 
         self.aviso_monto = QLabel("INGRESÁ EL MONTO RECIBIDO")
@@ -412,56 +382,22 @@ class Paso6Cobro(QDialog):
         self.panel_monto.zona_pago.contenido.addWidget(self.panel_alias, 1)
 
         # NUEVA LÍNEA HORIZONTAL DE MODIFICADORES COMPACTA
-        grid_desc_rec = QGridLayout()
-        grid_desc_rec.setSpacing(8)
+        from src.cajero.paso6_cobro.componentes_paso6_cobro.redondeo_recargo.panel_redondeo_recargo import PanelRedondeoRecargo
+        self.panel_redondeo_recargo = PanelRedondeoRecargo(self)
+        self.lbl_desc = self.panel_redondeo_recargo.lbl_desc
+        self.btn_tipo_desc = self.panel_redondeo_recargo.btn_tipo_desc
+        self.txt_desc = self.panel_redondeo_recargo.txt_desc
+        self.lbl_rec = self.panel_redondeo_recargo.lbl_rec
+        self.btn_tipo_rec = self.panel_redondeo_recargo.btn_tipo_rec
+        self.txt_rec = self.panel_redondeo_recargo.txt_rec
 
-        # REDONDEO
-        lay_lbl_desc = QHBoxLayout()
-        lay_lbl_desc.setContentsMargins(0,0,0,0)
-        self.lbl_desc = QLabel("Redondeo:")
-        self.lbl_desc.setObjectName("InputLabel")
-        self.btn_tipo_desc = QPushButton("$ ▾")
-        self.btn_tipo_desc.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_tipo_desc.setFixedSize(48, 32)
-        self.btn_tipo_desc.setStyleSheet("QPushButton { background: #E2E8F0; color: #1E293B; border-radius: 6px; font-weight: bold; border: 1px solid #CBD5E1; } QPushButton:hover { background: #CBD5E1; border: 1px solid #94A3B8; }")
         self.btn_tipo_desc.clicked.connect(self._toggle_tipo_desc)
-        lay_lbl_desc.addWidget(self.lbl_desc)
-        lay_lbl_desc.addWidget(self.btn_tipo_desc)
-        lay_lbl_desc.addStretch()
-        grid_desc_rec.addLayout(lay_lbl_desc, 0, 0)
-        
-        self.txt_desc = QLineEdit("")
-        self.txt_desc.setObjectName("InputDesc")
-        self.txt_desc.setFixedHeight(48)
-        self.txt_desc.setStyleSheet("font-size: 20px; font-weight: bold; border-radius: 8px; border: 1px solid #CBD5E1;")
-        self.txt_desc.setPlaceholderText("0.00")
         self.txt_desc.textChanged.connect(self.on_descuento_changed)
         self.txt_desc.installEventFilter(self)
-        grid_desc_rec.addWidget(self.txt_desc, 0, 1)
-
-        # RECARGO
-        lay_lbl_rec = QHBoxLayout()
-        lay_lbl_rec.setContentsMargins(0,0,0,0)
-        self.lbl_rec = QLabel("Recargo:")
-        self.lbl_rec.setObjectName("InputLabel")
-        self.btn_tipo_rec = QPushButton("$ ▾")
-        self.btn_tipo_rec.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_tipo_rec.setFixedSize(48, 32)
-        self.btn_tipo_rec.setStyleSheet("QPushButton { background: #E2E8F0; color: #1E293B; border-radius: 6px; font-weight: bold; border: 1px solid #CBD5E1; } QPushButton:hover { background: #CBD5E1; border: 1px solid #94A3B8; }")
+        
         self.btn_tipo_rec.clicked.connect(self._toggle_tipo_rec)
-        lay_lbl_rec.addWidget(self.lbl_rec)
-        lay_lbl_rec.addWidget(self.btn_tipo_rec)
-        lay_lbl_rec.addStretch()
-        grid_desc_rec.addLayout(lay_lbl_rec, 0, 2)
-
-        self.txt_rec = QLineEdit("")
-        self.txt_rec.setObjectName("InputRec")
-        self.txt_rec.setFixedHeight(48)
-        self.txt_rec.setStyleSheet("font-size: 20px; font-weight: bold; border-radius: 8px; border: 1px solid #CBD5E1;")
-        self.txt_rec.setPlaceholderText("0.00")
         self.txt_rec.textChanged.connect(self.on_recargo_changed)
         self.txt_rec.installEventFilter(self)
-        grid_desc_rec.addWidget(self.txt_rec, 0, 3)
 
         # NUEVO: Neto a cobrar destacado abajo
         self.lbl_neto = QLabel(f"NETO: $ {self.total_final:,.2f}")
@@ -519,7 +455,7 @@ class Paso6Cobro(QDialog):
         self._idx_tarjeta = content_lay.indexOf(self.panel_tarjeta)
         self._idx_monto = content_lay.indexOf(self.panel_monto)
         self._idx_hueco = content_lay.indexOf(self.hueco_pie)
-        content_lay.addLayout(grid_desc_rec)
+        content_lay.addWidget(self.panel_redondeo_recargo)
         content_lay.addSpacing(8)
 
         # Línea separadora
@@ -530,21 +466,12 @@ class Paso6Cobro(QDialog):
         content_lay.addWidget(line)
         content_lay.addSpacing(5)
 
-        # Indicador de método seleccionado y botón volver (Movido al pie)
-        lay_metodo_activo = QHBoxLayout()
-        self.lbl_metodo_activo = QLabel("Método: Ninguno")
-        self.lbl_metodo_activo.setStyleSheet("font-size: 22px; font-weight: bold; color: #3B82F6; background: transparent;")
-
-        btn_cambiar_metodo = QPushButton("← Cambiar (Esc)")
-        btn_cambiar_metodo.setStyleSheet("background: #E2E8F0; color: #1E293B; font-weight: bold; border-radius: 8px; padding: 0 15px;")
-        btn_cambiar_metodo.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_cambiar_metodo.clicked.connect(lambda: self.stack.setCurrentIndex(0))
-
-        lay_metodo_activo.addWidget(self.lbl_metodo_activo)
-        lay_metodo_activo.addStretch()
-        lay_metodo_activo.addWidget(btn_cambiar_metodo)
-
-        content_lay.addLayout(lay_metodo_activo)
+        # Indicador de método seleccionado y botón volver (Modularizado)
+        from src.cajero.paso6_cobro.componentes_paso6_cobro.metodo_activo.panel_metodo_activo import PanelMetodoActivo
+        self.panel_metodo_activo = PanelMetodoActivo(self)
+        self.lbl_metodo_activo = self.panel_metodo_activo.lbl_metodo_activo
+        self.panel_metodo_activo.btn_cambiar_metodo.clicked.connect(lambda: self.stack.setCurrentIndex(0))
+        content_lay.addWidget(self.panel_metodo_activo)
         left_lay.addLayout(content_lay)
         main_lay.addWidget(left_panel, 11)
 
@@ -558,67 +485,31 @@ class Paso6Cobro(QDialog):
         right_lay.setContentsMargins(12, 24, 12, 24)
         right_lay.setSpacing(6)
 
-        def create_action_btn(fn_key, subtitle, callback, style="default"):
-            btn = QPushButton(f"{fn_key}\n{subtitle}")
-            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-            btn.setProperty("action_type", style)
-            btn.setCursor(Qt.PointingHandCursor)
-            btn.clicked.connect(callback)
-            return btn
+        from src.cajero.paso6_cobro.componentes_paso6_cobro.botones_accion.panel_botones_accion import PanelBotonesAccion
+        self.panel_botones_accion = PanelBotonesAccion(self)
+        self.btn_f1 = self.panel_botones_accion.btn_f1
+        self.btn_f1.clicked.connect(lambda: self._elegir_cierre("imprime"))
+        self.btn_f2 = self.panel_botones_accion.btn_f2
+        self.btn_f2.clicked.connect(lambda: self._elegir_cierre("cierra"))
+        self.pila_f2 = self.panel_botones_accion.pila_f2
+        self.btn_ultimo_mixto = self.panel_botones_accion.btn_ultimo_mixto
+        self.btn_ultimo_mixto.clicked.connect(self.corroborar_ultimo_monto)
+        self.btn_descuento = self.panel_botones_accion.btn_descuento
+        self.btn_descuento.clicked.connect(self.abrir_descuento)
+        self.btn_recargo = self.panel_botones_accion.btn_recargo
+        self.btn_recargo.clicked.connect(self.abrir_recargo)
+        self.pila_point = self.panel_botones_accion.pila_point
+        self.btn_f11 = self.panel_botones_accion.btn_f11
+        self.btn_f11.clicked.connect(lambda: self.procesar_pago_mercadopago_point())
+        self.btn_f5 = self.panel_botones_accion.btn_f5
+        self.btn_f5.clicked.connect(self._f5_pagar_cuenta)
+        self.pila_extra = self.panel_botones_accion.pila_extra
+        self.btn_f12 = self.panel_botones_accion.btn_f12
+        self.btn_f12.clicked.connect(lambda: self.verificar_transferencia_mp())
+        self.btn_ultimo = self.panel_botones_accion.btn_ultimo
+        self.btn_ultimo.clicked.connect(self.corroborar_ultimo_monto)
 
-        def columna_fija():
-            caja = QFrame()
-            caja.setObjectName("ColumnaAccion")
-            caja.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-            lay = QVBoxLayout(caja)
-            lay.setContentsMargins(0, 0, 0, 0)
-            lay.setSpacing(5)
-            return caja, lay
-
-        fila_acciones = QHBoxLayout()
-        fila_acciones.setSpacing(5)
-        fila_acciones.setContentsMargins(0, 0, 0, 0)
-        col_imprime, lay_imprime = columna_fija()
-        col_registra, lay_registra = columna_fija()
-        col_ajuste, lay_ajuste = columna_fija()
-        for col in (col_imprime, col_registra, col_ajuste):
-            fila_acciones.addWidget(col, 1)
-
-        lay_imprime.addWidget(create_action_btn("F1", "imprime", lambda: self._elegir_cierre("imprime"), style="primary"), 1)
-        self.btn_f2 = create_action_btn("F2", "sin ticket", lambda: self._elegir_cierre("cierra"), style="default")
-        self.pila_f2 = QStackedWidget()
-        self.pila_f2.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.pila_f2.setMinimumHeight(78)
-        self.btn_ultimo_mixto = create_action_btn("F12", "último monto", self.corroborar_ultimo_monto, style="default")
-        self.pila_f2.addWidget(self.btn_f2)
-        self.pila_f2.addWidget(self.btn_ultimo_mixto)
-        lay_registra.addWidget(self.pila_f2, 1)
-        self.btn_descuento = create_action_btn("F3", "redondeo", self.abrir_descuento, style="default")
-        lay_ajuste.addWidget(self.btn_descuento, 1)
-
-        self.btn_recargo = create_action_btn("F4", "recargo", self.abrir_recargo, style="default")
-        lay_imprime.addWidget(self.btn_recargo, 1)
-        self.pila_point = QStackedWidget()
-        self.pila_point.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.pila_point.setMinimumHeight(78)
-        self.btn_f11 = create_action_btn("F11", "Point MP", lambda: self.procesar_pago_mercadopago_point(), style="default")
-        self.pila_point.addWidget(self.btn_f11)
-        self.pila_point.addWidget(QWidget())
-        lay_registra.addWidget(self.pila_point, 1)
-        
-        self.btn_f5 = create_action_btn("F5", "pagar cuenta", self._f5_pagar_cuenta, style="default")
-        self.pila_extra = QStackedWidget()
-        self.pila_extra.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.pila_extra.setMinimumHeight(78)
-        self.btn_f12 = create_action_btn("F12", "Verif QR", lambda: self.verificar_transferencia_mp(), style="default")
-        self.btn_ultimo = create_action_btn("F12", "último monto", self.corroborar_ultimo_monto, style="default")
-        self.pila_extra.addWidget(self.btn_f12)
-        self.pila_extra.addWidget(self.btn_ultimo)
-        self.pila_extra.addWidget(QWidget())
-        self.pila_extra.addWidget(self.btn_f5)
-        lay_ajuste.addWidget(self.pila_extra, 1)
-
-        right_lay.addLayout(fila_acciones, 2)
+        right_lay.addWidget(self.panel_botones_accion, 2)
 
         # Teclado numérico extraído modularmente
         self.teclado_lateral = TecladoNumericoLateral(self)
@@ -1214,7 +1105,7 @@ class Paso6Cobro(QDialog):
         lista = redondear_dinero(self.total_original + oferta)
         self.lbl_total.setText(self._monto(self.total_final))
         if hasattr(self, "panel_fiado"):
-            if self.panel_fiado.hoja_cuenta.isVisible():
+            if hasattr(self.panel_fiado, "hoja_cuenta") and self.panel_fiado.hoja_cuenta.isVisible():
                 self.panel_fiado.hoja_cuenta.fijar_monto(self.total_final)
             if hasattr(self.panel_fiado, "actualizar_monto"):
                 self.panel_fiado.actualizar_monto(self.total_final)

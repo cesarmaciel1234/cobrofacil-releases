@@ -21,7 +21,7 @@ def _cuenta_qr(token):
     return asegurar_pos_qr(token)
 
 
-def pedir_qr_pos(monto):
+def pedir_qr_pos(monto, title="Compra en Punto de Venta", description="Cobro de ticket via sistema POS"):
     """Pide el QR del POS. No abre ventanas y no toca otros medios."""
     config._load_config()
     token = str(config.get("mp_access_token", "") or "").strip()
@@ -38,8 +38,8 @@ def pedir_qr_pos(monto):
     url = url_crear_qr(user_id, pos)
     payload = {
         "external_reference": ref,
-        "title": "Compra en Punto de Venta",
-        "description": "Cobro de ticket via sistema POS",
+        "title": title,
+        "description": description,
         "total_amount": float(monto),
         "items": [
             {

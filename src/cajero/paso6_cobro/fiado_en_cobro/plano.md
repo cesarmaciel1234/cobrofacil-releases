@@ -1,14 +1,14 @@
-# Plano: Interfaz Nativa de Cobro (F5) Integrada en el Panel Fiado
+# Plano: Proceso Piramidal de Crédito (Fiado en Cobro)
 
 Frente:
-- El cajero presiona F5 estando en Paso 6 (Fiado).
-- El panel verde (PanelFiadoCobro) se transforma: oculta la búsqueda de clientes y muestra el monto a cobrar (Deuda Previa + Venta Actual).
-- Ofrece botones rápidos (Efectivo, Transferencia, Tarjeta, QR) directamente en el panel verde.
-- Si se aplican redondeos (F3) o recargos (F4), el panel verde recalcula en vivo el valor a cobrar.
-- Al seleccionar un método (QR, Tarjeta, etc.), el lienzo nativo de cobro se embebe dentro del mismo panel verde, manteniendo visible la cabecera con los saldos.
+- **Un proceso: el normal:** El cajero entra a Fiado (F6), selecciona al cliente, presiona Enter para confirmar. El panel se pone verde indicando que el crédito está aprobado. Al presionar Enter de nuevo, se carga la venta a la cuenta corriente del cliente y se sale (imprimiendo el ticket de fiado).
+- **Otro proceso: F5 (Cobro Integrado):** Si el cliente quiere pagar saldo en vivo, el cajero presiona F5 estando en el panel de Fiado. El panel verde se transforma en un selector de cobranza, mostrando métodos de pago (Efectivo, Tarjeta, etc.). Al elegir uno, el lienzo nativo de cobro se embebe en el panel. El cliente paga (abono) y luego se carga la venta actual a la cuenta.
 
 Fondo:
-- PanelFiadoCobro ahora alberga un QStackedWidget con los Lienzos de cobro (LienzoQr, LienzoTarjeta, etc.).
-- Cuando un lienzo emite 'listo', el panel asienta el pago usando asentar() y registra los movimientos de caja.
-- Luego, emite 'pago_listo', lo que indica a Paso6Cobro que finalice la venta como Fiado. 
-- Matemáticamente, el cliente queda con saldo temporal a favor por el pago total, el cual es inmediatamente absorbido por la finalización de la venta actual, garantizando tickets y saldos precisos.
+- El módulo está estructurado en pirámide (modularizado en `componentes_fiado/`):
+  - `PanelFiadoCobro` (`panel.py`) es el orquestador principal.
+  - `estado_credito/`: Maneja los componentes visuales de aprobación (etiquetas y montos).
+  - `selector_cobranza/`: Mantiene los botones y el stack de lienzos de pago (QR, Tarjeta, etc.).
+  - `motor/`: Contiene la lógica transaccional de cobro (`MotorCobranza`).
+- **Proceso Normal:** `panel.py` usa `HojaCuentaCobro` para buscar, luego muestra `estado_credito`. El Enter final emite `pago_listo`.
+- **Proceso F5:** `panel.py` muestra `selector_cobranza` y sus lienzos. Al finalizar el pago en el lienzo, `MotorCobranza` asienta el pago (generando saldo a favor temporal) y luego emite `pago_listo` para que el sistema superior (`Paso6Cobro`) finalice la venta, absorbiendo ese saldo.

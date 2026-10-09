@@ -19,8 +19,18 @@ def ejecutar_comun(datos, extra_validar=None):
     threading.Thread(target=post_cobro, args=(datos, id_v, resultado), daemon=True).start()
     try:
         from src.notificaciones.motor.estado import publicar
+        from src.hardware.cash_drawer import drawer_manager
 
-        publicar("cobro_ok", f"✅ COBRO EXITOSO — ticket {id_v}", segundos=10)
+        # Verificar si el cajón está realmente abierto (físicamente)
+        cajon_realmente_abierto = drawer_manager.is_open
+
+        # Mensaje con indicación REAL de cajón abierto
+        if cajon_realmente_abierto:
+            mensaje = f"✅ COBRO EXITOSO — ticket {id_v} · Cajón abierto"
+        else:
+            mensaje = f"✅ COBRO EXITOSO — ticket {id_v}"
+
+        publicar("cobro_ok", mensaje, segundos=10)
     except Exception:
         pass
     return True, None

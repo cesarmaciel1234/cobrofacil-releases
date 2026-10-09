@@ -354,7 +354,7 @@ class UICarne(QWidget):
         self._is_updating = True
         try:
             if not hasattr(self, '_costo_real_kg'): self._costo_real_kg = 0.0
-            
+
             c_ed = item.column() if item else -1
             r_ed = item.row() if item else -1
 
@@ -371,54 +371,53 @@ class UICarne(QWidget):
                 self._sync_calc()
                 return
 
-            t_vn = 0.0; t_gn = 0.0; t_vo = 0.0; t_go = 0.0
-            
+            # Extraer filas de la tabla
+            filas = []
             for r in range(self._prom_tabla.rowCount()):
+                fila = []
+                for c in range(13):
+                    it = self._prom_tabla.item(r, c)
+                    fila.append(it.text() if it else "")
+                filas.append(fila)
+
+            # Obtener valor editado si aplica
+            valor_editado = 0.0
+            if item and c_ed != -1:
                 try:
-                    k_str = self._prom_tabla.item(r, ColumnasCarne.KILOS).text()
-                    kilos = parse_float_regional(k_str)
-                    
-                    self._prom_tabla.setItem(r, ColumnasCarne.COSTO, QTableWidgetItem(f"{self._costo_real_kg:,.2f}"))
-
-                    pv = parse_float_regional(self._prom_tabla.item(r, ColumnasCarne.PV_KG).text() if self._prom_tabla.item(r, ColumnasCarne.PV_KG) else "0")
-                    pg = parse_float_regional(self._prom_tabla.item(r, ColumnasCarne.MARGEN_V).text() if self._prom_tabla.item(r, ColumnasCarne.MARGEN_V) else "0")
-                    pm = parse_float_regional(self._prom_tabla.item(r, ColumnasCarne.PM_KG).text() if self._prom_tabla.item(r, ColumnasCarne.PM_KG) else "0")
-                    pmg = parse_float_regional(self._prom_tabla.item(r, ColumnasCarne.MARGEN_M).text() if self._prom_tabla.item(r, ColumnasCarne.MARGEN_M) else "0")
-
-                    r_calc = MotorCarne.calcular_fila(
-                        costo_real_kg=self._costo_real_kg,
-                        kilos=kilos,
-                        pv=pv, pg=pg, pm=pm, pmg=pmg,
-                        c_ed=c_ed if r == r_ed else -1,
-                        from_calc=from_calc
-                    )
-
-                    self._prom_tabla.setItem(r, ColumnasCarne.PV_KG, QTableWidgetItem(f"{r_calc['pv']:,.2f}"))
-                    self._prom_tabla.setItem(r, ColumnasCarne.MARGEN_V, QTableWidgetItem(f"{r_calc['pg']:.2f}"))
-                    self._prom_tabla.setItem(r, ColumnasCarne.PM_KG, QTableWidgetItem(f"{r_calc['pm']:,.2f}"))
-                    self._prom_tabla.setItem(r, ColumnasCarne.MARGEN_M, QTableWidgetItem(f"{r_calc['pmg']:.2f}"))
-
-                    t_vn += r_calc["vn"]
-                    t_gn += r_calc["gn"]
-                    t_vo += r_calc["vo"]
-                    t_go += r_calc["go"]
-
-                    self._prom_tabla.setItem(r, ColumnasCarne.VALOR_COSTO, QTableWidgetItem(f"{r_calc['v_costo']:,.2f}"))
-                    self._prom_tabla.setItem(r, ColumnasCarne.VENTA_NORMAL, QTableWidgetItem(f"{r_calc['vn']:,.2f}"))
-                    self._prom_tabla.setItem(r, ColumnasCarne.VENTA_MAYOREO, QTableWidgetItem(f"{r_calc['vo']:,.2f}"))
-                    self._prom_tabla.setItem(r, ColumnasCarne.GANANCIA_N, QTableWidgetItem(f"{r_calc['gn']:,.2f}"))
-                    self._prom_tabla.setItem(r, ColumnasCarne.GANANCIA_M, QTableWidgetItem(f"{r_calc['go']:,.2f}"))
+                    valor_editado = parse_float_regional(item.text())
                 except ValueError:
                     pass
 
+            # Llamar al motor para recalcular
+            resultado = MotorCarne.recalcular_tabla(
+                filas, self._costo_real_kg,
+                col_editada=c_ed, fila_editada=r_ed,
+                valor_editado=valor_editado, from_calc=from_calc
+            )
+
+            # Actualizar tabla con resultados
+            for r, calc in enumerate(resultado["filas"]):
+                self._prom_tabla.setItem(r, ColumnasCarne.COSTO, QTableWidgetItem(f"{self._costo_real_kg:,.2f}"))
+                self._prom_tabla.setItem(r, ColumnasCarne.PV_KG, QTableWidgetItem(f"{calc['pv']:,.2f}"))
+                self._prom_tabla.setItem(r, ColumnasCarne.MARGEN_V, QTableWidgetItem(f"{calc['pg']:.2f}"))
+                self._prom_tabla.setItem(r, ColumnasCarne.PM_KG, QTableWidgetItem(f"{calc['pm']:,.2f}"))
+                self._prom_tabla.setItem(r, ColumnasCarne.MARGEN_M, QTableWidgetItem(f"{calc['pmg']:.2f}"))
+                self._prom_tabla.setItem(r, ColumnasCarne.VALOR_COSTO, QTableWidgetItem(f"{calc['v_costo']:,.2f}"))
+                self._prom_tabla.setItem(r, ColumnasCarne.VENTA_NORMAL, QTableWidgetItem(f"{calc['vn']:,.2f}"))
+                self._prom_tabla.setItem(r, ColumnasCarne.VENTA_MAYOREO, QTableWidgetItem(f"{calc['vo']:,.2f}"))
+                self._prom_tabla.setItem(r, ColumnasCarne.GANANCIA_N, QTableWidgetItem(f"{calc['gn']:,.2f}"))
+                self._prom_tabla.setItem(r, ColumnasCarne.GANANCIA_M, QTableWidgetItem(f"{calc['go']:,.2f}"))
+
+            # Actualizar totales
             ku = getattr(self, '_kilos_utiles', 0.0)
             cr = getattr(self, '_costo_real_kg', 0.0)
+            t = resultado["totales"]
             self._lbl_totales.setText(
                 f'<span style="color: #E11D48;">Kilos útiles: {ku:.2f} kg | Costo real kg: ${cr:,.2f}</span>'
                 f'&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;&nbsp;'
-                f'<span style="color: #10B981;">Normal =&gt; Venta: ${t_vn:,.2f} | Ganancia: ${t_gn:,.2f}</span>'
+                f'<span style="color: #10B981;">Normal =&gt; Venta: ${t["vn"]:,.2f} | Ganancia: ${t["gn"]:,.2f}</span>'
                 f'&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;&nbsp;'
-                f'<span style="color: #3B82F6;">Mayoreo =&gt; Venta: ${t_vo:,.2f} | Ganancia: ${t_go:,.2f}</span>'
+                f'<span style="color: #3B82F6;">Mayoreo =&gt; Venta: ${t["vo"]:,.2f} | Ganancia: ${t["go"]:,.2f}</span>'
             )
 
         finally:

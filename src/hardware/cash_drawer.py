@@ -120,6 +120,8 @@ class CashDrawerManager(QObject):
                 self.drawer_opened.emit()
                 if not self._apertura_autorizada:
                     self.intrusion_detected.emit()
+                    # Activar toast de alarma de intrusión (módulo separado)
+                    _mostrar_toast_intrusion()
             else:
                 _avisar_cajon(False)
                 self.drawer_closed.emit()
@@ -156,6 +158,16 @@ def _avisar_cajon(abierto: bool) -> None:
             retirar("cajon")
     except Exception:
         pass
+
+
+def _mostrar_toast_intrusion():
+    """Muestra el toast de alarma de intrusión cuando el cajón se abre con la llave."""
+    try:
+        from src.hardware.alarma_intrusion import mostrar_alarma_intrusion
+        mostrar_alarma_intrusion(duracion_ms=5000)
+    except Exception as e:
+        logger.error(f"Error al mostrar toast de intrusión: {e}")
+        # No inyecta datos, el sistema sigue funcionando
 
 # Instancia única (Singleton) para todo el sistema
 drawer_manager = None

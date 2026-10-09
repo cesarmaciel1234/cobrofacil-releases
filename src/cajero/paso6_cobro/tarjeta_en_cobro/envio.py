@@ -9,7 +9,7 @@ def _clave():
     return {"X-Idempotency-Key": str(uuid.uuid4())}
 
 
-def enviar_monto(token, device_id, monto):
+def enviar_monto(token, device_id, monto, descripcion="Venta TPV"):
     """Manda el importe a la terminal para cobrar con tarjeta. No abre ventanas."""
     if not token or not device_id or float(monto or 0) <= 0.009:
         return {"ok": False, "motivo": "sin_terminal"}
@@ -18,7 +18,7 @@ def enviar_monto(token, device_id, monto):
     payload = {
         "type": "point",
         "external_reference": uuid.uuid4().hex[:20],
-        "description": "Cobro tarjeta",
+        "description": descripcion,
         "expiration_time": "PT15M",
         "transactions": {"payments": [{"amount": f"{float(monto):.2f}"}]},
         "config": {

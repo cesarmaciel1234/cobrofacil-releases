@@ -35,22 +35,13 @@ class LienzoTarjeta(QWidget):
             " border: 2px dashed #FDBA74; border-radius: 14px;"
         )
         lay.addWidget(self.lbl_f9)
-        self.btn_volver = QPushButton("Cancelar")
-        self.btn_volver.setMinimumHeight(44)
-        self.btn_volver.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_volver.setStyleSheet(
-            "QPushButton { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1;"
-            " border-radius: 10px; font-weight: 800; }"
-        )
-        self.btn_volver.clicked.connect(self._al_volver)
-        lay.addWidget(self.btn_volver)
         self._senal = _SenalTarjeta(self)
         self._senal.dato.connect(self._pintar)
         self._reloj = QTimer(self)
         self._reloj.setInterval(2000)
         self._reloj.timeout.connect(self._consultar)
 
-    def arrancar(self, monto):
+    def arrancar(self, monto, descripcion="Venta TPV"):
         self._generacion += 1
         self._manual = False
         self._intent = ""
@@ -76,7 +67,7 @@ class LienzoTarjeta(QWidget):
                         "fallo": "Falta la terminal Point.",
                     })
                     return
-                envio = enviar_monto(token, device, importe)
+                envio = enviar_monto(token, device, importe, descripcion)
                 self._senal.dato.emit({
                     "generacion": generacion,
                     "envio": envio,

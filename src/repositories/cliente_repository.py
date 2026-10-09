@@ -34,6 +34,20 @@ class ClienteRepository:
         return float(config.get("fiado_express_limite", FIADO_EXPRESS_LIMITE_DEFAULT))
 
     @staticmethod
+    def nombre_ticket(cliente) -> str:
+        """Nombre del cliente en el ticket de crédito.
+        Con nombre registrado va el nombre. Si solo se cargó por DNI
+        (perfil 'Express <DNI>' o sin nombre), va 'DNI <número>'."""
+        if not cliente:
+            return ""
+        ficha = dict(cliente)
+        nombre = str(ficha.get("nombre") or "").strip()
+        dni = str(ficha.get("dni") or "").strip()
+        if dni and (not nombre or nombre == f"Express {dni}"):
+            return f"DNI {dni}"
+        return nombre
+
+    @staticmethod
     def limite_credito_excedido(cliente: dict, monto_venta: float) -> bool:
         """True si la venta supera el crédito disponible (dispara alarma en mostrador)."""
         return monto_venta > ClienteRepository.credito_disponible(cliente) + 0.01

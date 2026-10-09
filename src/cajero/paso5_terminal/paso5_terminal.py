@@ -494,7 +494,7 @@ class Paso5Terminal(QWidget):
             elif tecla_str == "F3": self.abrir_historial_dia()
             elif tecla_str == "F12": self.finalizar_venta()
             elif tecla_str == "F5": self.abrir_retiro_efectivo()
-            elif tecla_str == "F6": self.abrir_ingreso_efectivo()
+            elif tecla_str == "F6": self.abrir_ingreso_efectivo("FIADO")
             elif tecla_str == "F7": self._leer_bascula()
             elif tecla_str == "F8": self._swap_ticket_espera()
             elif tecla_str == "F4": self.abrir_cierre_caja()
@@ -522,9 +522,11 @@ class Paso5Terminal(QWidget):
         self.txt_scan.installEventFilter(self) # Para monitoreo PRO
 
     def _precalentar_cobro(self):
-        """Carga el cobro en segundo plano. En un ejecutable el primer import es el que espera."""
+        """Carga e instancia el cobro en segundo plano para que al tocar F12 abra instantáneo."""
         try:
-            from src.cajero.paso6_cobro import Paso6Cobro  # noqa: F401
+            from src.cajero.paso6_cobro import Paso6Cobro
+            if not getattr(self, '_next_cobro_dlg', None):
+                self._next_cobro_dlg = Paso6Cobro(0.0, [], self)
         except Exception:
             pass
 
@@ -534,7 +536,8 @@ class Paso5Terminal(QWidget):
         elif k == Qt.Key.Key_F3: self.abrir_historial_dia()
         elif k == Qt.Key.Key_F12: self.finalizar_venta()
         elif k == Qt.Key.Key_F5: self.abrir_retiro_efectivo()
-        elif k == Qt.Key.Key_F6: self.abrir_ingreso_efectivo()
+        elif k == Qt.Key.Key_F6: self.abrir_ingreso_efectivo("FIADO")
+        elif k == Qt.Key.Key_F2: self.abrir_ingreso_efectivo("OTROS")
         elif k == Qt.Key.Key_F7: self._leer_bascula()
         elif k == Qt.Key.Key_F8: self._swap_ticket_espera()
         elif k == Qt.Key.Key_F4: self.abrir_cierre_caja()
@@ -902,29 +905,21 @@ class Paso5Terminal(QWidget):
                     self.abrir_retiro_efectivo()
                     return True
                 elif key == Qt.Key.Key_F6:
-                    self.abrir_ingreso_efectivo()
+                    self.abrir_ingreso_efectivo("FIADO")
+                    return True
+                elif key == Qt.Key.Key_F2:
+                    self.abrir_ingreso_efectivo("OTROS")
                     return True
                 elif key == Qt.Key.Key_F11:
                     self.llamar_supervisor()
                     return True
                 elif key == Qt.Key.Key_Down:
-                    if self.list_results.isVisible() and self.list_results.count() > 0:
-                        self.list_results.setFocus()
-                        self.list_results.setCurrentRow(0)
-                        return True
-                elif key == Qt.Key.Key_Up:
-                    if self.list_results.isVisible() and self.list_results.count() > 0:
-                        self.list_results.setFocus()
-                        self.list_results.setCurrentRow(self.list_results.count() - 1)
-                        return True
-                elif key == Qt.Key.Key_Escape:
-                    self.txt_scan.clear()
-                    self._ocultar_busqueda()
-                    return True
-                elif key == Qt.Key.Key_Down:
                     if not self.list_results.isHidden() and self.list_results.count() > 0:
                         self.list_results.setFocus()
-                        self.list_results.setCurrentRow(0)
+                        if self.list_results.count() > 1:
+                            self.list_results.setCurrentRow(1)
+                        else:
+                            self.list_results.setCurrentRow(0)
                         return True
                     elif self.tabla.rowCount() > 0:
                         self.tabla.setFocus()
@@ -933,12 +928,20 @@ class Paso5Terminal(QWidget):
                         QTimer.singleShot(0, self._on_tabla_nav_row_only)
                         return True
                 elif key == Qt.Key.Key_Up:
-                    if self.tabla.rowCount() > 0:
+                    if not self.list_results.isHidden() and self.list_results.count() > 0:
+                        self.list_results.setFocus()
+                        self.list_results.setCurrentRow(self.list_results.count() - 1)
+                        return True
+                    elif self.tabla.rowCount() > 0:
                         self.tabla.setFocus()
                         self.tabla.selectRow(self.tabla.rowCount() - 1)
                         self.tabla.setCurrentCell(self.tabla.rowCount() - 1, 3)
                         QTimer.singleShot(0, self._on_tabla_nav_row_only)
                         return True
+                elif key == Qt.Key.Key_Escape:
+                    self.txt_scan.clear()
+                    self._ocultar_busqueda()
+                    return True
                 elif key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                     # Si la lista de resultados está desplegada, procesamos el ítem seleccionado directamente
                     if not self.list_results.isHidden() and self.list_results.currentRow() >= 0:
@@ -1478,18 +1481,7 @@ class Paso5Terminal(QWidget):
         self._cerrar_abierto_paso5()
         txt_raw = self.txt_scan.text()
 
-        if not self.list_results.isHidden():
-            current = self.list_results.currentItem()
-            if current:
-                p = current.data(Qt.UserRole)
-                if p:
-                    _, cantidad = BarcodeParser.parse_scan_text(txt_raw)
-                    self.agregar_a_tabla(p, cantidad)
-                    self.txt_scan.clear()
-                    self._ocultar_busqueda()
-                    self.txt_scan.setFocus()
-                    return
-
+        # 1. Intentamos procesarlo como código exacto / balanza / común primero
         success, p, cantidad, error_msg = self.controller.carrito.procesar_codigo_escaneado(txt_raw)
 
         if error_msg == 'FINALIZAR_VENTA':
@@ -1502,6 +1494,19 @@ class Paso5Terminal(QWidget):
             self._ocultar_busqueda()
             self.txt_scan.setFocus()
             return
+
+        # 2. Si no fue un código exacto, pero la lista de resultados está visible y hay selección
+        if not self.list_results.isHidden():
+            current = self.list_results.currentItem()
+            if current:
+                p = current.data(Qt.UserRole)
+                if p:
+                    _, cantidad = BarcodeParser.parse_scan_text(txt_raw)
+                    self.agregar_a_tabla(p, cantidad)
+                    self.txt_scan.clear()
+                    self._ocultar_busqueda()
+                    self.txt_scan.setFocus()
+                    return
 
         if error_msg:
             from PyQt6.QtWidgets import QMessageBox
@@ -1917,10 +1922,10 @@ class Paso5Terminal(QWidget):
 
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
-    def abrir_ingreso_efectivo(self):
-        """Abre el panel de ingreso manual de dinero a la caja (F6)."""
+    def abrir_ingreso_efectivo(self, modo_inicial=None):
+        """Abre el panel de ingreso manual de dinero a la caja (F6 o F2)."""
         try:
-            self._abrir_ingreso_efectivo()
+            self._abrir_ingreso_efectivo(modo_inicial)
         except Exception:
             try:
                 from PyQt6.QtWidgets import QMessageBox
@@ -1929,8 +1934,11 @@ class Paso5Terminal(QWidget):
                 pass
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
-    def _abrir_ingreso_efectivo(self):
+    def _abrir_ingreso_efectivo(self, modo_inicial=None):
         dlg = DialogoIngresoEfectivo(parent=self)
+        if modo_inicial:
+            dlg._directo = True
+            dlg._set_modo(modo_inicial)
         if not (qt_exec(dlg) and dlg.monto_ingresado > 0):
             return
         es_fiado = getattr(dlg, "tipo_ingreso", "") == "FIADO" and getattr(dlg, "cliente_id", None)
@@ -2016,9 +2024,13 @@ class Paso5Terminal(QWidget):
             self.abrir_retiro_efectivo()
             return
 
-        # F6: Ingreso
+        # F6: Cobranza
         if k == Qt.Key.Key_F6:
-            self.abrir_ingreso_efectivo()
+            self.abrir_ingreso_efectivo("FIADO")
+            return
+        # F2: Ingreso Manual
+        if k == Qt.Key.Key_F2:
+            self.abrir_ingreso_efectivo("OTROS")
             return
 
         # F4: Cierre de Caja
@@ -2174,7 +2186,14 @@ class Paso5Terminal(QWidget):
             items = redondear_items_carrito(items)
 
             from src.cajero.paso6_cobro import Paso6Cobro
-            dlg = Paso6Cobro(total, items, self)
+            if getattr(self, '_next_cobro_dlg', None) is not None:
+                dlg = self._next_cobro_dlg
+                self._next_cobro_dlg = None
+                dlg.total_original = total
+                dlg.items_carrito = items
+            else:
+                dlg = Paso6Cobro(total, items, self)
+            
             dlg.descuentaso_oferta = sum(
                 abs(parse_float_safe(self.tabla.item(i, 4).text())) for i in range(self.tabla.rowCount())
             )
@@ -2182,6 +2201,9 @@ class Paso5Terminal(QWidget):
 
             # Ejecutamos el cobro
             ok = qt_exec(dlg)
+            
+            # Reponer la instancia para la próxima venta velozmente en segundo plano
+            QTimer.singleShot(500, self._precalentar_cobro)
         finally:
             self._cobro_abierto = False
         self._refrescar_notificaciones()

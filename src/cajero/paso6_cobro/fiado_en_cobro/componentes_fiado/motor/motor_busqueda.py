@@ -1,0 +1,53 @@
+from PyQt6.QtCore import QObject, pyqtSignal, QTimer
+from src.clientes_fiado.cerebro.cerebro import cerebro
+import logging
+
+class MotorBusquedaLocal(QObject):
+    sugerencias_listas = pyqtSignal(list)
+    limite_aprobado = pyqtSignal(dict) # Emite el cartel con nombre, limite, compra
+    error_busqueda = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.logger = logging.getLogger('PunPro')
+        self._timer = QTimer(self)
+        self._timer.setSingleShot(True)
+        self._timer.timeout.connect(self._buscar_real)
+        self._ultimo_texto = ""
+        self._monto_venta = 0.0
+
+    def set_monto_venta(self, monto):
+        self._monto_venta = float(monto or 0.0)
+
+    def buscar_texto(self, texto):
+        self._ultimo_texto = texto.strip()
+        if len(self._ultimo_texto) >= 2:
+            self._timer.start(300)
+        else:
+            self.sugerencias_listas.emit([])
+
+    def _buscar_real(self):
+        try:
+            clientes = cerebro.buscar(self._ultimo_texto)
+            self.sugerencias_listas.emit(clientes)
+        except Exception as e:
+            self.logger.error(f"Error en MotorBusquedaLocal: {e}")
+            self.error_busqueda.emit("Error al consultar la base de clientes")
+            self.sugerencias_listas.emit([])
+
+    def aprobar_credito(self, cliente):
+        try:
+            cartel = cerebro.cartel(cliente)
+            disp = cartel.get("disponible") or 0.0
+            saludo = str(cartel.get("saludo") or "").replace("Hola, ", "")
+            
+            datos = {
+                'id': cliente.get('id'),
+                'nombre': saludo,
+                'limite': disp,
+                'compra': self._monto_venta
+            }
+            self.limite_aprobado.emit(datos)
+        except Exception as e:
+            self.logger.error(f"Error aprobando credito: {e}")
+            self.error_busqueda.emit("No se pudo calcular el crédito del cliente")

@@ -1,4 +1,4 @@
-﻿from src.utils.qt_compat import qt_exec
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
@@ -21,7 +21,7 @@ class DialogoTicket(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Diseñador de Ticket y Recibos")
-        self.setFixedSize(780, 580)
+        self.setFixedSize(850, 680)
         self.setStyleSheet(" font-family: 'Segoe UI';")
 
         main_layout = QHBoxLayout(self)
@@ -84,6 +84,27 @@ class DialogoTicket(QDialog):
             h_checks.addWidget(chk)
             
         ruteo_lay.addLayout(h_checks)
+
+        # Ancho Papel
+        line2 = QFrame()
+        line2.setFrameShape(QFrame.Shape.HLine)
+        line2.setStyleSheet("border: none; background: #E2E8F0; height: 1px;")
+        ruteo_lay.addWidget(line2)
+
+        lbl_ancho = QLabel("Ancho de Papel / Columnas:")
+        lbl_ancho.setStyleSheet("font-size: 11px; color: #334155; border: none; font-weight: bold;")
+        ruteo_lay.addWidget(lbl_ancho)
+
+        self.cmb_ancho = QComboBox()
+        self.cmb_ancho.addItems(["58mm (32 caracteres)", "80mm (48 caracteres)"])
+        ancho_val = config.get("printer_paper_width_mm", 58)
+        self.cmb_ancho.setCurrentIndex(1 if ancho_val == 80 else 0)
+        self.cmb_ancho.setStyleSheet("""
+            QComboBox { font-size: 12px; padding: 5px; border: 1px solid #CBD5E1; border-radius: 4px; background: white; }
+        """)
+        self.cmb_ancho.currentIndexChanged.connect(self._update_preview)
+        ruteo_lay.addWidget(self.cmb_ancho)
+
         left_layout.addWidget(self.grp_ruteo)
         
         left_layout.addStretch()
@@ -118,6 +139,7 @@ class DialogoTicket(QDialog):
         lbl_prev_title.setStyleSheet("font-size: 14px; font-weight: bold; ")
         lbl_prev_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         preview_layout.addWidget(lbl_prev_title)
+        preview_layout.addStretch()
 
         # Ticket Shape
         self.ticket_frame = QFrame()
@@ -157,19 +179,19 @@ class DialogoTicket(QDialog):
         self.lbl_t_phone.setStyleSheet("font-size: 12px; color: black; border: none; font-family: 'Courier New';")
         t_lay.addWidget(self.lbl_t_phone)
 
-        sep1 = QLabel("-" * 32)
-        sep1.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        sep1.setStyleSheet("color: black; border: none; font-family: 'Courier New';")
-        t_lay.addWidget(sep1)
+        self.sep1 = QLabel("-" * 32)
+        self.sep1.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.sep1.setStyleSheet("color: black; border: none; font-family: 'Courier New';")
+        t_lay.addWidget(self.sep1)
 
-        lbl_body = QLabel("Ticket Nro: 00000123\nFecha: 24/10/2026 15:30\n\n1 x Producto A      .00\n2 x Producto B      .00")
-        lbl_body.setStyleSheet("font-family: 'Courier New', monospace; font-size: 12px; color: black; border: none;")
-        t_lay.addWidget(lbl_body)
+        self.lbl_body = QLabel("Ticket Nro: 00000123\nFecha: 24/10/2026 15:30\n\n1 x Producto A      .00\n2 x Producto B      .00")
+        self.lbl_body.setStyleSheet("font-family: 'Courier New', monospace; font-size: 12px; color: black; border: none;")
+        t_lay.addWidget(self.lbl_body)
 
-        sep2 = QLabel("-" * 32)
-        sep2.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        sep2.setStyleSheet("color: black; border: none; font-family: 'Courier New';")
-        t_lay.addWidget(sep2)
+        self.sep2 = QLabel("-" * 32)
+        self.sep2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.sep2.setStyleSheet("color: black; border: none; font-family: 'Courier New';")
+        t_lay.addWidget(self.sep2)
 
         self.lbl_t_total = QLabel("TOTAL: .00")
         self.lbl_t_total.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -189,6 +211,7 @@ class DialogoTicket(QDialog):
         t_container.addWidget(self.ticket_frame)
         t_container.addStretch()
         preview_layout.addLayout(t_container)
+        preview_layout.addStretch()
 
         main_layout.addWidget(right_panel, 1)
 
@@ -198,9 +221,18 @@ class DialogoTicket(QDialog):
         data = self.panel_negocio.get_data()
         self.lbl_t_name.setText(data.get("business_name") or "MI EMPRESA")
         self.lbl_t_cuit.setText(data.get("business_cuit") or "CUIT: 00-00000000-0")
-        self.lbl_t_addr.setText(data.get("address") or "Dirección del Local")
+        self.lbl_t_addr.setText(data.get("address") or "Direccion del Local")
         self.lbl_t_phone.setText(f"Tel: {data.get('phone')}" if data.get('phone') else "")
         self.lbl_t_msg.setText(data.get("footer_message") or "Gracias por su compra!")
+        
+        is_80 = self.cmb_ancho.currentIndex() == 1
+        cols = 48 if is_80 else 32
+        self.ticket_frame.setFixedWidth(380 if is_80 else 280)
+        self.sep1.setText("-" * cols)
+        self.sep2.setText("-" * cols)
+        
+        body_text = f"Ticket Nro: 00000123<br>Fecha: 24/10/2026 15:30<br><br><b>PRODUCTO DE PRUEBA A</b><br>&nbsp;&nbsp;1 x .00{'&nbsp;'*(cols-27)}.00<br><b>PRODUCTO DE PRUEBA B</b><br>&nbsp;&nbsp;2 x .00{'&nbsp;'*(cols-26)}.00"
+        self.lbl_body.setText(body_text)
 
     def guardar(self):
         # Save ticket config
@@ -212,6 +244,7 @@ class DialogoTicket(QDialog):
         config.set("auto_print_transferencia", self.chk_transferencia.isChecked())
         config.set("auto_print_mixto", self.chk_mixto.isChecked())
         config.set("auto_print_qr", self.chk_transferencia.isChecked()) # QR acts like Transferencia/Tarjeta by default
+        config.set("printer_paper_width_mm", 80 if self.cmb_ancho.currentIndex() == 1 else 58)
         
         # Guardar en config.json
         config.save()

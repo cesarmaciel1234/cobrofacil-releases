@@ -104,6 +104,8 @@ Esas ventanas, y F11, tapan la venta con el gris `#334155` (`src/utils/fondo_gri
 
 Fiado y Clientes se piden en `HojaCuentaCobro`, en la misma hoja que la espera de la tarjeta. No abren la ventana oscura. Cancelar vuelve a los medios.
 
+En el menú «Otras» hay una sola entrada: **Crédito**. Fiado y cuenta corriente son la misma tabla clientes. Crédito entra con la clave interna Clientes (no crédito: esa clave de REGISTRO es la tarjeta de crédito). La caja de la hoja toma DNI (solo números) o nombre (sin números) y la lista sugiere por los dos. Un DNI nuevo crea el perfil Express <DNI> con iado_express_limite (monto menor); un nombre nuevo, con 50.000 (monto mayor). En el ticket va el nombre si está registrado; si solo hay DNI, va DNI <número> (ClienteRepository.nombre_ticket).
+
 La venta se escribe en `persistir_cobro`, que llama `db_manager.guardar_venta_completa`. Cabecera, renglones, stock y fiado van en esa transacción. El plano está en `src/base_de_datos/plano.md`.
 
 ### Hardware y red en la venta

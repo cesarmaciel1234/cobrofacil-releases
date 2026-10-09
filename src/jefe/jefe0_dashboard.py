@@ -36,7 +36,6 @@ JEFE_MODULES = [
     ("red_lan",      "Servidor LAN\nMaestra/Esclava", "ðŸŒ", "#0EA5E9", "#E0F2FE", "#075985", 6, None),
     
     ("proveedores",  "Proveedores\nERP",          "ðŸšš", "#0EA5E9", "#E0F2FE", "#075985", 26, None),
-    ("carteleria",   "Cartelería\nDigital",       "📺", "#F59E0B", "#FEF3C7", "#92400E", 22, None),
     ("promedios",    "Costos y\nPromedios",       "âš–ï¸", "#EC4899", "#FDF2F8", "#831843", 24, None),
     ("ia_proactiva", "IA\nProactiva",             "ðŸ§ ", "#8B5CF6", "#F5F3FF", "#4C1D95", 23, None),
     ("personal",     "Personal y\nUsuarios",      "ðŸ‘¥", "#F43F5E", "#FFE4E6", "#9F1239", -1, None),
@@ -609,5 +608,6 @@ class Jefe0Dashboard(QWidget):
         worker.start()
         qt_exec(dlg)
         worker.wait(120000)
+
 
 

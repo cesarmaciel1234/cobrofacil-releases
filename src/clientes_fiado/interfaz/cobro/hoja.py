@@ -117,7 +117,7 @@ class HojaCuentaCobro(QFrame):
         self.btn_f4.hide()
         lay.addWidget(self.btn_f4)
         
-        self.btn_enter = QLabel("[ ENTER ] FIAR COMPRA ACTUAL")
+        self.btn_enter = QLabel("[ ENTER ] CARGAR A CRÉDITO")
         self.btn_enter.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.btn_enter.setStyleSheet("color: #FFFFFF; background: #10B981; font-size: 16px; font-weight: 800; border-radius: 8px; padding: 12px; margin-top: 6px;")
         self.btn_enter.hide()
@@ -126,6 +126,8 @@ class HojaCuentaCobro(QFrame):
         lay.addStretch(1)
         self._val_dni = QRegularExpressionValidator(QRegularExpression(r"\d{0,11}"))
         self._val_nombre = QRegularExpressionValidator(QRegularExpression(r"[^\d]{0,80}"))
+        # Crédito: la misma caja toma DNI (solo números) o nombre (sin números).
+        self._val_credito = QRegularExpressionValidator(QRegularExpression(r"\d{0,11}|[^\d]{0,80}"))
         self._modo = "Clientes"
         self._paso = 1
         self._monto = 0.0
@@ -171,10 +173,7 @@ class HojaCuentaCobro(QFrame):
                 self._cerrar_pin()
             return
         pieza = str(texto or "")
-        if self._modo == "Fiado":
-            pieza = "".join(c for c in pieza if c.isdigit())
-        else:
-            pieza = "".join(c for c in pieza if not c.isdigit())
+        # Crédito: DNI o nombre. El validador de la caja no deja mezclar.
         if not pieza:
             return
         self.caja.setFocus()
@@ -269,9 +268,9 @@ class HojaCuentaCobro(QFrame):
                 aviso.raise_()
 
     def _frase(self):
-        if self._modo == "Fiado":
-            return "Pida el DNI del cliente." if self._paso == 1 else "Confirme el DNI."
-        return "Pida el nombre del cliente." if self._paso == 1 else "Confirme el nombre."
+        if self._paso == 1:
+            return "Pida el DNI o el nombre del cliente."
+        return "Confirme el cliente."
 
     def _pintar_paso(self):
         self._silencio = True
@@ -282,12 +281,8 @@ class HojaCuentaCobro(QFrame):
         self._silencio = False
         self._cerrar_lista()
         self.subtitulo.hide()
-        if self._modo == "Fiado":
-            self.caja.setValidator(self._val_dni)
-            self.caja.setPlaceholderText("DNI")
-        else:
-            self.caja.setValidator(self._val_nombre)
-            self.caja.setPlaceholderText("Nombre")
+        self.caja.setValidator(self._val_credito)
+        self.caja.setPlaceholderText("DNI o nombre")
         if self._paso == 2 and self._cliente:
             self.setStyleSheet(
                 "QFrame#HojaCuenta {"
@@ -296,7 +291,7 @@ class HojaCuentaCobro(QFrame):
                 "QLabel { background: transparent; border: none; }"
             )
             cartel = cerebro.cartel(self._cliente)
-            self.texto.setText("✔\n\nFIADO APROBADO")
+            self.texto.setText("✔\n\nCRÉDITO APROBADO")
             self.texto.setStyleSheet("color: #047857; font-size: 26px; font-weight: 900;")
             
             saludo = str(cartel.get("saludo") or "")
@@ -315,7 +310,7 @@ class HojaCuentaCobro(QFrame):
             self.caja.hide()
             self.caja.clearFocus()
             self.btn_f4.hide()
-            self.btn_enter.setText("[ ENTER ] CONFIRMAR FIADO")
+            self.btn_enter.setText("[ ENTER ] CONFIRMAR CRÉDITO")
             self.btn_enter.setStyleSheet("color: #FFFFFF; background: #10B981; font-size: 18px; font-weight: 900; border-radius: 8px; padding: 14px; margin-top: 10px;")
             self.btn_enter.show()
             self.setFocus()
@@ -329,7 +324,7 @@ class HojaCuentaCobro(QFrame):
             self.caja.show()
             self.btn_f4.hide()
             if hasattr(self, 'btn_enter'):
-                self.btn_enter.setText("[ ENTER ] FIAR COMPRA ACTUAL")
+                self.btn_enter.setText("[ ENTER ] CARGAR A CRÉDITO")
                 self.btn_enter.setStyleSheet("color: #FFFFFF; background: #10B981; font-size: 16px; font-weight: 800; border-radius: 8px; padding: 12px; margin-top: 6px;")
                 self.btn_enter.hide()
             self.texto.setText(self._frase())
@@ -338,7 +333,8 @@ class HojaCuentaCobro(QFrame):
             self.disponible.setStyleSheet("color: #047857; font-size: 28px; font-weight: 900;")
             self.saldo.clear()
             self.disponible.clear()
-            self.caja.setFocus()
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(0, self.caja.setFocus)
 
     def _pintar_numeros(self, saldo, disponible):
         if saldo is None:
@@ -351,7 +347,7 @@ class HojaCuentaCobro(QFrame):
             self.disponible.setText(f"Disponible  ${float(disponible):,.2f}")
 
     def _al_escribir(self, texto):
-        if self._silencio or self._modo != "Clientes" or self._paso != 1:
+        if self._silencio or self._paso != 1:
             return
         self.aviso.clear()
         self._armar_lista(texto)
@@ -428,38 +424,38 @@ class HojaCuentaCobro(QFrame):
 
 
     def _cargar(self):
-        texto = self.caja.text()
-        if self._modo == "Fiado":
-            if not cerebro.normalizar_dni(texto):
-                self._fallo("DNI inválido. Mínimo 7 dígitos.")
-                return
-            cliente, estado, msg = cerebro.identificar_dni(texto)
-            if estado == "error" or not cliente:
-                self._fallo(msg or "No se pudo identificar al cliente.")
-                return
-            if cerebro.limite_excedido(cliente, self._monto):
-                self._avisar_cupo(cliente, cerebro.normalizar_dni(texto))
-                return
-            self._pasar(cliente, cerebro.normalizar_dni(texto))
-            return
+        texto = self.caja.text().strip()
         elegido = self._elegida()
         if elegido:
             self._tomar_lista(elegido)
             return
         if len(self._filas) > 1:
-            self._fallo("Hay más de un cliente. Elegí el de la lista por el DNI.")
+            self._fallo("Hay más de un cliente. Elegí el de la lista por favor.")
             return
         if len(self._filas) == 1:
             self._tomar_lista(dict(self._filas[0]))
             return
-        cliente, estado, msg = cerebro.identificar_nombre(texto.strip())
+            
+        texto_limpio = texto.replace(".", "").replace("-", "").replace(" ", "")
+        es_dni = texto_limpio.isdigit() and len(texto_limpio) >= 7
+        if texto_limpio.isdigit() and not es_dni:
+            self._fallo("DNI inválido. Mínimo 7 dígitos.")
+            return
+        
+        if es_dni:
+            cliente, estado, msg = cerebro.identificar_dni(texto)
+            ref = cerebro.normalizar_dni(texto)
+        else:
+            cliente, estado, msg = cerebro.identificar_nombre(texto)
+            ref = str(dict(cliente).get("nombre") if cliente else texto)
+            
         if estado == "error" or not cliente:
             self._fallo(msg or "No se pudo identificar al cliente.")
             return
         if cerebro.limite_excedido(cliente, self._monto):
-            self._avisar_cupo(cliente, str(dict(cliente).get("nombre") or texto.strip()))
+            self._avisar_cupo(cliente, ref)
             return
-        self._pasar(cliente, str(dict(cliente).get("nombre") or texto.strip()))
+        self._pasar(cliente, ref)
 
     def _tomar_lista(self, cliente):
         if cerebro.limite_excedido(cliente, self._monto):

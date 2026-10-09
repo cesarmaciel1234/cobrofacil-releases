@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QBrush
 from datetime import datetime
 from src.cajero.paso8_historial.componentes_paso8_historial.stamp_label import StampLabel
+from src.utils.medio_pago import etiqueta_pago
 
 def fmt_moneda(val):
     try:
@@ -133,7 +134,7 @@ class PanelDetalle(QWidget):
         self.lbl_preview_title.setText(f"Ticket {v['id']}")
         self.lbl_det_folio.setText(str(v['id']))
         self.lbl_det_cajero.setText(str(v['usuario']).upper())
-        self.lbl_det_metodo.setText(str(v['metodo_pago'] if 'metodo_pago' in v.keys() else 'Efectivo').upper())
+        self.lbl_det_metodo.setText(etiqueta_pago(v['metodo_pago'] if 'metodo_pago' in v.keys() else 'Efectivo').upper())
         
         cli_nom = ""
         if "cliente_nombre" in v.keys() and v["cliente_nombre"]:

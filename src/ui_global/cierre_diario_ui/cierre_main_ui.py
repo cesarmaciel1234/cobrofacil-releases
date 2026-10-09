@@ -659,23 +659,79 @@ class CierreGlobalUI(QWidget):
         except Exception as e:
             print(f"Error cargando datos de corte: {e}")
 
-    def _imprimir_reporte(self, quiet: bool = False):
+    def _imprimir_reporte(self, quiet: bool = False, es_automatico: bool = False):
         try:
             from src.hardware.printer import printer_manager
+            from src.base_de_datos.database import db_manager
 
             d = self.datos_actuales or {}
             fisico, dif = self.panel_arq.get_fisico_y_dif()
             modo_print = "turno" if normalizar_modo(self.modo_vista) == "cajero" else "dia"
+
+            # Obtener datos de clientes del período
+            fecha_str = self.date_picker.date().toString("yyyy-MM-dd")
+            caja_id_filter = None
+            cajero_filter = None
+
+            if self.modo_vista == "cajero":
+                cajero_filter = self.user
+                caja_id_filter = config.get("caja_id", 1)
+
+            # Determinar rango de fechas
+            if fecha_str and fecha_str != QDate.currentDate().toString("yyyy-MM-dd"):
+                desde = f"{fecha_str} 00:00:00"
+                hasta = f"{fecha_str} 23:59:59"
+                v_cond = "estado IN ('COMPLETADA', 'CERRADA') AND fecha >= ? AND fecha <= ?"
+                v_params = [desde, hasta]
+            else:
+                desde = d.get("apertura_fecha") or f"{fecha_str} 00:00:00"
+                v_cond = "estado = 'COMPLETADA' AND fecha >= ?"
+                v_params = [desde]
+
+            if cajero_filter:
+                v_cond += " AND usuario = ?"
+                v_params.append(cajero_filter)
+            if caja_id_filter is not None:
+                v_cond += " AND caja_id = ?"
+                v_params.append(caja_id_filter)
+
+            # Consultar clientes del período
+            clientes_query = f"""
+                SELECT cliente_nombre, SUM(total) as total
+                FROM ventas
+                WHERE {v_cond} AND cliente_nombre IS NOT NULL AND cliente_nombre != ''
+                GROUP BY cliente_nombre
+                ORDER BY total DESC
+            """
+            clientes_data = db_manager.execute_query(clientes_query, tuple(v_params)) or []
+
+            # Detectar si es cierre de cajero (paso5) o admin/jefe
+            es_cajero = self.is_terminal or self.modo_vista == "cajero"
+
             datos_z = {
                 "fondo": d.get("fondo", 0),
                 "turno_efectivo": d.get("v_efectivo", 0),
-                "turno_tarjeta": d.get("v_tarjeta", 0) + d.get("v_trans", 0),
+                "turno_tarjeta": d.get("v_tarjeta", 0),
+                "turno_transferencia": d.get("v_trans", 0),
+                "turno_vales": d.get("v_vales", 0),
+                "turno_cheque": d.get("v_cheque", 0),
+                "turno_credito": d.get("v_credito", 0),
                 "turno_total": d.get("v_totales", 0),
                 "dia_tarjeta": d.get("v_tarjeta", 0) + d.get("v_trans", 0),
                 "dia_total": d.get("v_totales", 0),
                 "efectivo_esperado": self.panel_arq.esperado,
                 "esperado": self.panel_arq.esperado,
                 "modo": modo_print,
+                "clientes": clientes_data,
+                "abonos_efectivo_detalle": d.get("abonos_efectivo_detalle", 0),
+                "abonos_transferencia": d.get("abonos_transferencia", 0),
+                "abonos_digital": d.get("abonos_digital", 0),
+                "entradas_efectivo": d.get("entradas_efectivo", 0),
+                "salidas_efectivo": d.get("salidas_efectivo", 0),
+                "es_automatico": es_automatico,
+                "es_cajero": es_cajero,
+                "diferencia_mes": d.get("diferencia_mes", 0),
+                "diferencia_historica": d.get("diferencia_historica", 0),
             }
             ok = printer_manager.imprimir_ticket_z(self.user, fisico, dif, datos_z)
             if quiet:

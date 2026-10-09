@@ -3,6 +3,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from PyQt6.QtCore import QThread, pyqtSignal
 from datetime import datetime
+from src.utils.medio_pago import etiqueta_pago
 
 try:
     from src.base_de_datos.database import db_manager
@@ -186,7 +187,7 @@ class WorkerExportGanancias(QThread):
         for venta in datos["sin_cargo"]:
             ws.cell(fila, 1, venta.get("id")).border = borde
             ws.cell(fila, 2, str(venta.get("fecha") or "")).border = borde
-            ws.cell(fila, 3, venta.get("metodo_pago") or "").border = borde
+            ws.cell(fila, 3, etiqueta_pago(venta.get("metodo_pago"))).border = borde
             plata(ws.cell(fila, 4, float(venta.get("total") or 0)))
             fila += 1
         if not datos["sin_cargo"]:

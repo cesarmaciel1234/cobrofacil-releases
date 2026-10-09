@@ -7,6 +7,8 @@ from src.contabilidad.shared_globals import PAL
 from .carne.ui_carne import UICarne
 from .cerdo.ui_cerdo import UICerdo
 from .pollo.ui_pollo import UIPollo
+from .huevo import UIHuevo
+from .congelado import UICongelado
 
 from src.base_de_datos.database import DatabaseManager
 from src.jefe.promedios.motor_global_promedios import MotorPromedios
@@ -50,8 +52,10 @@ class PromediosMain(QWidget):
         self.btn_carne = QPushButton("🥩 CARNE")
         self.btn_cerdo = QPushButton("🐖 CERDO")
         self.btn_pollo = QPushButton("🍗 POLLO")
+        self.btn_huevo = QPushButton("🥚 HUEVO")
+        self.btn_congelado = QPushButton("❄️ CONGELADO")
         
-        for b in [self.btn_carne, self.btn_cerdo, self.btn_pollo]:
+        for b in [self.btn_carne, self.btn_cerdo, self.btn_pollo, self.btn_huevo, self.btn_congelado]:
             b.setCursor(Qt.CursorShape.PointingHandCursor)
             tabs_lay.addWidget(b)
         tabs_lay.addStretch()
@@ -87,10 +91,14 @@ class PromediosMain(QWidget):
         self.ui_carne = UICarne()
         self.ui_cerdo = UICerdo()
         self.ui_pollo = UIPollo()
+        self.ui_huevo = UIHuevo()
+        self.ui_congelado = UICongelado()
         
         self.stack.addWidget(self.ui_carne)
         self.stack.addWidget(self.ui_cerdo)
         self.stack.addWidget(self.ui_pollo)
+        self.stack.addWidget(self.ui_huevo)
+        self.stack.addWidget(self.ui_congelado)
         
         scroll.setWidget(self.stack)
         
@@ -103,6 +111,8 @@ class PromediosMain(QWidget):
         self.btn_carne.clicked.connect(lambda: self._switch_tab(0))
         self.btn_cerdo.clicked.connect(lambda: self._switch_tab(1))
         self.btn_pollo.clicked.connect(lambda: self._switch_tab(2))
+        self.btn_huevo.clicked.connect(lambda: self._switch_tab(3))
+        self.btn_congelado.clicked.connect(lambda: self._switch_tab(4))
         self._switch_tab(0)
 
     def _switch_tab(self, idx):
@@ -113,6 +123,8 @@ class PromediosMain(QWidget):
         self.btn_carne.setStyleSheet(active if idx == 0 else inactive)
         self.btn_cerdo.setStyleSheet(active if idx == 1 else inactive)
         self.btn_pollo.setStyleSheet(active if idx == 2 else inactive)
+        self.btn_huevo.setStyleSheet(active if idx == 3 else inactive)
+        self.btn_congelado.setStyleSheet(active if idx == 4 else inactive)
 
     def _action_sincronizar(self):
         w = self.stack.currentWidget()

@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 from datetime import datetime
+from src.utils.medio_pago import es_filtro_credito
 
 
 def iso_dia(f_raw) -> str:
@@ -98,6 +99,7 @@ def listar_tickets(
 
     txt = (texto or "").strip().lower()
     metodo_u = (metodo or "TODOS").upper()
+    credito = es_filtro_credito(metodo_u)
     m0 = _a_minutos(hora_desde)
     m1 = _a_minutos(hora_hasta)
     filtrar_hora = m0 is not None and m1 is not None and not (m0 == 0 and m1 >= 23 * 60 + 59)
@@ -142,14 +144,17 @@ def listar_tickets(
                 if metodo_u == "EFECTIVO":
                     aporte_parcial = pe - cambio
                 else:
-                    if metodo_u in ("FIADO", "CLIENTES") and "CLIENTE" not in pago:
+                    if credito and "CLIENTE" not in pago:
                         continue
-                    if metodo_u not in ("FIADO", "CLIENTES", "EFECTIVO", "TODOS") and "CLIENTE" in pago:
+                    if not credito and metodo_u not in ("EFECTIVO", "TODOS") and "CLIENTE" in pago:
                         continue
                     aporte_parcial = po
                 
                 if aporte_parcial <= 0:
                     continue  # Si no aporta nada a este filtro, se salta.
+            elif credito:
+                if pago not in ("FIADO", "CLIENTES"):
+                    continue
             elif metodo_u not in pago:
                 continue
         if caja_filtro is not None:

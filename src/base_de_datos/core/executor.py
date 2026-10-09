@@ -118,6 +118,32 @@ class QueryExecutorMixin:
             if conn:
                 conn.close()
 
+
+    def execute_insert(self, query: str, params: tuple = (), _reintento: bool = False) -> int:
+        """Executes an INSERT and returns the last inserted row id."""
+        conn = None
+        try:
+            if self._host_tienda():
+                self.asegurar_lectura_tienda()
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            cursor.execute(self._normalize_query(query), params)
+            conn.commit()
+            return cursor.lastrowid
+        except Exception as e:
+            if self._caer_a_sqlite_si_maestra_caida(e, _reintento):
+                if not _reintento:
+                    try:
+                        if getattr(self, 'mariadb_engine', None):
+                            self.mariadb_engine.close()
+                    except Exception:
+                        pass
+                    conn = None
+                return self.execute_insert(query, params, _reintento=True)
+            return None
+        finally:
+            if conn:
+                conn.close()
     def execute_many(self, query: str, params_list: List[tuple], _reintento: bool = False) -> bool:
         """Executes a bulk non-query operation using executemany and commits changes."""
         conn = None

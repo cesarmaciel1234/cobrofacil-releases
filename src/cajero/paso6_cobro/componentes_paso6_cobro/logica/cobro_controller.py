@@ -98,7 +98,7 @@ class CobroController:
         elif metodo_pago == "Mixto": debe_abrir = config.get("drawer_open_mixed", True)
         elif metodo_pago == "Tarjeta": debe_abrir = config.get("drawer_open_card", False)
         elif metodo_pago == "Transferencia": debe_abrir = config.get("drawer_open_transfer", False)
-        elif metodo_pago == "Fiado": debe_abrir = config.get("drawer_open_fiado", False)
+        elif metodo_pago in ("Fiado", "Clientes", "Cuenta Corriente"): debe_abrir = config.get("drawer_open_fiado", False)
 
         if debe_abrir:
             drawer_manager.set_authorized(True)
@@ -110,14 +110,14 @@ class CobroController:
                 s_disp = None
 
                 # Si es Fiado o Cuenta Corriente, cargar datos para inyectar en el ticket principal
-                if metodo_pago in ("Fiado", "Cuenta Corriente"):
+                if metodo_pago in ("Fiado", "Cuenta Corriente", "Clientes"):
                     cliente_id = resultado_venta.get("cliente_id")
                     if cliente_id:
                         try:
                             from src.repositories.cliente_repository import ClienteRepository
                             cli = ClienteRepository.obtener_por_id(cliente_id)
                             if cli:
-                                cli_nombre = cli.get("nombre") or cli.get("nombre_completo") or "Cliente"
+                                cli_nombre = ClienteRepository.nombre_ticket(cli) or cli.get("nombre_completo") or "Cliente"
                                 deuda_actual = float(
                                     cli.get("deuda_actual", cli.get("deuda_total", 0.0))
                                 )

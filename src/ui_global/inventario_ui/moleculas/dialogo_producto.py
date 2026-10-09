@@ -375,8 +375,16 @@ class DialogoProducto(QDialog):
         """)
 
     def keyPressEvent(self, event):
+        from PyQt6.QtWidgets import QPushButton
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-            self.focusNextChild()
+            if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+                self._ok()
+                return
+            fw = self.focusWidget()
+            if isinstance(fw, QPushButton):
+                fw.click()
+            else:
+                self.focusNextChild()
         else:
             super().keyPressEvent(event)
 

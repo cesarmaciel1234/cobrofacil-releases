@@ -5,6 +5,7 @@ from __future__ import annotations
 from src.utils.qt_compat import qt_exec
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
+from src.utils.medio_pago import etiqueta_pago
     QApplication,
     QDialog,
     QHBoxLayout,
@@ -122,7 +123,7 @@ class DialogoDetalleTicket(QDialog):
 
         venta = detalle["venta"]
         fecha = str(venta.get("fecha") or "Fecha no disponible")
-        metodo = str(venta.get("metodo_pago") or "Medio no disponible")
+        metodo = etiqueta_pago(venta.get("metodo_pago")) or "Medio no disponible"
         estado = str(venta.get("estado") or "Estado no disponible")
         self.resumen.setText(f"{fecha}  ·  {metodo}  ·  {estado}")
         self.origen.setText(f"Datos: {detalle['origen']}")

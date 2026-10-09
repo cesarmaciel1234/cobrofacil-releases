@@ -1,4 +1,12 @@
-"""Consultas de totales COMPLETADA para el panel de cierre."""
+"""Consultas de totales COMPLETADA para el panel de cierre.
+
+Este módulo calcula los totales de ventas, pagos y movimientos de caja
+para el panel de cierre de caja (cierre Z/X).
+
+Funciones principales:
+    - obtener_datos_cierre: Totales completos del turno
+    - _ultima_apertura: Fecha y monto de la última apertura de caja
+"""
 
 from __future__ import annotations
 
@@ -67,15 +75,28 @@ def obtener_datos_cierre(
             efectivo_esperado_caja,
             movimientos_turno,
         )
+        from src.cerebro_global.cierre_caja_cerebro.procesos.diferencias import (
+            calcular_diferencia_mes,
+            calcular_diferencia_historica,
+        )
 
         target_day = fecha_str or datetime.now().strftime("%Y-%m-%d")
         fondo, apertura_fecha = _ultima_apertura(db, caja_id=caja_id, cajero=cajero)
 
-        # Ventas pendientes de cierre: desde apertura, o el día del datepicker
-        desde = apertura_fecha or f"{target_day} 00:00:00"
-
-        v_cond = "estado = 'COMPLETADA' AND fecha >= ?"
-        v_params: list = [desde]
+        # Ventas pendientes de cierre:
+        # - Si se selecciona una fecha específica, usar esa fecha (ignorar apertura)
+        # - Si no hay fecha específica (hoy), usar desde apertura o inicio del día
+        if fecha_str and fecha_str != datetime.now().strftime("%Y-%m-%d"):
+            # Fecha específica seleccionada: usar todo el día (incluye CERRADAS para historial)
+            desde = f"{target_day} 00:00:00"
+            hasta = f"{target_day} 23:59:59"
+            v_cond = "estado IN ('COMPLETADA', 'CERRADA') AND fecha >= ? AND fecha <= ?"
+            v_params: list = [desde, hasta]
+        else:
+            # Hoy o sin fecha: desde apertura o inicio del día (solo COMPLETADAS para cierre activo)
+            desde = apertura_fecha or f"{target_day} 00:00:00"
+            v_cond = "estado = 'COMPLETADA' AND fecha >= ?"
+            v_params: list = [desde]
         if cajero:
             v_cond += " AND usuario = ?"
             v_params.append(cajero)
@@ -142,11 +163,15 @@ def obtener_datos_cierre(
         )
 
         entradas, salidas = movimientos_turno(caja_id, desde, db=db)
+
+        # Abonos de clientes desglosados por método de pago
         pago_cond = "tipo = 'INGRESO' AND observaciones LIKE ? AND fecha >= ?"
         pago_params: list = ["Pago de clientes%", desde]
         if caja_id is not None:
             pago_cond += " AND caja_id = ?"
             pago_params.append(caja_id)
+
+        # Total abonos
         abonos_efectivo = float(
             db.execute_scalar(
                 f"SELECT SUM(monto) FROM movimientos_caja WHERE {pago_cond}",
@@ -154,6 +179,26 @@ def obtener_datos_cierre(
             )
             or 0.0
         )
+
+        # Abonos por método de pago (desde observaciones del movimiento)
+        abonos_transferencia = float(
+            db.execute_scalar(
+                f"SELECT SUM(monto) FROM movimientos_caja WHERE {pago_cond} AND (observaciones LIKE '%Transferencia%' OR observaciones LIKE '%Transf%')",
+                tuple(pago_params),
+            )
+            or 0.0
+        )
+
+        abonos_digital = float(
+            db.execute_scalar(
+                f"SELECT SUM(monto) FROM movimientos_caja WHERE {pago_cond} AND (observaciones LIKE '%QR%' OR observaciones LIKE '%Digital%' OR observaciones LIKE '%MercadoPago%')",
+                tuple(pago_params),
+            )
+            or 0.0
+        )
+
+        # El resto de abonos se asume efectivo
+        abonos_efectivo_detalle = abonos_efectivo - abonos_transferencia - abonos_digital
 
         dev_cond = "tipo = 'RETIRO' AND observaciones LIKE ? AND fecha >= ?"
         dev_params: list = ["Devolución ticket #%", desde]
@@ -175,6 +220,10 @@ def obtener_datos_cierre(
 
         ganancia_estimada = v_totales * 0.30
 
+        # Calcular diferencias del mes e histórica usando el módulo especializado
+        diferencia_mes = calcular_diferencia_mes(caja_id=caja_id, db=db)
+        diferencia_historica = calcular_diferencia_historica(caja_id=caja_id, db=db)
+
         return {
             "fondo": fondo,
             "v_efectivo": v_efectivo,
@@ -189,8 +238,13 @@ def obtener_datos_cierre(
             "entradas_efectivo": entradas,
             "salidas_efectivo": salidas,
             "abonos_efectivo": abonos_efectivo,
+            "abonos_efectivo_detalle": abonos_efectivo_detalle,
+            "abonos_transferencia": abonos_transferencia,
+            "abonos_digital": abonos_digital,
             "devoluciones_efectivo": devoluciones_efectivo,
             "apertura_fecha": apertura_fecha or desde,
+            "diferencia_mes": diferencia_mes,
+            "diferencia_historica": diferencia_historica,
         }
     except Exception as e:
         print(f"Error en totales cierre: {e}")

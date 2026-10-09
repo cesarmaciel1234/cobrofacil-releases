@@ -38,15 +38,6 @@ class LienzoTransferencia(QWidget):
         )
         self.lbl_f9.hide()
         lay.addWidget(self.lbl_f9)
-        self.btn_volver = QPushButton("Volver")
-        self.btn_volver.setMinimumHeight(44)
-        self.btn_volver.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_volver.setStyleSheet(
-            "QPushButton { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1;"
-            " border-radius: 10px; font-weight: 800; }"
-        )
-        self.btn_volver.clicked.connect(self._al_volver)
-        lay.addWidget(self.btn_volver)
         self.toast = AvisoAbono(self)
         self._reloj = QTimer(self)
         self._reloj.setInterval(1000)

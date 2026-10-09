@@ -184,7 +184,10 @@ class MotorProveedor:
 
     @staticmethod
     def save_proveedor(date, prov_name, tropa, grupos, payment, amount, perfil, db_jefe=None):
-        """Registra una compra/romaneo. Retorna (True, desc) o (False, msg_error)."""
+        """Registra una compra/romaneo. Retorna (True, desc) o (False, msg_error).
+        
+        ENTERPRISE: Genera asiento contable de compra de mercadería automáticamente.
+        """
         if not MotorProveedor.tienda_disponible():
             return False, "Solo consulta sin conexión. Para registrar compras, conecte la tienda."
         conn = None
@@ -240,6 +243,72 @@ class MotorProveedor:
             ):
                 raise RuntimeError("No se pudo guardar la deuda del proveedor.")
             conn.commit()
+            
+            # ENTERPRISE: Generar asiento contable de compra de mercadería
+            try:
+                from datetime import datetime
+                from src.contabilidad.database import Database
+                from src.utils.paths import get_base_path
+                import os
+                
+                # Obtener ruta de BD contable
+                from src.config import config
+                custom_path = config.get("jefe_db_path", "")
+                if custom_path and os.path.exists(os.path.dirname(custom_path)):
+                    db_conta = custom_path
+                else:
+                    db_conta = os.path.join(get_base_path(), "data", "contabilidad_jefe.db")
+                
+                db_contabilidad = Database(db_conta)
+                
+                if db_contabilidad.is_enterprise_mode():
+                    from src.contabilidad.motor_asientos import MotorAsientos
+                    
+                    motor = MotorAsientos(db_conta)
+                    fecha_compra = datetime.strptime(date, "%Y-%m-%d").date()
+                    
+                    # Determinar cuenta según forma de pago
+                    if payment == "Contado (Pago Inmediato)":
+                        cuenta_pago = "1.1.01.01"  # Caja
+                    else:
+                        cuenta_pago = "2.1.01.01"  # Proveedores (Cuentas a Pagar)
+                    
+                    # Generar asiento de compra
+                    from src.contabilidad.schema_fiscal import AsientoContable, LineaAsiento, TipoAsiento, Moneda, EstadoAsiento
+                    
+                    lineas = [
+                        LineaAsiento(
+                            cuenta_codigo="1.2.01.01",  # Mercaderías
+                            debe=amount,
+                            descripcion=f"Compra mercadería - {prov_name}"
+                        ),
+                        LineaAsiento(
+                            cuenta_codigo=cuenta_pago,
+                            haber=amount,
+                            descripcion=f"Pago compra - {payment}"
+                        )
+                    ]
+                    
+                    asiento = AsientoContable(
+                        fecha=fecha_compra,
+                        tipo=TipoAsiento.COMPRA,
+                        descripcion=f"Compra mercadería - {prov_name} - Tropa {tropa}",
+                        lineas=lineas,
+                        moneda=Moneda.ARS,
+                        estado=EstadoAsiento.APROBADO,
+                        referencia=f"ROMANEO-{tropa}",
+                        usuario=perfil
+                    )
+                    
+                    exito, mensaje, asiento_id = motor.crear_asiento(asiento)
+                    if exito:
+                        print(f"[ENTERPRISE] Asiento contable generado para compra: {asiento_id}")
+                    else:
+                        print(f"[ENTERPRISE] Error generando asiento contable: {mensaje}")
+                        
+            except Exception as e:
+                print(f"[ENTERPRISE] Error en integración contable proveedor: {e}")
+            
             return True, desc
         except Exception as e:
             if conn is not None:

@@ -5,7 +5,7 @@ ABAJO = ("QR", "Mixto")
 
 METODOS = (
     ("💰", "Efectivo", "Efectivo"),
-    ("💳", "Crédito", "Tarjeta"),
+    ("💳", "Tarjeta", "Tarjeta"),
     ("🏦", "Transf.", "Transferencia"),
     ("📱", "QR", "QR"),
     ("🔀", "Mixto", "Mixto"),

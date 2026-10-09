@@ -205,6 +205,30 @@ class DialogoImpuestos(QDialog):
                         (name_val, iva_val, int(id_val))
                     )
 
+            # 3. ENTERPRISE: Sincronizar con motor de impuestos contable
+            try:
+                from src.utils.paths import get_base_path
+                import os
+                from src.config import config
+                
+                # Obtener ruta de BD contable
+                custom_path = config.get("jefe_db_path", "")
+                if custom_path and os.path.exists(os.path.dirname(custom_path)):
+                    db_conta = custom_path
+                else:
+                    db_conta = os.path.join(get_base_path(), "data", "contabilidad_jefe.db")
+                
+                from src.contabilidad.integracion_iva import IntegradorIVA
+                integrador = IntegradorIVA(db_conta)
+                exito, msg = integrador.sincronizar_alicuotas_desde_departamentos()
+                
+                if exito:
+                    logger.info(f"Sincronización IVA enterprise: {msg}")
+                else:
+                    logger.warning(f"No se pudo sincronizar IVA enterprise: {msg}")
+            except Exception as e:
+                logger.warning(f"Error sincronizando con motor de impuestos: {e}")
+
             QMessageBox.information(self, "Impuestos Guardados", "Los impuestos generales y por departamento se han guardado exitosamente.")
             self.accept()
         except Exception as e:

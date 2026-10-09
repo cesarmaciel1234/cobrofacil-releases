@@ -35,7 +35,12 @@ No partir la clase. No subir los imports internos al tope. No crear `plano.md` a
 
 Los relojes están en `Paso5Terminal.__init__`: reloj 1 s, búsqueda de un solo tiro, foco del escáner 150 ms, stock 5 min si `stock_alerta_activa`, autocierre 1 min si `cierre_auto_activo`. Si el cajero toca el ticket, la lista o el asistente, el cursor vuelve al buscador a los 2 s. Si deja de escribir en el asistente, también. Un escaneo cierra el asistente y la lista, y carga el producto. F12 hace lo mismo antes de abrir el cobro. El cobro no se toca: es el paso 6.
 
+Al presionar Enter en el buscador (`procesar_scan`), se prioriza que el texto ingresado coincida de manera exacta con el código o ID de un producto en base de datos. Solo si falla la búsqueda exacta y hay un menú de sugerencias visible, se carga el primer elemento preseleccionado. Así se evita agregar productos equivocados ante lecturas pausadas o parciales de escáner.
+Asimismo, al navegar la lista de resultados con la `Flecha Abajo` desde el buscador, el selector salta de forma instantánea al segundo ítem de la lista, ya que el primero se asume auto-seleccionado por defecto.
+
 F7 es `_leer_bascula`. El puerto se lee fuera de la pantalla. Si no lee, deja `0.750*` o `1.250*` en el escáner. El puerto se cierra en el hilo de la lectura. `focusChanged` se engancha una sola vez.
+
+El cobro (Paso 6) se pre-instancia en segundo plano de manera silenciosa (`_precalentar_cobro`) tras pintar la pantalla de venta y luego de finalizar cada cobro. Esto logra que al presionar F12 la ventana de métodos de pago se abra instantáneamente, sin tiempos de carga (zero-lag), rellenándose los datos netos justo antes de mostrarla.
 
 El candado, el retiro, el ingreso, el historial y el cierre no desenfocan la venta. La pantalla queda plana.
 

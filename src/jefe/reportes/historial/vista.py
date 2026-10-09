@@ -32,6 +32,7 @@ from src.jefe.reportes.financiero.dinero import fmt_plata
 from src.jefe.reportes.letra import etiqueta, fuente_limpia, paleta_clara, vestir_fecha
 from src.jefe.reportes.vista_financiero import _FIN, _aplicar_paleta_tabla
 from src.utils.qt_compat import qt_exec
+from src.utils.medio_pago import etiqueta_pago
 
 
 def _lbl(texto: str, px: int = 13, _peso: int = 400, _color: str | None = None) -> QLabel:
@@ -169,7 +170,7 @@ class VistaHistorial(QWidget):
         filt.addWidget(_lbl("Pago"), 2, 0)
         self.cb_pago = QComboBox()
         self.cb_pago.addItems(
-            ["TODOS", "EFECTIVO", "TARJETA", "TRANSFERENCIA", "MIXTO", "FIADO", "CLIENTES", "REDONDEO", "RECARGO"]
+            ["TODOS", "EFECTIVO", "TARJETA", "TRANSFERENCIA", "MIXTO", "CRÉDITO", "REDONDEO", "RECARGO"]
         )
         self.cb_pago.currentIndexChanged.connect(self.refrescar)
         filt.addWidget(self.cb_pago, 2, 1)
@@ -402,7 +403,7 @@ class VistaHistorial(QWidget):
         self.ticket_id = v["id"]
         self.lbl_ticket.setText(f"Ticket {v['id']}")
         self.lbl_cajero.setText(f"Cajero  {str(v['usuario'] or '—')}")
-        self.lbl_pago.setText(f"Pago  {str(v['metodo_pago'] or 'Efectivo')}")
+        self.lbl_pago.setText(f"Pago  {etiqueta_pago(v['metodo_pago'] or 'Efectivo')}")
         caja = v["caja_id"] if hasattr(v, "keys") and "caja_id" in v.keys() else "—"
         self.lbl_caja.setText(f"Caja  {caja}")
         self.lbl_cuando.setText(str(v["fecha"] or ""))
