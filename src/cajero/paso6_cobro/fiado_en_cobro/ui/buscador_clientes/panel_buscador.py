@@ -37,6 +37,7 @@ class FilaSugerencia(QFrame):
 class PanelBuscadorClientes(QWidget):
     texto_cambiado = pyqtSignal(str)
     cliente_elegido = pyqtSignal(dict)
+    creacion_solicitada = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -142,7 +143,11 @@ class PanelBuscadorClientes(QWidget):
                     )
                     
     def aceptar_actual(self):
+        texto = self.caja_busqueda.text().strip()
         if not hasattr(self, '_clientes_actuales') or not self._clientes_actuales:
+            if texto:
+                self.creacion_solicitada.emit(texto)
+                return True
             return False
         
         indice = 0 if self._indice_seleccionado < 0 else self._indice_seleccionado

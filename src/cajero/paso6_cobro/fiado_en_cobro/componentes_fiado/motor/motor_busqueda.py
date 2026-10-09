@@ -35,6 +35,30 @@ class MotorBusquedaLocal(QObject):
             self.error_busqueda.emit("Error al consultar la base de clientes")
             self.sugerencias_listas.emit([])
 
+    def identificar_o_crear(self, texto):
+        try:
+            texto_limpio = texto.replace(".", "").replace("-", "").replace(" ", "")
+            es_dni = texto_limpio.isdigit() and len(texto_limpio) >= 7
+            
+            if texto_limpio.isdigit() and not es_dni:
+                self.error_busqueda.emit("DNI invalido. Minimo 7 digitos.")
+                return
+            
+            if es_dni:
+                cliente, estado, msg = cerebro.identificar_dni(texto)
+            else:
+                cliente, estado, msg = cerebro.identificar_nombre(texto)
+                
+            if estado == "error" or not cliente:
+                self.error_busqueda.emit(msg or "No se pudo identificar al cliente.")
+                return
+                
+            c = dict(cliente) if hasattr(cliente, "keys") else (cliente if isinstance(cliente, dict) else {})
+            self.aprobar_credito(c)
+        except Exception as e:
+            self.logger.error(f"Error identificar_o_crear: {e}")
+            self.error_busqueda.emit("Error de base de datos al crear cliente.")
+
     def aprobar_credito(self, cliente):
         try:
             cartel = cerebro.cartel(cliente)
