@@ -1957,20 +1957,12 @@ class Paso5Terminal(QWidget):
         entra_caja = True
 
         if es_fiado:
-            from src.clientes_fiado.interfaz.cobro.medios.cerrar import asentar
-
-            hecho = asentar(
-                dlg.cliente_id, monto, dlg.deuda_actual, "Cajero", usuario, resultado,
-            )
-            if not hecho["ok"]:
-                from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.warning(self, "Abono", hecho["aviso"])
-                return
-            motivo = hecho["motivo"]
-            entra_caja = hecho["entra_caja"]
-            monto = hecho["monto_caja"]
             self._refrescar_notificaciones()
+            self.flash_feedback(success=True)
+            self.monitor_cajon_bloqueante(manual=True)
+            return
 
+        # F2 (OTROS INGRESOS)
         if entra_caja:
             try:
                 ok_caja = self.controller.movimientos_caja.registrar_ingreso_efectivo(
