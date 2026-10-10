@@ -1036,7 +1036,27 @@ class Paso6Cobro(QDialog):
             disp = cerebro.credito_disponible(c)
             p1_float = float(p1_t) if p1_t else 0
             if p1_float > disp + 0.01 and not cerebro.excepcion_vigente(cliente_id, self.total_final):
-                QMessageBox.warning(self, "Clientes", f"Crédito insuficiente.\nDisp: ${disp:.2f}\nReq: ${p1_float:.2f}")
+                self._mp_screen_shown = True
+                def _pedir_pin_luego():
+                    setattr(self, "_mp_screen_shown", False)
+                    from src.cajero.paso5_terminal.dialogos.pin.dialogo_pin import DialogoPIN
+                    from src.utils.qt_compat import qt_exec
+                    from src.cajero.cajero_activo import CajeroActivo
+                    dlg = DialogoPIN("Supervisor", self)
+                    if qt_exec(dlg) and dlg.ok:
+                        cerebro.conceder_excepcion(cliente_id, self.total_final, CajeroActivo.nombre)
+                        self._procesando_pago = False
+                        self.finalizar(imprimir=True)
+                    else:
+                        self._procesando_pago = False
+
+                try:
+                    self.pantalla_mp.mostrar_rechazado(
+                        f"LIMITE SUPERADO\nDisp: ${disp:.2f}",
+                        on_finish=_pedir_pin_luego
+                    )
+                except Exception:
+                    _pedir_pin_luego()
                 return None
 
         p1, p2 = CobroController.validar_monto_suficiente(
