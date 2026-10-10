@@ -158,11 +158,30 @@ class PanelBuscadorClientes(QWidget):
                     
     def aceptar_actual(self):
         texto = self.caja_busqueda.text().strip()
+        
         if not hasattr(self, '_clientes_actuales') or not self._clientes_actuales:
             if texto:
                 self.creacion_solicitada.emit(texto)
                 return True
             return False
+            
+        if self._indice_seleccionado >= 0 and self._indice_seleccionado < len(self._clientes_actuales):
+            c = self._clientes_actuales[self._indice_seleccionado]
+            c_dict = dict(c) if hasattr(c, "keys") else (c if isinstance(c, dict) else {})
+            self.cliente_elegido.emit(c_dict)
+            return True
+            
+        if len(self._clientes_actuales) == 1:
+            c = self._clientes_actuales[0]
+            c_dict = dict(c) if hasattr(c, "keys") else (c if isinstance(c, dict) else {})
+            self.cliente_elegido.emit(c_dict)
+            return True
+            
+        if texto:
+            self.creacion_solicitada.emit(texto)
+            return True
+            
+        return False
         
         indice = 0 if self._indice_seleccionado < 0 else self._indice_seleccionado
         if indice < len(self._clientes_actuales):
