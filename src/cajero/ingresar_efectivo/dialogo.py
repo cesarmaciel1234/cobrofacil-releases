@@ -243,6 +243,10 @@ class DialogoIngresoEfectivo(QDialog):
         return CajeroActivo.nombre
 
     def _f9(self):
+        if self.paginas.currentIndex() == 1:
+            if hasattr(self.panel_fiado, "procesar_f9"):
+                self.panel_fiado.procesar_f9()
+            return
         if self.paginas.currentIndex() != 2:
             return
         try:
