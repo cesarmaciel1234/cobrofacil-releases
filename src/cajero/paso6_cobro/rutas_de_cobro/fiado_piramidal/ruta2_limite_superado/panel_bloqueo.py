@@ -69,9 +69,10 @@ class PanelLimiteSuperado(QWidget):
         self.lbl_pin.setStyleSheet("color: #991B1B; font-size: 40px; letter-spacing: 15px; font-weight: 900;")
         lay.addWidget(self.lbl_pin)
 
-        self.btn_confirmar = QPushButton("[ ESPERANDO PIN ADMIN ]")
+        self.btn_confirmar = QLabel("[ ESPERANDO PIN ADMIN ]")
+        self.btn_confirmar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.btn_confirmar.setStyleSheet(
-            "QPushButton { color: #FFFFFF; background-color: #EF4444; font-size: 22px; font-weight: 900; "
+            "QLabel { color: #FFFFFF; background-color: #EF4444; font-size: 22px; font-weight: 900; "
             "border-radius: 14px; padding: 18px; border-bottom: 6px solid #991B1B; text-transform: uppercase; letter-spacing: 1px; }"
         )
         lay.addWidget(self.btn_confirmar)

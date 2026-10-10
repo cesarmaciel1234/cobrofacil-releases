@@ -59,15 +59,14 @@ class PanelMargenAprobado(QWidget):
         lay.addLayout(self.lay_desglose)
         lay.addSpacing(2)
 
-        self.btn_confirmar = QPushButton("[ ENTER ] CONFIRMAR CR\xc9DITO")
-        self.btn_confirmar.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_confirmar = QLabel("[ ENTER ] CONFIRMAR CR\xc9DITO")
+        self.btn_confirmar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.btn_confirmar.setStyleSheet(
-            "QPushButton { color: #FFFFFF; background-color: #10B981; font-size: 22px; font-weight: 900; "
+            "QLabel { color: #FFFFFF; background-color: #10B981; font-size: 22px; font-weight: 900; "
             "border-radius: 14px; padding: 18px; border-bottom: 6px solid #047857; text-transform: uppercase; letter-spacing: 1px; }"
-            "QPushButton:hover { background-color: #34D399; }"
-            "QPushButton:pressed { background-color: #059669; border-bottom: 2px solid #047857; margin-top: 4px; }"
+            "QLabel:hover { background-color: #34D399; }"
+            "QLabel:pressed { background-color: #059669; border-bottom: 2px solid #047857; margin-top: 4px; }"
         )
-        self.btn_confirmar.clicked.connect(self._al_confirmar)
         lay.addWidget(self.btn_confirmar)
 
     def poblar(self, datos):
