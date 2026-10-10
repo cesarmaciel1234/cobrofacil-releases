@@ -260,6 +260,16 @@ class DialogoIngresoEfectivo(QDialog):
             if self.pagina_cobro.tecla(event.key()):
                 return
             return
+        if self.paginas.currentIndex() == 1:
+            if event.key() == Qt.Key.Key_F9:
+                if hasattr(self.panel_fiado, "procesar_f9"):
+                    if self.panel_fiado.procesar_f9():
+                        return
+            if event.key() == Qt.Key.Key_Escape:
+                if hasattr(self.panel_fiado, "eventFilter"):
+                    if self.panel_fiado.eventFilter(None, event):
+                        return
+
         if self.paginas.currentIndex() == 0:
             if event.key() == Qt.Key.Key_Escape:
                 self.reject()
