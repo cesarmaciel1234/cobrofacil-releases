@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ï»¿# -*- coding: utf-8 -*-
 def generar_texto(subcontexto: str = "", saldo_anterior: float = 0.0, monto_actual: float = 0.0, cliente_nombre: str = "", **kwargs) -> str:
     nombre = cliente_nombre if cliente_nombre else "Cliente"
     if subcontexto == "abono":
@@ -12,5 +12,5 @@ def generar_texto(subcontexto: str = "", saldo_anterior: float = 0.0, monto_actu
             return f"Hola {nombre}! Tu cuenta esta al dia y no registras deuda. Gracias por elegirnos!"
         else:
             return f"Hola {nombre}! Te acercamos tu estado de cuenta. Actualmente tenes un saldo pendiente de ${saldo_anterior:.2f}. Te esperamos pronto!"
-    else: # Venta a crédito
+    else: # Venta a credito
         return f"VENTA A CREDITO. Pagare incondicional por la cantidad de ${monto_actual:.2f}. El cliente acepta los cargos y condiciones de credito de la tienda."

@@ -142,8 +142,13 @@ class CentroCobranzasPanel(QWidget):
         outer.addLayout(row_center)
 
     def _pin(self):
-        from src.cajero.cajero_activo import pedir_pin
-        return pedir_pin("Autorizaci\u00f3n para pago", self)
+        from src.cajero.paso5_terminal.dialogos.pin.dialogo_pin import DialogoPIN
+        from src.utils.qt_compat import qt_exec
+        from src.cajero.cajero_activo import CajeroActivo
+        dlg = DialogoPIN("Autorizacion para pago", self)
+        if qt_exec(dlg) and dlg.ok:
+            return dlg.get_pin()
+        return None
 
     def seleccionar_cliente_directo(self, ficha, monto_sugerido=None):
         self._modo = "buscando"
