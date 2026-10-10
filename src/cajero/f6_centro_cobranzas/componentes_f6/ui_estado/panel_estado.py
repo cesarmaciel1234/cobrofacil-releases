@@ -21,14 +21,6 @@ class PanelEstadoCredito(QWidget):
         )
         lay.addWidget(self.estado)
 
-        self.detalle = QLabel("")
-        self.detalle.setWordWrap(True)
-        self.detalle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.detalle.setStyleSheet(
-            "color: #B91C1C; font-size: 36px; font-weight: 900; background: transparent; border: none;"
-        )
-        lay.addWidget(self.detalle)
-        
         self.ultimo_pago_lbl = QLabel("")
         self.ultimo_pago_lbl.setWordWrap(True)
         self.ultimo_pago_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -37,6 +29,14 @@ class PanelEstadoCredito(QWidget):
         )
         self.ultimo_pago_lbl.hide()
         lay.addWidget(self.ultimo_pago_lbl)
+
+        self.detalle = QLabel("")
+        self.detalle.setWordWrap(True)
+        self.detalle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.detalle.setStyleSheet(
+            "color: #B91C1C; font-size: 36px; font-weight: 900; background: transparent; border: none;"
+        )
+        lay.addWidget(self.detalle)
         
         lay_botones_accion = QHBoxLayout()
         lay_botones_accion.setSpacing(15)
