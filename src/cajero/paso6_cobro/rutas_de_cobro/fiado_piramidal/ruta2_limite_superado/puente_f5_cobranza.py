@@ -113,9 +113,12 @@ class PuenteF5Cobranza(QFrame):
 
     def poblar(self, datos):
         self._datos = datos
-        self.deuda = float(datos.get('deuda', 0))
-        self.compra = float(datos.get('compra', 0))
-        self.cliente_id = int(datos.get('id', 0))
+        d = datos.get('deuda')
+        c = datos.get('compra')
+        i = datos.get('id')
+        self.deuda = float(d) if d is not None else 0.0
+        self.compra = float(c) if c is not None else 0.0
+        self.cliente_id = int(i) if i is not None else 0
         
         total = self.deuda + self.compra
         
