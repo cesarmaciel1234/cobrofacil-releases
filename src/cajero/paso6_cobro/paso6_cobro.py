@@ -303,7 +303,7 @@ class Paso6Cobro(QDialog):
         self.pantalla_mp = PantallaMP(self)
         from src.cajero.paso6_cobro.rutas_de_cobro.fiado_piramidal.orquestador_credito import OrquestadorFiadoPiramidal as PanelFiadoCobro
         self.panel_fiado = PanelFiadoCobro(self)
-        self.panel_fiado.pago_listo.connect(self._cuenta_lista)
+        self.panel_fiado.pago_completado.connect(self._cuenta_completada)
         self.panel_fiado.cancelado.connect(self._cuenta_cancelada)
         self.panel_fiado.abono_registrado.connect(self._abono_cuenta_registrado)
         content_lay.addWidget(self.panel_fiado, 0)
@@ -825,6 +825,27 @@ class Paso6Cobro(QDialog):
         self.panel_fiado.activar_cobranza(monto_sugerido, deuda_actual)
         return True
 
+    def _cuenta_completada(self, dict_datos):
+        import logging
+        logging.getLogger("PunPro").info(f"Cuenta completada recibida con: {dict_datos}")
+        
+        self._fiado_cliente_id = int(dict_datos.get('cliente_id', 0))
+        idx = self.cmb_cliente.findData(self._fiado_cliente_id)
+        if idx >= 0:
+            self.cmb_cliente.setCurrentIndex(idx)
+            
+        medio = dict_datos.get('medio_pago', 'CRÉDITO')
+        if medio == "CRÉDITO":
+            self.current_metodo = "Fiado"
+        else:
+            self.current_metodo = medio
+            
+        self._condiciones_ticket_custom = dict_datos.get('condiciones_ticket', {})
+        
+        self.txt_pago.setText(self._monto(self.total_final))
+        self._fiado_flujo_activo = False
+        self.finalizar(imprimir=True)
+
     def _cuenta_lista(self, cliente_id, _abono=0.0):
         self._fiado_cliente_id = int(cliente_id)
         idx = self.cmb_cliente.findData(self._fiado_cliente_id)
@@ -1331,6 +1352,7 @@ class Paso6Cobro(QDialog):
             from src.cajero.paso6_cobro.motor_pagos.motor_principal import MotorPrincipalCobros
 
             datos_orden = {
+                "condiciones_ticket_custom": getattr(self, "_condiciones_ticket_custom", {}),
                 "total_final": self.total_final,
                 "p1": p1,
                 "p2": p2,
