@@ -1,4 +1,5 @@
-﻿from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
+﻿# -*- coding: utf-8 -*-
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal
 
 class PanelCreditoAprobado(QWidget):
@@ -31,7 +32,7 @@ class PanelCreditoAprobado(QWidget):
         lay.addSpacing(10)
 
         # Limite y Compra
-        self.lbl_limite = QLabel("Límite Disponible: .00")
+        self.lbl_limite = QLabel("Límite Disponible: $0.00")
         self.lbl_limite.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_limite.setStyleSheet("color: #059669; font-size: 20px; font-weight: bold;")
         lay.addWidget(self.lbl_limite)
@@ -76,7 +77,7 @@ class PanelCreditoAprobado(QWidget):
             self.lbl_nombre.setStyleSheet("color: #B91C1C; font-size: 26px; font-weight: 800;")
             self.lbl_limite.setStyleSheet("color: #EF4444; font-size: 20px; font-weight: bold;")
             self.lbl_compra.setStyleSheet("color: #EF4444; font-size: 20px; font-weight: bold;")
-            self.lbl_pin.setText("? ? ? ?")
+            self.lbl_pin.setText("○ ○ ○ ○")
             self.lbl_pin.show()
             self.btn_confirmar.setText("[ ESPERANDO PIN ADMIN ]")
             self.btn_confirmar.setStyleSheet(
@@ -99,3 +100,8 @@ class PanelCreditoAprobado(QWidget):
                 "QPushButton:hover { background-color: #34D399; }"
                 "QPushButton:pressed { background-color: #059669; border-bottom: 2px solid #047857; margin-top: 4px; }"
             )
+
+    def actualizar_pin(self, cantidad):
+        llenos = "● " * cantidad
+        vacios = "○ " * (4 - cantidad)
+        self.lbl_pin.setText((llenos + vacios).strip())
