@@ -14,7 +14,7 @@ class PanelLimiteSuperado(QWidget):
         
         lay = QVBoxLayout(self)
         lay.setContentsMargins(20, 20, 20, 20)
-        lay.setSpacing(15)
+        lay.setSpacing(5)
 
         self.icono = QLabel("\u274c")
         self.icono.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -31,7 +31,7 @@ class PanelLimiteSuperado(QWidget):
         self.lbl_nombre.setStyleSheet("color: #B91C1C; font-size: 26px; font-weight: 800;")
         lay.addWidget(self.lbl_nombre)
 
-        lay.addSpacing(10)
+        lay.addSpacing(2)
 
         # Desglose matemático
         self.lay_desglose = QVBoxLayout()
@@ -47,7 +47,8 @@ class PanelLimiteSuperado(QWidget):
         
         self.linea = QFrame()
         self.linea.setFrameShape(QFrame.Shape.HLine)
-        self.linea.setStyleSheet("background-color: #FCA5A5; margin: 5px 40px;")
+        self.linea.setFixedHeight(2)
+        self.linea.setStyleSheet("background-color: #FCA5A5;")
         self.lay_desglose.addWidget(self.linea)
         
         self.lbl_saldo_total = QLabel("SALDO TOTAL: $0.00")
@@ -61,7 +62,7 @@ class PanelLimiteSuperado(QWidget):
         self.lay_desglose.addWidget(self.lbl_limite)
         
         lay.addLayout(self.lay_desglose)
-        lay.addSpacing(15)
+        lay.addSpacing(2)
 
         self.lbl_pin = QLabel("\u25cb \u25cb \u25cb \u25cb")
         self.lbl_pin.setAlignment(Qt.AlignmentFlag.AlignCenter)

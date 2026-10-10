@@ -9,7 +9,7 @@ class PanelMargenAprobado(QWidget):
         super().__init__(parent)
         lay = QVBoxLayout(self)
         lay.setContentsMargins(20, 20, 20, 20)
-        lay.setSpacing(15)
+        lay.setSpacing(5)
 
         self.icono = QLabel("\u2714\ufe0f")
         self.icono.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -26,7 +26,7 @@ class PanelMargenAprobado(QWidget):
         self.lbl_nombre.setStyleSheet("color: #065F46; font-size: 26px; font-weight: 800;")
         lay.addWidget(self.lbl_nombre)
 
-        lay.addSpacing(10)
+        lay.addSpacing(2)
 
         # Desglose matemático
         self.lay_desglose = QVBoxLayout()
@@ -42,7 +42,8 @@ class PanelMargenAprobado(QWidget):
         
         self.linea = QFrame()
         self.linea.setFrameShape(QFrame.Shape.HLine)
-        self.linea.setStyleSheet("background-color: #CBD5E1; margin: 5px 40px;")
+        self.linea.setFixedHeight(2)
+        self.linea.setStyleSheet("background-color: #CBD5E1;")
         self.lay_desglose.addWidget(self.linea)
         
         self.lbl_saldo_total = QLabel("SALDO TOTAL: $0.00")
@@ -56,7 +57,7 @@ class PanelMargenAprobado(QWidget):
         self.lay_desglose.addWidget(self.lbl_limite)
         
         lay.addLayout(self.lay_desglose)
-        lay.addSpacing(15)
+        lay.addSpacing(2)
 
         self.btn_confirmar = QPushButton("[ ENTER ] CONFIRMAR CR\xc9DITO")
         self.btn_confirmar.setCursor(Qt.CursorShape.PointingHandCursor)
