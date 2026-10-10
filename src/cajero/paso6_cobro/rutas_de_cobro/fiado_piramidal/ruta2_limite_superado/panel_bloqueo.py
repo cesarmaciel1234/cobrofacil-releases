@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from src.cajero.cajero_activo import CajeroActivo
 
 class PanelLimiteSuperado(QWidget):
-    pin_validado = pyqtSignal()
+    pin_validado = pyqtSignal(int, float)
     solicita_f5 = pyqtSignal(dict) # Emits client data to open F5 bridge
 
     def __init__(self, parent=None):
@@ -108,7 +108,7 @@ class PanelLimiteSuperado(QWidget):
         if admin:
             from src.clientes_fiado.cerebro.cerebro import cerebro
             cerebro.conceder_excepcion(self._datos.get('id'), self._datos.get('compra', 0), admin)
-            self.pin_validado.emit()
+            self.pin_validado.emit(int(self._datos['id']), 0.0)
         else:
             # Error visual (se vacía)
             self._admin_pin = ""
@@ -127,10 +127,13 @@ class PanelLimiteSuperado(QWidget):
             return
             
         char = event.text()
+        if k == Qt.Key.Key_Return or k == Qt.Key.Key_Enter:
+            if len(self._admin_pin) == 4:
+                self._validar_pin()
+            return
+            
         if char.isdigit() and len(self._admin_pin) < 4:
             self._admin_pin += char
             self.actualizar_pin(len(self._admin_pin))
-            if len(self._admin_pin) == 4:
-                self._validar_pin()
         else:
             event.ignore()

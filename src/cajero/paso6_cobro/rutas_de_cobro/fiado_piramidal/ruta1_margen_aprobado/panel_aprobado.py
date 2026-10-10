@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFrame
 from PyQt6.QtCore import Qt, pyqtSignal
 
 class PanelMargenAprobado(QWidget):
-    confirmado = pyqtSignal()
+    confirmado = pyqtSignal(int, float)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -71,6 +71,7 @@ class PanelMargenAprobado(QWidget):
         lay.addWidget(self.btn_confirmar)
 
     def poblar(self, datos):
+        self._datos = datos
         self.lbl_nombre.setText(f"Hola {datos['nombre']}")
         
         d = float(datos.get('deuda', 0))
@@ -84,6 +85,6 @@ class PanelMargenAprobado(QWidget):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
-            self.confirmado.emit()
+            self.confirmado.emit(int(self._datos['id']), 0.0)
         else:
             event.ignore()

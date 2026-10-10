@@ -28,7 +28,7 @@ class HojaVirtual:
 
 class OrquestadorFiadoPiramidal(QFrame):
     # Signals emitted to Paso 6 Checkout
-    pago_listo = pyqtSignal()
+    pago_listo = pyqtSignal(int, float)
     cancelado = pyqtSignal()
     abono_registrado = pyqtSignal(float)
 
