@@ -168,44 +168,13 @@ class CentroCobranzasPanel(QWidget):
         self._cliente_nombre = ""
         
         self.card.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
-        self.panel_buscador.limpiar()
-        self.stack.setCurrentWidget(self.panel_buscador)
-        self.show()
-        self.panel_buscador.focus_caja()
-        self.cambio.emit("buscando")
-
-    def _al_seleccionar_cliente(self, cliente):
-        c = dict(cliente) if hasattr(cliente, "keys") else (cliente if isinstance(cliente, dict) else {})
-        self.motor_busqueda.aprobar_credito(c)
-
-    def _al_limite_aprobado(self, datos):
-        self._cliente_id = datos['id']
-        self._cliente_nombre = datos['nombre']
-        self._modo = "cobranza"
-        
-        from src.clientes_fiado.cerebro.cerebro import cerebro
-        cli = cerebro.obtener(self._cliente_id)
-        cli_dict = dict(cli) if hasattr(cli, 'keys') else cli
-        self._deuda_actual = float(cli_dict.get('deuda_actual', 0) or 0)
-        
-        # Consultar ultimo pago
-        try:
-            ultimo = cerebro.cuenta.ultimo_pago(self._cliente_id)
-            if ultimo:
-                # ultimo has fecha and monto
-                fecha = ultimo[0]
-                monto_ult = float(ultimo[1] or 0)
-                self.ultimo_pago_lbl.setText(f"Ultimo pago: ${monto_ult:,.2f} el {fecha}")
-                self.ultimo_pago_lbl.show()
-            else:
-                self.ultimo_pago_lbl.setText("No registra pagos anteriores.")
-                self.ultimo_pago_lbl.show()
-        except Exception:
-            self.ultimo_pago_lbl.hide()
-        
-        self.card.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
         self.estado.setText(f"Hola {self._cliente_nombre}")
-        self.detalle.setText(f"Deuda actual: ${self._deuda_actual:,.2f}")
+        if self._deuda_actual < 0:
+            self.detalle.setText(f"Saldo a favor: ${abs(self._deuda_actual):,.2f}")
+            self.detalle.setStyleSheet("color: #10B981; font-size: 36px; font-weight: 900; background: transparent; border: none;")
+        else:
+            self.detalle.setText(f"Deuda actual: ${self._deuda_actual:,.2f}")
+            self.detalle.setStyleSheet("color: #B91C1C; font-size: 36px; font-weight: 900; background: transparent; border: none;")
         self.icono.hide()
         
         # Ocultar botones de pago por defecto
@@ -217,10 +186,11 @@ class CentroCobranzasPanel(QWidget):
         
         # Mostrar botones de accion iniciales
         self.btn_imprimir_resumen.show()
+        self.btn_iniciar_pago.show()
         if self._deuda_actual > 0.01:
-            self.btn_iniciar_pago.show()
+            self.btn_iniciar_pago.setText("PAGAR / ABONAR")
         else:
-            self.btn_iniciar_pago.hide()
+            self.btn_iniciar_pago.setText("DEJAR A CUENTA")
         
         self.stack.setCurrentWidget(self.vista_cobranza)
 
@@ -228,7 +198,8 @@ class CentroCobranzasPanel(QWidget):
         self.btn_iniciar_pago.hide()
         self.btn_imprimir_resumen.hide()
         
-        self.txt_monto_abono.setText(f"{self._deuda_actual:.2f}".replace('.', ','))
+        monto_sugerido = self._deuda_actual if self._deuda_actual > 0 else 0.0
+        self.txt_monto_abono.setText(f"{monto_sugerido:.2f}".replace('.', ','))
         self.txt_monto_abono.show()
         self.btn_abono_libre.show()
         self.instruccion.show()

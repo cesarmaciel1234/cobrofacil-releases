@@ -253,7 +253,7 @@ class MotorCuenta:
             except Exception:
                 nombre = ficha.get("nombre", "") if isinstance(ficha, dict) else ""
             nombre = nombre or ""
-            nuevo_saldo = max(0.0, deuda_actual - float(monto or 0))
+            nuevo_saldo = deuda_actual - float(monto or 0)
             cursor.execute(
                 "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
                 (nuevo_saldo, cliente_id),
