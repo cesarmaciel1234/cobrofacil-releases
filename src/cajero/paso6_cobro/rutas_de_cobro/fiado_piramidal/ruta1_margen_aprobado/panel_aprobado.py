@@ -44,6 +44,13 @@ class PanelMargenAprobado(QFrame):
             "border-radius: 12px; padding: 20px; text-transform: uppercase; letter-spacing: 2px; }"
         )
         lay.addWidget(self.btn_confirmar)
+        
+        lay.addSpacing(15)
+        
+        self.lbl_f5 = QLabel("O presione [ F5 ] para PAGAR cuenta")
+        self.lbl_f5.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_f5.setStyleSheet("color: #ECFDF5; background-color: #064E3B; padding: 12px; border-radius: 10px; font-size: 18px; font-weight: bold;")
+        lay.addWidget(self.lbl_f5)
 
     def poblar(self, datos):
         self._datos = datos

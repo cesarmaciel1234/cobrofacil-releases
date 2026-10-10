@@ -174,6 +174,16 @@ class OrquestadorFiadoPiramidal(QFrame):
         self._datos_cliente['compra'] = self._monto_carrito
         self._decidir_via_credito(self._datos_cliente)
 
+    def procesar_f5(self):
+        cw = self.stack.currentWidget()
+        if cw == self.via_aprobado:
+            self._abrir_puente_f5(self._datos_cliente)
+            return True
+        elif cw == self.via_bloqueo:
+            self._abrir_puente_f5(self._datos_cliente)
+            return True
+        return False
+        
     def bloquea_enter(self):
         return True
 
