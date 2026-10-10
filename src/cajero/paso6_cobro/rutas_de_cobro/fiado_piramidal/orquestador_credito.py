@@ -84,6 +84,7 @@ class OrquestadorFiadoPiramidal(QFrame):
         self.stack.addWidget(self.via_f5)       # 4
 
     def mostrar(self, monto, modo="Fiado"):
+        self.show()
         self._monto_carrito = monto
         self.stack.setCurrentWidget(self.via_buscador)
         self.via_buscador.focus_caja()
