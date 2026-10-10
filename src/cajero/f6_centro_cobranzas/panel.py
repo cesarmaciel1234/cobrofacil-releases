@@ -153,14 +153,9 @@ class CentroCobranzasPanel(QWidget):
 
     def _mostrar_error_busqueda(self, msg):
         self.panel_buscador.lbl_error.setText(msg)
-        self.panel_buscador.stack_busqueda.setCurrentIndex(1)
-        self.panel_buscador.caja_busqueda.setText("")
+        self.panel_buscador.lbl_error.show()
         from PyQt6.QtCore import QTimer
-        QTimer.singleShot(2500, self._restaurar_buscador)
-
-    def _restaurar_buscador(self):
-        self.panel_buscador.stack_busqueda.setCurrentIndex(0)
-        self.panel_buscador.caja_busqueda.setFocus()
+        QTimer.singleShot(3500, self.panel_buscador.lbl_error.hide)
 
     def seleccionar_cliente_directo(self, ficha, monto_sugerido=None):
         self._modo = "buscando"
