@@ -79,7 +79,7 @@ class CentroCobranzasPanel(QWidget):
         self.panel_buscador.caja_busqueda.installEventFilter(self)
         self.panel_buscador.texto_cambiado.connect(self.motor_busqueda.buscar_texto)
         self.motor_busqueda.sugerencias_listas.connect(self.panel_buscador.mostrar_sugerencias)
-        self.panel_buscador.cliente_elegido.connect(self._al_seleccionar_cliente)
+        self.panel_buscador.cliente_elegido.connect(self.seleccionar_cliente_directo)
         self.panel_buscador.creacion_solicitada.connect(self.motor_busqueda.buscar_estricto)
         self.motor_busqueda.limite_aprobado.connect(self._al_limite_aprobado)
         self.motor_busqueda.error_busqueda.connect(self._mostrar_error_busqueda)
@@ -162,19 +162,21 @@ class CentroCobranzasPanel(QWidget):
         self._monto_sugerido_externo = monto_sugerido
         self.motor_busqueda.aprobar_credito(ficha)
 
-    def mostrar(self, _=None):
-        self._modo = "buscando"
-        self._cliente_id = None
-        self._cliente_nombre = ""
+    def _al_limite_aprobado(self, datos):
+        self._cliente_id = datos['id']
+        self._cliente_nombre = datos['nombre']
+        self._deuda_actual = float(datos.get('deuda', 0))
         
         self.card.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
         self.estado.setText(f"Hola {self._cliente_nombre}")
+        
         if self._deuda_actual < 0:
             self.detalle.setText(f"Saldo a favor: ${abs(self._deuda_actual):,.2f}")
             self.detalle.setStyleSheet("color: #10B981; font-size: 36px; font-weight: 900; background: transparent; border: none;")
         else:
             self.detalle.setText(f"Deuda actual: ${self._deuda_actual:,.2f}")
             self.detalle.setStyleSheet("color: #B91C1C; font-size: 36px; font-weight: 900; background: transparent; border: none;")
+            
         self.icono.hide()
         
         # Ocultar botones de pago por defecto
@@ -187,14 +189,15 @@ class CentroCobranzasPanel(QWidget):
         # Mostrar botones de accion iniciales
         self.btn_imprimir_resumen.show()
         self.btn_iniciar_pago.show()
-        if self._deuda_actual > 0.01:
-            self.btn_iniciar_pago.setText("PAGAR / ABONAR")
-        else:
-            self.btn_iniciar_pago.setText("DEJAR A CUENTA")
+        
+        if self._monto_sugerido_externo:
+            # Si entramos a F6 y ya nos habian pasado un monto para cobrar/pagar, vamos directo
+            self._mostrar_controles_pago()
         
         self._modo = "vista_cliente"
         self.stack.setCurrentWidget(self.vista_cobranza)
         self.setFocus()
+
 
     def _mostrar_controles_pago(self):
         self._modo = "preparando_pago"
@@ -366,3 +369,6 @@ class CentroCobranzasPanel(QWidget):
                 actual.tecla(Qt.Key.Key_F9)
                 return True
         return False
+
+    def mostrar(self, _=None):
+        self._volver_al_buscador()
