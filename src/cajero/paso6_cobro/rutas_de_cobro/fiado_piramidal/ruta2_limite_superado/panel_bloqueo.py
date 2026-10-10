@@ -1,7 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFrame
 from PyQt6.QtCore import Qt, pyqtSignal
-from src.cajero.cajero_activo import CajeroActivo
+from src.clientes_fiado.interfaz.cobro.pin_admin import quien_autoriza
 
 class PanelLimiteSuperado(QWidget):
     pin_validado = pyqtSignal(int, float)
@@ -104,7 +104,7 @@ class PanelLimiteSuperado(QWidget):
         self.lbl_pin.setText((llenos + vacios).strip())
 
     def _validar_pin(self):
-        admin = CajeroActivo.quien_autoriza(self._admin_pin)
+        admin = quien_autoriza(self._admin_pin)
         if admin:
             from src.clientes_fiado.cerebro.cerebro import cerebro
             cerebro.conceder_excepcion(self._datos.get('id'), self._datos.get('compra', 0), admin)
