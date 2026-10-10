@@ -111,11 +111,14 @@ class OrquestadorFiadoPiramidal(QFrame):
         if not cli:
             return
             
+        
+        c_dict = dict(cli) if hasattr(cli, "keys") else (cli if isinstance(cli, dict) else {})
+        
         datos = {
-            'id': cli.id,
-            'nombre': cli.nombre,
-            'deuda': cli.deuda_actual,
-            'limite': cli.limite_credito,
+            'id': c_dict.get('id'),
+            'nombre': c_dict.get('nombre'),
+            'deuda': c_dict.get('deuda_actual', 0.0),
+            'limite': c_dict.get('limite_credito', 0.0),
             'compra': self._monto_carrito
         }
         self._datos_cliente = datos
