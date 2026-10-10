@@ -43,6 +43,12 @@ class PanelCreditoAprobado(QWidget):
         self.lbl_compra.hide()  # Ocultado a peticin del usuario porque el monto ya est arriba
 
         lay.addSpacing(15)
+        
+        self.lbl_pin = QLabel("")
+        self.lbl_pin.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_pin.setStyleSheet("color: #991B1B; font-size: 40px; letter-spacing: 15px; font-weight: 900;")
+        self.lbl_pin.hide()
+        lay.addWidget(self.lbl_pin)
 
         # Boton Confirmar
         self.btn_confirmar = QPushButton("[ ENTER ] CONFIRMAR CRÉDITO")
@@ -70,6 +76,8 @@ class PanelCreditoAprobado(QWidget):
             self.lbl_nombre.setStyleSheet("color: #B91C1C; font-size: 26px; font-weight: 800;")
             self.lbl_limite.setStyleSheet("color: #EF4444; font-size: 20px; font-weight: bold;")
             self.lbl_compra.setStyleSheet("color: #EF4444; font-size: 20px; font-weight: bold;")
+            self.lbl_pin.setText("? ? ? ?")
+            self.lbl_pin.show()
             self.btn_confirmar.setText("[ ESPERANDO PIN ADMIN ]")
             self.btn_confirmar.setStyleSheet(
                 "QPushButton { color: #FFFFFF; background-color: #EF4444; font-size: 22px; font-weight: 900; "
@@ -83,6 +91,7 @@ class PanelCreditoAprobado(QWidget):
             self.lbl_nombre.setStyleSheet("color: #065F46; font-size: 26px; font-weight: 800;")
             self.lbl_limite.setStyleSheet("color: #059669; font-size: 20px; font-weight: bold;")
             self.lbl_compra.setStyleSheet("color: #059669; font-size: 20px; font-weight: bold;")
+            self.lbl_pin.hide()
             self.btn_confirmar.setText("[ ENTER ] CONFIRMAR CRÉDITO")
             self.btn_confirmar.setStyleSheet(
                 "QPushButton { color: #FFFFFF; background-color: #10B981; font-size: 22px; font-weight: 900; "

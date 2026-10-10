@@ -184,12 +184,12 @@ class PanelFiadoCobro(QFrame):
                 if hasattr(self.window(), "toast"):
                     self.window().toast.cerrar()
                 self._admin_pin = ""
+                self.panel_estado.actualizar_pin(0)
                 self.mostrar(self._monto, "Fiado")
                 return
             if Qt.Key.Key_0 <= k <= Qt.Key.Key_9:
                 self._admin_pin += chr(k)
-                if hasattr(self.window(), "toast"):
-                    self.window().toast.pin("Autorización Admin", len(self._admin_pin))
+                self.panel_estado.actualizar_pin(len(self._admin_pin))
                 
                 if len(self._admin_pin) == 4:
                     from src.cajero.cajero_activo import CajeroActivo
@@ -200,17 +200,10 @@ class PanelFiadoCobro(QFrame):
                         self.pago_listo.emit(self._cliente_id, 0.0)
                     else:
                         self._admin_pin = ""
+                        self.panel_estado.actualizar_pin(0)
                         if hasattr(self.window(), "toast"):
-                            self.window().toast.alarma("PIN IN-CORRECTO")
-                            from PyQt6.QtCore import QTimer
-                            QTimer.singleShot(1000, lambda: self.window().toast.pin("Autorización Admin", 0))
-                return
-            elif k == Qt.Key.Key_Backspace:
-                if len(self._admin_pin) > 0:
-                    self._admin_pin = self._admin_pin[:-1]
-                    if hasattr(self.window(), "toast"):
-                        self.window().toast.pin("Autorización Admin", len(self._admin_pin))
-                return
+                            self.window().toast.alarma("PIN INCORRECTO")
+            return
         super().keyPressEvent(event)
 
     def procesar_enter(self):
