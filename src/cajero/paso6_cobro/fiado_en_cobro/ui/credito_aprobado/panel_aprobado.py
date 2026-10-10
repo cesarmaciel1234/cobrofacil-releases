@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal
 
@@ -104,4 +104,21 @@ class PanelCreditoAprobado(QWidget):
     def actualizar_pin(self, cantidad):
         llenos = "● " * cantidad
         vacios = "○ " * (4 - cantidad)
-        self.lbl_pin.setText((llenos + vacios).strip())
+        self.lbl_pin.setText((llenos + vacios).strip())
+
+    def aprobar_forzado(self):
+        self.icono.setText("✔️")
+        self.icono.setStyleSheet("color: #10B981; font-size: 80px; font-weight: bold;")
+        self.lbl_titulo.setText("CRÉDITO APROBADO")
+        self.lbl_titulo.setStyleSheet("color: #047857; font-size: 32px; font-weight: 900; letter-spacing: 2px;")
+        self.lbl_nombre.setStyleSheet("color: #065F46; font-size: 26px; font-weight: 800;")
+        self.lbl_limite.setStyleSheet("color: #059669; font-size: 20px; font-weight: bold;")
+        self.lbl_compra.setStyleSheet("color: #059669; font-size: 20px; font-weight: bold;")
+        self.lbl_pin.hide()
+        self.btn_confirmar.setText("[ ENTER ] CONFIRMAR CRÉDITO")
+        self.btn_confirmar.setStyleSheet(
+            "QPushButton { color: #FFFFFF; background-color: #10B981; font-size: 22px; font-weight: 900; "
+            "border-radius: 14px; padding: 18px; border-bottom: 6px solid #047857; text-transform: uppercase; letter-spacing: 1px; }"
+            "QPushButton:hover { background-color: #34D399; }"
+            "QPushButton:pressed { background-color: #059669; border-bottom: 2px solid #047857; margin-top: 4px; }"
+        )

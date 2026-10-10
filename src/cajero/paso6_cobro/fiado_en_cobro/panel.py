@@ -192,25 +192,30 @@ class PanelFiadoCobro(QFrame):
                 return
             
             char = event.text()
-            if char.isdigit():
+            if char.isdigit() and len(self._admin_pin) < 4:
                 self._admin_pin += char
                 self.panel_aprobado.actualizar_pin(len(self._admin_pin))
-                
-                if len(self._admin_pin) == 4:
-                    from src.clientes_fiado.interfaz.cobro.pin_admin import quien_autoriza
-                    admin_name = quien_autoriza(self._admin_pin)
-                    if admin_name:
-                        self._modo = "listo"
-                        self.pago_listo.emit(self._cliente_id, 0.0)
-                    else:
-                        self._admin_pin = ""
-                        self.panel_aprobado.actualizar_pin(0)
-                        if hasattr(self.window(), "toast"):
-                            self.window().toast.alarma("PIN INCORRECTO")
             return
         super().keyPressEvent(event)
 
     def procesar_enter(self):
+        if self._modo == "excedido":
+            if len(self._admin_pin) == 4:
+                from src.clientes_fiado.interfaz.cobro.pin_admin import quien_autoriza
+                admin_name = quien_autoriza(self._admin_pin)
+                if admin_name:
+                    from src.clientes_fiado.cerebro.cerebro import cerebro
+                    cerebro.conceder_excepcion(self._cliente_id, self._monto, admin_name)
+                    self.setStyleSheet("QFrame#PanelFiadoCobro { background: #ECFDF5; border: 2px solid #34D399; border-radius: 16px; }")
+                    self.panel_aprobado.aprobar_forzado()
+                    self._activar_modo_confirmando()
+                else:
+                    self._admin_pin = ""
+                    self.panel_aprobado.actualizar_pin(0)
+                    if hasattr(self.window(), "toast"):
+                        self.window().toast.alarma("PIN INCORRECTO")
+            return
+
         if self._modo == "buscando":
             self.panel_buscador.aceptar_actual()
         elif self._modo == "confirmando" and getattr(self, "_cliente_id", None):
