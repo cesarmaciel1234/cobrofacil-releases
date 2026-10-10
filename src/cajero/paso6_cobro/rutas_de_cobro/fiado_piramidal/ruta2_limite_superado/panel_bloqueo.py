@@ -73,6 +73,18 @@ class PanelLimiteSuperado(QFrame):
         self._datos = datos
         self.lbl_nombre.setText(f"{datos['nombre']}")
         self._admin_pin = ""
+        self._estado_aprobado = False
+        self.setStyleSheet("""
+            QFrame#PanelRojo {
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #EF4444, stop:1 #B91C1C);
+                border-radius: 16px;
+                border: 2px solid #7F1D1D;
+            }
+        """)
+        self.icono.setText("✘")
+        self.lbl_titulo.setText("RECHAZADO")
+        self.btn_confirmar.setText("ESPERANDO PIN...")
+        self.btn_confirmar.setStyleSheet("QLabel { color: #FFFFFF; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }")
         self.actualizar_pin(0)
 
     def actualizar_pin(self, cantidad):
@@ -87,7 +99,18 @@ class PanelLimiteSuperado(QFrame):
         if admin:
             from src.clientes_fiado.cerebro.cerebro import cerebro
             cerebro.conceder_excepcion(self._datos.get('id'), self._datos.get('compra', 0), admin)
-            self.pin_validado.emit(int(self._datos['id']), 0.0)
+            self._estado_aprobado = True
+            self.setStyleSheet("""
+                QFrame#PanelRojo {
+                    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #10B981, stop:1 #047857);
+                    border-radius: 16px;
+                    border: 2px solid #064E3B;
+                }
+            """)
+            self.icono.setText("✔")
+            self.lbl_titulo.setText("EXCEPCIÓN APROBADA")
+            self.btn_confirmar.setText("[ ENTER ] CONFIRMAR")
+            self.btn_confirmar.setStyleSheet("QLabel { color: #047857; background-color: #FFFFFF; font-size: 24px; font-weight: 900; border-radius: 12px; padding: 20px; text-transform: uppercase; letter-spacing: 2px; }")
         else:
             self._admin_pin = ""
             self.actualizar_pin(0)
@@ -110,7 +133,9 @@ class PanelLimiteSuperado(QFrame):
             
         char = event.text()
         if k == Qt.Key.Key_Return or k == Qt.Key.Key_Enter:
-            if len(self._admin_pin) == 4:
+            if getattr(self, '_estado_aprobado', False):
+                self.pin_validado.emit(int(self._datos['id']), 0.0)
+            elif len(self._admin_pin) == 4:
                 self._validar_pin()
             return
             
