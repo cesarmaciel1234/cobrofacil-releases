@@ -145,6 +145,11 @@ class CentroCobranzasPanel(QWidget):
         from src.cajero.cajero_activo import pedir_pin
         return pedir_pin("Autorizaci\u00f3n para pago", self)
 
+    def seleccionar_cliente_directo(self, ficha, monto_sugerido=None):
+        self._modo = "buscando"
+        self._monto_sugerido_externo = monto_sugerido
+        self.motor_busqueda.aprobar_credito(ficha)
+
     def mostrar(self, _=None):
         self._modo = "buscando"
         self._cliente_id = None
@@ -218,6 +223,12 @@ class CentroCobranzasPanel(QWidget):
         self.cont_botones.show()
         self.txt_monto_abono.setFocus()
         self.txt_monto_abono.selectAll()
+        if getattr(self, '_monto_sugerido_externo', None):
+            self.txt_monto_abono.setText(str(float(self._monto_sugerido_externo)))
+            self._monto_sugerido_externo = None
+        if getattr(self, '_monto_sugerido_externo', None):
+            self.txt_monto_abono.setText(str(float(self._monto_sugerido_externo)))
+            self._monto_sugerido_externo = None
 
     def _imprimir_estado_cuenta(self):
         try:
