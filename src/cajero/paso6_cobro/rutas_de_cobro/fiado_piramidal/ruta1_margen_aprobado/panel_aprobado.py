@@ -67,7 +67,7 @@ class PanelMargenAprobado(QWidget):
             "QPushButton:hover { background-color: #34D399; }"
             "QPushButton:pressed { background-color: #059669; border-bottom: 2px solid #047857; margin-top: 4px; }"
         )
-        self.btn_confirmar.clicked.connect(self.confirmado.emit)
+        self.btn_confirmar.clicked.connect(self._al_confirmar)
         lay.addWidget(self.btn_confirmar)
 
     def poblar(self, datos):
@@ -88,3 +88,6 @@ class PanelMargenAprobado(QWidget):
             self.confirmado.emit(int(self._datos['id']), 0.0)
         else:
             event.ignore()
+
+    def _al_confirmar(self):
+        self.confirmado.emit(int(self._datos.get('id', 0)), 0.0)
