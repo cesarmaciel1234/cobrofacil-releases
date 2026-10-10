@@ -106,8 +106,8 @@ class PanelLimiteSuperado(QWidget):
     def _validar_pin(self):
         admin = CajeroActivo.quien_autoriza(self._admin_pin)
         if admin:
-            from src.clientes_fiado.cerebro.cerebro import conceder_excepcion
-            conceder_excepcion(self._datos.get('id'), self._datos.get('compra', 0), admin)
+            from src.clientes_fiado.cerebro.cerebro import cerebro
+            cerebro.conceder_excepcion(self._datos.get('id'), self._datos.get('compra', 0), admin)
             self.pin_validado.emit()
         else:
             # Error visual (se vacía)
