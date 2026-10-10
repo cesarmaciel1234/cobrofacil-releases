@@ -174,7 +174,7 @@ class PanelFiadoCobro(QFrame):
         return False
 
     def bloquea_enter(self):
-        return self.isVisible() and self._modo in ("buscando", "confirmando", "cobranza", "cobrando_lienzo")
+        return self.isVisible() and self._modo in ("buscando", "confirmando", "cobranza", "cobrando_lienzo", "transicion")
         
     def procesar_enter(self):
         if self._modo == "buscando":
@@ -211,12 +211,17 @@ class PanelFiadoCobro(QFrame):
     def _al_limite_aprobado(self, datos):
         self._cliente_id = datos['id']
         self._cliente_nombre = datos['nombre']
-        self._modo = "confirmando"
+        self._modo = "transicion"
         
         self.setStyleSheet("QFrame#PanelFiadoCobro { background: #ECFDF5; border: 2px solid #34D399; border-radius: 16px; }")
         self.panel_aprobado.poblar(datos['nombre'], datos['limite'], datos['compra'])
         self.stack.setCurrentWidget(self.panel_aprobado)
         
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(150, self._activar_modo_confirmando)
+        
+    def _activar_modo_confirmando(self):
+        self._modo = "confirmando"
         self.cambio.emit("confirmando")
         self.panel_aprobado.btn_confirmar.setFocus()
 
