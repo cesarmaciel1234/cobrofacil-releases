@@ -26,6 +26,7 @@ class PanelClienteNuevo(QWidget):
         self.txt_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.txt_input.setStyleSheet("background: #FFFFFF; border: 2px solid #CBD5E1; border-radius: 8px; padding: 10px; font-size: 24px; font-weight: bold; color: #0F172A;")
         lay.addWidget(self.txt_input)
+        self.txt_input.returnPressed.connect(self._procesar)
         
         self.btn_crear = QPushButton("[ ENTER ] CREAR Y EVALUAR")
         self.btn_crear.setStyleSheet("background-color: #2563EB; color: white; font-size: 20px; font-weight: bold; padding: 15px; border-radius: 8px;")

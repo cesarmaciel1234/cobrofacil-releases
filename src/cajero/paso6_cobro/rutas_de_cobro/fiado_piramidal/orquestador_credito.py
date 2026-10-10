@@ -144,6 +144,16 @@ class OrquestadorFiadoPiramidal(QFrame):
 
     def procesar_enter(self):
         from PyQt6.QtGui import QKeyEvent
+        from PyQt6.QtCore import Qt
+        
+        # Dispatch explicitly if it's the search box to ensure it triggers
+        if self.stack.currentWidget() == self.via_buscador:
+            self.via_buscador.aceptar_actual()
+            return
+        if self.stack.currentWidget() == self.via_nuevo:
+            self.via_nuevo._procesar()
+            return
+            
         evt = QKeyEvent(QKeyEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier)
         self.keyPressEvent(evt)
 
