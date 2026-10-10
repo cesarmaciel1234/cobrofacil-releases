@@ -57,6 +57,10 @@ class PanelBuscadorClientes(QWidget):
         lay.addWidget(self.lbl_subtitulo)
 
         # Contenedor de Búsqueda Flat
+        from PyQt6.QtWidgets import QStackedWidget
+        self.stack_busqueda = QStackedWidget()
+        lay.addWidget(self.stack_busqueda)
+        
         self.cont_busqueda = QFrame()
         self.cont_busqueda.setStyleSheet("background: transparent;")
         lay_busq = QVBoxLayout(self.cont_busqueda)
@@ -73,7 +77,16 @@ class PanelBuscadorClientes(QWidget):
         self.caja_busqueda.textChanged.connect(self.texto_cambiado.emit)
         self.caja_busqueda.returnPressed.connect(self.aceptar_actual)
         lay_busq.addWidget(self.caja_busqueda)
-        lay.addWidget(self.cont_busqueda)
+        
+        self.stack_busqueda.addWidget(self.cont_busqueda)
+        
+        self.lbl_error = QLabel("")
+        self.lbl_error.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_error.setMinimumHeight(76)
+        self.lbl_error.setStyleSheet(
+            "QLabel { background: #FEF2F2; color: #DC2626; border: 3px solid #F87171; border-radius: 12px; padding: 10px 20px; font-size: 28px; font-weight: 900; }"
+        )
+        self.stack_busqueda.addWidget(self.lbl_error)
 
         # Contenedor de Sugerencias Flat
         self.lista_sugerencias = QFrame()
