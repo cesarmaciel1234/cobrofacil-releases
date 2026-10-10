@@ -11,9 +11,9 @@ from src.motores_empresariales.motor_busqueda_clientes.motor_busqueda import Mot
 from src.motores_empresariales.motor_cobranzas_medios.motor_cobranza import MotorCobranzaMedios, ResultadoAbonoPrevio
 
 # Componentes modulares copiados para F6
-from src.cajero.ingresar_efectivo.fiado.componentes_f6.ui_buscador.panel_buscador import PanelBuscadorClientes
-from src.cajero.ingresar_efectivo.fiado.componentes_f6.ui_estado.panel_estado import PanelEstadoCredito
-from src.cajero.ingresar_efectivo.fiado.componentes_f6.ui_selector.panel_selector import PanelSelectorCobranza
+from src.cajero.f6_centro_cobranzas.componentes_f6.ui_buscador.panel_buscador import PanelBuscadorClientes
+from src.cajero.f6_centro_cobranzas.componentes_f6.ui_estado.panel_estado import PanelEstadoCredito
+from src.cajero.f6_centro_cobranzas.componentes_f6.ui_selector.panel_selector import PanelSelectorCobranza
 from src.utils.dinero import redondear_dinero
 
 class CentroCobranzasPanel(QWidget):
@@ -80,7 +80,7 @@ class CentroCobranzasPanel(QWidget):
         self.panel_buscador.texto_cambiado.connect(self.motor_busqueda.buscar_texto)
         self.motor_busqueda.sugerencias_listas.connect(self.panel_buscador.mostrar_sugerencias)
         self.panel_buscador.cliente_elegido.connect(self._al_seleccionar_cliente)
-                self.panel_buscador.creacion_solicitada.connect(self.motor_busqueda.buscar_estricto)
+        self.panel_buscador.creacion_solicitada.connect(self.motor_busqueda.buscar_estricto)
         self.motor_busqueda.limite_aprobado.connect(self._al_limite_aprobado)
         self.motor_busqueda.error_busqueda.connect(self._mostrar_error_busqueda)
         self.stack.addWidget(self.panel_buscador)

@@ -5,8 +5,8 @@ from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QStackedWidget, QVBoxLayout
 
 from src.cajero.ingresar_efectivo.cambio.panel import PanelIngresoEfectivo
-from src.cajero.ingresar_efectivo.fiado.paleta import PALETA
-from src.cajero.ingresar_efectivo.fiado.panel import CentroCobranzasPanel
+from src.cajero.f6_centro_cobranzas.paleta import PALETA
+from src.cajero.f6_centro_cobranzas.panel import CentroCobranzasPanel
 from src.cajero.ingresar_efectivo.opciones.boton import boton_opcion
 from src.cajero.ingresar_efectivo.otros.panel import PanelOtrosIngresos
 from src.cajero.ingresar_efectivo.pie.botones import fila_pie
