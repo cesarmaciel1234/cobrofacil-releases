@@ -193,31 +193,17 @@ class Paso6Cobro(QDialog):
 
 
         # Botón de Otras Opciones (Fiado, Clientes)
-        self.btn_otras = QPushButton("Otras opciones")
+        self.btn_otras = QPushButton("⚖ CRÉDITO")
         self.btn_otras.setObjectName("Paso6Otras")
         self.btn_otras.setFixedHeight(64)
         self.btn_otras.setFixedWidth(220)
         self.btn_otras.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_otras.setStyleSheet(estilo_pie)
-
-        # Crear Menú Desplegable
-        from PyQt6.QtWidgets import QMenu
-        from PyQt6.QtGui import QAction
-        menu_otras = QMenu(self)
-        menu_otras.setStyleSheet("""
-            QMenu { background-color: #FFFFFF; border: 2px solid #E2E8F0; border-radius: 8px; font-size: 18px; font-weight: bold; color: #334155; padding: 5px; }
-            QMenu::item { padding: 10px 30px; border-radius: 4px; }
-            QMenu::item:selected { background-color: #F1F5F9; color: #0F172A; }
-        """)
-
-        # Fiado y cuenta corriente son la misma cuenta: una sola entrada "Crédito".
-        # La hoja acepta DNI o nombre. La clave interna sigue siendo "Clientes":
-        # "crédito" en REGISTRO es la tarjeta de crédito.
-        act_credito = QAction("Crédito", self)
-        act_credito.triggered.connect(lambda: self.procesar_click_metodo("Clientes"))
-        menu_otras.addAction(act_credito)
-
-        self.btn_otras.setMenu(menu_otras)
+        self.btn_otras.setStyleSheet(
+            "QPushButton { background-color: #3B82F6; color: #FFFFFF; "
+            "border: none; border-radius: 10px; font-size: 18px; font-weight: 800; } "
+            "QPushButton:hover { background-color: #2563EB; }"
+        )
+        self.btn_otras.clicked.connect(lambda: self.procesar_click_metodo("Clientes"))
 
         pie = QFrame()
         pie.setObjectName("Paso6MetodoPie")
