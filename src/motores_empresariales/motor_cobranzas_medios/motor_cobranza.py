@@ -68,6 +68,10 @@ class MotorCobranzaMedios(QObject):
             self.error_cobranza.emit(hecho.get('msg', "No se pudo asentar el pago"))
             return
             
+        res.monto = monto
+        res.cliente_id = cliente_id
+        res.nombre = hecho.get('nombre', 'Cliente')
+            
         if hecho.get('entra_caja'):
             from src.cajero.paso5_terminal.logica.movimientos_caja_service import MovimientosCajaService
             MovimientosCajaService().registrar_ingreso_efectivo(

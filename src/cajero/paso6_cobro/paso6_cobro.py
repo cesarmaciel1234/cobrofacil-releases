@@ -1298,6 +1298,11 @@ class Paso6Cobro(QDialog):
         p1, p2 = vals
 
         try:
+            self.resultado_venta = {
+                "total": self.total_final,
+                "pago_con": p1 + p2,
+                "cambio": max(0.0, (p1 + p2) - self.total_final)
+            }
             from src.cajero.cajero_activo import CajeroActivo
             cajero_secundario = CajeroActivo.nombre if CajeroActivo.numero == 2 else ''
             cajero_actual = dict(config.current_user).get('username', 'cajero') if config.current_user else 'cajero'
