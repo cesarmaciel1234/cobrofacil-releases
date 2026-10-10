@@ -39,8 +39,8 @@ class CerebroBackup:
 
     def _state_path(self) -> str:
         from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
-        _, os_dir = AutoBlindajeDB.get_backup_directories()
-        return os.path.join(os_dir, "cerebro_backup_state.json")
+        dirs = AutoBlindajeDB.get_backup_directories()
+        return os.path.join(dirs[1], "cerebro_backup_state.json")
 
     def _load_state(self) -> dict:
         path = self._state_path()

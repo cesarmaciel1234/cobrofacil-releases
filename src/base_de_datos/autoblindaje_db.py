@@ -626,8 +626,8 @@ class AutoBlindajeDB:
             return False
 
         filename = f"backup_diario_{fecha_hoy}_ventas.sql"
-        target_local = os.path.join(local_dir, filename)
-        target_os = os.path.join(os_dir, filename)
+        targets = [os.path.join(d, filename) for d in cls.get_backup_directories()]
+        
         cmd = [
             mysqldump_exe,
             f"--host={host}",
@@ -644,24 +644,12 @@ class AutoBlindajeDB:
             result = subprocess.run(
                 cmd, capture_output=True, text=True, creationflags=flags, timeout=60
             )
-            if result.returncode != 0 or not result.stdout:
-                logger.warning(
-                    f"Incremental mysqldump falló: {result.stderr[:200] if result.stderr else 'sin salida'}"
-                )
-                return False
-            for path in (target_local, target_os):
-                with open(path, "w", encoding="utf-8") as f:
-                    f.write(result.stdout)
-            # También refrescar mtime del rolling diario si existe (marca de vida)
-            daily_local, daily_os, _ = cls._paths_backup_diario_hoy(engine_type)
-            for marker in (daily_os, daily_local):
-                if os.path.exists(marker):
-                    try:
-                        os.utime(marker, None)
-                    except OSError:
-                        pass
-            logger.info(f"✅ Incremental ventas → {target_os} ({', '.join(tablas)})")
-            return True
+            if result.returncode == 0 and len(result.stdout) > 100:
+                for t in targets:
+                    with open(t, "w", encoding="utf-8") as f:
+                        f.write(result.stdout)
+                return True
+            return False
         except Exception as e:
             logger.error(f"Error backup incremental: {e}")
             return False
