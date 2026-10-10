@@ -80,8 +80,9 @@ class CentroCobranzasPanel(QWidget):
         self.panel_buscador.texto_cambiado.connect(self.motor_busqueda.buscar_texto)
         self.motor_busqueda.sugerencias_listas.connect(self.panel_buscador.mostrar_sugerencias)
         self.panel_buscador.cliente_elegido.connect(self._al_seleccionar_cliente)
-        self.panel_buscador.creacion_solicitada.connect(self.motor_busqueda.identificar_o_crear)
+                self.panel_buscador.creacion_solicitada.connect(self.motor_busqueda.buscar_estricto)
         self.motor_busqueda.limite_aprobado.connect(self._al_limite_aprobado)
+        self.motor_busqueda.error_busqueda.connect(self._mostrar_error_busqueda)
         self.stack.addWidget(self.panel_buscador)
 
         # 2. Cobranza
@@ -149,6 +150,12 @@ class CentroCobranzasPanel(QWidget):
         if qt_exec(dlg) and dlg.ok:
             return True
         return False
+
+    def _mostrar_error_busqueda(self, msg):
+        self.panel_buscador.caja_busqueda.setText("")
+        self.panel_buscador.caja_busqueda.setPlaceholderText(msg)
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(2500, lambda: self.panel_buscador.caja_busqueda.setPlaceholderText("Nombre del fiado o DNI..."))
 
     def seleccionar_cliente_directo(self, ficha, monto_sugerido=None):
         self._modo = "buscando"

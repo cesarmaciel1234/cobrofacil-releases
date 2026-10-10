@@ -35,6 +35,30 @@ class MotorBusquedaClientes(QObject):
             self.error_busqueda.emit("Error al consultar la base de clientes")
             self.sugerencias_listas.emit([])
 
+    def buscar_estricto(self, texto):
+        try:
+            texto_limpio = texto.replace(".", "").replace("-", "").replace(" ", "")
+            es_dni = texto_limpio.isdigit() and len(texto_limpio) >= 7
+            
+            if texto_limpio.isdigit() and not es_dni:
+                self.error_busqueda.emit("DNI invalido. Minimo 7 digitos.")
+                return
+            
+            if es_dni:
+                cliente = cerebro.buscar_por_dni(texto)
+            else:
+                cliente = cerebro.buscar_por_nombre(texto)
+                
+            if not cliente:
+                self.error_busqueda.emit("Cliente no encontrado.")
+                return
+                
+            c = dict(cliente) if hasattr(cliente, "keys") else (cliente if isinstance(cliente, dict) else {})
+            self.aprobar_credito(c)
+        except Exception as e:
+            self.logger.error(f"Error buscar_estricto: {e}")
+            self.error_busqueda.emit("Error de base de datos al buscar cliente.")
+
     def identificar_o_crear(self, texto):
         try:
             texto_limpio = texto.replace(".", "").replace("-", "").replace(" ", "")
