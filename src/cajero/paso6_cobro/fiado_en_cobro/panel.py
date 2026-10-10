@@ -267,7 +267,7 @@ class PanelFiadoCobro(QFrame):
             from PyQt6.QtCore import QTimer
             QTimer.singleShot(150, self._activar_modo_confirmando)
             
-        self.panel_aprobado.poblar(datos['nombre'], datos['limite'], datos['compra'])
+        self.panel_aprobado.poblar(datos['nombre'], datos['limite'], datos['compra'], datos.get('deuda', 0.0))
         self.stack.setCurrentWidget(self.panel_aprobado)
         
     def _activar_modo_excedido(self):
