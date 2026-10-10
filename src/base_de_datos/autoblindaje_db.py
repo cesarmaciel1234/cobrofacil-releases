@@ -31,17 +31,28 @@ class AutoBlindajeDB:
     )
 
     @classmethod
-    def get_backup_directories(cls):
-        """Devuelve las rutas de respaldo local del proyecto y blindada en AppData del SO."""
+    def get_backup_directories(cls) -> list[str]:
+        """Devuelve las rutas de respaldo: local, AppData y Documentos."""
         base_dir = get_base_path()
         local_backup_dir = os.path.join(base_dir, "backups", "db")
 
-        user_appdata = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+        user_home = os.environ.get("USERPROFILE", os.path.expanduser("~"))
+        user_appdata = os.environ.get("LOCALAPPDATA", user_home)
+        
         os_backup_dir = os.path.join(user_appdata, "CobroFacil_PRO", "backups", "db")
-
-        os.makedirs(local_backup_dir, exist_ok=True)
-        os.makedirs(os_backup_dir, exist_ok=True)
-        return local_backup_dir, os_backup_dir
+        docs_backup_dir = os.path.join(user_home, "Documents", "CobroFacil_Backups", "db")
+        
+        dirs = [local_backup_dir, os_backup_dir]
+        try:
+            os.makedirs(docs_backup_dir, exist_ok=True)
+            dirs.append(docs_backup_dir)
+        except Exception:
+            pass
+            
+        for d in dirs:
+            os.makedirs(d, exist_ok=True)
+            
+        return dirs
 
     @classmethod
     def _fecha_hoy(cls) -> str:
@@ -131,7 +142,7 @@ class AutoBlindajeDB:
         if not usb_drives:
             return
 
-        local_dir, os_dir = cls.get_backup_directories()
+        dirs = cls.get_backup_directories()
         patterns = (
             "backup_diario_*.*",
             "backup_turno_*.*",
@@ -139,7 +150,7 @@ class AutoBlindajeDB:
             "pre_restore_*.*",
         )
         backup_files = []
-        for directory in (os_dir, local_dir):
+        for directory in cls.get_backup_directories():
             for pat in patterns:
                 backup_files.extend(glob.glob(os.path.join(directory, pat)))
 
@@ -159,22 +170,22 @@ class AutoBlindajeDB:
     @classmethod
     def _paths_backup_diario_hoy(cls, engine_type: str):
         fecha_hoy = cls._fecha_hoy()
-        local_dir, os_dir = cls.get_backup_directories()
+        dirs = cls.get_backup_directories()
         ext = "sql" if engine_type == "mariadb" else "db"
         filename = f"backup_diario_{fecha_hoy}.{ext}"
         return (
-            os.path.join(local_dir, filename),
-            os.path.join(os_dir, filename),
+            os.path.join(dirs[0], filename),
+            os.path.join(dirs[-1], filename),
             filename,
         )
 
     @classmethod
     def _daily_needs_refresh(cls, target_os: str, min_interval_hours: float) -> bool:
         """True si no existe o está más viejo que el intervalo (rolling)."""
-        if not os.path.exists(target_os):
+        if not os.path.exists(targets[-1]):
             return True
         try:
-            age_h = (time.time() - os.path.getmtime(target_os)) / 3600.0
+            age_h = (time.time() - os.path.getmtime(targets[-1])) / 3600.0
             return age_h >= min_interval_hours
         except OSError:
             return True
@@ -192,19 +203,19 @@ class AutoBlindajeDB:
         (estilo enterprise: al cierre ya está casi listo; solo se 'flashea' el final).
         """
         hours = min_interval_hours if min_interval_hours is not None else cls.PERIODIC_INTERVAL_HOURS
-        target_local, target_os, filename = cls._paths_backup_diario_hoy(engine_type)
+        target_local, targets[-1], filename = cls._paths_backup_diario_hoy(engine_type)
 
-        if not force and not cls._daily_needs_refresh(target_os, hours):
+        if not force and not cls._daily_needs_refresh(targets[-1], hours):
             return False
 
         logger.info(f"🛡️ Actualizando respaldo diario rolling ({filename})...")
         if engine_type == "mariadb":
-            exito = cls._backup_mariadb(target_local, target_os, mariadb_host)
+            exito = cls._backup_mariadb(targets, mariadb_host)
         else:
-            exito = cls._backup_sqlite(target_local, target_os)
+            exito = cls._backup_sqlite(targets)
 
         if exito:
-            logger.info(f"✅ Respaldo diario rolling actualizado en {target_os}")
+            logger.info(f"✅ Respaldo diario rolling actualizado en {targets[-1]}")
         return exito
 
     @classmethod
@@ -227,18 +238,17 @@ class AutoBlindajeDB:
 
         # Copia sellada con hora (además del rolling del día)
         stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        local_dir, os_dir = cls.get_backup_directories()
+        dirs = cls.get_backup_directories()
         ext = "sql" if engine_type == "mariadb" else "db"
         filename = f"backup_periodico_{stamp}.{ext}"
-        target_local = os.path.join(local_dir, filename)
-        target_os = os.path.join(os_dir, filename)
+        targets = [os.path.join(d, filename) for d in dirs]
         try:
             daily_local, daily_os, _ = cls._paths_backup_diario_hoy(engine_type)
             src = daily_os if os.path.exists(daily_os) else daily_local
             if os.path.exists(src):
-                shutil.copy2(src, target_local)
-                shutil.copy2(src, target_os)
-                logger.info(f"✅ Copia periódica sellada: {target_os}")
+                for t in targets:
+                    shutil.copy2(src, t)
+                logger.info(f"✅ Copia periódica sellada: {targets[-1]}")
                 return True
         except Exception as e:
             logger.warning(f"No se pudo sellar copia periódica: {e}")
@@ -270,24 +280,23 @@ class AutoBlindajeDB:
         except Exception:
             pass
         stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        local_dir, os_dir = cls.get_backup_directories()
+        dirs = cls.get_backup_directories()
         ext = "sql" if engine_type == "mariadb" else "db"
         filename = f"backup_turno_{stamp}.{ext}"
-        target_local = os.path.join(local_dir, filename)
-        target_os = os.path.join(os_dir, filename)
+        targets = [os.path.join(d, filename) for d in dirs]
         ok_turno = False
         try:
             daily_local, daily_os, _ = cls._paths_backup_diario_hoy(engine_type)
             src = daily_os if os.path.exists(daily_os) else daily_local
             if os.path.exists(src):
-                shutil.copy2(src, target_local)
-                shutil.copy2(src, target_os)
+                for t in targets:
+                    shutil.copy2(src, t)
                 ok_turno = True
             else:
                 if engine_type == "mariadb":
-                    ok_turno = cls._backup_mariadb(target_local, target_os, mariadb_host)
+                    ok_turno = cls._backup_mariadb(targets, mariadb_host)
                 else:
-                    ok_turno = cls._backup_sqlite(target_local, target_os)
+                    ok_turno = cls._backup_sqlite(targets)
         except Exception as e:
             logger.error(f"Error sellando backup de turno: {e}")
 
@@ -309,17 +318,16 @@ class AutoBlindajeDB:
         Evita perder ventas de hoy si el restore usa una copia vieja.
         """
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        local_dir, os_dir = cls.get_backup_directories()
+        dirs = cls.get_backup_directories()
         ext = "sql" if engine_type == "mariadb" else "db"
         filename = f"pre_restore_{stamp}.{ext}"
-        target_local = os.path.join(local_dir, filename)
-        target_os = os.path.join(os_dir, filename)
+        targets = [os.path.join(d, filename) for d in dirs]
         logger.info(f"📸 Snapshot pre-restore → {filename}")
         try:
             if engine_type == "mariadb":
-                ok = cls._backup_mariadb(target_local, target_os, mariadb_host)
+                ok = cls._backup_mariadb(targets, mariadb_host)
             else:
-                ok = cls._backup_sqlite(target_local, target_os)
+                ok = cls._backup_sqlite(targets)
             if ok:
                 logger.info(f"✅ Snapshot pre-restore guardado en {target_os}")
                 return target_os
@@ -412,10 +420,9 @@ class AutoBlindajeDB:
                 "productos": productos,
             }
             # Persistir delta en disco por si el proceso cae a mitad del restore
-            local_dir, os_dir = cls.get_backup_directories()
             stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             import json
-            for directory in (os_dir, local_dir):
+            for directory in cls.get_backup_directories():
                 path = os.path.join(directory, f"delta_hoy_{stamp}.json")
                 try:
                     with open(path, "w", encoding="utf-8") as f:
@@ -552,10 +559,18 @@ class AutoBlindajeDB:
             return False
 
     @classmethod
-    def _backup_sqlite(cls, target_local: str, target_os: str) -> bool:
+    def _backup_sqlite(cls, targets: list[str]) -> bool:
         base_dir = get_base_path()
         db_file = os.path.join(base_dir, "punpro.db")
         if not os.path.exists(db_file):
+            return False
+
+        try:
+            for t in targets:
+                shutil.copy2(db_file, t)
+            return True
+        except Exception as e:
+            logger.error(f"Error copiando DB SQLite: {e}")
             return False
 
         try:
@@ -575,7 +590,6 @@ class AutoBlindajeDB:
         Usado por CerebroBackup cuando hubo pocas ventas desde el último ciclo.
         """
         fecha_hoy = cls._fecha_hoy()
-        local_dir, os_dir = cls.get_backup_directories()
         if engine_type != "mariadb":
             # SQLite: copia completa sigue siendo barata en POS chicos
             return cls.crear_backup_diario_si_corresponde(
@@ -653,13 +667,40 @@ class AutoBlindajeDB:
             return False
 
     @classmethod
-    def _backup_mariadb(cls, target_local: str, target_os: str, host: str) -> bool:
+    def _backup_mariadb(cls, targets: list[str], host: str) -> bool:
         try:
             base_dir = get_base_path()
             mysqldump_exe = os.path.join(base_dir, "mariadb_server", "bin", "mysqldump.exe")
 
             if not os.path.exists(mysqldump_exe):
-                return cls._backup_mariadb_physical(target_local, target_os)
+                return cls._backup_mariadb_physical(targets)
+
+            cmd = [
+                mysqldump_exe,
+                f"--host={host}",
+                "--port=3306",
+                "-u", "root",
+                "-p1234",
+                "--single-transaction",
+                "--quick",
+                "punpro_db",
+            ]
+
+            flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            result = subprocess.run(cmd, capture_output=True, text=True, creationflags=flags, timeout=90)
+
+            if result.returncode == 0 and len(result.stdout) > 500:
+                for t in targets:
+                    with open(t, "w", encoding="utf-8") as f:
+                        f.write(result.stdout)
+                return True
+            else:
+                logger.error(f"mysqldump fallo: {result.stderr}")
+                return cls._backup_mariadb_physical(targets)
+
+        except Exception as e:
+            logger.error(f"Error en respaldo logico MariaDB: {e}")
+            return cls._backup_mariadb_physical(targets)
 
             cmd = [
                 mysqldump_exe,
@@ -688,12 +729,20 @@ class AutoBlindajeDB:
             return cls._backup_mariadb_physical(target_local, target_os)
 
     @classmethod
-    def _backup_mariadb_physical(cls, target_local: str, target_os: str) -> bool:
+    def _backup_mariadb_physical(cls, targets: list[str]) -> bool:
         try:
             base_dir = get_base_path()
             data_dir = os.path.join(base_dir, "mariadb_server", "data")
             if not os.path.exists(data_dir):
                 return False
+
+            for t in targets:
+                zip_base = t.rsplit(".", 1)[0]
+                shutil.make_archive(zip_base, "zip", data_dir)
+            return True
+        except Exception as e:
+            logger.error(f"Error en respaldo fisico MariaDB: {e}")
+            return False
 
             zip_base_local = target_local.rsplit(".", 1)[0]
             zip_base_os = target_os.rsplit(".", 1)[0]
@@ -897,14 +946,13 @@ class AutoBlindajeDB:
     @classmethod
     def _list_usable_backups(cls, only_today: bool = False) -> list:
         """Lista respaldos candidatos, descartando vacíos/cuarentenados."""
-        local_dir, os_dir = cls.get_backup_directories()
         patterns = (
             "backup_diario_*.*",
             "backup_turno_*.*",
             "backup_periodico_*.*",
         )
         candidates = []
-        for directory in (os_dir, local_dir):
+        for directory in cls.get_backup_directories():
             for pat in patterns:
                 candidates.extend(glob.glob(os.path.join(directory, pat)))
 
