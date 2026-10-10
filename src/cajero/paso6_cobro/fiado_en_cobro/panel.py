@@ -238,6 +238,8 @@ class PanelFiadoCobro(QFrame):
         self._cliente_nombre = ""
         
         self.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
+        self.style().unpolish(self)
+        self.style().polish(self)
         self.panel_buscador.limpiar()
         self.stack.setCurrentWidget(self.panel_buscador)
         self.show()
@@ -258,12 +260,16 @@ class PanelFiadoCobro(QFrame):
         if excedido:
             self._modo = "transicion_excedido"
             self.setStyleSheet("QFrame#PanelFiadoCobro { background: #FEF2F2; border: 2px solid #F87171; border-radius: 16px; }")
+            self.style().unpolish(self)
+            self.style().polish(self)
             self._admin_pin = ""
             from PyQt6.QtCore import QTimer
             QTimer.singleShot(150, self._activar_modo_excedido)
         else:
             self._modo = "transicion"
             self.setStyleSheet("QFrame#PanelFiadoCobro { background: #ECFDF5; border: 2px solid #34D399; border-radius: 16px; }")
+            self.style().unpolish(self)
+            self.style().polish(self)
             from PyQt6.QtCore import QTimer
             QTimer.singleShot(150, self._activar_modo_confirmando)
             
