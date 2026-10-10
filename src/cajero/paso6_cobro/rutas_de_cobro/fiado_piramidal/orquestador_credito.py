@@ -55,7 +55,7 @@ class OrquestadorFiadoPiramidal(QFrame):
         
         from .ruta3_cliente_nuevo.panel_nuevo import PanelClienteNuevo
         self.via_nuevo = PanelClienteNuevo(self)
-        self.via_nuevo.creado.connect(self._cliente_recien_creado)
+        self.via_nuevo.cliente_creado.connect(self._cliente_recien_creado)
 
         from src.cajero.paso6_cobro.fiado_en_cobro.componentes_fiado.buscador import BuscadorFiado
         self.via_buscador = BuscadorFiado(self)
@@ -142,8 +142,10 @@ class OrquestadorFiadoPiramidal(QFrame):
     def _volver_a_bloqueo(self):
         self.stack.setCurrentWidget(self.via_bloqueo)
 
-    def _cliente_recien_creado(self, cliente_id):
-        self._evaluar_cliente(cliente_id)
+    def _cliente_recien_creado(self, dict_datos):
+        self._datos_cliente = dict_datos
+        self._datos_cliente['compra'] = self._monto_carrito
+        self._decidir_via_credito(self._datos_cliente)
 
     def bloquea_enter(self):
         return True
