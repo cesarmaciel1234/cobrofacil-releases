@@ -15,13 +15,21 @@ class HojaVirtual:
     def borrar(self): 
         from PyQt6.QtGui import QKeyEvent
         from PyQt6.QtCore import Qt
-        evt = QKeyEvent(QKeyEvent.Type.KeyPress, Qt.Key.Key_Backspace, Qt.KeyboardModifier.NoModifier)
-        self.parent.keyPressEvent(evt)
+        if hasattr(self.parent.via_buscador, 'caja_busqueda') and self.parent.stack.currentWidget() == self.parent.via_buscador:
+            txt = self.parent.via_buscador.caja_busqueda.text()
+            self.parent.via_buscador.caja_busqueda.setText(txt[:-1])
+        else:
+            evt = QKeyEvent(QKeyEvent.Type.KeyPress, Qt.Key.Key_Backspace, Qt.KeyboardModifier.NoModifier)
+            self.parent.keyPressEvent(evt)
     def escribir(self, key):
         from PyQt6.QtGui import QKeyEvent
         from PyQt6.QtCore import Qt
-        evt = QKeyEvent(QKeyEvent.Type.KeyPress, 0, Qt.KeyboardModifier.NoModifier, str(key))
-        self.parent.keyPressEvent(evt)
+        if hasattr(self.parent.via_buscador, 'caja_busqueda') and self.parent.stack.currentWidget() == self.parent.via_buscador:
+            txt = self.parent.via_buscador.caja_busqueda.text()
+            self.parent.via_buscador.caja_busqueda.setText(txt + str(key))
+        else:
+            evt = QKeyEvent(QKeyEvent.Type.KeyPress, 0, Qt.KeyboardModifier.NoModifier, str(key))
+            self.parent.keyPressEvent(evt)
     def fijar_monto(self, m): pass
 
 class OrquestadorFiadoPiramidal(QFrame):
@@ -57,9 +65,17 @@ class OrquestadorFiadoPiramidal(QFrame):
         self.via_nuevo = PanelClienteNuevo(self)
         self.via_nuevo.cliente_creado.connect(self._cliente_recien_creado)
 
-        from src.cajero.paso6_cobro.fiado_en_cobro.componentes_fiado.buscador import BuscadorFiado
-        self.via_buscador = BuscadorFiado(self)
-        self.via_buscador.cliente_seleccionado.connect(self._evaluar_cliente)
+        from src.cajero.paso6_cobro.fiado_en_cobro.ui.buscador_clientes.panel_buscador import PanelBuscadorClientes
+        from src.motores_empresariales.motor_busqueda_clientes.motor_busqueda import MotorBusquedaClientes
+        
+        self.motor_busqueda = MotorBusquedaClientes(self)
+        self.via_buscador = PanelBuscadorClientes(self)
+        
+        self.via_buscador.texto_cambiado.connect(self.motor_busqueda.buscar_texto)
+        self.motor_busqueda.sugerencias_listas.connect(self.via_buscador.mostrar_sugerencias)
+        self.via_buscador.cliente_elegido.connect(self._cliente_elegido)
+        self.via_buscador.creacion_solicitada.connect(self._abrir_creacion)
+
 
         self.stack.addWidget(self.via_buscador) # 0
         self.stack.addWidget(self.via_aprobado) # 1
@@ -70,11 +86,18 @@ class OrquestadorFiadoPiramidal(QFrame):
     def mostrar_para(self, monto):
         self._monto_carrito = monto
         self.stack.setCurrentWidget(self.via_buscador)
-        self.via_buscador.txt_busqueda.setFocus()
-        self.via_buscador.txt_busqueda.selectAll()
+        self.via_buscador.focus_caja()
+        
 
     def ocultar(self):
         self.hide()
+
+    def _cliente_elegido(self, dict_datos):
+        self._evaluar_cliente(int(dict_datos['id']))
+
+    def _abrir_creacion(self, nombre):
+        self.stack.setCurrentWidget(self.via_nuevo)
+        self.via_nuevo.poblar_inicial(nombre)
 
     def _evaluar_cliente(self, cliente_id):
         if cliente_id == 0:
@@ -171,8 +194,8 @@ class OrquestadorFiadoPiramidal(QFrame):
                 self._volver_a_bloqueo()
             elif self.stack.currentWidget() in (self.via_aprobado, self.via_bloqueo, self.via_nuevo):
                 self.stack.setCurrentWidget(self.via_buscador)
-                self.via_buscador.txt_busqueda.setFocus()
-                self.via_buscador.txt_busqueda.selectAll()
+                self.via_buscador.focus_caja()
+                
             else:
                 self.cancelado.emit()
         else:
