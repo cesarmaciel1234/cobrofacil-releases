@@ -93,7 +93,8 @@ class MotorBusquedaClientes(QObject):
                 'id': cliente.get('id'),
                 'nombre': saludo,
                 'limite': disp,
-                'compra': self._monto_venta
+                'compra': self._monto_venta,
+                'deuda': cartel.get('saldo') or 0.0
             }
             self.limite_aprobado.emit(datos)
         except Exception as e:
