@@ -181,21 +181,25 @@ class PanelFiadoCobro(QFrame):
             from PyQt6.QtCore import Qt
             k = event.key()
             if k == Qt.Key.Key_Escape:
-                if hasattr(self.window(), "toast"):
-                    self.window().toast.cerrar()
                 self._admin_pin = ""
                 self.panel_aprobado.actualizar_pin(0)
                 self.mostrar(self._monto, "Fiado")
                 return
-            if Qt.Key.Key_0 <= k <= Qt.Key.Key_9:
-                self._admin_pin += chr(k)
+            elif k == Qt.Key.Key_Backspace:
+                if len(self._admin_pin) > 0:
+                    self._admin_pin = self._admin_pin[:-1]
+                    self.panel_aprobado.actualizar_pin(len(self._admin_pin))
+                return
+            
+            char = event.text()
+            if char.isdigit():
+                self._admin_pin += char
                 self.panel_aprobado.actualizar_pin(len(self._admin_pin))
                 
                 if len(self._admin_pin) == 4:
-                    from src.cajero.cajero_activo import CajeroActivo
-                    if self._admin_pin == CajeroActivo.pin_admin:
-                        if hasattr(self.window(), "toast"):
-                            self.window().toast.cerrar()
+                    from src.clientes_fiado.interfaz.cobro.pin_admin import quien_autoriza
+                    admin_name = quien_autoriza(self._admin_pin)
+                    if admin_name:
                         self._modo = "listo"
                         self.pago_listo.emit(self._cliente_id, 0.0)
                     else:
@@ -262,8 +266,6 @@ class PanelFiadoCobro(QFrame):
     def _activar_modo_excedido(self):
         self._modo = "excedido"
         self.cambio.emit("confirmando")
-        if hasattr(self.window(), "toast"):
-            self.window().toast.pin("Autorización Admin", 0)
         self.panel_aprobado.btn_confirmar.setFocus()
         
     def _activar_modo_confirmando(self):

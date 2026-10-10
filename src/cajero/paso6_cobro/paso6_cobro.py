@@ -2215,6 +2215,8 @@ class Paso6Cobro(QDialog):
             
         if self.current_metodo == "Mixto":
             focused = self.panel_mixto.campo_foco()
+        elif self.current_metodo == "Fiado":
+            focused = self.panel_fiado
         elif not focused or not isinstance(focused, QLineEdit):
             focused = self.txt_pago
 
@@ -2223,3 +2225,9 @@ class Paso6Cobro(QDialog):
             QApplication.sendEvent(focused, event_press)
             event_release = QKeyEvent(QEvent.Type.KeyRelease, Qt.Key.Key_Backspace, Qt.NoModifier, "")
             QApplication.sendEvent(focused, event_release)
+            return
+            
+        event_press = QKeyEvent(QEvent.Type.KeyPress, 0, Qt.NoModifier, key)
+        QApplication.sendEvent(focused, event_press)
+        event_release = QKeyEvent(QEvent.Type.KeyRelease, 0, Qt.NoModifier, key)
+        QApplication.sendEvent(focused, event_release)
