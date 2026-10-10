@@ -192,9 +192,12 @@ class CentroCobranzasPanel(QWidget):
         else:
             self.btn_iniciar_pago.setText("DEJAR A CUENTA")
         
+        self._modo = "vista_cliente"
         self.stack.setCurrentWidget(self.vista_cobranza)
+        self.setFocus()
 
     def _mostrar_controles_pago(self):
+        self._modo = "preparando_pago"
         self.btn_iniciar_pago.hide()
         self.btn_imprimir_resumen.hide()
         
@@ -254,14 +257,50 @@ class CentroCobranzasPanel(QWidget):
             self.cont_lienzos.setCurrentWidget(self.lienzo_transferencia)
             self.lienzo_transferencia.arrancar(monto)
             
+    def keyPressEvent(self, event):
+        from PyQt6.QtCore import Qt
+        if event.key() == Qt.Key.Key_Escape:
+            if self._modo == "buscando":
+                self.ocultar()
+                self.cancelado.emit()
+                return
+            elif self._modo == "vista_cliente":
+                self._volver_al_buscador()
+                return
+            elif self._modo == "preparando_pago":
+                self._cancelar_preparacion_pago()
+                return
+            elif self._modo == "cobrando_lienzo":
+                self._volver_de_lienzo()
+                return
+        super().keyPressEvent(event)
+        
+    def _volver_al_buscador(self):
+        self._modo = "buscando"
+        self._cliente_id = None
+        self.stack.setCurrentWidget(self.panel_buscador)
+        self.panel_buscador.caja_busqueda.setText("")
+        self.panel_buscador.caja_busqueda.setFocus()
+        
+    def _cancelar_preparacion_pago(self):
+        self._modo = "vista_cliente"
+        self.txt_monto_abono.hide()
+        self.btn_abono_libre.hide()
+        self.instruccion.hide()
+        self.cont_botones.hide()
+        self.btn_iniciar_pago.show()
+        self.btn_imprimir_resumen.show()
+        self.setFocus()
+
     def _volver_de_lienzo(self):
-        self._modo = "cobranza"
+        self._modo = "preparando_pago"
         self._cerrar_lienzos()
         self.txt_monto_abono.show()
         self.btn_abono_libre.show()
-        self.btn_imprimir_resumen.show()
+        self.instruccion.show()
         self.cont_botones.show()
         self.txt_monto_abono.setFocus()
+        self.txt_monto_abono.selectAll()
         
     def _cerrar_lienzos(self):
         for lienzo in (self.lienzo_efectivo, self.lienzo_qr, self.lienzo_tarjeta, self.lienzo_transferencia):
@@ -289,13 +328,15 @@ class CentroCobranzasPanel(QWidget):
         caja_busq = getattr(self.panel_buscador, 'caja_busqueda', None) if hasattr(self, 'panel_buscador') else None
 
         if txt_monto and obj == txt_monto and event.type() == event.Type.KeyPress:
+            from PyQt6.QtCore import Qt
             if event.key() == Qt.Key.Key_Escape:
-                self.cancelado.emit()
+                self._cancelar_preparacion_pago()
                 return True
             elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                 self._iniciar_cobranza("Efectivo")
                 return True
         elif caja_busq and obj == caja_busq and event.type() == event.Type.KeyPress:
+            from PyQt6.QtCore import Qt
             if event.key() == Qt.Key.Key_Escape:
                 self.ocultar()
                 self.cancelado.emit()
