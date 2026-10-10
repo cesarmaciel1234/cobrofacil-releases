@@ -174,8 +174,45 @@ class PanelFiadoCobro(QFrame):
         return False
 
     def bloquea_enter(self):
-        return self.isVisible() and self._modo in ("buscando", "confirmando", "cobranza", "cobrando_lienzo", "transicion")
+        return self.isVisible() and self._modo in ("buscando", "confirmando", "cobranza", "cobrando_lienzo", "transicion", "excedido", "transicion_excedido")
         
+    def keyPressEvent(self, event):
+        if self._modo == "excedido":
+            from PyQt6.QtCore import Qt
+            k = event.key()
+            if k == Qt.Key.Key_Escape:
+                if hasattr(self.window(), "toast"):
+                    self.window().toast.cerrar()
+                self._admin_pin = ""
+                self.mostrar(self._monto, "Fiado")
+                return
+            if Qt.Key.Key_0 <= k <= Qt.Key.Key_9:
+                self._admin_pin += chr(k)
+                if hasattr(self.window(), "toast"):
+                    self.window().toast.pin("Autorización Admin", len(self._admin_pin))
+                
+                if len(self._admin_pin) == 4:
+                    from src.cajero.cajero_activo import CajeroActivo
+                    if self._admin_pin == CajeroActivo.pin_admin:
+                        if hasattr(self.window(), "toast"):
+                            self.window().toast.cerrar()
+                        self._modo = "listo"
+                        self.pago_listo.emit(self._cliente_id, 0.0)
+                    else:
+                        self._admin_pin = ""
+                        if hasattr(self.window(), "toast"):
+                            self.window().toast.alarma("PIN IN-CORRECTO")
+                            from PyQt6.QtCore import QTimer
+                            QTimer.singleShot(1000, lambda: self.window().toast.pin("Autorización Admin", 0))
+                return
+            elif k == Qt.Key.Key_Backspace:
+                if len(self._admin_pin) > 0:
+                    self._admin_pin = self._admin_pin[:-1]
+                    if hasattr(self.window(), "toast"):
+                        self.window().toast.pin("Autorización Admin", len(self._admin_pin))
+                return
+        super().keyPressEvent(event)
+
     def procesar_enter(self):
         if self._modo == "buscando":
             self.panel_buscador.aceptar_actual()
@@ -211,14 +248,30 @@ class PanelFiadoCobro(QFrame):
     def _al_limite_aprobado(self, datos):
         self._cliente_id = datos['id']
         self._cliente_nombre = datos['nombre']
-        self._modo = "transicion"
         
-        self.setStyleSheet("QFrame#PanelFiadoCobro { background: #ECFDF5; border: 2px solid #34D399; border-radius: 16px; }")
+        excedido = float(datos.get('compra', 0)) > float(datos.get('limite', 0)) + 0.01
+        
+        if excedido:
+            self._modo = "transicion_excedido"
+            self.setStyleSheet("QFrame#PanelFiadoCobro { background: #FEF2F2; border: 2px solid #F87171; border-radius: 16px; }")
+            self._admin_pin = ""
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(150, self._activar_modo_excedido)
+        else:
+            self._modo = "transicion"
+            self.setStyleSheet("QFrame#PanelFiadoCobro { background: #ECFDF5; border: 2px solid #34D399; border-radius: 16px; }")
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(150, self._activar_modo_confirmando)
+            
         self.panel_aprobado.poblar(datos['nombre'], datos['limite'], datos['compra'])
         self.stack.setCurrentWidget(self.panel_aprobado)
         
-        from PyQt6.QtCore import QTimer
-        QTimer.singleShot(150, self._activar_modo_confirmando)
+    def _activar_modo_excedido(self):
+        self._modo = "excedido"
+        self.cambio.emit("confirmando")
+        if hasattr(self.window(), "toast"):
+            self.window().toast.pin("Autorización Admin", 0)
+        self.panel_aprobado.btn_confirmar.setFocus()
         
     def _activar_modo_confirmando(self):
         self._modo = "confirmando"
