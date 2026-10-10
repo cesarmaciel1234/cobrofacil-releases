@@ -207,6 +207,8 @@ class PanelFiadoCobro(QFrame):
                     from src.clientes_fiado.cerebro.cerebro import cerebro
                     cerebro.conceder_excepcion(self._cliente_id, self._monto, admin_name)
                     self.setStyleSheet("QFrame#PanelFiadoCobro { background: #ECFDF5; border: 2px solid #34D399; border-radius: 16px; }")
+                    self.style().unpolish(self)
+                    self.style().polish(self)
                     self.panel_aprobado.aprobar_forzado()
                     self._activar_modo_confirmando()
                 else:
