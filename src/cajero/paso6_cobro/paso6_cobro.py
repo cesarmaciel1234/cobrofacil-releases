@@ -301,7 +301,7 @@ class Paso6Cobro(QDialog):
         self.aviso_toast = AvisoCobro(left_panel)
         self.espera_point = EsperaPoint(left_panel)
         self.pantalla_mp = PantallaMP(self)
-        from src.cajero.paso6_cobro.fiado_en_cobro.panel import PanelFiadoCobro
+        from src.cajero.paso6_cobro.rutas_de_cobro.fiado_piramidal.orquestador_credito import OrquestadorFiadoPiramidal as PanelFiadoCobro
         self.panel_fiado = PanelFiadoCobro(self)
         self.panel_fiado.pago_listo.connect(self._cuenta_lista)
         self.panel_fiado.cancelado.connect(self._cuenta_cancelada)
