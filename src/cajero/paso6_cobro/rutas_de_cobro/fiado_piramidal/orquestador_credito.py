@@ -22,8 +22,16 @@ class HojaVirtual:
     def ubicar(self): pass
     def _cancelar(self): self.parent.cancelado.emit()
     def confirmar(self): self.parent.procesar_enter()
-    def borrar(self): pass
-    def escribir(self, key): pass
+    def borrar(self): 
+        from PyQt6.QtGui import QKeyEvent
+        from PyQt6.QtCore import Qt
+        evt = QKeyEvent(QKeyEvent.Type.KeyPress, Qt.Key.Key_Backspace, Qt.KeyboardModifier.NoModifier)
+        self.parent.keyPressEvent(evt)
+    def escribir(self, key):
+        from PyQt6.QtGui import QKeyEvent
+        from PyQt6.QtCore import Qt
+        evt = QKeyEvent(QKeyEvent.Type.KeyPress, 0, Qt.KeyboardModifier.NoModifier, str(key))
+        self.parent.keyPressEvent(evt)
     def fijar_monto(self, m): pass
 
 class OrquestadorFiadoPiramidal(QFrame):

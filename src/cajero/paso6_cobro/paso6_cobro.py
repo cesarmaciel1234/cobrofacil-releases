@@ -2173,6 +2173,13 @@ class Paso6Cobro(QDialog):
             else:
                 self._enter_cobro()
         else:
+            if self._hoja_cuenta_al_frente():
+                if event.text() and hasattr(self.panel_fiado.hoja_cuenta, "escribir"):
+                    self.panel_fiado.hoja_cuenta.escribir(event.text())
+                    return
+                if k == Qt.Key.Key_Backspace and hasattr(self.panel_fiado.hoja_cuenta, "borrar"):
+                    self.panel_fiado.hoja_cuenta.borrar()
+                    return
             super().keyPressEvent(event)
 
 

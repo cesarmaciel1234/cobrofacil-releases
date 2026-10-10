@@ -1,73 +1,49 @@
-﻿# -*- coding: utf-8 -*-
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFrame
+# -*- coding: utf-8 -*-
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal
 from src.clientes_fiado.interfaz.cobro.pin_admin import quien_autoriza
 
 class PanelLimiteSuperado(QWidget):
     pin_validado = pyqtSignal(int, float)
-    solicita_f5 = pyqtSignal(dict) # Emits client data to open F5 bridge
+    solicita_f5 = pyqtSignal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._datos = {}
         self._admin_pin = ""
-        
         lay = QVBoxLayout(self)
         lay.setContentsMargins(20, 20, 20, 20)
-        lay.setSpacing(5)
+        lay.setSpacing(15)
 
-        self.icono = QLabel("\u274c")
+        self.icono = QLabel("❌")
         self.icono.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.icono.setStyleSheet("color: #EF4444; font-size: 80px; font-weight: bold;")
         lay.addWidget(self.icono)
 
-        self.lbl_titulo = QLabel("L\xcdMITE SUPERADO")
+        self.lbl_titulo = QLabel("LÍMITE SUPERADO")
         self.lbl_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_titulo.setStyleSheet("color: #991B1B; font-size: 32px; font-weight: 900; letter-spacing: 2px;")
         lay.addWidget(self.lbl_titulo)
 
         self.lbl_nombre = QLabel("Nombre Cliente")
         self.lbl_nombre.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_nombre.setStyleSheet("color: #B91C1C; font-size: 26px; font-weight: 800;")
+        self.lbl_nombre.setStyleSheet("color: #7F1D1D; font-size: 26px; font-weight: 800;")
         lay.addWidget(self.lbl_nombre)
 
-        lay.addSpacing(2)
+        lay.addStretch()
 
-        # Desglose matemático
-        self.lay_desglose = QVBoxLayout()
-        self.lbl_deuda_anterior = QLabel("Deuda Anterior: $0.00")
-        self.lbl_deuda_anterior.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_deuda_anterior.setStyleSheet("color: #991B1B; font-size: 18px; font-weight: bold;")
-        self.lay_desglose.addWidget(self.lbl_deuda_anterior)
+        self.lay_pin = QHBoxLayout()
+        self.lay_pin.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lay_pin.setSpacing(20)
+        self.dots = []
+        for _ in range(4):
+            d = QLabel()
+            d.setFixedSize(24, 24)
+            d.setStyleSheet("border: 2px solid #991B1B; border-radius: 12px; background: transparent;")
+            self.lay_pin.addWidget(d)
+            self.dots.append(d)
+        lay.addLayout(self.lay_pin)
         
-        self.lbl_compra = QLabel("+ Compra Actual: $0.00")
-        self.lbl_compra.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_compra.setStyleSheet("color: #991B1B; font-size: 18px; font-weight: bold;")
-        self.lay_desglose.addWidget(self.lbl_compra)
-        
-        self.linea = QFrame()
-        self.linea.setFrameShape(QFrame.Shape.HLine)
-        self.linea.setFixedHeight(2)
-        self.linea.setStyleSheet("background-color: #FCA5A5;")
-        self.lay_desglose.addWidget(self.linea)
-        
-        self.lbl_saldo_total = QLabel("SALDO TOTAL: $0.00")
-        self.lbl_saldo_total.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_saldo_total.setStyleSheet("color: #DC2626; font-size: 26px; font-weight: 900;")
-        self.lay_desglose.addWidget(self.lbl_saldo_total)
-        
-        self.lbl_limite = QLabel("(L\xedmite Asignado: $0.00)")
-        self.lbl_limite.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_limite.setStyleSheet("color: #B91C1C; font-size: 16px; font-weight: bold;")
-        self.lay_desglose.addWidget(self.lbl_limite)
-        
-        lay.addLayout(self.lay_desglose)
-        lay.addSpacing(2)
-
-        self.lbl_pin = QLabel("\u25cb \u25cb \u25cb \u25cb")
-        self.lbl_pin.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_pin.setStyleSheet("color: #991B1B; font-size: 40px; letter-spacing: 15px; font-weight: 900;")
-        lay.addWidget(self.lbl_pin)
+        lay.addSpacing(10)
 
         self.btn_confirmar = QLabel("[ ESPERANDO PIN ADMIN ]")
         self.btn_confirmar.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -77,32 +53,23 @@ class PanelLimiteSuperado(QWidget):
         )
         lay.addWidget(self.btn_confirmar)
         
-        # El Puente F5
-        self.lbl_ayuda_f5 = QLabel("O presione [ F5 ] para COBRAR la deuda ahora mismo")
-        self.lbl_ayuda_f5.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_ayuda_f5.setStyleSheet("color: #B91C1C; font-size: 16px; font-weight: bold; margin-top: 10px;")
-        lay.addWidget(self.lbl_ayuda_f5)
+        self.lbl_f5 = QLabel("O presione [ F5 ] para PAGAR cuenta")
+        self.lbl_f5.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_f5.setStyleSheet("color: #991B1B; font-size: 16px; font-weight: bold;")
+        lay.addWidget(self.lbl_f5)
 
     def poblar(self, datos):
         self._datos = datos
+        self.lbl_nombre.setText(f"Hola {datos['nombre']}")
         self._admin_pin = ""
         self.actualizar_pin(0)
-        
-        self.lbl_nombre.setText(f"Hola {datos['nombre']}")
-        
-        d = float(datos.get('deuda', 0))
-        c = float(datos.get('compra', 0))
-        t = d + c
-        
-        self.lbl_deuda_anterior.setText(f"Deuda Anterior: ${d:,.2f}")
-        self.lbl_compra.setText(f"+ Compra Actual: ${c:,.2f}")
-        self.lbl_saldo_total.setText(f"SALDO TOTAL: ${t:,.2f}")
-        self.lbl_limite.setText(f"(L\xedmite Asignado: ${float(datos.get('limite', 0)):,.2f})")
 
     def actualizar_pin(self, cantidad):
-        llenos = "\u25cf " * cantidad
-        vacios = "\u25cb " * (4 - cantidad)
-        self.lbl_pin.setText((llenos + vacios).strip())
+        for i, d in enumerate(self.dots):
+            if i < cantidad:
+                d.setStyleSheet("border: 2px solid #991B1B; border-radius: 12px; background: #EF4444;")
+            else:
+                d.setStyleSheet("border: 2px solid #991B1B; border-radius: 12px; background: transparent;")
 
     def _validar_pin(self):
         admin = quien_autoriza(self._admin_pin)
@@ -111,7 +78,6 @@ class PanelLimiteSuperado(QWidget):
             cerebro.conceder_excepcion(self._datos.get('id'), self._datos.get('compra', 0), admin)
             self.pin_validado.emit(int(self._datos['id']), 0.0)
         else:
-            # Error visual (se vacía)
             self._admin_pin = ""
             self.actualizar_pin(0)
 
