@@ -224,7 +224,8 @@ class PanelFiadoCobro(QFrame):
             self._modo = "listo"
             self.pago_listo.emit(self._cliente_id, 0.0)
         elif self._modo == "cobranza" and getattr(self, "_cliente_id", None):
-            self._iniciar_cobranza("Efectivo")
+            # En modo cobranza, mostrar selector de métodos de pago primero (como con mouse)
+            self._mostrar_selector_cobranza()
         elif self._modo == "cobrando_lienzo":
             actual = self.cont_lienzos.currentWidget()
             if hasattr(actual, "tecla"):
@@ -318,6 +319,16 @@ class PanelFiadoCobro(QFrame):
         except Exception:
             return False
 
+    def _mostrar_selector_cobranza(self):
+        """Muestra el selector de métodos de pago (como cuando se hace click con mouse)."""
+        self._modo = "cobranza"
+        self.cont_botones.show()
+        self.instruccion.show()
+        self.txt_monto_abono.show()
+        self.btn_abono_libre.show()
+        self.cont_lienzos.hide()
+        self.txt_monto_abono.setFocus()
+
     def _iniciar_cobranza(self, metodo="Efectivo"):
         texto = self.txt_monto_abono.text().replace('.', '').replace(',', '.')
         if not texto.strip(): return
@@ -326,13 +337,13 @@ class PanelFiadoCobro(QFrame):
 
         self._monto_a_cobrar = monto
         self._metodo_elegido = metodo
-        
+
         self._modo = "cobrando_lienzo"
         self.txt_monto_abono.hide()
         self.btn_abono_libre.hide()
         self.cont_botones.hide()
         self.instruccion.hide()
-        
+
         self.cont_lienzos.show()
         if metodo == "Efectivo":
             self.cont_lienzos.setCurrentWidget(self.lienzo_efectivo)

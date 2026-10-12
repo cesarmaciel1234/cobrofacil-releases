@@ -39,20 +39,20 @@ class MotorBusquedaLocal(QObject):
         try:
             texto_limpio = texto.replace(".", "").replace("-", "").replace(" ", "")
             es_dni = texto_limpio.isdigit() and len(texto_limpio) >= 7
-            
+
             if texto_limpio.isdigit() and not es_dni:
                 self.error_busqueda.emit("DNI invalido. Minimo 7 digitos.")
                 return
-            
+
             if es_dni:
                 cliente, estado, msg = cerebro.identificar_dni(texto)
             else:
                 cliente, estado, msg = cerebro.identificar_nombre(texto)
-                
+
             if estado == "error" or not cliente:
                 self.error_busqueda.emit(msg or "No se pudo identificar al cliente.")
                 return
-                
+
             c = dict(cliente) if hasattr(cliente, "keys") else (cliente if isinstance(cliente, dict) else {})
             self.aprobar_credito(c)
         except Exception as e:
