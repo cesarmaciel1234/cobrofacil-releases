@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 
 from src.utils.paths import get_base_path
 from src.carteleria.vitrina.catalogo.sql import PRECIOS_SELECT, sql_sos, sql_top_fallback
 from src.carteleria.vitrina.catalogo.serializar import to_serializable
+
+logger = logging.getLogger("Carteleria_MariaDB")
 
 
 def _q(db_manager, sql, rand_func):
@@ -60,6 +63,17 @@ def leer_catalogo_db(db_manager) -> dict:
     oferta_sos = to_serializable(_q(db_manager, sql_sos(rand_func), rand_func))
     rows_precios = to_serializable(_q(db_manager, PRECIOS_SELECT, rand_func))
     top_hoy = to_serializable(_q(db_manager, sql_top_fallback(rand_func), rand_func))
+
+    # Validar que hay productos válidos
+    if not rows_precios:
+        logger.warning("MariaDB retornó 0 productos - verificar tabla productos y campos")
+    else:
+        # Filtrar productos sin nombre o precio
+        validos = [p for p in rows_precios if p.get("nombre") and (p.get("precio") or 0) > 0]
+        if len(validos) < len(rows_precios):
+            logger.warning(f"Filtrados {len(rows_precios) - len(validos)} productos inválidos de MariaDB")
+            rows_precios = validos
+
     return {
         "config": {
             "business_name": cfg_data.get("business_name", "Carnicería"),

@@ -846,6 +846,7 @@ class AutoBlindajeDB:
                     dni VARCHAR(50) NULL,
                     tipo_cliente VARCHAR(50) NULL,
                     direccion TEXT NULL,
+                    plazo_dias INT DEFAULT 0,
                     PRIMARY KEY (id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """

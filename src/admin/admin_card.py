@@ -1,27 +1,29 @@
 ﻿from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel
 from PyQt6.QtCore import pyqtSignal, Qt
 
+# Cache de colores para evitar recrear el dict en cada instancia
+_COLOR_CACHE = {
+    "indigo": ("#E0E7FF", "#3730A3"),
+    "blue": ("#DBEAFE", "#1E40AF"),
+    "amber": ("#FEF3C7", "#92400E"),
+    "emerald": ("#D1FAE5", "#065F46"),
+    "rose": ("#FFE4E6", "#9F1239"),
+    "violet": ("#EDE9FE", "#5B21B6"),
+    "pink": ("#FCE7F3", "#9D174D"),
+    "slate": ("#F1F5F9", "#334155"),
+    "sky": ("#E0F2FE", "#075985")
+}
+
 class AdminCard(QFrame):
     clicked = pyqtSignal()
 
     def __init__(self, title, icon, palette_name, sub, parent=None):
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        
-        # Mapa de colores flat premium (sin sombras, alto rendimiento)
-        colores = {
-            "indigo": ("#E0E7FF", "#3730A3"),
-            "blue": ("#DBEAFE", "#1E40AF"),
-            "amber": ("#FEF3C7", "#92400E"),
-            "emerald": ("#D1FAE5", "#065F46"),
-            "rose": ("#FFE4E6", "#9F1239"),
-            "violet": ("#EDE9FE", "#5B21B6"),
-            "pink": ("#FCE7F3", "#9D174D"),
-            "slate": ("#F1F5F9", "#334155"),
-            "sky": ("#E0F2FE", "#075985")
-        }
-        bg_soft, txt_dark = colores.get(palette_name, ("#F1F5F9", "#334155"))
 
+        bg_soft, txt_dark = _COLOR_CACHE.get(palette_name, ("#F1F5F9", "#334155"))
+
+        # Stylesheet simplificado para mejor performance
         self.setStyleSheet(f"""
             AdminCard {{
                 background-color: #FFFFFF;

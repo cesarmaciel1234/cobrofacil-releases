@@ -71,6 +71,9 @@ class DialogoPIN(QDialog):
     """PIN de 4 a 6 dígitos. Esc cancela (no saltea el candado del padre)."""
 
     def __init__(self, cajero_nombre, parent=None):
+        import logging, traceback
+        stack_str = "".join(traceback.format_stack())
+        logging.getLogger("PunPro").warning(f"=== DIALOGO_PIN INSTANCIADO por {cajero_nombre} ===\n{stack_str}")
         super().__init__(parent)
         self.cajero_nombre = cajero_nombre
         self.ok = False

@@ -34,8 +34,28 @@ class _PanelesWorker(QThread):
             )
             self.listo.emit({"paneles": paneles or {}, "precios": self._productos})
         except Exception:
-            logger.exception("Error armando paneles TV")
-            self.listo.emit({})
+            logger.exception("Error armando paneles TV - usando fallback simple")
+            # Fallback: paneles simples con productos válidos
+            try:
+                paneles = self._paneles_fallback()
+                self.listo.emit({"paneles": paneles, "precios": self._productos})
+            except Exception:
+                logger.exception("Error en fallback de paneles")
+                self.listo.emit({})
+
+    def _paneles_fallback(self):
+        """Fallback simple si falla el motor de paneles."""
+        vivos = [p for p in self._productos if p.get("nombre") and (p.get("precio") or 0) > 0]
+        return {
+            "hero": None,
+            "destacados": vivos[:8] if vivos else [],
+            "rotacion": [
+                {"id": "inventario", "titulo": "Tu lista", "subtitulo": "Inventario", "items": vivos[:10]}
+            ] if vivos else [],
+            "combos": [],
+            "columna3": [],
+            "ia": [],
+        }
 
 
 class LanzadorDirectoTV(QObject):
@@ -62,11 +82,14 @@ class LanzadorDirectoTV(QObject):
         self._vivo = False
         self._paneles_worker = None
         self.last_error = ""
+        self._retry_count = 0
+        self._max_retries = 10  # Límite de reintentos antes de rendirse
 
     def lanzar(self, screen_index=None):
         try:
             self.last_error = ""
             self._vivo = True
+            self._retry_count = 0
             if self._cuello:
                 self.detener()
                 self._vivo = True
@@ -114,10 +137,13 @@ class LanzadorDirectoTV(QObject):
                             self._aplicar_catalogo(productos)
                             logger.info(f"Cargados {len(self.rows_precios)} productos desde caché")
                             return
+                        else:
+                            logger.warning("Caché existe pero está vacío (sin productos)")
                 except Exception as e:
                     logger.warning(f"Error leyendo caché: {e}")
 
             # Si no hay caché, cargar directamente desde DB
+            logger.info("Cargando productos directamente desde DB (sin caché)")
             q = """
                 SELECT
                     id,
@@ -160,10 +186,10 @@ class LanzadorDirectoTV(QObject):
                 self._aplicar_catalogo(productos)
                 logger.info(f"Cargados {len(self.rows_precios)} productos desde DB")
             else:
-                logger.warning("No se encontraron productos en la base de datos")
+                logger.warning("No se encontraron productos en la base de datos (query retornó vacío)")
 
         except Exception as e:
-            logger.error(f"Error cargando datos iniciales: {e}")
+            logger.error(f"Error cargando datos iniciales: {e}", exc_info=True)
 
     def _iniciar_motores(self):
         """Hilos de sync/clima + timers (el padre es QObject para que Qt no trague el arranque)."""
@@ -202,6 +228,8 @@ class LanzadorDirectoTV(QObject):
                 self._sync_timer.stop()
             if self._clima_timer:
                 self._clima_timer.stop()
+            if self._retry_timer:
+                self._retry_timer.stop()
             if self._sync_worker and self._sync_worker.isRunning():
                 self._sync_worker.requestInterruption()
             if self._clima_worker and self._clima_worker.isRunning():
@@ -246,7 +274,23 @@ class LanzadorDirectoTV(QObject):
             if not productos:
                 if status:
                     self._sync_status = status
+                logger.warning(f"Sync completó con estado '{status}' pero sin productos (payload vacío)")
+                # Si falló y ya tenemos datos previos, forzar reintentar en 5 segundos
+                if self.rows_precios and status == "error":
+                    logger.info("Forzando reintentosync en 5 segundos por error transitorio")
+                    QTimer.singleShot(5000, self._sincronizar)
+                # Si no hay datos previos y falló, reintentar más agresivamente con backoff
+                elif not self.rows_precios and status == "error":
+                    if self._retry_count >= self._max_retries:
+                        logger.error(f"Se alcanzó el límite de {self._max_retries} reintentos sin éxito - pausando reintentos automáticos")
+                        return
+                    self._retry_count += 1
+                    delay = min(3000 * (2 ** min(self._retry_count, 4)), 30000)  # 3s, 6s, 12s, 24s, 30s max
+                    logger.warning(f"Sin datos previos y sync falló (intento {self._retry_count}/{self._max_retries}) - reintentando en {delay/1000}s")
+                    QTimer.singleShot(int(delay), self._sincronizar)
                 return
+            # Reset contador si tuvo éxito
+            self._retry_count = 0
             self._sync_status = status or "online"
             try:
                 from src.central_red_global.sync_tienda.ranking.desde_payload import asegurar_ranking
@@ -275,7 +319,7 @@ class LanzadorDirectoTV(QObject):
                 len(self._paneles.get("rotacion") or []),
             )
         except Exception as e:
-            logger.warning(f"Error procesando sync: {e}")
+            logger.warning(f"Error procesando sync: {e}", exc_info=True)
 
     def _on_clima_actualizado(self, icon_name, text):
         if not self._vivo:
@@ -290,9 +334,13 @@ class LanzadorDirectoTV(QObject):
         result = []
         for item in productos or []:
             if isinstance(item, dict):
-                result.append({
+                # Validar datos mínimos
+                nombre = item.get("nombre", "") or ""
+                if not nombre or nombre.strip() == "":
+                    continue
+                prod = {
                     "id": item.get("id"),
-                    "nombre": item.get("nombre", "") or "",
+                    "nombre": nombre,
                     "precio": float(item.get("precio") or 0),
                     "precio_oferta": float(item.get("precio_oferta") or 0),
                     "precio_oferta_relampago": float(item.get("precio_oferta_relampago") or 0),
@@ -306,15 +354,22 @@ class LanzadorDirectoTV(QObject):
                     "stock": float(item.get("stock") or 0),
                     "icono": item.get("icono") or "",
                     "es_publicidad": bool(item.get("es_publicidad")),
-                })
+                }
+                # Filtrar productos sin precio válido
+                if prod["precio"] <= 0 and prod["precio_oferta"] <= 0:
+                    continue
+                result.append(prod)
                 continue
             row = list(item) if isinstance(item, (list, tuple)) else []
             if len(row) < 3:
                 continue
-            result.append({
+            nombre = row[1] if len(row) > 1 else ""
+            if not nombre or nombre.strip() == "":
+                continue
+            prod = {
                 "id": None,
                 "categoria": row[0] if len(row) > 0 else "",
-                "nombre": row[1] if len(row) > 1 else "",
+                "nombre": nombre,
                 "precio": float(row[2] or 0) if len(row) > 2 else 0,
                 "precio_oferta": float(row[3] or 0) if len(row) > 3 else 0,
                 "precio_oferta_relampago": float(row[4] or 0) if len(row) > 4 else 0,
@@ -327,7 +382,13 @@ class LanzadorDirectoTV(QObject):
                 "icono": row[12] if len(row) > 12 else "",
                 "id": row[13] if len(row) > 13 else None,
                 "es_publicidad": False,
-            })
+            }
+            # Filtrar productos sin precio válido
+            if prod["precio"] <= 0 and prod["precio_oferta"] <= 0:
+                continue
+            result.append(prod)
+        if result and len(result) < len(productos or []):
+            logger.info(f"Filtrados {len(productos or []) - len(result)} productos inválidos (sin nombre o precio)")
         return result
 
     def _marcar_publicidad(self, productos):
@@ -359,7 +420,10 @@ class LanzadorDirectoTV(QObject):
             iconos_tv._png_indice_cache = None
         except Exception:
             pass
-        self.rows_precios = self._marcar_publicidad(self._normalizar_productos(productos))
+        normalized = self._normalizar_productos(productos)
+        if not normalized:
+            logger.warning(f"_aplicar_catalogo recibió {len(productos or [])} productos pero normalización retornó 0 válidos")
+        self.rows_precios = self._marcar_publicidad(normalized)
         self._refrescar_paneles(force=True)
 
     def _paneles_vacios(self):
@@ -376,12 +440,14 @@ class LanzadorDirectoTV(QObject):
         if not self.rows_precios:
             self._paneles_vacios()
             self._publicar_estado()
+            logger.warning("No hay productos para armar paneles - paneles vacíos")
             return
         huella = self._huella_catalogo()
         if not force and huella == self._huella and self._paneles.get("rotacion"):
             self._publicar_estado()
             return
         if self._paneles_worker and self._paneles_worker.isRunning():
+            logger.debug("Worker de paneles ya corriendo, omitiendo")
             return
         self._huella = huella
         copia = [dict(p) for p in self.rows_precios]
@@ -395,6 +461,7 @@ class LanzadorDirectoTV(QObject):
         )
         self._paneles_worker.listo.connect(self._on_paneles_listos)
         self._paneles_worker.start()
+        logger.info(f"Iniciando worker de paneles con {len(copia)} productos")
         self._publicar_estado()
 
     def _on_paneles_listos(self, payload):
@@ -404,6 +471,10 @@ class LanzadorDirectoTV(QObject):
         precios = (payload or {}).get("precios") if isinstance(payload, dict) else None
         if paneles:
             self._paneles = paneles
+            logger.info(f"Paneles actualizados: {len(paneles.get('rotacion', []))} en rotación")
+        else:
+            logger.warning("Worker de paneles retornó payload vacío o sin paneles - reintentando en 2s")
+            QTimer.singleShot(2000, lambda: self._refrescar_paneles(force=True))
         if precios:
             self.rows_precios = precios
         self._publicar_estado()

@@ -1,4 +1,4 @@
-﻿from src.utils.qt_compat import qt_exec
+from src.utils.qt_compat import qt_exec
 import src.utils.qt_compat  # noqa: F401 â€” enums Qt6 antes de widgets
 from PyQt6.QtWidgets import (
 
@@ -48,7 +48,7 @@ def _cargar_admin15_carteleria():
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Cobro FÃ¡cil")
+        self.setWindowTitle("Cobro Fácil POS")
         ref_w, ref_h, min_w, min_h = _terminal_window_sizes()
         self.resize(ref_w, ref_h)
         self.setMinimumSize(min_w, min_h)

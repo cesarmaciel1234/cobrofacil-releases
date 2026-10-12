@@ -24,6 +24,19 @@ def leer_cache() -> dict | None:
     try:
         with open(cache_path(), "r", encoding="utf-8") as handle:
             data = json.load(handle)
-        return data if isinstance(data, dict) else None
-    except Exception:
+        if not isinstance(data, dict):
+            logger.warning("Caché existe pero no es un dict válido")
+            return None
+        # Validar estructura mínima
+        if "precios" not in data or not isinstance(data.get("precios"), list):
+            logger.warning("Caché no tiene estructura válida (falta 'precios' o no es lista)")
+            return None
+        precios = data.get("precios", [])
+        if not precios:
+            logger.warning("Caché tiene estructura válida pero está vacío (0 productos)")
+            return None
+        logger.info(f"Caché leído con {len(precios)} productos válidos")
+        return data
+    except Exception as exc:
+        logger.warning("Error leyendo caché: %s", exc)
         return None

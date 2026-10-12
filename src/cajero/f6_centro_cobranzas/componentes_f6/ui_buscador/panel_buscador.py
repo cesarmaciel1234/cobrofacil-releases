@@ -74,6 +74,12 @@ class PanelBuscadorClientes(QWidget):
         self.caja_busqueda.returnPressed.connect(self.aceptar_actual)
         lay_busq.addWidget(self.caja_busqueda)
         
+        self.lbl_sin_coincidencia = QLabel("No hay coincidencia. Presione ENTER para guardar como nuevo cliente")
+        self.lbl_sin_coincidencia.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_sin_coincidencia.setStyleSheet("color: #64748B; font-size: 18px; font-weight: 700; margin-top: 10px;")
+        self.lbl_sin_coincidencia.hide()
+        lay_busq.addWidget(self.lbl_sin_coincidencia)
+        
         lay.addWidget(self.cont_busqueda)
         
         self.lbl_error = QLabel("")
@@ -111,7 +117,13 @@ class PanelBuscadorClientes(QWidget):
         
         if not self._clientes_actuales:
             self.lista_sugerencias.hide()
+            if self.caja_busqueda.text().strip():
+                self.lbl_sin_coincidencia.show()
+            else:
+                self.lbl_sin_coincidencia.hide()
             return
+            
+        self.lbl_sin_coincidencia.hide()
             
         for c in self._clientes_actuales:
             fila = FilaSugerencia(c)

@@ -77,7 +77,10 @@ class PosPrinter:
 
     def _send_raw_data(self, raw_data, printer_name_override=None):
         """ Envía bytes RAW a la impresora (Windows Spooler o Serial Directo). """
-        p_name = printer_name_override if printer_name_override else config.get('ticket_printer', config.get('printer_name', ''))
+        # Prioridad: override > printer_name (si está set) > config
+        p_name = printer_name_override
+        if not p_name:
+            p_name = self.printer_name if self.printer_name else config.get('ticket_printer', config.get('printer_name', ''))
 
         if not p_name:
             logger.info("Impresora no configurada. Simulando impresión.")
@@ -135,7 +138,10 @@ class PosPrinter:
 
     def abrir_cajon(self, printer_name_override=None):
         """ Envía el comando ESC/POS estándar para patear el cajón de dinero. """
-        p_name = printer_name_override or _impresora_cajero_activo()
+        # Prioridad: override > printer_name (si está set) > config > CajeroActivo
+        p_name = printer_name_override
+        if not p_name:
+            p_name = self.printer_name if self.printer_name else _impresora_cajero_activo()
         logger.info(f"Enviando señal de apertura a {p_name}...")
 
         # Seleccionar pin (0=Pin 2, 1=Pin 5)

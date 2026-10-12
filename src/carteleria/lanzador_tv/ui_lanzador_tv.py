@@ -25,6 +25,8 @@ class CarteleriaMainTV(QWidget):
         self._paneles = {"hero": None, "destacados": [], "rotacion": [], "combos": [], "columna3": [], "ia": []}
         self._sync_status, self._ultima_sincro, self._clima = "Preparando datos", None, "Información local"
         self._clima_icon = "sol"
+        self._retry_count = 0
+        self._max_retries = 10
         self._apply_theme()
         self._build_ui()
         self._cargar_cache_inicial()
@@ -195,6 +197,25 @@ class CarteleriaMainTV(QWidget):
 
     def _on_sync_finished(self, data, status):
         data = data or {}
+        productos = data.get("precios", []) or []
+        if not productos:
+            if status:
+                self._sync_status = status
+            import logging
+            logger = logging.getLogger("CarteleriaUI")
+            logger.warning(f"Sync completó con estado '{status}' pero sin productos")
+            # Reintentar si no hay datos previos
+            if not self.rows_precios and status == "error":
+                if self._retry_count >= self._max_retries:
+                    logger.error(f"Se alcanzó el límite de {self._max_retries} reintentos sin éxito - pausando reintentos automáticos")
+                    return
+                self._retry_count += 1
+                delay = min(3000 * (2 ** min(self._retry_count, 4)), 30000)
+                logger.warning(f"Sin datos previos y sync falló (intento {self._retry_count}/{self._max_retries}) - reintentando en {delay/1000}s")
+                QTimer.singleShot(int(delay), self._sincronizar)
+            return
+        # Reset contador si tuvo éxito
+        self._retry_count = 0
         self.sos_data = data.get("sos", []) or []
         self.top10_data = data.get("top10", {}) or {}
         try:
@@ -214,7 +235,7 @@ class CarteleriaMainTV(QWidget):
                 motor_publicidad.aplicar_remoto(pub)
         except Exception:
             pass
-        productos = [self._normalizar_producto(row) for row in data.get("precios", [])]
+        productos = [self._normalizar_producto(row) for row in productos]
         try:
             from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
             motor_publicidad.marcar_lista(productos)

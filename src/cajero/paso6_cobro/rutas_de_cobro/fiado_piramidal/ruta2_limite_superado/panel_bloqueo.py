@@ -5,7 +5,8 @@ from src.clientes_fiado.interfaz.cobro.pin_admin import quien_autoriza
 
 class PanelLimiteSuperado(QFrame):
     pin_validado = pyqtSignal(int, float)
-    solicita_f5 = pyqtSignal(dict)
+    solicita_cobranza = pyqtSignal(dict)
+    solicita_f5 = solicita_cobranza # Alias retrocompatible
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -35,7 +36,7 @@ class PanelLimiteSuperado(QFrame):
 
         self.lbl_nombre = QLabel("NOMBRE CLIENTE")
         self.lbl_nombre.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_nombre.setStyleSheet("color: #FEE2E2; font-size: 24px; font-weight: 600; text-transform: uppercase;")
+        self.lbl_nombre.setStyleSheet("color: #FEE2E2; font-size: 24px; font-weight: 600;")
         lay.addWidget(self.lbl_nombre)
 
         lay.addStretch()
@@ -64,14 +65,13 @@ class PanelLimiteSuperado(QFrame):
         
         lay.addSpacing(15)
         
-        self.lbl_f5 = QLabel("O presione [ F5 ] para PAGAR cuenta")
-        self.lbl_f5.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_f5.setStyleSheet("color: #FEF2F2; background-color: #991B1B; padding: 12px; border-radius: 10px; font-size: 18px; font-weight: bold;")
-        lay.addWidget(self.lbl_f5)
+        
 
     def poblar(self, datos):
         self._datos = datos
-        self.lbl_nombre.setText(f"{datos['nombre']}")
+        nombre_raw = str(datos.get('nombre', '') or '')
+        nombre_amable = nombre_raw.strip().title() if (nombre_raw.isupper() or nombre_raw.islower()) else nombre_raw.strip()
+        self.lbl_nombre.setText(nombre_amable or "Cliente")
         self._admin_pin = ""
         self._estado_aprobado = False
         self.setStyleSheet("""
@@ -121,9 +121,7 @@ class PanelLimiteSuperado(QFrame):
 
     def keyPressEvent(self, event):
         k = event.key()
-        if k == Qt.Key.Key_F5:
-            self.solicita_f5.emit(self._datos)
-            return
+        
             
         if k == Qt.Key.Key_Backspace:
             if len(self._admin_pin) > 0:

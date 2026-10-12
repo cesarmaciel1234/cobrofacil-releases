@@ -6,7 +6,6 @@ from PyQt6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QStackedWidget
 
 from src.cajero.ingresar_efectivo.cambio.panel import PanelIngresoEfectivo
 from src.cajero.f6_centro_cobranzas.paleta import PALETA
-from src.cajero.f6_centro_cobranzas.panel import CentroCobranzasPanel
 from src.cajero.ingresar_efectivo.opciones.boton import boton_opcion
 from src.cajero.ingresar_efectivo.otros.panel import PanelOtrosIngresos
 from src.cajero.ingresar_efectivo.pie.botones import fila_pie
@@ -125,6 +124,7 @@ class DialogoIngresoEfectivo(QDialog):
         self.stack = QStackedWidget()
         self.stack.setStyleSheet("background: transparent; border: none;")
         self.panel_cambio = PanelIngresoEfectivo()
+        from src.cajero.f6_centro_cobranzas.panel import CentroCobranzasPanel
         self.panel_fiado = CentroCobranzasPanel()
         self.panel_otros = PanelOtrosIngresos()
         self.panel_cambio.txt_monto.returnPressed.connect(self._procesar)

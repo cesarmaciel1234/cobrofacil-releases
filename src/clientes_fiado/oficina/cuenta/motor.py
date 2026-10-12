@@ -213,14 +213,19 @@ class MotorCuenta:
             {"nombre": nombre, "telefono": telefono, "limite_credito": limite, "dni": dni},
         )
 
-    def actualizar_ficha(self, cliente_id, nombre, dni, telefono, direccion, tipo):
+    def actualizar_ficha(self, cliente_id, nombre, dni, telefono, direccion, tipo, plazo_dias=None):
         from src.clientes_fiado.oficina.huella.eventos import editar
 
-        return editar(
-            cliente_id,
-            {"nombre": nombre, "dni": dni, "telefono": telefono or None,
-             "direccion": direccion or None, "tipo_cliente": tipo},
-        )
+        cambios = {
+            "nombre": nombre, "dni": dni, "telefono": telefono or None,
+            "direccion": direccion or None, "tipo_cliente": tipo
+        }
+        if plazo_dias is not None:
+            try:
+                cambios["plazo_dias"] = int(plazo_dias)
+            except (ValueError, TypeError):
+                cambios["plazo_dias"] = 0
+        return editar(cliente_id, cambios)
 
     def fijar_limite(self, cliente_id, limite):
         from src.clientes_fiado.oficina.huella.eventos import editar

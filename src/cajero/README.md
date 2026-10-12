@@ -11,7 +11,7 @@ Leé esto antes de diagnosticar o de proponer un corte.
 | `paso5_terminal/` | Venta | `paso5_terminal.py`, clase `Paso5Terminal` |
 | `paso6_cobro/` | Cobro | `paso6_cobro.py` |
 | `paso8_historial/` | Historial, F3 | `dialogo.py`, clase `DialogoHistorialDia` |
-| `ingresar_efectivo/` | Ingreso, F6 | `dialogo.py` |
+| `ingresar_efectivo/` | Ingreso, F6 (Centro de Cobranzas) | `dialogo.py` |
 | `sacar_efectivo/` | Retiro, F5 | `dialogo_retiro.py`, clase `DialogoRetiroEfectivo` |
 
 `cajero_activo.py` guarda la estación (cajero 1 o 2). No es una pantalla.
@@ -105,6 +105,17 @@ Esas ventanas, y F11, tapan la venta con el gris `#334155` (`src/utils/fondo_gri
 Fiado y Clientes se piden en `HojaCuentaCobro`, en la misma hoja que la espera de la tarjeta. No abren la ventana oscura. Cancelar vuelve a los medios.
 
 En el menú «Otras» hay una sola entrada: **Crédito**. Fiado y cuenta corriente son la misma tabla clientes. Crédito entra con la clave interna Clientes (no crédito: esa clave de REGISTRO es la tarjeta de crédito). La caja de la hoja toma DNI (solo números) o nombre (sin números) y la lista sugiere por los dos. Un DNI nuevo crea el perfil Express <DNI> con iado_express_limite (monto menor); un nombre nuevo, con 50.000 (monto mayor). En el ticket va el nombre si está registrado; si solo hay DNI, va DNI <número> (ClienteRepository.nombre_ticket).
+
+### Seguridad en Centro de Cobranzas (F6)
+
+El módulo `ingresar_efectivo/fiado` incluye protecciones para operar en entornos con pantallas expuestas al público:
+- Búsqueda por nombre limitada a 5 resultados para evitar exposición masiva de datos de clientes
+- Deudas ocultas en la lista de resultados (solo visible al seleccionar un cliente específico)
+- Validación de sobreabono con confirmación explícita del cajero
+- Timer de búsqueda optimizado a 200ms para balancear velocidad y rendimiento
+- Mensajes de UX mejorados para claridad y profesionalismo
+
+Ver detalles en `ingresar_efectivo/fiado/README.md`.
 
 La venta se escribe en `persistir_cobro`, que llama `db_manager.guardar_venta_completa`. Cabecera, renglones, stock y fiado van en esa transacción. El plano está en `src/base_de_datos/plano.md`.
 

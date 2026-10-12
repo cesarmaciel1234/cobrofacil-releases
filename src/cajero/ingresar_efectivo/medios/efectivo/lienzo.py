@@ -57,11 +57,12 @@ class LienzoEfectivo(QWidget):
     def arrancar(self, monto):
         self._deuda = redondear_dinero(monto)
         self.lbl_abono.setText(f"Abono ${self._deuda:,.2f}")
-        self.txt.clear()
+        self.txt.setText(f"{self._deuda:.2f}".replace('.', ','))
         self.aviso.setText("")
         self._calcular()
         self.show()
         self.txt.setFocus()
+        self.txt.selectAll()
 
     def cerrar(self):
         self.hide()
@@ -75,7 +76,7 @@ class LienzoEfectivo(QWidget):
     def _numero(self):
         texto = (self.txt.text() or "").replace("$", "").replace(" ", "").replace(",", ".")
         if not texto.strip():
-            return 0.0
+            return self._deuda
         try:
             return redondear_dinero(float(texto))
         except ValueError:

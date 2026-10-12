@@ -1,13 +1,14 @@
 # src/jefe/componentes_visuales/jefe_card.py
+import os
 from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QPixmap
 
 
 class JefeCard(QFrame):
     clicked = pyqtSignal()
 
-    def __init__(self, title, icon_char, accent, bg_soft, text_dark, parent=None):
+    def __init__(self, title, icon_input, accent, bg_soft, text_dark, parent=None):
         super().__init__(parent)
         self._locked   = False
         self._accent   = accent
@@ -34,16 +35,52 @@ class JefeCard(QFrame):
         layout.setContentsMargins(20, 22, 20, 18)
         layout.setSpacing(0)
 
-        # Pill de ícono con color suave
-        icon_pill = QLabel(icon_char)
+        # Pill de ícono con color suave - soporta PNG o emoji
+        icon_pill = QLabel()
         icon_pill.setFixedSize(56, 56)
         icon_pill.setAlignment(Qt.AlignCenter)
-        icon_pill.setStyleSheet(f"""
-            font-size: 28px;
-            background: {bg_soft};
-            border-radius: 16px;
-            border: none;
-        """)
+
+        # Intentar cargar PNG si es una ruta
+        if isinstance(icon_input, str) and (icon_input.endswith('.png') or icon_input.endswith('.jpg') or icon_input.endswith('.svg')):
+            icon_path = self._resolve_icon_path(icon_input)
+            if icon_path and os.path.exists(icon_path):
+                pixmap = QPixmap(icon_path)
+                if not pixmap.isNull():
+                    scaled = pixmap.scaled(40, 40, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    icon_pill.setPixmap(scaled)
+                    icon_pill.setStyleSheet(f"""
+                        background: {bg_soft};
+                        border-radius: 16px;
+                        border: none;
+                    """)
+                else:
+                    # Fallback a emoji si PNG falla
+                    icon_pill.setText("📊")
+                    icon_pill.setStyleSheet(f"""
+                        font-size: 28px;
+                        background: {bg_soft};
+                        border-radius: 16px;
+                        border: none;
+                    """)
+            else:
+                # Fallback a emoji si no existe el archivo
+                icon_pill.setText("📊")
+                icon_pill.setStyleSheet(f"""
+                    font-size: 28px;
+                    background: {bg_soft};
+                    border-radius: 16px;
+                    border: none;
+                """)
+        else:
+            # Usar emoji como antes
+            icon_pill.setText(icon_input if icon_input else "📊")
+            icon_pill.setStyleSheet(f"""
+                font-size: 28px;
+                background: {bg_soft};
+                border-radius: 16px;
+                border: none;
+            """)
+
         h_icon = QHBoxLayout()
         h_icon.addStretch()
         h_icon.addWidget(icon_pill)
@@ -73,6 +110,29 @@ class JefeCard(QFrame):
         layout.addWidget(self.lbl_link)
 
         # Animación eliminada para PCs de bajos recursos
+
+    def _resolve_icon_path(self, icon_path):
+        """Resuelve la ruta del icono buscando en múltiples ubicaciones."""
+        from src.utils.paths import get_base_path
+
+        # Si es ruta absoluta
+        if os.path.isabs(icon_path):
+            return icon_path
+
+        # Buscar en src/jefe/assets/
+        base = get_base_path()
+        candidates = [
+            os.path.join(base, "src", "jefe", "assets", icon_path),
+            os.path.join(base, "src", "jefe", "assets", icon_path.replace('.png', '.svg')),
+            os.path.join(base, "src", "assets", icon_path),
+            os.path.join(base, "src", "assets", icon_path.replace('.png', '.svg')),
+        ]
+
+        for candidate in candidates:
+            if os.path.exists(candidate):
+                return candidate
+
+        return None
 
     @staticmethod
     def _hex2rgb(h):

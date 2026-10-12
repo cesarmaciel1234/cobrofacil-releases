@@ -30,11 +30,13 @@ def pulso_vitrina(abortar=None) -> tuple[dict, str]:
     ctx = contexto_sync(db_manager, config)
     http_data = None
     if ctx["is_slave"] and ctx["master_ip"]:
+        logger.info(f"Tienda esclava, intentando HTTP maestra {ctx['master_ip']}")
         http_data = leer_http_maestra(ctx["master_ip"], abortar=abortar)
 
     if http_data and not ctx["db_viva"]:
         from src.central_red_global.sync_tienda.ranking.desde_payload import asegurar_ranking
 
+        logger.info("DB local no conectada, usando HTTP maestra")
         data = asegurar_ranking(http_data, ctx["master_ip"])
         data = fusionar_http(data, http_data, ctx["master_ip"])
         guardar_cache(data)
@@ -42,16 +44,22 @@ def pulso_vitrina(abortar=None) -> tuple[dict, str]:
         return data, "online"
 
     try:
+        logger.info("Leyendo catálogo desde DB local")
         data = leer_catalogo_db(db_manager)
         data = fusionar_http(data, http_data, ctx["master_ip"])
-        logger.info("Cartelería sync MariaDB/local (%s ítems)", len(data.get("precios") or []))
+        precios_count = len(data.get("precios") or [])
+        logger.info("Cartelería sync MariaDB/local (%s ítems)", precios_count)
+        if precios_count == 0:
+            logger.warning("DB local retornó 0 productos - revisar tabla productos")
         guardar_cache(data)
         if ctx["is_slave"]:
             _bajar_pngs()
         return data, "online"
     except Exception as e_req:
-        logger.warning("Error DB directa (%s), intentando caché offline...", e_req)
+        logger.warning("Error DB directa (%s), intentando caché offline...", e_req, exc_info=True)
         cached = leer_cache()
         if cached:
+            logger.info("Usando caché offline (%s ítems)", len(cached.get("precios") or []))
             return cached, "offline"
+        logger.error("No hay caché disponible ni DB - cartelería sin datos")
         return {}, "error"

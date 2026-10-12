@@ -22,7 +22,7 @@ class DialogoEditarCliente(QDialog):
         self.db = db_manager
         self.cliente = cerebro.obtener(cliente_id) or {}
         self.setWindowTitle("Editar cliente")
-        self.setFixedSize(420, 440)
+        self.setFixedSize(460, 500)
         self.setStyleSheet(f"""
             QDialog {{ background: {_CLI['bg']}; }}
             QLabel {{ color: #334155; font-weight: 700; border: none; }}
@@ -68,11 +68,28 @@ class DialogoEditarCliente(QDialog):
         tipo = (dict(self.cliente).get("tipo_cliente") or "regular").lower()
         self.cmb_perfil.setCurrentIndex(0 if tipo == "express" else 1)
 
+        self.cmb_plazo = QComboBox()
+        self.cmb_plazo.setEditable(True)
+        for etiqueta, dias in (("Sin plazo (cuenta días corridos)", 0), ("7 días", 7),
+                               ("15 días", 15), ("30 días", 30), ("45 días", 45), ("60 días", 60)):
+            self.cmb_plazo.addItem(etiqueta, dias)
+        self.cmb_plazo.setToolTip("Con plazo, la cartera muestra cuenta regresiva. En 0 pasa a -1 día (vencido).")
+        try:
+            plazo_actual = int(dict(self.cliente).get("plazo_dias") or 0)
+        except (TypeError, ValueError):
+            plazo_actual = 0
+        idx = self.cmb_plazo.findData(plazo_actual)
+        if idx >= 0:
+            self.cmb_plazo.setCurrentIndex(idx)
+        else:
+            self.cmb_plazo.setEditText(f"{plazo_actual} días")
+
         form.addRow("Nombre:", self.txt_nombre)
         form.addRow("DNI:", self.txt_dni)
         form.addRow("Teléfono:", self.txt_telefono)
         form.addRow("Dirección:", self.txt_direccion)
         form.addRow("Perfil:", self.cmb_perfil)
+        form.addRow("Plazo:", self.cmb_plazo)
         lay.addLayout(form)
         lay.addStretch()
 
@@ -100,6 +117,14 @@ class DialogoEditarCliente(QDialog):
         self.txt_nombre.setFocus()
         self.txt_nombre.selectAll()
 
+    def _plazo_elegido(self) -> int:
+        texto = self.cmb_plazo.currentText().strip()
+        idx = self.cmb_plazo.findText(texto)
+        if idx >= 0:
+            return int(self.cmb_plazo.itemData(idx) or 0)
+        digitos = "".join(ch for ch in texto if ch.isdigit())
+        return int(digitos) if digitos else 0
+
     def _guardar(self):
         nombre = self.txt_nombre.text().strip()
         if not nombre:
@@ -120,8 +145,9 @@ class DialogoEditarCliente(QDialog):
         telefono = self.txt_telefono.text().strip()
         direccion = self.txt_direccion.text().strip()
         tipo = self.cmb_perfil.currentData() or "regular"
+        plazo = self._plazo_elegido()
         ok = cerebro.actualizar_ficha(
-            self.cliente_id, nombre, dni, telefono, direccion, tipo
+            self.cliente_id, nombre, dni, telefono, direccion, tipo, plazo
         )
         if ok:
             self.accept()

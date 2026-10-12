@@ -113,6 +113,7 @@ class CentroCobranzasPanel(QWidget):
         self.lienzo_qr = self.panel_selector.lienzo_qr
         self.lienzo_tarjeta = self.panel_selector.lienzo_tarjeta
         self.lienzo_transferencia = self.panel_selector.lienzo_transferencia
+        self.lienzo_mixto = self.panel_selector.lienzo_mixto
         
         lay_cob.addWidget(self.panel_estado)
         lay_cob.addWidget(self.panel_selector)
@@ -122,6 +123,7 @@ class CentroCobranzasPanel(QWidget):
         self.panel_selector.btn_qr.clicked.connect(lambda: self._iniciar_cobranza("QR"))
         self.panel_selector.btn_tarjeta.clicked.connect(lambda: self._iniciar_cobranza("Tarjeta"))
         self.panel_selector.btn_transferencia.clicked.connect(lambda: self._iniciar_cobranza("Transferencia"))
+        self.panel_selector.btn_mixto.clicked.connect(lambda: self._iniciar_cobranza("Mixto"))
         
         self.btn_abono_libre.clicked.connect(lambda: self._iniciar_cobranza("Efectivo"))
 
@@ -137,6 +139,8 @@ class CentroCobranzasPanel(QWidget):
         
         self.lienzo_transferencia.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Transferencia", det))
         self.lienzo_transferencia.volver.connect(self._volver_de_lienzo)
+        self.lienzo_mixto.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Mixto", det))
+        self.lienzo_mixto.volver.connect(self._volver_de_lienzo)
 
         row_center.addWidget(self.card)
         row_center.addStretch(1)
@@ -259,6 +263,9 @@ class CentroCobranzasPanel(QWidget):
         elif metodo == "Transferencia":
             self.cont_lienzos.setCurrentWidget(self.lienzo_transferencia)
             self.lienzo_transferencia.arrancar(monto)
+        elif metodo == "Mixto":
+            self.cont_lienzos.setCurrentWidget(self.lienzo_mixto)
+            self.lienzo_mixto.arrancar(monto)
             
     def keyPressEvent(self, event):
         from PyQt6.QtCore import Qt

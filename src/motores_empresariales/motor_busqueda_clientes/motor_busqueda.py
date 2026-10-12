@@ -22,7 +22,7 @@ class MotorBusquedaClientes(QObject):
     def buscar_texto(self, texto):
         self._ultimo_texto = texto.strip()
         if len(self._ultimo_texto) >= 2:
-            self._timer.start(300)
+            self._timer.start(120)
         else:
             self.sugerencias_listas.emit([])
 

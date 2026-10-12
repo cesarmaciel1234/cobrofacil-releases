@@ -36,6 +36,7 @@ class OrquestadorFiadoPiramidal(QFrame):
     pago_completado = pyqtSignal(dict)
     cancelado = pyqtSignal()
     abono_registrado = pyqtSignal(object)
+    submetodo_cambiado = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -54,12 +55,14 @@ class OrquestadorFiadoPiramidal(QFrame):
         from .ruta2_limite_superado.panel_bloqueo import PanelLimiteSuperado
         self.via_bloqueo = PanelLimiteSuperado(self)
         self.via_bloqueo.pin_validado.connect(self._emitir_aprobado_normal)
-        self.via_bloqueo.solicita_f5.connect(self._abrir_puente_f5)
+        self.via_bloqueo.solicita_cobranza.connect(self._abrir_cobranza)
         
-        from .ruta2_limite_superado.puente_f5_cobranza import PuenteF5Cobranza
-        self.via_f5 = PuenteF5Cobranza(self)
-        self.via_f5.pago_completado.connect(self.pago_completado.emit)
-        self.via_f5.cancelado.connect(self._volver_a_bloqueo)
+        from .modulo_cobranza.panel_cobranza import PanelCobranza
+        self.via_cobranza = PanelCobranza(self)
+        self.via_cobranza.abono_exitoso.connect(self._finalizar_desde_cobranza)
+        self.via_cobranza.cancelado.connect(self._volver_de_cobranza)
+        self.via_cobranza.submetodo_cambiado.connect(self.submetodo_cambiado.emit)
+        self.via_f5 = self.via_cobranza  # Alias retrocompatible
         
         from .ruta3_cliente_nuevo.panel_nuevo import PanelClienteNuevo
         self.via_nuevo = PanelClienteNuevo(self)
@@ -81,11 +84,13 @@ class OrquestadorFiadoPiramidal(QFrame):
         self.stack.addWidget(self.via_aprobado) # 1
         self.stack.addWidget(self.via_bloqueo)  # 2
         self.stack.addWidget(self.via_nuevo)    # 3
-        self.stack.addWidget(self.via_f5)       # 4
+        self.stack.addWidget(self.via_cobranza) # 4
 
     def mostrar(self, monto, modo="Fiado"):
         self.show()
+        self._modo = modo
         self._monto_carrito = monto
+        self.submetodo_cambiado.emit("")
         self.stack.setCurrentWidget(self.via_buscador)
         self.via_buscador.focus_caja()
         
@@ -122,7 +127,10 @@ class OrquestadorFiadoPiramidal(QFrame):
             'compra': self._monto_carrito
         }
         self._datos_cliente = datos
-        self._decidir_via_credito(datos)
+        if getattr(self, '_modo', '') == "MasCredito":
+            self._abrir_cobranza(self._datos_cliente)
+        else:
+            self._decidir_via_credito(datos)
 
     def _decidir_via_credito(self, datos):
         limite = float(datos.get('limite', 0))
@@ -138,13 +146,15 @@ class OrquestadorFiadoPiramidal(QFrame):
             self.via_bloqueo.poblar(datos)
             self.stack.setCurrentWidget(self.via_bloqueo)
 
-    def _emitir_aprobado_normal(self, cliente_id, _abono):
-        saldo_final = self._datos_cliente['deuda'] + self._monto_carrito
+    def _emitir_aprobado_normal(self, cliente_id, _abono=0.0):
+        monto_abono = float(_abono or 0.0)
+        saldo_previo = float(self._datos_cliente.get('deuda', 0.0) or 0.0)
+        saldo_final = saldo_previo + self._monto_carrito
         dict_salida = {
             "estado": "APROBADO",
             "cliente_id": cliente_id,
             "monto_carrito": self._monto_carrito,
-            "medio_pago": "CR\xc9DITO",
+            "medio_pago": "CRÉDITO",
             "condiciones_ticket": {
                 "es_cuenta_corriente": True,
                 "cliente_nombre": self._datos_cliente["nombre"],
@@ -152,8 +162,8 @@ class OrquestadorFiadoPiramidal(QFrame):
                     "--------------------------------",
                     ">>> CUENTA CORRIENTE <<<",
                     f"CLIENTE: {self._datos_cliente['nombre']}",
-                    f"SALDO PREVIO:   ${self._datos_cliente['deuda']:,.2f}",
-                    f"ABONO F5:       $0.00",
+                    f"SALDO PREVIO:   ${saldo_previo:,.2f}",
+                    f"ABONO COBRANZA: ${monto_abono:,.2f}",
                     f"SALDO RESTANTE: ${saldo_final:,.2f}",
                     "--------------------------------",
                     "FIRMA: _________________________"
@@ -162,9 +172,51 @@ class OrquestadorFiadoPiramidal(QFrame):
         }
         self.pago_completado.emit(dict_salida)
 
-    def _abrir_puente_f5(self, datos):
-        self.via_f5.poblar(datos)
-        self.stack.setCurrentWidget(self.via_f5)
+    def _finalizar_desde_cobranza(self):
+        # Al validar el PIN y asentarse el pago/abono en COBRANZA,
+        # concedemos la excepcion activa para que el validador final de Paso 6 NO vuelva a pedir PIN,
+        # y enviamos inmediatamente el OK al motor de cobro para finalizar la venta y emitir ticket.
+        cliente_id = int(self._datos_cliente.get('id', 0))
+        monto_abono = float(getattr(self.via_cobranza, '_monto_a_cobrar', 0.0) or 0.0)
+        try:
+            from src.clientes_fiado.cerebro.cerebro import cerebro
+            from src.cajero.cajero_activo import CajeroActivo
+            cerebro.conceder_excepcion(cliente_id, self._monto_carrito, CajeroActivo.nombre)
+            cli = cerebro.obtener(cliente_id)
+            if cli:
+                c_dict = dict(cli) if hasattr(cli, "keys") else (cli if isinstance(cli, dict) else {})
+                self._datos_cliente['deuda'] = float(c_dict.get('deuda_actual', 0.0) or 0.0)
+        except Exception:
+            pass
+        self._emitir_aprobado_normal(cliente_id, monto_abono)
+
+    _finalizar_desde_f5 = _finalizar_desde_cobranza  # Retrocompatibilidad
+
+    def _recargar_cobranza(self):
+        from src.clientes_fiado.cerebro.cerebro import cerebro
+        cli = cerebro.obtener(self._datos_cliente['id'])
+        if cli:
+            c_dict = dict(cli) if hasattr(cli, "keys") else (cli if isinstance(cli, dict) else {})
+            self._datos_cliente['deuda'] = float(c_dict.get('deuda_actual', 0.0))
+        self.via_cobranza.poblar(self._datos_cliente)
+
+    _recargar_f5 = _recargar_cobranza  # Retrocompatibilidad
+
+    def _volver_de_cobranza(self):
+        # El abono redujo la deuda, volvemos a la pantalla verde o bloqueo según corresponda.
+        cw = self.via_aprobado if self._datos_cliente['compra'] <= self._datos_cliente['limite'] else self.via_bloqueo
+        # Forzar estado aprobado si ya habian puesto el PIN (cw == via_bloqueo)
+        if cw == self.via_bloqueo:
+            self.via_bloqueo._estado_aprobado = True
+        self.stack.setCurrentWidget(cw)
+
+    _volver_de_f5 = _volver_de_cobranza  # Retrocompatibilidad
+        
+    def _abrir_cobranza(self, datos):
+        self.via_cobranza.poblar(datos)
+        self.stack.setCurrentWidget(self.via_cobranza)
+
+    _abrir_puente_f5 = _abrir_cobranza  # Retrocompatibilidad
 
     def _volver_a_bloqueo(self):
         self.stack.setCurrentWidget(self.via_bloqueo)
@@ -174,14 +226,25 @@ class OrquestadorFiadoPiramidal(QFrame):
         self._datos_cliente['compra'] = self._monto_carrito
         self._decidir_via_credito(self._datos_cliente)
 
-    def procesar_f5(self):
+    def procesar_cobranza(self):
         cw = self.stack.currentWidget()
-        if cw == self.via_aprobado:
-            self._abrir_puente_f5(self._datos_cliente)
+        if cw in (self.via_aprobado, self.via_bloqueo):
+            self._abrir_cobranza(self._datos_cliente)
             return True
-        elif cw == self.via_bloqueo:
-            self._abrir_puente_f5(self._datos_cliente)
-            return True
+        return False
+
+    procesar_f5 = procesar_cobranza  # Retrocompatibilidad
+
+    def procesar_f9(self):
+        cw = self.stack.currentWidget()
+        if cw == self.via_cobranza and hasattr(self.via_cobranza, "procesar_f9"):
+            return self.via_cobranza.procesar_f9()
+        return False
+
+    def verificar_qr(self):
+        cw = self.stack.currentWidget()
+        if cw == self.via_cobranza and hasattr(self.via_cobranza, "verificar_qr"):
+            return self.via_cobranza.verificar_qr()
         return False
         
     def bloquea_enter(self):
@@ -204,8 +267,8 @@ class OrquestadorFiadoPiramidal(QFrame):
     def keyPressEvent(self, event):
         from PyQt6.QtCore import Qt
         if event.key() == Qt.Key.Key_Escape:
-            if self.stack.currentWidget() == self.via_f5:
-                self._volver_a_bloqueo()
+            if self.stack.currentWidget() == self.via_cobranza:
+                self._volver_de_cobranza()
             elif self.stack.currentWidget() in (self.via_aprobado, self.via_bloqueo, self.via_nuevo):
                 self.stack.setCurrentWidget(self.via_buscador)
                 self.via_buscador.focus_caja()

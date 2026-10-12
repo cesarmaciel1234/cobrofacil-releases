@@ -207,6 +207,7 @@ class MigratorMixin:
         add_column_if_not_exists('clientes', 'dni', 'TEXT')
         add_column_if_not_exists('clientes', 'tipo_cliente', "TEXT DEFAULT 'regular'")
         add_column_if_not_exists('clientes', 'direccion', 'TEXT')
+        add_column_if_not_exists('clientes', 'plazo_dias', 'INTEGER DEFAULT 0')
         add_column_if_not_exists('cuenta_corriente', 'medio_pago', 'TEXT')
         add_column_if_not_exists('cuenta_corriente', 'perfil', 'TEXT')
         add_column_if_not_exists('cuenta_corriente', 'registrado_por', 'TEXT')

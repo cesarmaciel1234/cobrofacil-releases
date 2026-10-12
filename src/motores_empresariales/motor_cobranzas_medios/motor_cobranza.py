@@ -31,18 +31,14 @@ class MotorCobranzaMedios(QObject):
         from src.config import config
         from src.clientes_fiado.cerebro.cerebro import cerebro
         
-        if metodo == "Efectivo":
-            if self._pedir_pin_callback:
-                if not self._pedir_pin_callback():
-                    self.error_cobranza.emit("PIN cancelado o incorrecto")
-                    return
-            else:
-                self.requiere_autorizacion.emit()
-                # En un diseño sin callback, tendríamos que esperar. 
-                # Recomendamos inyectar set_pedir_pin_callback.
-                pass
-                
-        res = ResultadoMedio(True, metodo, (metodo == "Efectivo"), detalle)
+        if metodo == "Mixto":
+            from src.clientes_fiado.interfaz.cobro.medios.mixto import cobrar
+            res = cobrar(monto, detalle if isinstance(detalle, dict) else {})
+            if not res.ok:
+                self.error_cobranza.emit(res.detalle or "Error en distribución mixta")
+                return
+        else:
+            res = ResultadoMedio(True, metodo, (metodo == "Efectivo"), detalle)
         
         cliente = cerebro.obtener(cliente_id)
         if not cliente: 

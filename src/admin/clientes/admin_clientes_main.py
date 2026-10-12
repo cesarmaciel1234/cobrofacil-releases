@@ -175,6 +175,35 @@ class AdminClientes(QWidget):
         self.txt_buscar.textChanged.connect(self.cargar_clientes)
         pt_lay.addWidget(self.txt_buscar)
 
+        from PyQt6.QtWidgets import QButtonGroup
+        self._filtro = "todos"
+        self._chips = {}
+        chips_lay = QHBoxLayout()
+        chips_lay.setSpacing(8)
+        chips_lay.setContentsMargins(0, 6, 0, 2)
+        grupo = QButtonGroup(self)
+        grupo.setExclusive(True)
+        for clave, color in (("todos", "#334155"), ("deuda", "#DC2626"), ("al_dia", "#059669"),
+                             ("favor", "#2563EB"), ("express", "#D97706")):
+            chip = QPushButton()
+            chip.setCheckable(True)
+            chip.setCursor(Qt.CursorShape.PointingHandCursor)
+            chip.setStyleSheet(f"""
+                QPushButton {{
+                    background: white; color: {color}; border: 1px solid {_CLI['border']};
+                    border-radius: 16px; padding: 7px 16px; font-weight: 800; font-size: 12px;
+                }}
+                QPushButton:hover {{ border-color: {color}; }}
+                QPushButton:checked {{ background: {color}; color: white; border-color: {color}; }}
+            """)
+            chip.clicked.connect(lambda _=False, c=clave: self._elegir_filtro(c))
+            grupo.addButton(chip)
+            chips_lay.addWidget(chip)
+            self._chips[clave] = chip
+        self._chips["todos"].setChecked(True)
+        chips_lay.addStretch()
+        pt_lay.addLayout(chips_lay)
+
         self.tabla = QTableWidget()
         self.tabla.setColumnCount(10)
         self.tabla.setHorizontalHeaderLabels([
@@ -217,6 +246,43 @@ class AdminClientes(QWidget):
 
         self.cargar_clientes()
 
+    @staticmethod
+    def _categoria(ficha):
+        deuda = float(ficha.get("deuda_actual") or 0)
+        if deuda > 0.009:
+            return "deuda"
+        if deuda < -0.009:
+            return "favor"
+        return "al_dia"
+
+    def _elegir_filtro(self, clave):
+        self._filtro = clave
+        self.cargar_clientes()
+
+    def _pintar_chips(self, fichas):
+        cuentas = {"todos": len(fichas), "deuda": 0, "al_dia": 0, "favor": 0, "express": 0}
+        for f in fichas:
+            cuentas[self._categoria(f)] += 1
+            if (f.get("tipo_cliente") or "").lower() == "express":
+                cuentas["express"] += 1
+        textos = {
+            "todos": "Todos", "deuda": "🔴 Con deuda", "al_dia": "🟢 Al día",
+            "favor": "🔵 Saldo a favor", "express": "⚡ Express",
+        }
+        for clave, chip in self._chips.items():
+            chip.setText(f"{textos[clave]} ({cuentas[clave]})")
+
+    def _pasa_filtro(self, ficha):
+        if self._filtro == "todos":
+            return True
+        if self._filtro == "express":
+            return (ficha.get("tipo_cliente") or "").lower() == "express"
+        return self._categoria(ficha) == self._filtro
+
+    @staticmethod
+    def _dias_txt(n):
+        return f"{n} día" if abs(n) == 1 else f"{n} días"
+
     def cargar_clientes(self):
         from src.clientes_fiado.cerebro.cerebro import cerebro
         from src.clientes_fiado.oficina.huella.consulta import huella_texto
@@ -224,7 +290,10 @@ class AdminClientes(QWidget):
         self.tabla.setRowCount(0)
         busqueda = self.txt_buscar.text().strip()
         clientes = cerebro.buscar(busqueda)
-        fichas = [dict(c) for c in clientes]
+        todas = [dict(c) for c in clientes]
+        if hasattr(self, "_chips"):
+            self._pintar_chips(todas)
+        fichas = [f for f in todas if self._pasa_filtro(f)] if hasattr(self, "_chips") else todas
         fechas_cargo = cerebro.ultimos_cargos(
             [
                 ficha["id"]
@@ -236,8 +305,14 @@ class AdminClientes(QWidget):
         total_deuda = 0
         deudores = 0
         max_deuda = 0
+        for f in todas:
+            d = float(f.get("deuda_actual") or 0)
+            if d > 0:
+                total_deuda += d
+                deudores += 1
+                max_deuda = max(max_deuda, d)
 
-        if clientes:
+        if fichas:
             for i, c in enumerate(fichas):
                 deuda = float(c.get('deuda_actual') or 0)
                 limite = float(c.get('limite_credito') or 0)
@@ -247,19 +322,19 @@ class AdminClientes(QWidget):
                 tipo_txt = "⚡ Express" if tipo == 'express' else "Regular"
                 if tipo == 'express' and limite <= 0:
                     limite = FIADO_EXPRESS_LIMITE_DEFAULT
-
-                if deuda > 0:
-                    total_deuda += deuda
-                    deudores += 1
-                    if deuda > max_deuda:
-                        max_deuda = deuda
+                try:
+                    plazo = int(c.get('plazo_dias') or 0)
+                except (TypeError, ValueError):
+                    plazo = 0
 
                 self.tabla.insertRow(i)
                 self.tabla.setRowHeight(i, 58)
                 it_id = QTableWidgetItem(str(c['id']))
                 it_id.setData(Qt.ItemDataRole.UserRole, int(c['id']))
                 self.tabla.setItem(i, 0, it_id)
-                it_nombre = QTableWidgetItem(c['nombre'])
+                nombre_raw = str(c['nombre'] or '')
+                nombre_vis = nombre_raw.title() if (nombre_raw.islower() or nombre_raw.isupper()) else nombre_raw
+                it_nombre = QTableWidgetItem(nombre_vis)
                 it_nombre.setToolTip(huella_texto(c))
                 self.tabla.setItem(i, 1, it_nombre)
                 self.tabla.setItem(i, 2, QTableWidgetItem(dni or "—"))
@@ -270,10 +345,17 @@ class AdminClientes(QWidget):
                 self.tabla.setItem(i, 3, it_tipo)
                 self.tabla.setItem(i, 4, QTableWidgetItem(f"${limite:,.2f}"))
 
-                it_deuda = QTableWidgetItem(f"${deuda:,.2f}")
-                if deuda > 0:
+                if deuda > 0.009:
+                    it_deuda = QTableWidgetItem(f"${deuda:,.2f}")
                     it_deuda.setForeground(QColor("#EF4444"))
                     it_deuda.setFont(QFont("Arial", 10, QFont.Bold))
+                elif deuda < -0.009:
+                    it_deuda = QTableWidgetItem(f"+${abs(deuda):,.2f} a favor")
+                    it_deuda.setForeground(QColor("#2563EB"))
+                    it_deuda.setFont(QFont("Arial", 10, QFont.Bold))
+                else:
+                    it_deuda = QTableWidgetItem("$0.00")
+                    it_deuda.setForeground(QColor("#64748B"))
                 self.tabla.setItem(i, 5, it_deuda)
 
                 it_disp = QTableWidgetItem(f"${disponible:,.2f}")
@@ -283,26 +365,48 @@ class AdminClientes(QWidget):
                     it_disp.setForeground(QColor("#F59E0B"))
                 self.tabla.setItem(i, 6, it_disp)
 
-                dias_atraso = 0
-                if deuda > 0:
+                # Días: sin plazo = días corridos desde el último cargo.
+                # Con plazo = cuenta regresiva; después del día 0 sigue en -1, -2… (vencido).
+                if deuda > 0.009:
+                    dias_corridos = 0
                     ultima_compra = fechas_cargo.get(c["id"])
                     if ultima_compra:
                         try:
                             dt = datetime.strptime(str(ultima_compra).split('.')[0], "%Y-%m-%d %H:%M:%S")
-                            dias_atraso = (datetime.now() - dt).days
+                            dias_corridos = (datetime.now() - dt).days
                         except Exception:
                             pass
-
-                it_dias = QTableWidgetItem(f"{dias_atraso} días")
-                if dias_atraso > 30:
-                    it_dias.setForeground(QColor("#DC2626"))
-                    it_dias.setFont(QFont("Arial", 10, QFont.Bold))
+                    if plazo > 0:
+                        restan = plazo - dias_corridos
+                        if restan > 0:
+                            it_dias = QTableWidgetItem(f"⏳ {self._dias_txt(restan)}")
+                            it_dias.setForeground(QColor("#D97706" if restan <= 3 else "#0F766E"))
+                        elif restan == 0:
+                            it_dias = QTableWidgetItem("⚠ Vence hoy")
+                            it_dias.setForeground(QColor("#D97706"))
+                        else:
+                            it_dias = QTableWidgetItem(f"🔴 {self._dias_txt(restan)}")
+                            it_dias.setForeground(QColor("#DC2626"))
+                        it_dias.setFont(QFont("Arial", 10, QFont.Bold))
+                        it_dias.setToolTip(f"Plazo {plazo} días · {self._dias_txt(dias_corridos)} desde el último cargo")
+                    else:
+                        it_dias = QTableWidgetItem(self._dias_txt(dias_corridos))
+                        if dias_corridos > 30:
+                            it_dias.setForeground(QColor("#DC2626"))
+                            it_dias.setFont(QFont("Arial", 10, QFont.Bold))
+                        it_dias.setToolTip("Sin plazo: días corridos desde el último cargo")
+                elif deuda < -0.009:
+                    it_dias = QTableWidgetItem("A favor")
+                    it_dias.setForeground(QColor("#2563EB"))
+                else:
+                    it_dias = QTableWidgetItem("Al día")
+                    it_dias.setForeground(QColor("#059669"))
                 self.tabla.setItem(i, 7, it_dias)
 
-                btn_sim = QPushButton("🔄 Recalcular")
-                btn_sim.setCursor(Qt.CursorShape.PointingHandCursor)
-                btn_sim.setFixedHeight(32)
-                if deuda > 0:
+                if deuda > 0.009:
+                    btn_sim = QPushButton("🔄 Recalcular")
+                    btn_sim.setCursor(Qt.CursorShape.PointingHandCursor)
+                    btn_sim.setFixedHeight(32)
                     btn_sim.setStyleSheet(
                         "background-color: #F8FAFC; color: #2563EB; border: 1px solid #CBD5E1; "
                         "font-weight: bold; border-radius: 6px; padding: 4px 10px; font-size: 12px;"
@@ -310,10 +414,12 @@ class AdminClientes(QWidget):
                     btn_sim.clicked.connect(
                         lambda ch, cid=c['id'], cnom=c['nombre']: self._abrir_recalculo(cid, cnom)
                     )
+                    self.tabla.setCellWidget(i, 8, btn_sim)
                 else:
-                    btn_sim.setEnabled(False)
-                    btn_sim.setStyleSheet("background: transparent; color: transparent; border: none;")
-                self.tabla.setCellWidget(i, 8, btn_sim)
+                    it_rec = QTableWidgetItem("—")
+                    it_rec.setForeground(QColor("#CBD5E1"))
+                    it_rec.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    self.tabla.setItem(i, 8, it_rec)
 
                 acc_w = QWidget()
                 acc_lay = QHBoxLayout(acc_w)

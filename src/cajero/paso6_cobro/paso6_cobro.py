@@ -183,38 +183,58 @@ class Paso6Cobro(QDialog):
             "QPushButton:hover { background-color: #F8FAFC; border-color: #CBD5E1; }"
         )
 
+        from PyQt6.QtWidgets import QSizePolicy
         btn_cancelar = QPushButton("Volver al carrito")
         btn_cancelar.setObjectName("Paso6Volver")
         btn_cancelar.setFixedHeight(64)
-        btn_cancelar.setFixedWidth(220)
+        btn_cancelar.setMinimumWidth(140)
+        btn_cancelar.setMaximumWidth(190)
+        btn_cancelar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         btn_cancelar.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_cancelar.setStyleSheet(estilo_pie)
         btn_cancelar.clicked.connect(self.reject)
 
-
-        # Botón de Otras Opciones (Fiado, Clientes)
         self.btn_otras = QPushButton("⚖ CRÉDITO")
         self.btn_otras.setObjectName("Paso6Otras")
         self.btn_otras.setFixedHeight(64)
-        self.btn_otras.setFixedWidth(220)
+        self.btn_otras.setMinimumWidth(140)
+        self.btn_otras.setMaximumWidth(190)
+        self.btn_otras.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.btn_otras.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_otras.setStyleSheet(
             "QPushButton { background-color: #3B82F6; color: #FFFFFF; "
-            "border: none; border-radius: 10px; font-size: 18px; font-weight: 800; } "
+            "border: none; border-radius: 10px; font-size: 17px; font-weight: 800; } "
             "QPushButton:hover { background-color: #2563EB; }"
         )
         self.btn_otras.clicked.connect(lambda: self.procesar_click_metodo("Clientes"))
+
+        self.btn_mas_credito = QPushButton("COBRANZA")
+        self.btn_mas_credito.setObjectName("Paso6MasCredito")
+        self.btn_mas_credito.setFixedHeight(64)
+        self.btn_mas_credito.setMinimumWidth(140)
+        self.btn_mas_credito.setMaximumWidth(190)
+        self.btn_mas_credito.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.btn_mas_credito.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_mas_credito.setStyleSheet(
+            "QPushButton { background-color: #10B981; color: #FFFFFF; "
+            "border: none; border-radius: 10px; font-size: 17px; font-weight: 800; } "
+            "QPushButton:hover { background-color: #059669; }"
+        )
+        self.btn_mas_credito.clicked.connect(lambda: self.procesar_click_metodo("MasCredito"))
+
 
         pie = QFrame()
         pie.setObjectName("Paso6MetodoPie")
         pie.setFixedHeight(PIE)
         pie.setStyleSheet("QFrame#Paso6MetodoPie { background: #F8FAFC; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; border-top: 1px solid #E2E8F0; }")
         lay_btn = QHBoxLayout(pie)
-        lay_btn.setContentsMargins(32, 0, 32, 0)
+        lay_btn.setContentsMargins(16, 0, 16, 0)
         lay_btn.addStretch()
         lay_btn.addWidget(btn_cancelar)
         lay_btn.addSpacing(16)
         lay_btn.addWidget(self.btn_otras)
+        lay_btn.addSpacing(16)
+        lay_btn.addWidget(self.btn_mas_credito)
         lay_btn.addStretch()
         page_method_lay.addWidget(pie)
         self.stack.addWidget(self.page_method)
@@ -292,6 +312,7 @@ class Paso6Cobro(QDialog):
         self.panel_fiado.pago_completado.connect(self._cuenta_completada)
         self.panel_fiado.cancelado.connect(self._cuenta_cancelada)
         self.panel_fiado.abono_registrado.connect(self._abono_cuenta_registrado)
+        self.panel_fiado.submetodo_cambiado.connect(self._on_submetodo_cobranza_cambiado)
         content_lay.addWidget(self.panel_fiado, 0)
         self._point_en_curso = False
         self._emergencia_pendiente = False
@@ -531,6 +552,10 @@ class Paso6Cobro(QDialog):
             self.stack.setCurrentIndex(1)
             self._activar_fiado_express()
             return
+        elif key == "MasCredito":
+            self.stack.setCurrentIndex(1)
+            self._activar_mas_credito_express()
+            return
         else:
             self.set_metodo(key)
 
@@ -626,21 +651,8 @@ class Paso6Cobro(QDialog):
                     self.btn_aviso_mp.hide()
                 self.timer_mp.stop()
                 self.timer_spinner.stop()
-        elif key == "Clientes":
-            if metodo_previo != "Clientes":
-                self._revertir_tras_fiado = metodo_previo or "Efectivo"
-            self.lbl_input1.hide()
-            self.txt_pago.hide()
-            self.lbl_input2.hide()
-            self.txt_otro.hide()
-            self.lbl_cliente.hide()
-            self.cmb_cliente.hide()
-            self.txt_pago.setText(self._monto(self.total_final))
-            self.txt_pago.setReadOnly(True)
-            self.lbl_mp_status.hide()
-            self.timer_mp.stop()
-        elif key == "Fiado":
-            if metodo_previo != "Fiado":
+        elif key in ("Clientes", "Fiado", "MasCredito"):
+            if metodo_previo not in ("Clientes", "Fiado", "MasCredito"):
                 self._revertir_tras_fiado = metodo_previo or "Efectivo"
             self.lbl_input1.hide()
             self.txt_pago.hide()
@@ -681,7 +693,7 @@ class Paso6Cobro(QDialog):
                 QTimer.singleShot(0, self._cobrar_tarjeta_point)
         elif hasattr(self, "panel_tarjeta"):
             self.panel_tarjeta.ocultar()
-        if key not in ("Fiado", "Clientes") and hasattr(self, "panel_fiado"):
+        if key not in ("Fiado", "Clientes", "MasCredito") and hasattr(self, "panel_fiado"):
             self.panel_fiado.ocultar()
         if key != "Transferencia" and hasattr(self, "btn_aviso_mp"):
             self.btn_aviso_mp.hide()
@@ -699,7 +711,7 @@ class Paso6Cobro(QDialog):
         if key == "Transferencia":
             self.setFocus()
             return
-        if key in ("Fiado", "Clientes"):
+        if key in ("Fiado", "Clientes", "MasCredito"):
             self.setFocus()
             return
         if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
@@ -729,6 +741,13 @@ class Paso6Cobro(QDialog):
             except Exception:
                 continue
         self.cmb_cliente.blockSignals(False)
+
+    def _activar_mas_credito_express(self):
+        if self.current_metodo != "MasCredito":
+            self._revertir_tras_fiado = self.current_metodo or "Efectivo"
+        self.stack.setCurrentIndex(1)
+        self.set_metodo("MasCredito")
+        self._mostrar_hoja_cuenta("MasCredito")
 
     def _activar_cliente_express(self):
         """Clic en Clientes: la misma hoja del cobro, no una ventana oscura."""
@@ -784,7 +803,7 @@ class Paso6Cobro(QDialog):
             hasattr(self, "panel_fiado")
             and self.panel_fiado.hoja_cuenta.isVisible()
             and (
-                self.current_metodo in ("Fiado", "Clientes")
+                self.current_metodo in ("Fiado", "Clientes", "MasCredito")
                 or getattr(self, "_mixto_espera_cuenta", False)
             )
         )
@@ -879,7 +898,7 @@ class Paso6Cobro(QDialog):
             self._fiado_flujo_activo = False
             self._fiado_cliente_id = None
             rev = getattr(self, "_revertir_tras_fiado", "Efectivo") or "Efectivo"
-            if rev in ("Fiado", "Clientes"):
+            if rev in ("Fiado", "Clientes", "MasCredito"):
                 rev = "Efectivo"
             self.panel_fiado.ocultar()
             self.stack.setCurrentIndex(0)
@@ -1006,7 +1025,7 @@ class Paso6Cobro(QDialog):
         """ Centraliza la validación para evitar redundancias y errores de arqueo. """
         p1_t = str(parse_float_regional(self.txt_pago.text()))
         p2_t = str(parse_float_regional(self.txt_otro.text()))
-        if self.current_metodo in ("Fiado", "Clientes"):
+        if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
             p1_t = f"{float(self.total_final or 0):.2f}"
 
         if not p1_t:
@@ -1026,7 +1045,7 @@ class Paso6Cobro(QDialog):
         else:
             self.aviso_monto.hide()
 
-        if self.current_metodo in ("Fiado", "Clientes"):
+        if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
             from src.clientes_fiado.cerebro.cerebro import cerebro
 
             cliente_id = getattr(self, "_fiado_cliente_id", None) or self.cmb_cliente.currentData()
@@ -1081,7 +1100,7 @@ class Paso6Cobro(QDialog):
                 # Si falta dinero y no es mixto, ofrecer pasarse a Mixto
                 if self.current_metodo == "Mixto":
                     return None
-                if self.current_metodo in ("Fiado", "Clientes"):
+                if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
                     self._avisar("No se pudo cargar el total a la cuenta.")
                     return None
                 try:
@@ -1107,7 +1126,7 @@ class Paso6Cobro(QDialog):
         if self.current_metodo == "Mixto":
             self._entrar_mixto(False)
             return
-        if self.current_metodo in ("Fiado", "Clientes"):
+        if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
             if getattr(self, "_fiado_flujo_activo", False):
                 return
             if getattr(self, "_fiado_cliente_id", None):
@@ -1249,7 +1268,7 @@ class Paso6Cobro(QDialog):
     def _elegir_cierre(self, modo):
         """F1 imprime al pagar. F2 cierra sin ticket. F10 es el fiscal.
         Si todavía se espera el cobro, el clic no cierra: avisa una vez y queda elegido."""
-        if self.current_metodo in ("Fiado", "Clientes"):
+        if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
             return
         if modo == "fiscal":
             config._load_config()
@@ -1479,6 +1498,9 @@ class Paso6Cobro(QDialog):
             elif k == Qt.Key.Key_F12:
                 self._tecla_f12()
                 return True
+            elif k == Qt.Key.Key_F7:
+                self._tecla_f7()
+                return True
             elif k == Qt.Key.Key_F1:
                 self._elegir_cierre("imprime")
                 return True
@@ -1522,10 +1544,7 @@ class Paso6Cobro(QDialog):
         listo = bool(token and device) or bool(token and user and self._pos_qr())
         self._tpv_listo = listo
         if hasattr(self, "teclado_lateral"):
-            if self.current_metodo in ("Fiado", "Clientes"):
-                self.teclado_lateral.mostrar_emergencia(False)
-            else:
-                self.teclado_lateral.mostrar_emergencia(listo)
+            self.teclado_lateral.mostrar_emergencia(listo)
         color = "#22C55E" if listo else "#EF4444"
         texto = "TPV listo" if listo else "TPV sin activar"
         estilo = (
@@ -1561,7 +1580,7 @@ class Paso6Cobro(QDialog):
             self.panel_monto.hide()
             self._repartir_hueco(tarjeta=1)
             return
-        if self.current_metodo in ("Fiado", "Clientes"):
+        if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
             self.panel_monto.hide()
             self._repartir_hueco(hueco=0)
             self.content_lay.setStretch(self.content_lay.indexOf(self.panel_fiado), 1)
@@ -1638,16 +1657,19 @@ class Paso6Cobro(QDialog):
         self.intentar_finalizar()
 
     def _emergencia(self):
-        if not getattr(self, "_tpv_listo", False):
-            return
         if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
             return
-            
-        if getattr(self, "_fiado_flujo_activo", False):
-            if hasattr(self, "panel_fiado") and self.panel_fiado.isVisible():
-                if hasattr(self.panel_fiado, "procesar_f9"):
-                    if self.panel_fiado.procesar_f9():
-                        return # El lienzo absorbió el F9
+
+        if hasattr(self, "panel_fiado") and self.panel_fiado.isVisible():
+            if hasattr(self.panel_fiado, "procesar_f9"):
+                if self.panel_fiado.procesar_f9():
+                    return # El lienzo absorbió el F9 y cobró de emergencia
+
+        if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
+            return
+
+        if not getattr(self, "_tpv_listo", False):
+            return
 
         if getattr(self, "_point_en_curso", False):
             self._emergencia_pendiente = True
@@ -2045,20 +2067,27 @@ class Paso6Cobro(QDialog):
         ):
             self._entrar_mixto(getattr(self, "_mixto_imprimir", False))
 
+    def _on_submetodo_cobranza_cambiado(self, submetodo):
+        self._submetodo_cobranza = str(submetodo or "")
+        self._ajustar_botones_mp()
+
     def _ajustar_botones_mp(self):
         """Cada columna conserva el hueco. Solo se ve el botón del medio elegido."""
         if not hasattr(self, "pila_point"):
             return
         metodo = self.current_metodo
-        self.pila_point.setCurrentIndex(0 if metodo in ("Tarjeta", "Mixto") else 1)
+        sub = getattr(self, "_submetodo_cobranza", "") or ""
+        
+        # En Cobranza o Clientes/Fiado, si hay un submedio activo (QR, Tarjeta, Transferencia), adoptamos sus botones
+        efectivo_metodo = sub if (metodo in ("MasCredito", "Cobranza", "Fiado", "Clientes") and sub) else metodo
+        
+        self.pila_point.setCurrentIndex(0 if efectivo_metodo in ("Tarjeta", "Mixto") else 1)
         if hasattr(self, "pila_f2"):
-            self.pila_f2.setCurrentIndex(1 if metodo == "Mixto" else 0)
-        if metodo in ("Mixto", "QR"):
+            self.pila_f2.setCurrentIndex(1 if efectivo_metodo == "Mixto" else 0)
+        if efectivo_metodo in ("Mixto", "QR"):
             self.pila_extra.setCurrentIndex(0)
-        elif metodo == "Transferencia":
+        elif efectivo_metodo == "Transferencia":
             self.pila_extra.setCurrentIndex(1)
-        elif metodo in ("Fiado", "Clientes"):
-            self.pila_extra.setCurrentIndex(3)
         else:
             self.pila_extra.setCurrentIndex(2)
         
@@ -2070,27 +2099,44 @@ class Paso6Cobro(QDialog):
         config._load_config()
         self.teclado_lateral.mostrar_fiscal(bool(config.get("facturacion_afip_global", False)))
 
+    def _metodo_efectivo_botonera(self):
+        sub = getattr(self, "_submetodo_cobranza", "") or ""
+        if self.current_metodo in ("MasCredito", "Cobranza", "Fiado", "Clientes") and sub:
+            return sub
+        return self.current_metodo
+
     def _tecla_f12(self):
-        if self.current_metodo == "Transferencia":
+        """F12 = Verif QR. Solo donde se ve el botón Verif QR (QR y Mixto)."""
+        if self._metodo_efectivo_botonera() in ("QR", "Mixto"):
+            self.verificar_transferencia_mp()
+
+    def _tecla_f7(self):
+        """F7 = último monto. Solo donde se ve ese botón (Transferencia y Mixto)."""
+        if self._metodo_efectivo_botonera() in ("Transferencia", "Mixto"):
             self.corroborar_ultimo_monto()
-        elif self.current_metodo == "QR":
-            self.verificar_transferencia_mp()
-        elif self.current_metodo == "Mixto":
-            if getattr(self, "_mixto_esperando_qr", False):
-                self.verificar_transferencia_mp()
-            else:
-                self.corroborar_ultimo_monto()
-        elif self.current_metodo == "Tarjeta" and self.btn_f12.isVisible():
-            self.verificar_transferencia_mp()
 
     def corroborar_ultimo_monto(self):
         if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
             return
+        sub = getattr(self, "_submetodo_cobranza", "")
+        if self.current_metodo in ("MasCredito", "Cobranza", "Fiado", "Clientes") and sub == "Transferencia":
+            if hasattr(self, "panel_fiado") and hasattr(self.panel_fiado, "via_cobranza"):
+                cob = self.panel_fiado.via_cobranza
+                if hasattr(cob, "lienzo_transferencia") and cob.cont_lienzos.currentWidget() == cob.lienzo_transferencia:
+                    cob.lienzo_transferencia._mirar()
+                    return
         from src.cajero.paso6_cobro.mercadopago_core.polling_service import PollingService
         PollingService(self).ultimo_monto_recibido()
 
     def procesar_pago_mercadopago_point(self):
         if getattr(self, 'stack', None) and self.stack.currentIndex() == 0: return
+        sub = getattr(self, "_submetodo_cobranza", "")
+        if self.current_metodo in ("MasCredito", "Cobranza", "Fiado", "Clientes") and sub == "Tarjeta":
+            if hasattr(self, "panel_fiado") and hasattr(self.panel_fiado, "via_cobranza"):
+                cob = self.panel_fiado.via_cobranza
+                if hasattr(cob, "lienzo_tarjeta") and cob.cont_lienzos.currentWidget() == cob.lienzo_tarjeta:
+                    cob.lienzo_tarjeta.arrancar(cob._monto_a_cobrar, descripcion="Abono de Cuenta")
+                    return
         if getattr(self, '_fiado_flujo_activo', False): return
         if self.current_metodo == "QR":
             return
@@ -2116,6 +2162,17 @@ class Paso6Cobro(QDialog):
 
     def verificar_transferencia_mp(self):
         if getattr(self, 'stack', None) and self.stack.currentIndex() == 0: return
+        sub = getattr(self, "_submetodo_cobranza", "")
+        if (getattr(self, '_fiado_flujo_activo', False) or self.current_metodo in ("MasCredito", "Cobranza")) and sub:
+            if hasattr(self, "panel_fiado") and hasattr(self.panel_fiado, "via_cobranza"):
+                cob = self.panel_fiado.via_cobranza
+                if sub == "QR" and hasattr(cob, "lienzo_qr") and cob.cont_lienzos.currentWidget() == cob.lienzo_qr:
+                    cob.lienzo_qr._consultar_pago()
+                    return
+                elif sub == "Transferencia" and hasattr(cob, "lienzo_transferencia") and cob.cont_lienzos.currentWidget() == cob.lienzo_transferencia:
+                    cob.lienzo_transferencia._mirar()
+                    return
+            return
         if getattr(self, '_fiado_flujo_activo', False): return
         from src.cajero.paso6_cobro.mercadopago_core.polling_service import PollingService
         PollingService(self).verificar_transferencia_mp()
@@ -2135,16 +2192,14 @@ class Paso6Cobro(QDialog):
         # =========================================================
 
         if k == Qt.Key.Key_F1:
-            if self.current_metodo in ("Fiado", "Clientes"): return
+            if self.current_metodo in ("Fiado", "Clientes", "MasCredito"): return
             self._elegir_cierre("imprime")
         elif k == Qt.Key.Key_F2:
-            if self.current_metodo in ("Fiado", "Clientes"): return
+            if self.current_metodo in ("Fiado", "Clientes", "MasCredito"): return
             self._elegir_cierre("cierra")
         elif k == Qt.Key.Key_F3: self.abrir_descuento()
         elif k == Qt.Key.Key_F4: self.abrir_recargo()
-        elif k == Qt.Key.Key_F5:
-            if self._f5_pagar_cuenta():
-                return
+        
         elif k == Qt.Key.Key_F10: self._elegir_cierre("fiscal")
         elif k == Qt.Key.Key_F9: self._emergencia()
         elif k == Qt.Key.Key_F11:
@@ -2152,6 +2207,8 @@ class Paso6Cobro(QDialog):
                 self.procesar_pago_mercadopago_point()
         elif k == Qt.Key.Key_F12:
             self._tecla_f12()
+        elif k == Qt.Key.Key_F7:
+            self._tecla_f7()
         elif k == Qt.Key.Key_Escape:
             if self._hoja_cuenta_al_frente():
                 self.panel_fiado.hoja_cuenta._cancelar()
@@ -2165,7 +2222,7 @@ class Paso6Cobro(QDialog):
             if self._hoja_cuenta_al_frente():
                 self.panel_fiado.hoja_cuenta.confirmar()
                 return
-            if self.current_metodo in ("Fiado", "Clientes"):
+            if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
                 if self.panel_fiado.hoja_cuenta.isVisible():
                     self.panel_fiado.hoja_cuenta.confirmar()
                     return
@@ -2209,8 +2266,10 @@ class Paso6Cobro(QDialog):
         if key == "F10":
             self._elegir_cierre("fiscal")
             return
-        if key == "F5" and self._f5_pagar_cuenta():
+        if key == "F9":
+            self._emergencia()
             return
+        
         if self._hoja_cuenta_al_frente():
             if key == "ENTER":
                 self.panel_fiado.hoja_cuenta.confirmar()

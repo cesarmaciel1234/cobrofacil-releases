@@ -1,28 +1,52 @@
-# Plano: Centro de Cobranzas (F6) - Encarpetado Piramidal
+﻿# Plano Piramidal: F6 (Centro de Cobranzas Autónomo)
 
-## �Qu� es esto?
-Este es el "Centro de Cobranzas" o "F6", la pantalla a la que entra el cajero cuando el cliente viene a abonar (pagar) una deuda de fiado sin comprar productos nuevos.
+## Filosofía
+El Centro de Cobranzas (F6) es una aplicación independiente dentro del TPV. No vende productos; **exclusivamente gestiona deudas y dinero a favor**.
+Siguiendo la ley de rutas aisladas, F6 ya no mezcla la lógica visual en un solo archivo, sino que el orquestador (`panel.py`) desvía el tren a módulos cerrados según lo que el cajero quiera hacer.
 
-## Arquitectura Piramidal (Frente y Fondo)
+## Estructura de Rutas
 
-### Frente (UI Modular)
-La interfaz visual se ha dividido en "lienzos" o componentes est�ticos dentro de la carpeta `componentes_f6/` para no saturar el archivo principal (`panel.py`).
-1. **`ui_buscador/`**: Contiene el buscador interactivo de clientes.
-2. **`ui_estado/`**: Muestra la deuda actual del cliente, su nombre, y la caja para escribir el monto a abonar (o el bot�n para abrir el selector).
-3. **`ui_selector/`**: Contiene los botones de los medios de pago digitales (Efectivo, Tarjeta, QR, Transferencia) y un `QStackedWidget` que embebe los lienzos interactivos nativos de cada medio (los mismos que usa Paso 6).
+```text
+src/cajero/f6_centro_cobranzas/
+│
+├── panel.py                      <-- El Orquestador F6. Actúa como estación central de trenes.
+│
+├── rutas_f6/                     <-- Las vías físicas aisladas
+│   │
+│   ├── 1_buscador_global/        <-- (Actualmente: ui_buscador)
+│   │   ├── panel_buscador.py     (Busca al cliente)
+│   │   └── README.md             (Emite el DNI/Nombre al orquestador)
+│   │
+│   ├── 2_analisis_cuenta/        <-- (Actualmente: ui_estado)
+│   │   ├── panel_estado.py       (Recibe la info del motor. Calcula si es DEUDA o SALDO A FAVOR)
+│   │   └── README.md             (Si es saldo a favor -> Pinta Verde. Si es deuda -> Pinta Rojo)
+│   │
+│   └── 3_ejecucion_pago/         <-- (Actualmente: ui_selector)
+│       ├── panel_selector.py     (El usuario tipeó el monto y eligió Efectivo/QR)
+│       ├── lienzos_embebidos/    (Muestra la tarjeta o el código QR)
+│       └── README.md             (Da el OK final al Motor Global)
+│
+└── Motores Globales Usados:
+    - MotorBusquedaClientes (Extrae la deuda y el límite)
+    - MotorCobranzaMedios (Asienta el ingreso de dinero en la caja y resta la deuda)
+```
 
-### Fondo (Motores Empresariales Globales)
-A diferencia de versiones anteriores, F6 ya no tiene l�gica dura embebida en su UI. `panel.py` act�a �nicamente como orquestador y se conecta a los **Motores Empresariales** globales ubicados en `src/motores_empresariales/`:
-1. **`MotorBusquedaClientes`**: Maneja la conexi�n a MariaDB/SQLite, busca el cliente, y emite `limite_aprobado` con los datos de deuda actualizados.
-2. **`MotorCobranzaMedios`**: Recibe el intento de pago (Efectivo, QR, etc.). Tiene embebida la regla de autorizaci�n (el callback de PIN, por ejemplo, que levanta el `DialogoPIN` validado contra `CajeroActivo`). Si el PIN es correcto, este motor llama a `asentar()` en la base de datos y descuenta la deuda.
+## Flujo del Tren (Paso a Paso F6)
 
-## Flujo de Datos (C�mo funciona)
-1. El usuario abre F6. Aparece `PanelBuscadorClientes` (`ui_buscador`).
-2. Al tipear y dar **Enter**, se emite `cliente_elegido`.
-3. `panel.py` recibe el cliente y se lo pasa a `MotorBusquedaClientes.aprobar_credito()`.
-4. El motor calcula y responde. La UI cambia al `PanelEstadoCredito` (`ui_estado`).
-5. El cajero toca "Iniciar Pago". Se muestran los botones de medios (`ui_selector`).
-6. El cajero selecciona (ej: Transferencia). Se abre el lienzo nativo de Transferencia.
-7. Si el TPV no detecta nada, el cajero fuerza el cobro con **F9 MANUAL**.
-8. El lienzo emite `listo`. `panel.py` se lo manda a `MotorCobranzaMedios.finalizar()`.
-9. El motor global asienta el pago, descuenta el saldo en BD y emite �xito, cerrando el F6.
+1. **Vía 1 (Buscando):**
+   - El cajero oprime F6 en el panel principal.
+   - El orquestador inyecta `1_buscador_global`.
+   - Si no hay coincidencias, aparece el cartel `"No hay coincidencia..."` (y se puede crear un cliente nuevo con ENTER).
+
+2. **Vía 2 (Análisis):**
+   - Se selecciona a un cliente. El orquestador invoca al *MotorBusquedaClientes* y extrae la variable `deuda`.
+   - Se inyecta la ruta `2_analisis_cuenta`. 
+   - El módulo decide: ¿Es un saldo negativo? Muestra **Saldo a favor ($ verde)**. ¿Es un saldo positivo? Muestra **Deuda actual ($ rojo)**.
+
+3. **Vía 3 (Cobro o Recarga):**
+   - El cajero oprime "PAGAR/ABONAR".
+   - Se inyecta la ruta `3_ejecucion_pago`.
+   - El cajero ingresa el monto (ej: $15.000) y elige el método (Ej: Transferencia).
+   - El lienzo emite un `"AUTORIZADO"`.
+   - El Orquestador manda esos $15.000 al *MotorCobranzaMedios*. La caja del día suma $15.000 y el cliente descuenta su deuda. Todo de forma transparente y sin entorpecer el proceso de ventas del Paso 6.
+

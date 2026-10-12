@@ -66,8 +66,8 @@ class CerebroClientesFiado:
     def actualizar_existente(self, cliente_id, nombre, telefono, limite, dni):
         return self.cuenta.actualizar_existente(cliente_id, nombre, telefono, limite, dni)
 
-    def actualizar_ficha(self, cliente_id, nombre, dni, telefono, direccion, tipo):
-        return self.cuenta.actualizar_ficha(cliente_id, nombre, dni, telefono, direccion, tipo)
+    def actualizar_ficha(self, cliente_id, nombre, dni, telefono, direccion, tipo, plazo_dias=None):
+        return self.cuenta.actualizar_ficha(cliente_id, nombre, dni, telefono, direccion, tipo, plazo_dias)
 
     def fijar_limite(self, cliente_id, limite):
         return self.cuenta.fijar_limite(cliente_id, limite)

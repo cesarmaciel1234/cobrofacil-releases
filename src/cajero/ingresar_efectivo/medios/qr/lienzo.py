@@ -23,7 +23,7 @@ class LienzoQr(QWidget):
         self._senal = _Senal(self)
         self._senal.dato.connect(self._pintar)
         self._reloj = QTimer(self)
-        self._reloj.setInterval(3000)
+        self._reloj.setInterval(1000)
         self._reloj.timeout.connect(self._consultar_pago)
 
     def _armar(self):
@@ -133,6 +133,7 @@ class LienzoQr(QWidget):
         ref = self._ref
         token = self._token
         generacion = self._generacion
+        self.estado.setText("Verificando pago en Mercado Pago…")
 
         def _trabajo():
             try:
@@ -146,6 +147,11 @@ class LienzoQr(QWidget):
                     "pagado": True,
                     "pago_id": str((pago or {}).get("id") or ref),
                 })
+            else:
+                self._senal.dato.emit({
+                    "generacion": generacion,
+                    "esperando_aun": True,
+                })
 
         threading.Thread(target=_trabajo, daemon=True).start()
 
@@ -157,6 +163,10 @@ class LienzoQr(QWidget):
 
     def _aplicar(self, dato):
         if not dato or dato.get("generacion") != self._generacion:
+            return
+        if dato.get("esperando_aun"):
+            if self._modo == "esperando":
+                self.estado.setText("Esperando escaneo del cliente…")
             return
         if dato.get("pagado"):
             if self._modo != "esperando":

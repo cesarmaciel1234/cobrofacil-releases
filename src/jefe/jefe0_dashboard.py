@@ -30,16 +30,18 @@ from src.jefe.reportes.letra import fuente_limpia
 
 # â”€â”€ MÃ³dulos del Jefe â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 JEFE_MODULES = [
-    ("reportes",     "Reportes\ny Ventas",       "ðŸ“Š", "#10B981", "#D1FAE5", "#065F46", 20,  None),
-    ("nexus_pro",    "Nexus Pro\nControl",        "ðŸŒŒ", "#6366F1", "#EEF2FF", "#3730A3", 18, None),
-    ("corte_caja",   "Corte y\nCierre Global",    "ðŸ’µ", "#34D399", "#ECFDF5", "#047857", 7,  None),
-    ("red_lan",      "Servidor LAN\nMaestra/Esclava", "ðŸŒ", "#0EA5E9", "#E0F2FE", "#075985", 6, None),
-    
-    ("proveedores",  "Proveedores\nERP",          "ðŸšš", "#0EA5E9", "#E0F2FE", "#075985", 26, None),
-    ("promedios",    "Costos y\nPromedios",       "âš–ï¸", "#EC4899", "#FDF2F8", "#831843", 24, None),
-    ("ia_proactiva", "IA\nProactiva",             "ðŸ§ ", "#8B5CF6", "#F5F3FF", "#4C1D95", 23, None),
-    ("personal",     "Personal y\nUsuarios",      "ðŸ‘¥", "#F43F5E", "#FFE4E6", "#9F1239", -1, None),
+    ("reportes",     "Reportes\ny Ventas",       "📊", "#10B981", "#D1FAE5", "#065F46", 20,  None),
+    ("nexus_pro",    "Nexus Pro\nControl",        "🌌", "#6366F1", "#EEF2FF", "#3730A3", 18, None),
+    ("corte_caja",   "Corte y\nCierre Global",    "💰", "#34D399", "#ECFDF5", "#047857", 7,  None),
+    ("red_lan",      "Servidor LAN\nMaestra/Esclava", "🌐", "#0EA5E9", "#E0F2FE", "#075985", 6, None),
+
+    ("proveedores",  "Proveedores\nERP",          "🚚", "#0EA5E9", "#E0F2FE", "#075985", 26, None),
+    ("promedios",    "Costos y\nPromedios",       "⚖️", "#EC4899", "#FDF2F8", "#831843", 24, None),
+    ("ia_proactiva", "IA\nProactiva",             "🧠", "#8B5CF6", "#F5F3FF", "#4C1D95", 23, None),
+    ("personal",     "Personal y\nUsuarios",      "👥", "#F43F5E", "#FFE4E6", "#9F1239", -1, None),
 ]
+# (id, título, icon, accent_hex, bg_suave, text_dark, screen, tab)
+
 # (id, tÃ­tulo, icon, accent_hex, bg_suave, text_dark, screen, tab)
 
 
@@ -164,7 +166,7 @@ class Jefe0Dashboard(QWidget):
         nav_lay.addWidget(self.btn_portabilidad)
         QTimer.singleShot(0, self._refresh_nodo_button)
 
-        self.btn_tema = QPushButton("ðŸŒ™ Noche")
+        self.btn_tema = QPushButton("🌙 Noche")
         self.btn_tema.setCursor(Qt.PointingHandCursor)
         self.btn_tema.setFixedHeight(34)
         self.btn_tema.setStyleSheet("""
@@ -178,7 +180,7 @@ class Jefe0Dashboard(QWidget):
         """)
         self.btn_tema.clicked.connect(self._toggle_theme)
 
-        self.btn_perfiles = QPushButton("ðŸ‘¥ Personal")
+        self.btn_perfiles = QPushButton("👥 Personal")
         self.btn_perfiles.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_perfiles.setFixedHeight(34)
         self.btn_perfiles.setStyleSheet("""
@@ -196,12 +198,12 @@ class Jefe0Dashboard(QWidget):
         try:
             from src.config import config
             if config and config.get("theme", "light") == "dark":
-                self.btn_tema.setText("â˜€ï¸ DÃ­a")
+                self.btn_tema.setText("☀️ Día")
         except: pass
 
         nav_lay.addWidget(self.btn_tema)
 
-        self.btn_logout = QPushButton("Cerrar SesiÃ³n")
+        self.btn_logout = QPushButton("Cerrar Sesión")
         self.btn_logout.setCursor(Qt.PointingHandCursor)
         self.btn_logout.setFixedHeight(34)
         self.btn_logout.setStyleSheet("""

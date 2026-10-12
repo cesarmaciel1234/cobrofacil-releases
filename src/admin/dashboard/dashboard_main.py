@@ -21,20 +21,28 @@ except ImportError:
 from src.utils.theme_manager import theme_manager
 
 STATS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "module_stats.json")
+_stats_cache = None
 
 def load_stats():
+    global _stats_cache
+    if _stats_cache is not None:
+        return _stats_cache
     try:
         if os.path.exists(STATS_FILE):
             with open(STATS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                _stats_cache = json.load(f)
+                return _stats_cache
     except Exception:
         pass
-    return {}
+    _stats_cache = {}
+    return _stats_cache
 
 def increment_stat(module_name):
+    global _stats_cache
     try:
         stats = load_stats()
         stats[module_name] = stats.get(module_name, 0) + 1
+        _stats_cache = stats  # Actualizar cache
         with open(STATS_FILE, "w", encoding="utf-8") as f:
             json.dump(stats, f, indent=4)
     except Exception:
@@ -53,6 +61,8 @@ class Admin0Dashboard(QWidget):
 
     def __init__(self):
         super().__init__()
+        self._cards_created = False  # Para diferir creación de cards
+        self._current_visible = set()  # Cache de módulos visibles
         self.setup_ui()
         self._apply_theme()
         theme_manager.theme_changed.connect(lambda _: self._apply_theme())
@@ -86,7 +96,10 @@ class Admin0Dashboard(QWidget):
             "font-size: 11px; font-weight: 600;"
             " background: transparent; border: none; margin-right: 16px;")
         self._tick()
-        QTimer(self, timeout=self._tick, singleShot=False).start(30000)
+        # Timer optimizado: 30 segundos es suficiente, no necesita ser más frecuente
+        self._clock_timer = QTimer(self)
+        self._clock_timer.timeout.connect(self._tick)
+        self._clock_timer.start(30000)
         nav_lay.addWidget(self.lbl_clock)
 
         self.btn_tema = QPushButton("🌙 Noche")
@@ -210,22 +223,23 @@ class Admin0Dashboard(QWidget):
         self.JEFE_MODULES = {"nexus_pro", "proveedores", "red_lan", "cierre"}
 
         self.cards = {}
-        for m_id, title, icon, palette, sub, screen_idx in self.modules_info:
-            card = AdminCard(title, icon, palette, sub)
-            card.clicked.connect(lambda s=screen_idx, mid=m_id: self._on_card_clicked(mid, s))
-            self.cards[m_id] = card
+        # Diferir creación de cards hasta cargar_datos() para mejorar performance
+        # for m_id, title, icon, palette, sub, screen_idx in self.modules_info:
+        #     card = AdminCard(title, icon, palette, sub)
+        #     card.clicked.connect(lambda s=screen_idx, mid=m_id: self._on_card_clicked(mid, s))
+        #     self.cards[m_id] = card
 
-        # Alias para retrocompatibilidad
-        self.card_inv    = self.cards["inventario"]
-        self.card_ofertas= self.cards["ofertas"]
-        self.card_rep    = self.cards["reportes"]
-        self.card_cierre = self.cards["cierre"]
-        self.card_mp     = self.cards["mercadopago"]
-        self.card_etiq   = self.cards["etiquetas"]
-        self.card_conf   = self.cards["configuracion"]
-        self.card_hw     = self.cards["hardware"]
-        self.card_vd     = self.cards["panel_fiscal"]
-        self.card_cli    = self.cards["clientes"]
+        # Alias para retrocompatibilidad (se crean bajo demanda)
+        self.card_inv    = None
+        self.card_ofertas= None
+        self.card_rep    = None
+        self.card_cierre = None
+        self.card_mp     = None
+        self.card_etiq   = None
+        self.card_conf   = None
+        self.card_hw     = None
+        self.card_vd     = None
+        self.card_cli    = None
 
         grid_container = QHBoxLayout()
         grid_container.addStretch(1)
@@ -336,8 +350,34 @@ class Admin0Dashboard(QWidget):
         else:
             visible_ids = {m[0] for m in self.modules_info} - {"reportes", "contabilidad", "panel_fiscal"}
 
+        # Si no cambió el set de módulos visibles, no reconstruir
+        if visible_ids == self._current_visible and self._cards_created:
+            return
+
+        self._current_visible = visible_ids
+
         filtered       = [m for m in self.modules_info if m[0] in visible_ids]
         sorted_modules = sorted(filtered, key=lambda m: stats.get(m[0], 0), reverse=True)
+
+        # Crear cards solo una vez
+        if not self._cards_created:
+            for m_id, title, icon, palette, sub, screen_idx in self.modules_info:
+                card = AdminCard(title, icon, palette, sub)
+                card.clicked.connect(lambda s=screen_idx, mid=m_id: self._on_card_clicked(mid, s))
+                self.cards[m_id] = card
+            self._cards_created = True
+
+            # Actualizar aliases
+            self.card_inv    = self.cards.get("inventario")
+            self.card_ofertas= self.cards.get("ofertas")
+            self.card_rep    = self.cards.get("reportes")
+            self.card_cierre = self.cards.get("cierre")
+            self.card_mp     = self.cards.get("mercadopago")
+            self.card_etiq   = self.cards.get("etiquetas")
+            self.card_conf   = self.cards.get("configuracion")
+            self.card_hw     = self.cards.get("hardware")
+            self.card_vd     = self.cards.get("panel_fiscal")
+            self.card_cli    = self.cards.get("clientes")
 
         # Limpiar grid de forma segura
         for i in reversed(range(self.grid_layout.count())):
@@ -353,7 +393,6 @@ class Admin0Dashboard(QWidget):
         for idx, (m_id, *_) in enumerate(sorted_modules):
             card = self.cards[m_id]
             self.grid_layout.addWidget(card, idx // cols, idx % cols)
-            card.show()
             card.show()
 
         for m_id in self.cards:

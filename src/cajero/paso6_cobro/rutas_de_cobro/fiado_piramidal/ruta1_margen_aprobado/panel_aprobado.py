@@ -32,7 +32,7 @@ class PanelMargenAprobado(QFrame):
 
         self.lbl_nombre = QLabel("NOMBRE CLIENTE")
         self.lbl_nombre.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_nombre.setStyleSheet("color: #D1FAE5; font-size: 24px; font-weight: 600; text-transform: uppercase;")
+        self.lbl_nombre.setStyleSheet("color: #D1FAE5; font-size: 24px; font-weight: 700;")
         lay.addWidget(self.lbl_nombre)
 
         lay.addStretch()
@@ -47,17 +47,27 @@ class PanelMargenAprobado(QFrame):
         
         lay.addSpacing(15)
         
-        self.lbl_f5 = QLabel("O presione [ F5 ] para PAGAR cuenta")
-        self.lbl_f5.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_f5.setStyleSheet("color: #ECFDF5; background-color: #064E3B; padding: 12px; border-radius: 10px; font-size: 18px; font-weight: bold;")
-        lay.addWidget(self.lbl_f5)
+        
 
     def poblar(self, datos):
+        from PyQt6.QtCore import QTimer
         self._datos = datos
-        self.lbl_nombre.setText(f"{datos['nombre']}")
+        nombre_raw = str(datos.get('nombre', '') or '').strip()
+        nombre_amable = nombre_raw.title() if (nombre_raw.isupper() or nombre_raw.islower()) else nombre_raw
+        if nombre_amable:
+            self.lbl_nombre.setText(f"¡Hola, {nombre_amable}! 👋")
+        else:
+            self.lbl_nombre.setText("Cliente Aprobado")
+        self._listo_para_enter = False
+        # Evitar que el mismo Enter del buscador filtre y confirme en el mismo frame
+        QTimer.singleShot(350, self._armar_enter)
+
+    def _armar_enter(self):
+        self._listo_para_enter = True
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
-            self.confirmado.emit(int(self._datos['id']), 0.0)
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            if getattr(self, '_listo_para_enter', False):
+                self.confirmado.emit(int(self._datos['id']), 0.0)
         else:
             event.ignore()

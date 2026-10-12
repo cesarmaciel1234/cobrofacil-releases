@@ -414,6 +414,13 @@ class CarteleriaConfigPanel(QWidget):
             "carteleria_perf": self.cmb_perf.currentData(),
         }
 
+        # Limpiar cache del perfil si cambió
+        try:
+            from src.carteleria.lanzador_tv.perfil_pc import limpiar_cache_perfil
+            limpiar_cache_perfil()
+        except Exception:
+            pass
+
         # 2. Guardar en Base de Datos para que TODAS las PCs lo vean
         from src.base_de_datos.database import db_manager
         from src.config import config

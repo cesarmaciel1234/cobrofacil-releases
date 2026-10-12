@@ -113,14 +113,15 @@ class TecladoNumericoLateral(QFrame):
         self.btn_fiscal.clicked.connect(lambda: self.key_clicked.emit("F10"))
         kb_layout.addWidget(self.btn_fiscal)
 
-        self.lbl_emergencia = QLabel("Presione F9\nEmergencia")
-        self.lbl_emergencia.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_emergencia = QPushButton("Presione F9\nEmergencia")
+        self.lbl_emergencia.setCursor(Qt.CursorShape.PointingHandCursor)
         self.lbl_emergencia.setMinimumHeight(64)
-        self.lbl_emergencia.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.lbl_emergencia.setStyleSheet(
-            "background: #FFF7ED; color: #9A3412; font-size: 15px; font-weight: 800;"
-            " font-family: 'Segoe UI', sans-serif; border: 2px dashed #FDBA74; border-radius: 14px;"
+            "QPushButton { background: #FFF7ED; color: #9A3412; font-size: 15px; font-weight: 800;"
+            " font-family: 'Segoe UI', sans-serif; border: 2px dashed #FDBA74; border-radius: 14px; }"
+            "QPushButton:hover { background: #FFEDD5; border-color: #FB923C; }"
         )
+        self.lbl_emergencia.clicked.connect(lambda: self.key_clicked.emit("F9"))
         self.lbl_emergencia.hide()
         kb_layout.addWidget(self.lbl_emergencia)
 

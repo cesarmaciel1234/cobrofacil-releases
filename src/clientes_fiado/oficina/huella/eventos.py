@@ -7,7 +7,7 @@ import json
 from src.clientes_fiado.oficina.huella import pc as huella_pc
 from src.clientes_fiado.oficina.huella import tabla
 
-CAMPOS_FICHA = ("nombre", "telefono", "dni", "direccion", "email", "tipo_cliente")
+CAMPOS_FICHA = ("nombre", "telefono", "dni", "direccion", "email", "tipo_cliente", "plazo_dias")
 
 
 def _db():
