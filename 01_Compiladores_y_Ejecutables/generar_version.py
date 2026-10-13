@@ -46,7 +46,7 @@ def _skip_rel(rel_path: str, fname: str) -> bool:
 
 def load_manifest() -> dict:
     if os.path.isfile(VERSION_FILE) and os.path.getsize(VERSION_FILE) > 0:
-        with open(VERSION_FILE, "r", encoding="utf-8") as f:
+        with open(VERSION_FILE, "r", encoding="utf-8-sig") as f:
             return json.load(f)
     return {
         "app_version": "4.0",
@@ -68,7 +68,12 @@ def scan_modules() -> dict:
                 continue
 
             file_path = os.path.join(root, fname)
-            rel_path = os.path.relpath(file_path, REPO_ROOT).replace("\\", "/")
+            if fname.lower() in ("nul", "con", "prn", "aux"):
+                continue
+            try:
+                rel_path = os.path.relpath(file_path, REPO_ROOT).replace("\\", "/")
+            except ValueError:
+                continue
             if _skip_rel(rel_path, fname):
                 continue
 
