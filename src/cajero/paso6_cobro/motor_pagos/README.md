@@ -13,3 +13,5 @@ motor_pagos/
 
 Los motores **no se llaman entre si**. Hablan con `consultas` y `comandos`.
 Fiado: venta + deuda + cuenta corriente en el mismo commit.
+
+La cobranza no es un segundo motor de venta. `MotorCobranzaMedios` da el ok del abono; este motor asienta el ticket. Ver `paso6_cobro/decisiones.md`.

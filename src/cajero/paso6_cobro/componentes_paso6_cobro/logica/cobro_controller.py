@@ -82,26 +82,43 @@ class CobroController:
         return persistir_cobro(datos)
 
     @staticmethod
+    def _debe_abrir_cajon(metodo_pago):
+        """Casilleros de Admin → Cajón. Mixto (Cliente) cuenta como mixto."""
+        m = str(metodo_pago or "").strip().lower()
+        if m.startswith("efectivo"):
+            return bool(config.get("drawer_open_cash", True))
+        if m.startswith("mixto"):
+            return bool(config.get("drawer_open_mixed", True))
+        if m.startswith("tarjeta") or m in ("crédito", "credito", "débito", "debito"):
+            return bool(config.get("drawer_open_card", False))
+        if m.startswith("transf"):
+            return bool(config.get("drawer_open_transfer", False))
+        if m in ("fiado", "clientes", "cuenta corriente", "mascredito"):
+            return bool(config.get("drawer_open_fiado", False))
+        return False
+
+    @staticmethod
     def procesar_cajon_impresion(
         metodo_pago, imprimir, id_v, items_carrito, total_final, resultado_venta,
         cajero_nombre, descuento_total, monto_recargo, force_fiscal=False, abono_cuenta=0.0,
         deuda_anterior_abono=None,
+        condiciones_ticket_custom=None,
     ):
         """
-        Decide si debe abrir el cajón y llama al gestor de impresión.
+        Abre el cajón por el casillero del medio y después imprime.
+        El kick va aparte: el spooler de Windows se come el ESC del ticket.
         """
         from src.hardware.printer import printer_manager
         from src.hardware.cash_drawer import drawer_manager
 
-        debe_abrir = False
-        if metodo_pago == "Efectivo": debe_abrir = config.get("drawer_open_cash", True)
-        elif metodo_pago == "Mixto": debe_abrir = config.get("drawer_open_mixed", True)
-        elif metodo_pago == "Tarjeta": debe_abrir = config.get("drawer_open_card", False)
-        elif metodo_pago == "Transferencia": debe_abrir = config.get("drawer_open_transfer", False)
-        elif metodo_pago in ("Fiado", "Clientes", "Cuenta Corriente"): debe_abrir = config.get("drawer_open_fiado", False)
+        debe_abrir = CobroController._debe_abrir_cajon(metodo_pago)
 
         if debe_abrir:
-            drawer_manager.set_authorized(True)
+            try:
+                drawer_manager.abrir(autorizada=True)
+            except Exception:
+                import logging
+                logging.getLogger("PunPro").error("Cajón: no se pudo abrir", exc_info=True)
 
         if imprimir:
             try:
@@ -132,12 +149,18 @@ class CobroController:
                             import logging
                             logging.error(f"Error al cargar saldos de fiado automático: {e_fiado}")
 
-                from src.motor_condiciones.ticket import MotorCondicionesTicket
-                mensaje_condiciones = MotorCondicionesTicket.evaluar(metodo_pago, abono_cuenta, total_final, items_carrito)
+                mensaje_condiciones = None
+                custom = condiciones_ticket_custom or {}
+                lineas = custom.get("lineas_extra") if isinstance(custom, dict) else None
+                if lineas:
+                    mensaje_condiciones = "\n".join(str(x) for x in lineas if x)
+                if not mensaje_condiciones:
+                    from src.motor_condiciones.ticket import MotorCondicionesTicket
+                    mensaje_condiciones = MotorCondicionesTicket.evaluar(metodo_pago, abono_cuenta, total_final, items_carrito)
                 printer_manager.imprimir_ticket_venta(
                     id_v, items_carrito, total_final,
                     resultado_venta['pago_con'], resultado_venta['cambio'],
-                    abrir_cajon=debe_abrir, discount_amount=descuento_total, surcharge_amount=monto_recargo,
+                    abrir_cajon=False, discount_amount=descuento_total, surcharge_amount=monto_recargo,
                     cajero=cajero_nombre, metodo_pago=metodo_pago,
                     force_fiscal=force_fiscal,
                     cliente_nombre=cli_nombre,
@@ -151,8 +174,6 @@ class CobroController:
                 import logging
                 logging.error(f"Error al imprimir ticket: {e}")
         else:
-            if debe_abrir:
-                drawer_manager.abrir(autorizada=True)
             if config.get("opt_corte_papel_sin_ticket", False):
                 try:
                     printer_manager.cortar_papel()

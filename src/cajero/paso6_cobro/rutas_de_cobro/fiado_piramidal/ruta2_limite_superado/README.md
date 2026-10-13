@@ -1,16 +1,9 @@
-# Ruta 2: Límite Superado
+# Ruta 2: límite superado
 
-## Qué hace
-Gestiona el bloqueo por exceso de límite de crédito (`panel_bloqueo.py`), permitiendo validar PIN de supervisor o derivar la cuenta al Módulo de Cobranza.
+Qué hace: Bloquea el crédito si el carrito supera el disponible.
 
-## Funciones principales
-- `panel_bloqueo.py`:
-  - Informa el exceso de margen y permite solicitar PIN de supervisor o saltar a Cobranza.
-  - `solicita_cobranza`: Emite solicitud para abrir el centro de liquidación.
+Qué función: `PanelLimiteSuperado`. PIN de supervisor (`quien_autoriza`) o botón COBRANZA (`solicita_cobranza`).
 
-## Cómo funciona
-Si un cliente no posee margen disponible suficiente para cubrir el carrito, el sistema muestra la pantalla roja de bloqueo:
-- El supervisor puede ingresar su PIN de 4 dígitos para conceder una excepción puntual.
-- Alternativamente, se puede derivar al **Módulo de Cobranza** para liquidar deuda previa y liberar disponible.
+Cómo funciona: Cuatro dígitos conceden excepción en el cerebro. El botón abre `modulo_cobranza` sin PIN. F5 no entra acá.
 
-
+Qué no debe cambiar: el PIN de excepción es de crédito, no de cobranza.

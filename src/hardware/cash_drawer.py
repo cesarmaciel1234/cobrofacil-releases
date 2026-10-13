@@ -16,7 +16,7 @@ except (ImportError, ModuleNotFoundError):
     from config import config
     from hardware.printer import printer_manager, _impresora_cajero_activo
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("PunPro.hardware.cajon")
 
 class CashDrawerManager(QObject):
     """
@@ -34,34 +34,48 @@ class CashDrawerManager(QObject):
         self._apertura_autorizada = False
         self._is_checking = False
         self._opos_active = False
+        self._opos_probed = False
         self._lock = QMutex()
+
+    def _ensure_opos(self):
+        if self._opos_probed:
+            return
+        self._opos_probed = True
         self._init_opos()
 
     def _init_opos(self):
-        """ Intenta inicializar el driver OPOS como fallback para hardware 3nstar/Epson. """
+        """Intenta OPOS al primer uso. Sin driver (Clase no registrada) no es error de caja."""
         try:
             import win32com.client
             from src.hardware.printer import OPOS_LDNS
-            # Nombres lógicos: Prioridad al configurado, luego búsqueda genérica industrial
+            try:
+                win32com.client.Dispatch("OPOS.CashDrawer")
+            except Exception as e:
+                texto = str(e).lower()
+                if "-2147221164" in str(e) or "clase no registrada" in texto or "class not registered" in texto:
+                    logger.debug("OPOS CashDrawer no registrado; se usa ESC/POS.")
+                    return
             custom_ldn = config.get("opos_drawer_name", "")
             ldns = [custom_ldn] if custom_ldn else OPOS_LDNS
 
             for ldn in ldns:
-                if not ldn: continue
+                if not ldn:
+                    continue
                 try:
-                    logger.info(f"Intentando conectar a OPOS LDN: {ldn}...")
+                    logger.debug("Intentando OPOS LDN: %s", ldn)
                     self._opos = win32com.client.Dispatch("OPOS.CashDrawer")
                     self._opos.Open(ldn)
-                    self._opos.ClaimDevice(2000)
+                    self._opos.ClaimDevice(250)
                     self._opos.DeviceEnabled = True
                     self._opos_active = True
-                    logger.info(f"✅ ¡ÉXITO! Motor OPOS activado para: {ldn}")
-                    break
+                    logger.info("Motor OPOS de cajón activo: %s", ldn)
+                    return
                 except Exception as e:
-                    logger.warning(f"❌ Fallo en LDN {ldn}: {e}")
+                    logger.debug("OPOS LDN %s no disponible: %s", ldn, e)
                     continue
+            logger.debug("OPOS cajón no instalado; se usa ESC/POS.")
         except Exception as e:
-            logger.error(f"❌ Error crítico al inicializar win32com/OPOS: {e}")
+            logger.debug("win32com/OPOS no disponible: %s", e)
 
     def set_authorized(self, status=True):
         """ Marca la próxima apertura como autorizada para el monitor de seguridad. """
@@ -73,6 +87,7 @@ class CashDrawerManager(QObject):
         """ Envía la señal física de apertura (OPOS o ESC/POS). """
         self._apertura_autorizada = autorizada
         logger.info(f"Abriendo cajón de dinero ({'Autorizada' if autorizada else 'FORZADA'}).")
+        self._ensure_opos()
 
         # 1. Intento vía OPOS si está activo
         if self._opos_active:
@@ -93,7 +108,7 @@ class CashDrawerManager(QObject):
 
         self._is_checking = True
         try:
-            # 1. Intento vía OPOS
+            # No sondear OPOS acá: el timer de vigilancia corre en la UI.
             if self._opos_active:
                 try:
                     status = self._opos.DrawerOpened

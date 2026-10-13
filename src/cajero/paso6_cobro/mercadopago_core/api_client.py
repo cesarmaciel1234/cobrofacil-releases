@@ -14,6 +14,14 @@ def fecha_busqueda_mp(resta=None):
 
 
 class MPApiClient:
+    _sesion = None
+
+    @classmethod
+    def sesion(cls):
+        if cls._sesion is None:
+            cls._sesion = requests.Session()
+        return cls._sesion
+
     @staticmethod
     def get_headers(token, json_content=True):
         headers = {"Authorization": f"Bearer {token}"}
@@ -26,16 +34,16 @@ class MPApiClient:
         headers = MPApiClient.get_headers(token)
         if extra_headers:
             headers.update(extra_headers)
-        return requests.post(url, json=payload, headers=headers, timeout=timeout)
+        return MPApiClient.sesion().post(url, json=payload, headers=headers, timeout=timeout)
 
     @staticmethod
     def put(url, payload, token, timeout=10):
-        return requests.put(url, json=payload, headers=MPApiClient.get_headers(token), timeout=timeout)
+        return MPApiClient.sesion().put(url, json=payload, headers=MPApiClient.get_headers(token), timeout=timeout)
 
     @staticmethod
     def get(url, token, timeout=10):
-        return requests.get(url, headers=MPApiClient.get_headers(token, False), timeout=timeout)
+        return MPApiClient.sesion().get(url, headers=MPApiClient.get_headers(token, False), timeout=timeout)
 
     @staticmethod
     def delete(url, token, timeout=5):
-        return requests.delete(url, headers=MPApiClient.get_headers(token, False), timeout=timeout)
+        return MPApiClient.sesion().delete(url, headers=MPApiClient.get_headers(token, False), timeout=timeout)

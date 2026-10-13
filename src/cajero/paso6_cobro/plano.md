@@ -9,28 +9,20 @@ Sigue la estructura piramidal: `paso6_cobro.py` es el Orquestador Central que re
 ```text
 src/cajero/paso6_cobro/
 │
-├── paso6_cobro.py                <-- El Gran Orquestador. Solo sabe escuchar la tecla (F1, F2, F3...) e inyectar el módulo correcto.
+├── reparacion.md                 <-- Si se rompe velocidad/ESC/QR, este archivo manda
+├── decisiones.md                 <-- F9, PIN y token: por qué aún no
+├── paso6_cobro.py                <-- Orquestador de la ventana. Teclas F1–F12 e inyecta el medio.
 │
-├── componentes/                  <-- Los bloques visuales compartidos (botones laterales de la UI, teclado numérico en pantalla, total a pagar).
+├── componentes_paso6_cobro/      <-- Botones, teclado, total, selector de método.
 │
-├── rutas_de_cobro/               <-- Cada medio de pago es una VÍA AISLADA:
-│   │
-│   ├── efectivo/                 (Panel de billetes rápidos, calcula vuelto matemáticamente)
-│   ├── tarjeta/                  (Input para N° de comprobante / lote)
-│   ├── qr_y_transferencia/       (Módulos ligeros para pagos digitales)
-│   ├── mixto/                    (Calculadora para dividir pagos: Mitad efectivo, mitad tarjeta)
-│   │
-│   └── fiado_piramidal/          <-- La super-ruta aislada de Créditos (F5)
-│       ├── orquestador_credito.py
-│       ├── 1_margen_aprobado/    (Ruta Verde: Confirmación rápida)
-│       ├── 2_limite_superado/    (Ruta Roja: Pide PIN de Admin)
-│       └── 3_cliente_nuevo/      (Ruta Azul: Crear expediente)
+├── rutas_de_cobro/
+│   ├── salida/                   <-- ESC: vuelve limpio a la grilla
+│   ├── efectivo/  tarjeta/  qr/  transferencia/  mixto/
+│   └── fiado_piramidal/          <-- CRÉDITO y COBRANZA
 │
-└── motor_pagos/                  <-- El Cierre Definitivo (Sin interfaz visual)
-    ├── motor_principal.py        (Orquestador de base de datos)
-    ├── asentar_caja/             (Guarda los billetes en la caja de este turno)
-    ├── descontar_stock/          (Da de baja los productos del inventario)
-    └── generar_ticket/           (Envía la orden cruda a la impresora térmica)
+├── fiado_en_cobro/ui/buscador_clientes/   <-- Buscador que usa el orquestador
+│
+└── motor_pagos/                  <-- Cierre de la venta (sin UI)
 ```
 
 ## Flujo del Tren (El Paso a Paso del Cobro)
@@ -42,7 +34,8 @@ src/cajero/paso6_cobro/
    - El cajero oprime el método deseado en la botonera lateral (o con atajos de teclado F1..F6).
    - El orquestador borra el panel anterior e inyecta la ruta nueva.
    - *¿Apretó Tarjeta?* Se inyecta la ruta `tarjeta/`.
-   - *¿Apretó Crédito?* Se inyecta la `fiado_piramidal/` que hace su propio proceso independiente de buscar cliente y evaluar límites.
+   - *¿Apretó ⚖ CRÉDITO o COBRANZA?* Se inyecta `fiado_piramidal/`. F5 no entra en ese flujo.
+  - *¿Apretó ESC?* `salida/proceso.py` suelta el proceso y vuelve a la grilla. No cierra el cobro.
 
 3. **Ejecución y Despacho:**
    - La ruta inyectada hace su trabajo. Ejemplo: en Efectivo el cliente entrega $20.000, la ruta calcula el vuelto de $10.000.

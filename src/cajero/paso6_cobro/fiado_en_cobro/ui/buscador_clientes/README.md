@@ -1,6 +1,9 @@
-# Buscador de Clientes (Paso 1)
+# Buscador de clientes
 
-Qué hace: Contiene la interfaz visual para buscar un cliente por DNI o Nombre. Muestra una caja de texto grande y un menú desplegable de sugerencias.
-Qué función: PanelBuscadorClientes en panel_buscador.py
-Cómo funciona: El cajero escribe, la caja emite 	exto_cambiado. El motor local escucha, busca en la BD y llama a mostrar_sugerencias(lista). Si el cajero hace clic en un resultado o da Enter, emite cliente_elegido.
-Qué no debe cambiar una mejora futura: Debe mantenerse 100% visual (frontend). Las consultas a la base de datos se hacen desde el motor, no desde aquí.
+Qué hace: Caja de DNI/nombre y hasta 5 sugerencias.
+
+Qué función: `PanelBuscadorClientes`. Señales `texto_cambiado`, `cliente_elegido`, `creacion_solicitada`.
+
+Cómo funciona: Un match: Enter elige. Varios: flecha o hover y Enter. Sin match: Enter pide crear. `aplicar_modo` cambia el título a CRÉDITO o COBRANZA. La consulta la hace el motor en memoria (3 letras, inicio de 1.ª o 2.ª palabra).
+
+Qué no debe cambiar: las 5 filas se reusan. No crear ni borrar widgets en cada tecla. La consulta es del motor. Sin `:hover` ni `enterEvent` que pinte: la flecha se traba. Si se congela, `paso6_cobro/reparacion.md`.

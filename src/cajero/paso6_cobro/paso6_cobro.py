@@ -74,6 +74,39 @@ class Paso6Cobro(QDialog):
             pass
         self.apply_glow()
 
+    def preparar_para_venta(self, total, items_carrito):
+        """Reusa el diálogo ya armado. No vuelve a crear paneles ni lee config."""
+        import uuid
+        self.request_id = str(uuid.uuid4())
+        self.total_original = float(total or 0)
+        self.total_final = self.total_original
+        self.items_carrito = items_carrito or []
+        self.deuda_adicional_cobrada = 0.0
+        self.deuda_adicional_saldo_anterior = None
+        self._deuda_adicional_incluida = 0.0
+        self.descuento_porcentaje = 0.0
+        self.recargo_porcentaje = 0.0
+        self.descuento_monto = 0.0
+        self.recargo_monto = 0.0
+        self.descuentaso_oferta = 0.0
+        self._procesando_pago = False
+        self._mp_screen_shown = False
+        self._tarjeta_ya_cerrado = False
+        self._point_en_curso = False
+        self._emergencia_pendiente = False
+        self.resultado_venta = None
+        self._condiciones_ticket_custom = {}
+        self._fiado_flujo_activo = False
+        self._fiado_cliente_id = None
+        try:
+            from src.cajero.paso6_cobro.rutas_de_cobro.salida.proceso import salir_a_metodos
+            salir_a_metodos(self)
+        except Exception:
+            if getattr(self, "stack", None) is not None:
+                self.stack.setCurrentIndex(0)
+            self.current_metodo = "Efectivo"
+        self.recargar_total_final()
+
     def _medida_panel(self):
         """La ventana de cobro. El gris de alrededor es el que tapa el paso 5."""
         parent = self.parent()
@@ -477,7 +510,7 @@ class Paso6Cobro(QDialog):
         from src.cajero.paso6_cobro.componentes_paso6_cobro.metodo_activo.panel_metodo_activo import PanelMetodoActivo
         self.panel_metodo_activo = PanelMetodoActivo(self)
         self.lbl_metodo_activo = self.panel_metodo_activo.lbl_metodo_activo
-        self.panel_metodo_activo.btn_cambiar_metodo.clicked.connect(lambda: self.stack.setCurrentIndex(0))
+        self.panel_metodo_activo.btn_cambiar_metodo.clicked.connect(self._volver_a_metodos)
         content_lay.addWidget(self.panel_metodo_activo)
         left_lay.addLayout(content_lay)
         main_lay.addWidget(left_panel, 11)
@@ -792,7 +825,6 @@ class Paso6Cobro(QDialog):
             self._abrir_fiado_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
 
     def _mostrar_hoja_cuenta(self, modo):
-        self._asegurar_lista_clientes()
         self._fiado_flujo_activo = True
         self._fiado_cliente_id = None
         self.stack.setCurrentIndex(1)
@@ -809,31 +841,10 @@ class Paso6Cobro(QDialog):
         )
 
     def _f5_pagar_cuenta(self):
-        """F5 abre el diálogo de cobranza para cobrar la venta actual + deuda previa de una vez."""
-        if self.current_metodo not in ("Fiado", "Clientes") or not hasattr(self, "panel_fiado"):
-            return False
-        hoja = self.panel_fiado.hoja_cuenta
-        if getattr(hoja, "_paso", 1) != 2 or not hoja._cliente:
-            return False
-            
-        from src.clientes_fiado.cerebro.cerebro import cerebro
-        cliente = cerebro.obtener(hoja._cliente.get("id"))
-        monto_sugerido = self.total_final
-        if cliente:
-            try:
-                cliente_dict = dict(cliente) if hasattr(cliente, 'keys') else cliente
-                deuda_actual = float(cliente_dict.get("deuda_actual", 0) or 0)
-            except (TypeError, AttributeError):
-                deuda_actual = float(cliente["deuda_actual"] if "deuda_actual" in cliente.keys() else 0)
-            monto_sugerido += deuda_actual
-            
-        self.panel_fiado.activar_cobranza(monto_sugerido, deuda_actual)
-        return True
+        """F5 del cobro no opera crédito ni cobranza. El botón está oculto."""
+        return False
 
     def _cuenta_completada(self, dict_datos):
-        import logging
-        logging.getLogger("PunPro").info(f"Cuenta completada recibida con: {dict_datos}")
-        
         self._fiado_cliente_id = int(dict_datos.get('cliente_id', 0))
         idx = self.cmb_cliente.findData(self._fiado_cliente_id)
         if idx >= 0:
@@ -882,28 +893,11 @@ class Paso6Cobro(QDialog):
         self._cuenta_lista(resultado.cliente_id)
 
     def _cuenta_cancelada(self):
-        if getattr(self, "_mixto_espera_cuenta", False):
-            self._mixto_espera_cuenta = False
-            self._fiado_cliente_id = None
-            self.panel_fiado.ocultar()
-            self._mixto_pasos = None
-            self.panel_mixto.show()
-            if getattr(self, "_mixto_vivo_hecho", None):
-                self._avisar("Ese medio ya se cobró. La cuenta no se cargó.")
-            return
         if getattr(self, "_cuenta_cerrando", False):
             return
         self._cuenta_cerrando = True
         try:
-            self._fiado_flujo_activo = False
-            self._fiado_cliente_id = None
-            rev = getattr(self, "_revertir_tras_fiado", "Efectivo") or "Efectivo"
-            if rev in ("Fiado", "Clientes", "MasCredito"):
-                rev = "Efectivo"
-            self.panel_fiado.ocultar()
-            self.stack.setCurrentIndex(0)
-            self.set_metodo(rev)
-            self.setFocus()
+            self._volver_a_metodos()
         finally:
             self._cuenta_cerrando = False
 
@@ -1795,20 +1789,9 @@ class Paso6Cobro(QDialog):
         return motivo in ("usuario", "cancelo")
 
     def _volver_a_metodos(self):
-        self._ticket_al_pagar = None
-        self._mixto_pasos = None
-        self._mixto_confirmado = False
-        self._mixto_espera_transferencia = None
-        self._mixto_esperando_qr = False
-        try:
-            self.timer_mp.stop()
-            self.timer_spinner.stop()
-        except Exception:
-            pass
-        if hasattr(self, "aviso_toast"):
-            self.aviso_toast.cerrar()
-        self.stack.setCurrentIndex(0)
-        self.setFocus()
+        from src.cajero.paso6_cobro.rutas_de_cobro.salida.proceso import salir_a_metodos
+
+        salir_a_metodos(self)
 
     def _cobrar_tarjeta_point(self):
         if self.current_metodo != "Tarjeta" or getattr(self, "_point_en_curso", False):
@@ -2210,10 +2193,15 @@ class Paso6Cobro(QDialog):
         elif k == Qt.Key.Key_F7:
             self._tecla_f7()
         elif k == Qt.Key.Key_Escape:
-            if self._hoja_cuenta_al_frente():
-                self.panel_fiado.hoja_cuenta._cancelar()
+            self._volver_a_metodos()
+            return
+        elif k in (Qt.Key.Key_Down, Qt.Key.Key_Up):
+            if event.isAutoRepeat():
                 return
-            self.reject()
+            if self._hoja_cuenta_al_frente() and hasattr(self.panel_fiado, "navegar_buscador"):
+                if self.panel_fiado.navegar_buscador("abajo" if k == Qt.Key.Key_Down else "arriba"):
+                    return
+            super().keyPressEvent(event)
         elif k in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             foco = self.focusWidget()
             if self.panel_fiado.bloquea_enter():

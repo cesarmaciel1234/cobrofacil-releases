@@ -139,10 +139,13 @@ class NetworkEngine(QObject):
                 if addr:
                     self._active_ips[origen] = addr[0]
 
-                if tipo == "HEARTBEAT":
-                    self._safe_emit(self.heartbeat_received, origen)
-                else:
-                    self._safe_emit(self.message_received, origen, tipo, datos)
+                try:
+                    if tipo == "HEARTBEAT":
+                        self._safe_emit(self.heartbeat_received, origen)
+                    else:
+                        self._safe_emit(self.message_received, origen, tipo, datos)
+                except RuntimeError:
+                    return
         finally:
             try:
                 sock.close()

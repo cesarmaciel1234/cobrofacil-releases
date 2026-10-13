@@ -4,7 +4,7 @@ La venta. El archivo `paso5_terminal.py` junta la pantalla. Termina en la línea
 
 `parse_float_safe` está en este archivo, una sola vez, fuera de la clase. Lee un texto con `$`, punto de miles y coma decimal. Si no puede, devuelve `0.0`.
 
-`Paso5Terminal._precalentar_cobro` importa `Paso6Cobro` adentro del método. Lo dispara `QTimer.singleShot(1200, ...)`. En el ejecutable ese import es el que espera, y la venta ya está pintada.
+`Paso5Terminal._precalentar_cobro` importa `Paso6Cobro` adentro del método. Lo dispara `QTimer.singleShot(1200, ...)`. En el ejecutable ese import es el que espera, y la venta ya está pintada. Al cobrar se reusa con `preparar_para_venta`. Si F12 vuelve a crear el diálogo cada vez, `paso6_cobro/reparacion.md`.
 
 La punta de esta rama es `punta del piramide.md`. Cada carpeta de adentro tiene su README.
 

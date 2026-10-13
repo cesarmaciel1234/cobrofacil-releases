@@ -32,6 +32,11 @@ class PanelQrCobro(QFrame):
         self._reloj.timeout.connect(self._consultar_pago)
         self.hide()
         self._armar()
+        QTimer.singleShot(0, self._precargar)
+
+    def _precargar(self):
+        from src.cajero.paso6_cobro.qr_en_cobro.pedido import precargar_conexion
+        threading.Thread(target=precargar_conexion, name="qr-precarga", daemon=True).start()
 
     def _armar(self):
         self.setObjectName("PanelQrCobro")
@@ -125,7 +130,7 @@ class PanelQrCobro(QFrame):
             self._fuente.scaled(
                 lado, lado,
                 Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
+                Qt.TransformationMode.FastTransformation,
             )
         )
 

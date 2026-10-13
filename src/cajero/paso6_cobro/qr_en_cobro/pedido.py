@@ -4,33 +4,76 @@ import uuid
 
 import qrcode
 
+try:
+    _QR_L = qrcode.constants.ERROR_CORRECT_L
+except Exception:
+    _QR_L = 1
+
 from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient, fecha_busqueda_mp
 from src.config import config
 from src.services.mercadopago_instore import url_crear_qr
 
+_cuenta_cache = {"token": "", "user": "", "pos": ""}
+
+
+def precargar_conexion():
+    """Abre TLS y deja user/pos en memoria. Lo llama el cobro al armarse, no al elegir QR."""
+    try:
+        config._load_config()
+        token = str(config.get("mp_access_token", "") or "").strip()
+        if not token:
+            return
+        user_id, pos = _cuenta_qr(token)
+        if not user_id or not pos:
+            return
+        MPApiClient.sesion().get(
+            "https://api.mercadopago.com/users/me",
+            headers=MPApiClient.get_headers(token, False),
+            timeout=3,
+        )
+    except Exception:
+        pass
+
 
 def _cuenta_qr(token):
-    """Usuario y punto de venta tal como los guarda Admin → Terminales TPV."""
+    """Usuario y POS de Admin → Terminales TPV. No crea POS en el cobro."""
+    if _cuenta_cache.get("token") == token and _cuenta_cache.get("user") and _cuenta_cache.get("pos"):
+        return _cuenta_cache["user"], _cuenta_cache["pos"]
     user_id = str(config.get("mp_user_id", "") or "").strip()
     pos = str(config.get("mp_qr_pos_external_id", "") or "").strip()
-    if not pos:
-        pos = str(config.get("mp_external_pos_id", "") or "").strip()
     if user_id and pos:
+        _cuenta_cache.update({"token": token, "user": user_id, "pos": pos})
         return user_id, pos
-    from src.services.mercadopago_instore import asegurar_pos_qr
-    return asegurar_pos_qr(token)
+    return "", ""
+
+
+def _png_qr(texto):
+    codigo = qrcode.QRCode(
+        version=None,
+        error_correction=_QR_L,
+        box_size=4,
+        border=1,
+    )
+    codigo.add_data(texto)
+    codigo.make(fit=True)
+    imagen = codigo.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    try:
+        imagen.save(buf, format="PNG")
+    except TypeError:
+        imagen.save(buf)
+    return buf.getvalue()
 
 
 def pedir_qr_pos(monto, title="Compra en Punto de Venta", description="Cobro de ticket via sistema POS"):
-    """Pide el QR del POS. No abre ventanas y no toca otros medios."""
+    """Pide el QR del POS. Timeout corto. Si el POS no responde, usa preferencia."""
+    if float(monto or 0) <= 0:
+        return {"ok": False, "motivo": "monto"}
     config._load_config()
     token = str(config.get("mp_access_token", "") or "").strip()
     if not token:
         return {"ok": False, "motivo": "sin_config"}
-    try:
-        user_id, pos = _cuenta_qr(token)
-    except Exception:
-        return {"ok": False, "motivo": "sin_config"}
+    user_id, pos = _cuenta_qr(token)
     if not user_id or not pos:
         return {"ok": False, "motivo": "sin_config"}
 
@@ -57,23 +100,24 @@ def pedir_qr_pos(monto, title="Compra en Punto de Venta", description="Cobro de 
     qr_data = ""
     borrar_url = ""
     try:
-        resp = MPApiClient.put(url, payload, token, timeout=10)
+        resp = MPApiClient.put(url, payload, token, timeout=3.5)
+        if resp is not None and resp.status_code in (200, 201):
+            try:
+                qr_data = (resp.json() or {}).get("qr_data") or ""
+            except Exception:
+                qr_data = ""
+            if qr_data:
+                borrar_url = url
     except Exception:
         resp = None
-    if resp is not None and resp.status_code in (200, 201):
-        qr_data = (resp.json() or {}).get("qr_data") or ""
-        borrar_url = url
     if not qr_data:
         qr_data = _qr_con_monto(token, float(monto), ref)
     if not qr_data:
         return {"ok": False, "motivo": "api"}
 
-    imagen = qrcode.make(qr_data)
-    buf = io.BytesIO()
-    imagen.save(buf, format="PNG")
     return {
         "ok": True,
-        "png": buf.getvalue(),
+        "png": _png_qr(qr_data),
         "ref": ref,
         "token": token,
         "borrar_url": borrar_url,
@@ -99,13 +143,16 @@ def _qr_con_monto(token, monto, ref):
             "https://api.mercadopago.com/checkout/preferences",
             payload,
             token,
-            timeout=10,
+            timeout=3.5,
         )
     except Exception:
         return ""
-    if resp.status_code not in (200, 201):
+    if resp is None or resp.status_code not in (200, 201):
         return ""
-    return (resp.json() or {}).get("init_point") or ""
+    try:
+        return (resp.json() or {}).get("init_point") or ""
+    except Exception:
+        return ""
 
 
 def pago_aprobado(token, ref):
@@ -116,8 +163,11 @@ def pago_aprobado(token, ref):
         f"&limit=10&status=approved&external_reference={ref}"
         f"&range=date_created&begin_date={begin}&end_date={end}"
     )
-    resp = MPApiClient.get(url, token, timeout=5)
-    if resp.status_code != 200:
+    try:
+        resp = MPApiClient.get(url, token, timeout=4)
+        if resp is None or resp.status_code != 200:
+            return None
+        pagos = (resp.json() or {}).get("results") or []
+    except Exception:
         return None
-    pagos = (resp.json() or {}).get("results") or []
     return pagos[0] if pagos else None

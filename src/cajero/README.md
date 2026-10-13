@@ -82,7 +82,7 @@ Esta sección es la nota de la caja para sacar una versión. No hace falta otro 
 
 El bip del escáner es un `threading.Thread` daemon en el alta del producto, si `AUDIO_ENABLED`. Hay otro bip igual en `paso6_cobro/widgets/cliente_express.py` y en `fiado_express.py`. No comparten estado de la venta.
 
-F12 abre el cobro. `_precalentar_cobro` ya importó `Paso6Cobro` un segundo después de pintar.
+F12 abre el cobro. `_precalentar_cobro` deja una instancia oculta de `Paso6Cobro` lista. Al cobrar se reusa con `preparar_para_venta` y al cerrar se vuelve a dejar en escucha. El import de `Paso6Cobro` sigue adentro del método.
 
 ### El paso 5 es dueño de la venta
 
@@ -102,9 +102,9 @@ Esas ventanas, y F11, tapan la venta con el gris `#334155` (`src/utils/fondo_gri
 
 ### Cobro
 
-Fiado y Clientes se piden en `HojaCuentaCobro`, en la misma hoja que la espera de la tarjeta. No abren la ventana oscura. Cancelar vuelve a los medios.
+Crédito (clave `Clientes`) y Cobranza (clave `MasCredito`) se piden en `OrquestadorFiadoPiramidal` (`paso6_cobro/rutas_de_cobro/fiado_piramidal/`). No abren la ventana oscura. Cancelar vuelve a los medios. F5 no abre cobranza. El PIN de cobranza está apagado; el PIN de supervisor solo aparece si el cupo no alcanza.
 
-En el menú «Otras» hay una sola entrada: **Crédito**. Fiado y cuenta corriente son la misma tabla clientes. Crédito entra con la clave interna Clientes (no crédito: esa clave de REGISTRO es la tarjeta de crédito). La caja de la hoja toma DNI (solo números) o nombre (sin números) y la lista sugiere por los dos. Un DNI nuevo crea el perfil Express <DNI> con iado_express_limite (monto menor); un nombre nuevo, con 50.000 (monto mayor). En el ticket va el nombre si está registrado; si solo hay DNI, va DNI <número> (ClienteRepository.nombre_ticket).
+La clave interna de crédito es Clientes (no `crédito`: esa clave de REGISTRO es la tarjeta de crédito). La caja toma DNI o nombre. Un match: Enter. Varios: flechas o mouse y Enter. Un nombre nuevo crea con límite 50.000.
 
 ### Seguridad en Centro de Cobranzas (F6)
 
@@ -123,13 +123,13 @@ La venta se escribe en `persistir_cobro`, que llama `db_manager.guardar_venta_co
 
 F7 llama `_leer_bascula`. El puerto (`puerto_bascula`, o `COM1`) se abre en un hilo aparte, a 9600, manda `P` y espera la línea con timeout 0,45 s. El puerto se cierra siempre. El resultado vuelve por la señal `bascula_leida` a `_aplicar_lectura_bascula`. Si el puerto falla, escribe `0.750*` en el escáner y muestra un aviso. Si no hay respuesta, escribe `1.250*`. El próximo producto entra con esa cantidad. `focusChanged` se conecta una vez, en `_enganchar_foco_teclado`, no en cada F7. Ahí también se anota el motivo del foco. El teclado en pantalla se abre si ese motivo es un toque y la pantalla es táctil. El teclado físico no lo abre.
 
-Un código numérico no dispara la búsqueda por nombre. Esa búsqueda espera 160 ms y solo corre si el texto tiene letras. Enter corta el timer.
+Un código numérico no dispara la búsqueda por nombre: Enter busca id o código exacto, sin LIKE. El nombre espera 3 letras y 160 ms. `asa` pega el inicio de la 1.ª o 2.ª palabra, no el medio del nombre. Enter corta el timer. Si vuelven a meter `LIKE '%texto%'` en el hilo de la UI, sacarlo: `paso6_cobro/reparacion.md`.
 
 `StockOfertasService.obtener_combos` recuerda la lista 15 s, ya con el JSON leído. Si no hay combos, el escaneo no recorre el ticket para buscarlos. Una línea nueva sin combo repinta esa fila y la anterior. Borrar un renglón sigue repintando el ticket entero, para que las rayas no queden corridas.
 
 `_evaluar_combos`, cuando aplica un combo, manda un UDP `COMBO_TRIGGERED` al broadcast, puerto 37021, y cierra ese socket.
 
-F12 abre el cobro sin leer la tabla `clientes`. Esa lista se carga la primera vez que se abre Fiado o Clientes (`_asegurar_lista_clientes`, que llama `cerebro.listar`). Fiado y Clientes autorizan en `src/clientes_fiado` y solo entonces mandan la orden ok al cobro. En la confirmación de Fiado, F5 abre el Centro de Cobranza para registrar por separado un abono previo; al volver, Enter mantiene el flujo normal de la compra fiada. El importe no se agrega al total: `deuda_adicional` solo lo usa la impresión para mostrar «Abono a cuenta» en el mismo ticket. La nota está en `paso6_cobro/punta del piramide.md`; el plano de clientes y cobranzas está en `src/clientes_fiado/plano.md`. `_pintar_luz_tpv` lee el config una vez. `_tpv_point_listo` y `_tpv_qr_listo` siguen leyendo el config cada uno cuando se cobra con Point o QR. Con la luz en rojo, Enter llama `_guardar_sin_tpv`: guarda efectivo, tarjeta, transferencia, QR y mixto, sin Point, sin espera de transferencia y sin QR en vivo. Fiado y clientes siguen pidiendo el cliente. F9 no está. Con la luz en verde, Enter no registra mientras se espera: sale el cartel rojo. F9, debajo de F10, cobra a mano y no se aprieta con el mouse. Llega aunque el cursor esté en el monto o en el mixto. Si el Point está esperando, suelta esa espera y guarda.
+F12 abre el cobro sin leer la tabla `clientes`. Crédito y cobranza buscan con `cerebro.buscar` al escribir. Fiado y Clientes autorizan en `src/clientes_fiado` y solo entonces mandan la orden ok al cobro. F5 no abre cobranza. El plano está en `paso6_cobro/rutas_de_cobro/fiado_piramidal/plano.md`. `_pintar_luz_tpv` lee el config una vez. `_tpv_point_listo` y `_tpv_qr_listo` siguen leyendo el config cada uno cuando se cobra con Point o QR. Con la luz en rojo, Enter llama `_guardar_sin_tpv`: guarda efectivo, tarjeta, transferencia, QR y mixto, sin Point, sin espera de transferencia y sin QR en vivo. Fiado y clientes siguen pidiendo el cliente. F9 no está. Con la luz en verde, Enter no registra mientras se espera: sale el cartel rojo. F9, debajo de F10, cobra a mano y no se aprieta con el mouse. Llega aunque el cursor esté en el monto o en el mixto. Si el Point está esperando, suelta esa espera y guarda.
 
 El redondeo es automático. `redondear_dinero`, en `src/utils/dinero.py`, deja cada monto en dos centavos con `Decimal` y `ROUND_HALF_UP`. El total del cobro es la suma de los subtotales del ticket, redondeada en `finalizar_venta`. No se toma del rótulo grande. `recargar_total_final` vuelve a redondear después de F3 y F4. Al guardar, `armar_resultado_venta` y `persistir_cobro` redondean otra vez. No lo reemplaces por `round` de float. La nota completa está en `paso6_cobro/punta del piramide.md`, sección Redondeo.
 

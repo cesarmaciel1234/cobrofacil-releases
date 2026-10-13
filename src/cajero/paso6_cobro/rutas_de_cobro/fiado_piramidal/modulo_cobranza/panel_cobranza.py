@@ -196,6 +196,23 @@ class PanelCobranza(QFrame):
         
         self._modo = "preparando_pago"
 
+    def _ticket(self):
+        return redondear_dinero(max(0.0, float(getattr(self, "compra", 0.0) or 0.0)))
+
+    def _deuda_pendiente(self):
+        d = float(getattr(self, "deuda", 0.0) or 0.0)
+        return redondear_dinero(d) if d > 0.009 else 0.0
+
+    def _saldo_a_favor(self):
+        d = float(getattr(self, "deuda", 0.0) or 0.0)
+        return redondear_dinero(-d) if d < -0.009 else 0.0
+
+    def _escribir_monto(self, monto):
+        valor = redondear_dinero(max(0.0, float(monto or 0.0)))
+        self.txt_monto_abono.setText(f"{valor:.2f}".replace(".", ","))
+        self.txt_monto_abono.setFocus()
+        self.txt_monto_abono.selectAll()
+
     def poblar(self, datos):
         self._datos = datos
         d = datos.get('deuda')
@@ -204,49 +221,69 @@ class PanelCobranza(QFrame):
         self.deuda = float(d) if d is not None else 0.0
         self.compra = float(c) if c is not None else 0.0
         self.cliente_id = int(i) if i is not None else 0
-        
-        total_sugerido = self.deuda + self.compra
-        
+
+        ticket = self._ticket()
+        deuda_p = self._deuda_pendiente()
+        favor = self._saldo_a_favor()
+
         nombre_raw = str(datos.get('nombre', '') or '').strip()
         nombre_amable = nombre_raw.title() if (nombre_raw.isupper() or nombre_raw.islower()) else nombre_raw
         if nombre_amable:
             self.lbl_nombre.setText(f"¡Hola, {nombre_amable}! 👋")
         else:
             self.lbl_nombre.setText("¡Bienvenido/a! 👋")
-            
-        self.lbl_val_ant.setText(f"${self.deuda:,.2f}")
-        self.lbl_val_act.setText(f"${self.compra:,.2f}")
-        self.lbl_val_tot.setText(f"${total_sugerido:,.2f}")
-        
-        self.btn_pill_compra.setText(f"Solo Carrito (${self.compra:,.0f})")
-        self.btn_pill_deuda.setText(f"Solo Deuda (${self.deuda:,.0f})")
-        self.btn_pill_todo.setText(f"Liquidar Todo (${total_sugerido:,.0f})")
-        
-        self.txt_monto_abono.setText(f"{total_sugerido:.2f}".replace('.', ','))
-        
+
+        if favor > 0.009:
+            self.lbl_tag_ant.setText("Saldo a favor:")
+            self.lbl_val_ant.setText(f"${favor:,.2f}")
+        else:
+            self.lbl_tag_ant.setText("Saldo Pendiente Anterior:")
+            self.lbl_val_ant.setText(f"${deuda_p:,.2f}")
+
+        self.lbl_val_act.setText(f"${ticket:,.2f}")
+        self.lbl_tag_tot.setText("IMPORTE A COBRAR (TICKET):")
+        self.lbl_val_tot.setText(f"${ticket:,.2f}")
+
+        self.btn_pill_compra.setText(f"Solo Carrito (${ticket:,.0f})")
+        self.btn_pill_deuda.setText(f"Solo Deuda (${deuda_p:,.0f})")
+        self.btn_pill_todo.setText(f"Liquidar Todo (${deuda_p + ticket:,.0f})")
+        self.btn_pill_deuda.setVisible(deuda_p > 0.009)
+        self.btn_pill_todo.setVisible(deuda_p > 0.009)
+
+        self.lbl_mid.setText("SELECCIONE EL MEDIO DE PAGO PARA REGISTRAR EL INGRESO")
+        self._escribir_monto(ticket)
         self._volver_de_lienzo()
 
     def _fijar_solo_compra(self):
-        self.txt_monto_abono.setText(f"{self.compra:.2f}".replace('.', ','))
-        self.txt_monto_abono.setFocus()
-        self.txt_monto_abono.selectAll()
+        self._escribir_monto(self._ticket())
 
     def _fijar_solo_deuda(self):
-        self.txt_monto_abono.setText(f"{self.deuda:.2f}".replace('.', ','))
-        self.txt_monto_abono.setFocus()
-        self.txt_monto_abono.selectAll()
+        deuda_p = self._deuda_pendiente()
+        if deuda_p <= 0.009:
+            self._escribir_monto(self._ticket())
+            return
+        self._escribir_monto(deuda_p)
 
     def _fijar_todo(self):
-        total = self.deuda + self.compra
-        self.txt_monto_abono.setText(f"{total:.2f}".replace('.', ','))
-        self.txt_monto_abono.setFocus()
-        self.txt_monto_abono.selectAll()
+        deuda_p = self._deuda_pendiente()
+        if deuda_p <= 0.009:
+            self._escribir_monto(self._ticket())
+            return
+        self._escribir_monto(deuda_p + self._ticket())
 
     def _iniciar_cobranza(self, metodo="Efectivo"):
-        texto = self.txt_monto_abono.text().replace('.', '').replace(',', '.')
-        if not texto.strip(): return
-        monto = redondear_dinero(float(texto))
-        if monto <= 0: return
+        from src.utils.parser import parse_float_regional
+        texto = self.txt_monto_abono.text().strip()
+        if not texto:
+            return
+        try:
+            monto = redondear_dinero(parse_float_regional(texto))
+        except Exception:
+            return
+        if monto <= 0:
+            self.lbl_mid.setText("NO SE COBRA UN IMPORTE NEGATIVO. SE COBRA EL TICKET.")
+            self._escribir_monto(self._ticket())
+            return
 
         self._monto_a_cobrar = monto
         self._modo = "cobrando_lienzo"
@@ -275,6 +312,28 @@ class PanelCobranza(QFrame):
         elif metodo == "Mixto":
             self.cont_lienzos.setCurrentWidget(self.lienzo_mixto)
             self.lienzo_mixto.arrancar(monto)
+
+    def soltar(self):
+        self._detalles_mixto = None
+        self._pasos_digitales_mixto = []
+        self._modo = "preparando_pago"
+        self.submetodo_cambiado.emit("")
+        for lienzo in (
+            getattr(self, "lienzo_efectivo", None),
+            getattr(self, "lienzo_qr", None),
+            getattr(self, "lienzo_tarjeta", None),
+            getattr(self, "lienzo_transferencia", None),
+            getattr(self, "lienzo_mixto", None),
+        ):
+            if lienzo is None:
+                continue
+            if hasattr(lienzo, "cerrar"):
+                try:
+                    lienzo.cerrar()
+                except Exception:
+                    pass
+        self.cont_lienzos.hide()
+        self.cont_botones.show()
 
     def _volver_de_lienzo(self):
         self._detalles_mixto = None

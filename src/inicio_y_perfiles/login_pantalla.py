@@ -285,7 +285,9 @@ class LoginPantalla(QDialog):
         campos_lay.setContentsMargins(0, 0, 0, 0)
         campos_lay.setSpacing(8)
 
-        auth_controller = AuthController()
+        self._auth = AuthController()
+        self._credenciales = []
+        self._verificando = False
 
         lbl_user = QLabel("SELECCIONA TU USUARIO")
         lbl_user.setObjectName("LoginFieldLbl")
@@ -294,10 +296,11 @@ class LoginPantalla(QDialog):
         self.txt_user = UsuarioCampo(on_tab_siguiente=self._foco_password)
         self.txt_user.setObjectName("LoginUserCb")
         try:
-            users = auth_controller.get_users_by_role(self.role)
-            self.txt_user.set_usuarios(users)
+            self._credenciales = self._auth.listar_credenciales(self.role)
+            self.txt_user.set_usuarios([r["username"] for r in self._credenciales])
         except Exception as e:
             print(f"Error cargando usuarios: {e}")
+            self._credenciales = []
             self.txt_user.set_usuarios([])
         if self.txt_user.text():
             self.txt_user.selectAll()
@@ -351,6 +354,8 @@ class LoginPantalla(QDialog):
         self.txt_pass.selectAll()
 
     def verificar(self):
+        if self._verificando:
+            return
         user = self.txt_user.text().strip()
         pwd = self.txt_pass.text().strip()
         if not user:
@@ -361,8 +366,11 @@ class LoginPantalla(QDialog):
             self.txt_pass.setFocus()
             return
 
-        auth_controller = AuthController()
-        user_dict = auth_controller.authenticate(user, pwd)
+        self._verificando = True
+        try:
+            user_dict = self._auth.authenticate(user, pwd, cache=self._credenciales)
+        finally:
+            self._verificando = False
 
         if not user_dict:
             QMessageBox.critical(self, "Acceso Denegado", "Usuario o contraseña incorrectos.")
@@ -384,12 +392,7 @@ class LoginPantalla(QDialog):
             self.txt_pass.setFocus()
             return
 
-        auth_controller.set_current_user(user_dict)
-        try:
-            from src.utils.bot_state import update_bot_state
-            update_bot_state("paso4")
-        except Exception:
-            pass
+        self._auth.set_current_user(user_dict)
         self.accept()
 
     def mousePressEvent(self, event):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QFrame
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QFrame, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal
 from src.clientes_fiado.interfaz.cobro.pin_admin import quien_autoriza
 
@@ -20,6 +20,7 @@ class PanelLimiteSuperado(QFrame):
         """)
         
         self._admin_pin = ""
+        self._datos = {}
         lay = QVBoxLayout(self)
         lay.setContentsMargins(40, 40, 40, 40)
         lay.setSpacing(15)
@@ -62,10 +63,18 @@ class PanelLimiteSuperado(QFrame):
             "text-transform: uppercase; letter-spacing: 2px; }"
         )
         lay.addWidget(self.btn_confirmar)
-        
+
+        self.btn_ir_cobranza = QPushButton("COBRANZA — ABONAR Y CONTINUAR")
+        self.btn_ir_cobranza.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_ir_cobranza.setStyleSheet(
+            "QPushButton { color: #7F1D1D; background: #FEE2E2; font-size: 16px; font-weight: 800; "
+            "border: none; border-radius: 10px; padding: 14px; }"
+            "QPushButton:hover { background: #FFFFFF; }"
+        )
+        self.btn_ir_cobranza.clicked.connect(lambda: self.solicita_cobranza.emit(self._datos or {}))
+        lay.addWidget(self.btn_ir_cobranza)
+
         lay.addSpacing(15)
-        
-        
 
     def poblar(self, datos):
         self._datos = datos

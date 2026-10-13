@@ -540,10 +540,13 @@ class PerfilPantalla(QDialog):
         self._reintentos[rol] = 0
 
         if is_locked and pid:
+            from src.utils.candados import focus_pid_window
+            if focus_pid_window(pid):
+                return
             resp = QMessageBox.question(
                 self,
                 "⚙️ Gestión de Instancia Autónoma",
-                f"El perfil '{rol.upper()}' ya se encuentra en ejecución (PID {pid}).\n\n"
+                f"El perfil '{rol.upper()}' ya se encuentra en ejecución (PID {pid}) pero la ventana no respondió.\n\n"
                 "¿Qué acción deseas realizar?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
                 QMessageBox.StandardButton.Yes

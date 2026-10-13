@@ -8,4 +8,6 @@ Valida el monto. Efectivo es el único que pide vuelto. No pinta las tarjetas.
 
 `CobroController.procesar_y_guardar_venta` arma el diccionario y llama `persistir_cobro`. La escritura no está en este archivo.
 
+`procesar_cajon_impresion` abre el cajón con `drawer_manager.abrir` si el casillero del medio está marcado (`drawer_open_cash` / `drawer_open_mixed`). No deja el kick solo en el ticket. `Mixto (Cliente)` abre como mixto. El 13.er argumento es `condiciones_ticket_custom`: no lo saques, si falta TypeError y no abre el cajón.
+
 No convertir `validar_monto_suficiente` en método de instancia para inyectar la base.

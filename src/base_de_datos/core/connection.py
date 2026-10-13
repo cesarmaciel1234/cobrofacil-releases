@@ -469,16 +469,20 @@ class ConnectionMixin:
         self._init_db()
 
     def _puerto_maestra_vivo(self, host: str) -> bool:
-        """True si 3306 de la maestra acepta conexiÃ³n. El sÃ­ se recuerda 8s para no frenar cada lectura."""
+        """True si 3306 de la maestra acepta conexion. Cachea si y no para no congelar la UI."""
         import time
 
         ahora = time.monotonic()
         if ahora < float(getattr(self, "_maestra_viva_hasta", 0) or 0):
             return True
-        if puerto_mariadb_abierto(host, 2.0):
+        if ahora < float(getattr(self, "_maestra_muerta_hasta", 0) or 0):
+            return False
+        if puerto_mariadb_abierto(host, 0.4):
             self._maestra_viva_hasta = ahora + 8.0
+            self._maestra_muerta_hasta = 0.0
             return True
         self._maestra_viva_hasta = 0.0
+        self._maestra_muerta_hasta = ahora + 8.0
         return False
 
     def _abrir_sqlite(self):
@@ -531,13 +535,17 @@ class ConnectionMixin:
             self._maestra_viva_hasta = 0.0
             try:
                 import time as _time
-                self._last_master_try = _time.monotonic()
+                ahora = _time.monotonic()
+                self._last_master_try = ahora
+                self._maestra_muerta_hasta = ahora + 8.0
             except Exception:
                 pass
 
-            # Verificar/crear tablas en la BD local
-            self._create_tables()
-            self._migrate_db()
+            # El SQLite local ya existe en la caja: no migrar en el hilo de la UI.
+            sqlite_lista = os.path.isfile(local_path) and os.path.getsize(local_path) > 4096
+            if not sqlite_lista:
+                self._create_tables()
+                self._migrate_db()
 
             logger.info(f"[RED LAN] Reconectado a BD local: {local_path}")
         except Exception as e:

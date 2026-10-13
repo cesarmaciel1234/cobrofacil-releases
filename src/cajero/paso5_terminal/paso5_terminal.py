@@ -519,17 +519,57 @@ class Paso5Terminal(QWidget):
         QTimer.singleShot(0, self._apply_screen_layout)
         self.txt_scan.setFocus()
         QTimer.singleShot(500, self.txt_scan.setFocus) # Asegurar foco inicial
-        QTimer.singleShot(1200, self._precalentar_cobro)
+        QTimer.singleShot(400, self._precalentar_cobro)
         self.txt_scan.installEventFilter(self) # Para monitoreo PRO
 
-    def _precalentar_cobro(self):
-        """Carga e instancia el cobro en segundo plano para que al tocar F12 abra instantáneo."""
+    def _cobro_vivo(self, dlg):
+        if dlg is None:
+            return False
         try:
-            from src.cajero.paso6_cobro import Paso6Cobro
-            if not getattr(self, '_next_cobro_dlg', None):
-                self._next_cobro_dlg = Paso6Cobro(0.0, [], self)
+            from shiboken6 import isValid
+            return bool(isValid(dlg))
         except Exception:
-            pass
+            try:
+                dlg.objectName()
+                return True
+            except RuntimeError:
+                return False
+
+    def _precalentar_cobro(self):
+        """Deja el Paso 6 armado y oculto. F12 solo le carga el carrito."""
+        try:
+            if self._cobro_vivo(getattr(self, "_next_cobro_dlg", None)):
+                return
+            from src.cajero.paso6_cobro import Paso6Cobro
+            dlg = Paso6Cobro(0.0, [], self)
+            dlg.hide()
+            self._next_cobro_dlg = dlg
+        except Exception:
+            self._next_cobro_dlg = None
+
+    def _tomar_cobro_listo(self, total, items):
+        dlg = getattr(self, "_next_cobro_dlg", None)
+        self._next_cobro_dlg = None
+        if self._cobro_vivo(dlg):
+            try:
+                dlg.preparar_para_venta(total, items)
+                return dlg
+            except Exception:
+                pass
+        from src.cajero.paso6_cobro import Paso6Cobro
+        return Paso6Cobro(total, items, self)
+
+    def _devolver_cobro(self, dlg):
+        if not self._cobro_vivo(dlg):
+            QTimer.singleShot(0, self._precalentar_cobro)
+            return
+        try:
+            dlg.preparar_para_venta(0.0, [])
+            dlg.hide()
+            self._next_cobro_dlg = dlg
+        except Exception:
+            self._next_cobro_dlg = None
+            QTimer.singleShot(0, self._precalentar_cobro)
 
     def keyPressEvent(self, event):
         k = event.key()
@@ -1178,7 +1218,10 @@ class Paso5Terminal(QWidget):
             return
         prod = item.data(Qt.UserRole) or {}
         try:
-            stk = float(prod.get("stock") or 0)
+            if hasattr(prod, "get"):
+                stk = float(prod.get("stock") or 0)
+            else:
+                stk = float(prod["stock"] or 0)
         except Exception:
             stk = 0.0
         col_s = self._color_stock_busqueda(selected, stk)
@@ -1373,9 +1416,9 @@ class Paso5Terminal(QWidget):
         return txt.isdigit()
 
     def actualizar_busqueda(self):
-        # El nombre espera 160 ms. El código no consulta hasta Enter.
+        # El nombre espera 3 letras y 160 ms. El código no consulta hasta Enter.
         txt = self.txt_scan.text().strip()
-        if self._texto_es_codigo(txt):
+        if self._texto_es_codigo(txt) or len(txt) < 3:
             self.search_timer.stop()
             if getattr(self, "list_results", None) is not None and not self.list_results.isHidden():
                 self._ocultar_busqueda()
@@ -1395,6 +1438,9 @@ class Paso5Terminal(QWidget):
                 self._ocultar_busqueda()
                 return
 
+        if len(txt) < 3 and not txt.isdigit():
+            self._ocultar_busqueda()
+            return
         res = self.controller.carrito.buscar_productos(txt)
         self.list_results.clear()
 
@@ -2178,25 +2224,14 @@ class Paso5Terminal(QWidget):
                 })
             items = redondear_items_carrito(items)
 
-            from src.cajero.paso6_cobro import Paso6Cobro
-            if getattr(self, '_next_cobro_dlg', None) is not None:
-                dlg = self._next_cobro_dlg
-                self._next_cobro_dlg = None
-                dlg.total_original = total
-                dlg.items_carrito = items
-            else:
-                dlg = Paso6Cobro(total, items, self)
-            
+            dlg = self._tomar_cobro_listo(total, items)
             dlg.descuentaso_oferta = sum(
                 abs(parse_float_safe(self.tabla.item(i, 4).text())) for i in range(self.tabla.rowCount())
             )
             dlg.recargar_total_final()
 
-            # Ejecutamos el cobro
             ok = qt_exec(dlg)
-            
-            # Reponer la instancia para la próxima venta velozmente en segundo plano
-            QTimer.singleShot(500, self._precalentar_cobro)
+            self._devolver_cobro(dlg)
         finally:
             self._cobro_abierto = False
         self._refrescar_notificaciones()
