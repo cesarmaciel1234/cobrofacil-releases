@@ -131,7 +131,11 @@ class PanelDetalle(QWidget):
 
     def mostrar_venta(self, v, items):
         self.ticket_seleccionado = v['id']
-        self.lbl_preview_title.setText(f"Ticket {v['id']}")
+        estado = str(v['estado']).upper() if 'estado' in v.keys() else ""
+        if "CANCELADA" in estado:
+            self.lbl_preview_title.setText(f"Ticket {v['id']}  ·  CANCELADO")
+        else:
+            self.lbl_preview_title.setText(f"Ticket {v['id']}")
         self.lbl_det_folio.setText(str(v['id']))
         self.lbl_det_cajero.setText(str(v['usuario']).upper())
         self.lbl_det_metodo.setText(etiqueta_pago(v['metodo_pago'] if 'metodo_pago' in v.keys() else 'Efectivo').upper())

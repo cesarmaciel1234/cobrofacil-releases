@@ -10,6 +10,8 @@ Clase `MotorAuditoria`. Todo es estático y habla con la base que le pasan.
 
 `obtener_inventario` lee `productos`: id, codigo, nombre, departamento, precio, stock, unidad, es_pesable. Orden: departamento, nombre. Si falla, devuelve lista vacía.
 
+`leer_producto` hace `SELECT id, codigo, nombre, stock FROM productos WHERE id = ?`. Es la lectura que usa el conector antes del SET, para no depender del catálogo.
+
 `aplicar_ajuste_stock` ejecuta `UPDATE productos SET stock = ? WHERE id = ?`. Un solo update. Pone el stock en el número contado. No resta.
 
 `registrar_ajuste` solo inserta en `auditorias_inventario`. No toca `productos`. Campos: producto_id, nombre_producto, stock_sistema, stock_fisico, diferencia, responsable, motivo.
@@ -34,7 +36,7 @@ La caché dura 15 segundos (`_cache_duration`). `invalidar_cache` la vacía. `_v
 
 1. Si no hay base, falso y el texto «Base de datos no disponible».
 2. Si `stock_nuevo` es menor que 0, falso y «El stock no puede ser negativo».
-3. Busca el producto. Si no está, falso.
+3. Lee el producto con `MotorAuditoria.leer_producto`. Si no está, prueba el catálogo. Si tampoco, falso.
 4. Diferencia = stock nuevo − stock anterior. Si es casi cero (menos de 1e-9), verdadero y «Sin cambio», sin escribir.
 5. `aplicar_ajuste_stock`. Si falla, no registra el log.
 6. `registrar_ajuste`.

@@ -7,7 +7,8 @@ Todas reciben `desde` / `hasta` ('YYYY-MM-DD', los dos días incluidos). Sin fec
 - `tickets(desde, hasta)`: `(cantidad, total vendido)`. La vista muestra `77 · $1.657.988,50` y abajo el promedio.
 - `cancelaciones(desde, hasta)`: ventas `CANCELADA` por `fecha_cancel` (si falta, la fecha de la venta). `{'cant', 'monto', 'cuando', 'usuario'}` de la última; `cuando` = 'YYYY-MM-DD HH:MM'.
 - `pagos_clientes(desde, hasta)`: abonos de `cuenta_corriente`.
-- `digitales(desde, hasta)`: `(sin_firmar, total)`. Sin firmar = digitales (QR, tarjeta, transferencia, MP, Point) cuyo `id` no está como ticket en `reportes/mp_vinculos.json` de esta PC ni en `mp_pagos` de la tienda (`motor_cobros_digitales.veredicto.conciliar.tickets_firmados(desde, hasta)`).
+- `digitales(desde, hasta)`: `(sin_firmar, total)` solo QR/tarjeta/transferencia/Point. Fiado, Clientes y MasCredito no entran: son cuenta/DNI.
+- `cobros_auditoria(desde, hasta)`: mismos montos que el monitor (`tickets_digitales`, `cliente`, `sin_firmar_monto`, `firmados`) más conteos. La vitrina muestra el monto y `5/25` (no firmados / tickets digitales).
 
 - `deuda_clientes()` e `inventario_costo()`: los mismos números que `cerebro.resumen_cuentas()` y `WorkerAnaliticaJefe`. El panel los usa sin maestra.
 

@@ -43,9 +43,10 @@ class PanelTarjetaCobro(QFrame):
         self._intent = ""
         self._token = ""
         self._device = ""
+        self._en_vuelo = False
         self._llegada.connect(self._pintar)
         self._reloj = QTimer(self)
-        self._reloj.setInterval(2500)
+        self._reloj.setInterval(800)
         self._reloj.timeout.connect(self._consultar)
         self.hide()
         self._armar()
@@ -134,14 +135,20 @@ class PanelTarjetaCobro(QFrame):
         threading.Thread(target=_trabajo, daemon=True).start()
 
     def _consultar(self):
-        if self._modo != "esperando" or not self._intent:
+        if self._modo != "esperando" or not self._intent or self._en_vuelo:
             return
         token, intent, generacion = self._token, self._intent, self._generacion
+        self._en_vuelo = True
 
         def _trabajo():
+            try:
+                estado = estado_intent(token, intent)
+            except Exception:
+                estado = ""
             self._llegada.emit({
                 "generacion": generacion,
-                "estado": estado_intent(token, intent),
+                "vuelo": True,
+                "estado": estado,
             })
 
         threading.Thread(target=_trabajo, daemon=True).start()
@@ -149,6 +156,8 @@ class PanelTarjetaCobro(QFrame):
     def _pintar(self, dato):
         if not dato or dato.get("generacion") != self._generacion:
             return
+        if dato.get("vuelo"):
+            self._en_vuelo = False
         estado = dato.get("estado")
         if estado:
             if self._modo != "esperando":
@@ -167,11 +176,13 @@ class PanelTarjetaCobro(QFrame):
             self._device = pedido.get("device") or ""
             self._intent = pedido.get("intent") or ""
             self._modo = "esperando"
+            self._en_vuelo = False
             self.estado.setText("Apoye la tarjeta.")
             self.detalle.setText(
                 f"${self._monto:,.2f}\nNo toque la terminal."
             )
             self._reloj.start()
+            self._consultar()
             self.cambio.emit("esperando")
             return
         motivo = pedido.get("motivo")

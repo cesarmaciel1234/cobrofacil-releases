@@ -12,6 +12,20 @@ def _ficha(fila):
         return {}
 
 
+def fecha_corta(fecha):
+    f = str(fecha or "")
+    if len(f) >= 16 and f[4] == "-" and f[7] == "-":
+        return f"{f[8:10]}/{f[5:7]}/{f[:4]} {f[11:16]}"
+    return f
+
+
+def titulo_persona(texto):
+    t = " ".join(str(texto or "").split())
+    if t.isupper() and len(t) > 1:
+        return t.title()
+    return t
+
+
 def _parentesis(descripcion):
     desc = str(descripcion or "").strip()
     if desc.endswith(")") and "(" in desc:
@@ -32,12 +46,19 @@ def medio_de(fila):
 
 
 def detalle_de(fila):
-    """Id de transferencia, QR, Point o F9 MANUAL, si quedó en la descripción."""
+    """Id de Mercado Pago o F9 MANUAL. Efectivo no tiene id digital."""
     ficha = _ficha(fila)
     dentro = _parentesis(ficha.get("descripcion"))
     if ":" not in dentro:
         return ""
-    return dentro.split(":", 1)[1].strip()
+    bruto = dentro.split(":", 1)[1].strip()
+    try:
+        from src.motor_auditoria_digital.consultas.ids import id_pago
+
+        f9 = "F9" in bruto.upper()
+        return id_pago(bruto, f9=f9) or bruto
+    except Exception:
+        return bruto
 
 
 def armar(fila):
@@ -50,14 +71,33 @@ def armar(fila):
         saldo = float(ficha.get("saldo_resultante") or 0)
     except (TypeError, ValueError):
         saldo = 0.0
+    try:
+        from src.motor_auditoria_digital.consultas.ids import ticket_cobro
+
+        cobro = ticket_cobro(ficha.get("id"))
+    except Exception:
+        cobro = f"COB-{ficha.get('id')}" if ficha.get("id") else ""
+    medio = medio_de(ficha)
+    detalle = detalle_de(ficha)
+    if not detalle and medio.lower() == "efectivo":
+        detalle = "Caja"
+    perfil = titulo_persona(ficha.get("perfil"))
+    quien = titulo_persona(ficha.get("registrado_por"))
+    if quien.lower() == perfil.lower():
+        quien = quien or perfil
+    fecha_raw = str(ficha.get("fecha") or "")
     return {
-        "fecha": str(ficha.get("fecha") or ""),
+        "id": str(ficha.get("id") or "").strip(),
+        "ticket_cobro": cobro,
+        "fecha": fecha_corta(fecha_raw) or fecha_raw,
+        "fecha_raw": fecha_raw,
         "nombre": str(ficha.get("nombre") or "").strip(),
         "dni": str(ficha.get("dni") or "").strip(),
         "monto": monto,
-        "medio": medio_de(ficha),
-        "detalle": detalle_de(ficha),
-        "perfil": str(ficha.get("perfil") or "").strip(),
-        "quien": str(ficha.get("registrado_por") or "").strip(),
+        "medio": medio,
+        "detalle": detalle,
+        "perfil": perfil,
+        "quien": quien,
         "saldo": saldo,
+        "digital": medio.lower() in ("qr", "transferencia", "tarjeta", "mixto"),
     }

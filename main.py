@@ -231,6 +231,12 @@ def launch_app(direct_role=None):
         pass
 
     try:
+        from src.motor_auditoria_digital import arrancar as arrancar_auditoria_digital
+        arrancar_auditoria_digital()
+    except Exception:
+        pass
+
+    try:
         from src.clientes_fiado.oficina.huella import arrancar as arrancar_huella_clientes
         arrancar_huella_clientes()
     except Exception:

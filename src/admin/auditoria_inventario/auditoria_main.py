@@ -4,10 +4,38 @@ from PyQt6.QtWidgets import (
     QDialog, QComboBox, QAbstractItemView, QFrame, QGridLayout,
 )
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QColor, QBrush
+from PyQt6.QtGui import QColor, QBrush, QKeyEvent
 from src.cerebro_global.auditoria.motor_conector_auditoria import obtener_conector_auditoria
 from src.utils.theme_manager import theme_manager
 from src.config import config
+
+
+def _numero(texto) -> float:
+    """Pasa '12,5' o '12.5' a float. No interpreta 2.000 como miles."""
+    s = str(texto or "").strip().replace(" ", "").replace("$", "")
+    if not s:
+        raise ValueError("vacío")
+    if "," in s and "." not in s:
+        s = s.replace(",", ".")
+    return float(s)
+
+
+def _partes_codigo(raw: str):
+    texto = str(raw or "").strip()
+    if not texto:
+        return []
+    partes = [texto]
+    for sep in ("/", ";", ",", " "):
+        extra = []
+        for p in partes:
+            extra.extend(x.strip() for x in p.split(sep) if x.strip())
+        partes = extra
+    return partes
+
+
+def _parece_barras(texto: str) -> bool:
+    compacto = str(texto or "").replace(" ", "").replace("-", "")
+    return compacto.isdigit() and len(compacto) >= 8
 
 
 def _info_unidad(unidad="", departamento="", pesable=False):
@@ -19,34 +47,34 @@ def _info_unidad(unidad="", departamento="", pesable=False):
             "clave": "MT",
             "corto": "metros",
             "stock": "metros en sistema",
-            "hint": "Medí los metros de tela (rollo o corte). Este número reemplaza el conteo.",
+            "hint": "Medí los metros. Guardar deja el stock igual a este número.",
         }
     if pesable or u in ("KG", "KILO", "KILOS"):
         return {
             "clave": "KG",
             "corto": "kilos",
             "stock": "kilos en sistema",
-            "hint": "Pesá el producto. Este número reemplaza el conteo.",
+            "hint": "Pesá el producto. Guardar deja el stock igual a este número.",
         }
     if u in ("LT", "L", "LITRO", "LITROS"):
         return {
             "clave": "LT",
             "corto": "litros",
             "stock": "litros en sistema",
-            "hint": "Anotá los litros. Este número reemplaza el conteo.",
+            "hint": "Anotá los litros. Guardar deja el stock igual a este número.",
         }
     if u in ("CJ", "CAJA", "CAJAS"):
         return {
             "clave": "CJ",
             "corto": "cajas",
             "stock": "cajas en sistema",
-            "hint": "Contá las cajas. Este número reemplaza el conteo.",
+            "hint": "Contá las cajas. Guardar deja el stock igual a este número.",
         }
     return {
         "clave": "UN",
         "corto": "unidades",
         "stock": "unidades en sistema",
-        "hint": "Contá las unidades. Este número reemplaza el conteo.",
+            "hint": "Contá las unidades. Guardar deja el stock igual a este número.",
     }
 
 
@@ -155,15 +183,39 @@ class DialogoConteo(QDialog):
         btn_cancel.setMinimumHeight(48)
         btn_cancel.setStyleSheet("background: #64748B; color: white; font-size: 14px; padding: 0 16px;")
         btn_cancel.clicked.connect(self.reject)
-        btn_ok = QPushButton("Guardar conteo")
-        btn_ok.setMinimumHeight(48)
-        btn_ok.setStyleSheet("background: #10B981; color: white; font-size: 16px; padding: 0 22px;")
-        btn_ok.clicked.connect(self.accept)
+        self.btn_ok = QPushButton("Guardar y aplicar stock")
+        self.btn_ok.setMinimumHeight(48)
+        self.btn_ok.setStyleSheet("background: #10B981; color: white; font-size: 16px; padding: 0 22px;")
+        self.btn_ok.setDefault(True)
+        self.btn_ok.setAutoDefault(True)
+        self.btn_ok.clicked.connect(self._aceptar)
         acciones.addStretch()
         acciones.addWidget(btn_cancel)
-        acciones.addWidget(btn_ok)
+        acciones.addWidget(self.btn_ok)
         root.addLayout(acciones)
         self._refrescar()
+
+    def _aceptar(self):
+        if not (self._buffer or "").strip():
+            return
+        self.accept()
+
+    def keyPressEvent(self, event: QKeyEvent):
+        key = event.key()
+        txt = event.text() or ""
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self._aceptar()
+            return
+        if key in (Qt.Key.Key_Backspace, Qt.Key.Key_Delete):
+            self._tecla("⌫")
+            return
+        if txt in (",", "."):
+            self._tecla(",")
+            return
+        if txt.isdigit():
+            self._tecla(txt)
+            return
+        super().keyPressEvent(event)
 
     def _tecla(self, t):
         if t == "⌫":
@@ -181,6 +233,8 @@ class DialogoConteo(QDialog):
     def _refrescar(self):
         num = self._buffer if self._buffer != "" else "0"
         self.lbl_valor.setText(f"{num}  {self._sufijo}")
+        if hasattr(self, "btn_ok"):
+            self.btn_ok.setEnabled(bool((self._buffer or "").strip()))
 
     def valor(self) -> float:
         raw = (self._buffer or "0").replace(",", ".")
@@ -198,6 +252,11 @@ class AuditoriaMain(QWidget):
         self.conector_auditoria = obtener_conector_auditoria()
         self.user_role = self._rol_actual()
         self._vista = "todos"
+        self._dialogo_abierto = False
+        self._timer_scan = QTimer(self)
+        self._timer_scan.setSingleShot(True)
+        self._timer_scan.setInterval(180)
+        self._timer_scan.timeout.connect(self._on_codigo_escaneado)
         self.setup_ui()
         self.aplicar_permisos_perfil()
         self.cargar_datos()
@@ -282,7 +341,7 @@ class AuditoriaMain(QWidget):
         nav.addStretch()
         root.addLayout(nav)
 
-        self.lbl_estado = QLabel("Listo para contar. Escaneá o escribí el código y Enter.")
+        self.lbl_estado = QLabel("Escaneá el producto: se abre el conteo y al guardar se aplica el stock.")
         self.lbl_estado.setStyleSheet("color: #64748B; font-size: 13px;")
         root.addWidget(self.lbl_estado)
 
@@ -303,7 +362,7 @@ class AuditoriaMain(QWidget):
         filtro_lay = QHBoxLayout()
         self.txt_buscar = QLineEdit()
         self.txt_buscar.setPlaceholderText("Escanear código o filtrar por nombre / depto…")
-        self.txt_buscar.textChanged.connect(self._aplicar_filtros)
+        self.txt_buscar.textChanged.connect(self._on_texto_buscar)
         self.txt_buscar.returnPressed.connect(self._on_codigo_escaneado)
 
         self.cmb_vista = QComboBox()
@@ -383,7 +442,18 @@ class AuditoriaMain(QWidget):
     def _puede_editar(self):
         return not self._es_lectura()
 
+    def _on_texto_buscar(self, *_):
+        self._aplicar_filtros()
+        texto = self.txt_buscar.text().strip()
+        if _parece_barras(texto):
+            self._timer_scan.start()
+        else:
+            self._timer_scan.stop()
+
     def _on_codigo_escaneado(self):
+        self._timer_scan.stop()
+        if getattr(self, "_dialogo_abierto", False):
+            return
         if not self._puede_editar():
             self.lbl_estado.setText("Solo lectura: el cajero no puede cargar conteos.")
             return
@@ -393,47 +463,43 @@ class AuditoriaMain(QWidget):
 
         row = self._buscar_fila(codigo)
         if row is None:
+            self.conector_auditoria.invalidar_cache()
+            self.cargar_datos(forzar=True)
+            row = self._buscar_fila(codigo)
+        if row is None:
             self.lbl_estado.setText(f"No hay producto con código o ID «{codigo}».")
-            self._aplicar_filtros()
+            self.txt_buscar.selectAll()
             return
 
-        id_item = self.tabla.item(row, self.COL_ID)
-        depto = self.tabla.item(row, self.COL_DEP).text() if self.tabla.item(row, self.COL_DEP) else ""
-        pesable = bool(id_item.data(Qt.ItemDataRole.UserRole + 1)) if id_item else False
-        unidad = str(id_item.data(Qt.ItemDataRole.UserRole + 2) or "") if id_item else ""
-        info = _info_unidad(unidad, depto, pesable)
-        if info["clave"] in ("KG", "MT", "LT"):
-            self._mostrar_dialogo_edicion(row)
-        else:
-            self._sumar_conteo(row, 1.0)
+        self.txt_buscar.blockSignals(True)
         self.txt_buscar.clear()
+        self.txt_buscar.blockSignals(False)
+        self._aplicar_filtros()
         self.tabla.selectRow(row)
         self.tabla.scrollToItem(self.tabla.item(row, 0))
+        self._mostrar_dialogo_edicion(row)
+        QTimer.singleShot(40, self.txt_buscar.setFocus)
 
     def _buscar_fila(self, codigo: str):
         codigo = codigo.strip()
+        if not codigo:
+            return None
+        codigo_l = codigo.lower()
         for i in range(self.tabla.rowCount()):
             item_cod = self.tabla.item(i, self.COL_COD)
             item_id = self.tabla.item(i, self.COL_ID)
-            if item_cod and item_cod.text().strip() == codigo:
+            id_txt = (item_id.text() if item_id else "").strip()
+            raw_cod = (item_cod.text() if item_cod else "").strip()
+            if id_txt == codigo:
                 return i
-            if item_id and item_id.text().strip() == codigo:
+            if raw_cod.lower() == codigo_l:
+                return i
+            for parte in _partes_codigo(raw_cod):
+                if parte.lower() == codigo_l:
+                    return i
+            if len(codigo_l) >= 8 and codigo_l in raw_cod.lower():
                 return i
         return None
-
-    def _sumar_conteo(self, row, cantidad):
-        item = self.tabla.item(row, self.COL_REAL)
-        actual = 0.0
-        txt = (item.text() or "").strip()
-        if txt:
-            try:
-                actual = float(txt)
-            except ValueError:
-                actual = 0.0
-        nuevo = actual + float(cantidad)
-        item.setText(f"{nuevo:g}")
-        nombre = self.tabla.item(row, self.COL_NOM).text()
-        self.lbl_estado.setText(f"{nombre}: conteo {nuevo:g} (sumó {cantidad:g})")
 
     def _fila_seleccionada(self):
         row = self.tabla.currentRow()
@@ -498,11 +564,47 @@ class AuditoriaMain(QWidget):
         self._dialogo_abierto = True
         try:
             if dlg.exec() == QDialog.DialogCode.Accepted:
-                item = self.tabla.item(row, self.COL_REAL)
-                if item:
-                    item.setText(f"{dlg.valor():g}")
+                self._aplicar_conteo_fila(row, dlg.valor())
         finally:
             self._dialogo_abierto = False
+            QTimer.singleShot(40, self.txt_buscar.setFocus)
+
+    def _usuario_ajuste(self) -> str:
+        u = config.current_user or {}
+        return u.get("nombre") or u.get("username") or u.get("usuario") or "Admin"
+
+    def _aplicar_conteo_fila(self, row, conteo: float):
+        item_real = self.tabla.item(row, self.COL_REAL)
+        if item_real:
+            item_real.setText(f"{float(conteo):g}")
+        try:
+            p_id = int(self.tabla.item(row, self.COL_ID).text())
+        except (TypeError, ValueError):
+            self.lbl_estado.setText("No se pudo leer el ID del producto.")
+            return
+        nombre = self.tabla.item(row, self.COL_NOM).text() if self.tabla.item(row, self.COL_NOM) else ""
+        ok, msg = self.conector_auditoria.solicitar_ajuste_stock(
+            p_id,
+            float(conteo),
+            self._usuario_ajuste(),
+            "Conteo físico",
+        )
+        if not ok:
+            QMessageBox.warning(self, "Stock", f"{nombre or p_id}: {msg}")
+            self.lbl_estado.setText(f"No se aplicó el stock de {nombre or p_id}.")
+            return
+        sist = self.tabla.item(row, self.COL_SIST)
+        if sist:
+            sist.setText(f"{float(conteo):.3f}")
+        dif_item = self.tabla.item(row, self.COL_DIF)
+        if dif_item:
+            dif_item.setText("0.000")
+            dif_item.setForeground(QBrush(QColor("#0F172A")))
+        is_dark = theme_manager.is_dark()
+        if item_real:
+            item_real.setBackground(QColor("#DCFCE7" if not is_dark else "#14532D"))
+        self._actualizar_kpis()
+        self.lbl_estado.setText(f"Stock aplicado: {nombre} = {float(conteo):g}")
 
     def _ver_historial_ajustes(self, p_id, codigo, nombre):
         dialog = QDialog(self)
@@ -587,7 +689,9 @@ class AuditoriaMain(QWidget):
         self.tabla.blockSignals(False)
         self._apply_theme()
         self._actualizar_kpis()
-        self.lbl_estado.setText(f"{len(productos)} productos cargados. Escaneá para sumar al conteo.")
+        self.lbl_estado.setText(
+            f"{len(productos)} productos cargados. Escaneá: se abre el conteo y al guardar se aplica el stock."
+        )
 
     def _aplicar_filtros(self, *_):
         t = self.txt_buscar.text().lower().strip()
@@ -626,8 +730,8 @@ class AuditoriaMain(QWidget):
             self._actualizar_kpis()
             return
         try:
-            conteo = float(str_val)
-            stock_sis = float(stock_sist_item.text())
+            conteo = _numero(str_val)
+            stock_sis = _numero(stock_sist_item.text())
             dif = conteo - stock_sis
             dif_item.setText(f"{dif:.3f}")
             if dif > 1e-9:
@@ -675,8 +779,8 @@ class AuditoriaMain(QWidget):
             try:
                 p_id = int(self.tabla.item(i, self.COL_ID).text())
                 nombre = self.tabla.item(i, self.COL_NOM).text()
-                stock_sis = float(self.tabla.item(i, self.COL_SIST).text())
-                conteo = float(str_val)
+                stock_sis = _numero(self.tabla.item(i, self.COL_SIST).text())
+                conteo = _numero(str_val)
                 dif = conteo - stock_sis
                 if abs(dif) < 1e-9:
                     continue
@@ -718,8 +822,7 @@ class AuditoriaMain(QWidget):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        u = config.current_user or {}
-        usuario = u.get("nombre") or u.get("username") or u.get("usuario") or "Admin"
+        usuario = self._usuario_ajuste()
         ok, errores = self.conector_auditoria.aplicar_lote_ajustes(ajustes, usuario)
         self.cargar_datos(forzar=True)
         self.txt_buscar.clear()

@@ -19,7 +19,7 @@ Leé esto antes de tocar velocidad, ESC, QR, buscador o login. Si un síntoma vu
 
 | Se ve | Causa que ya dimos | Arreglo |
 |---|---|---|
-| «Buscando el QR de Mercado Pago…» se queda | PUT/POST a MP en el hilo UI, timeout 10 s, o `asegurar_pos_qr` (users/me + listar POS + crear store) | El trabajo va en hilo. `pedir_qr_pos` timeout 3,5 s. Sin `asegurar_pos_qr`. Session HTTP reusada. `precargar_conexion` al armar el panel. |
+| El cliente ya pagó y el ticket no cierra | Se preguntaba `/v1/payments/search` cada 3 s (índice lento, recorte de fecha, GETs apiladas) | `pago_aprobado` lee la orden del POS, después merchant_orders. Panel cada 800 ms, una GET a la vez. |
 | QR no sale y pide foto con TPV verde | Faltan `mp_user_id` y `mp_qr_pos_external_id` | Configurar en Admin → Terminales TPV. No crear el POS desde el cobro. |
 | QR tarda otra vez tras un cobro | Se perdió `requests.Session` o el cache `_cuenta_cache` | Restaurar `MPApiClient._sesion` y `_cuenta_cache` en `qr_en_cobro/pedido.py`. |
 | ESC congela | `salir_a_metodos` consultaba DB o `config._load_config` | `rutas_de_cobro/salida/proceso.py` solo suelta timers/Point/QR y página 0. |
@@ -32,6 +32,7 @@ Leé esto antes de tocar velocidad, ESC, QR, buscador o login. Si un síntoma vu
 | Señal de red tras cerrar | emit sobre QObject borrado | `network_engine`: `except RuntimeError`. |
 | Cobranza arma QR/Point con $-2.600 | Saldo a favor sumado al ticket | Por defecto el ticket. Solo Deuda / Liquidar Todo si la deuda es > 0. `pedir_qr_pos` rechaza monto ≤ 0. |
 | Cajón no abre en efectivo/mixto con casillero marcado | `post_cobro` pasaba un 13.er argumento (TypeError, se tragaba ticket y cajón). Mixto (Cliente) no coincidía con `"Mixto"`. El kick iba solo dentro del ticket y el spooler lo come. | Abrir con `drawer_manager.abrir` aparte. Nombre del medio por prefijo. Aceptar `condiciones_ticket_custom`. |
+| F6 ficha del cliente + flecha derecha abre Cambio/Otros | Un solo diálogo juntaba F2 y F6 | F6 es `f6_centro_cobranzas/dialogo.py`. F2 es `ingresar_efectivo/dialogo.py`. |
 
 ## QR — camino vivo
 
@@ -39,7 +40,7 @@ Leé esto antes de tocar velocidad, ESC, QR, buscador o login. Si un síntoma vu
 2. Al elegir QR, `_tpv_qr_listo` hace `_load_config` (luz).
 3. `mostrar` pinta «Buscando…» y pide `pedir_qr_pos` en hilo.
 4. `pedir_qr_pos` hace `_load_config`, lee token, usa `_cuenta_qr` (memoria). PUT instore 3,5 s. Si no hay `qr_data`, POST preferences 3,5 s. PNG chico (`box_size=4`, `border=1`, `ERROR_CORRECT_L`).
-5. Pintar con `FastTransformation`. Polling de pago cada 3 s, GET 4 s, también en hilo.
+5. Pintar con `FastTransformation`. Al quedar el código, consulta al toque. Reloj 800 ms. Una GET en vuelo. `pago_aprobado`: orden POS → merchant_orders → payments/search.
 
 Archivos: `qr_en_cobro/pedido.py`, `qr_en_cobro/panel.py`, `mercadopago_core/api_client.py`.
 

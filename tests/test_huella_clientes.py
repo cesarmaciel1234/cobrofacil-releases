@@ -259,6 +259,15 @@ def test_resumen_y_llegada_se_leen():
     ) == "telefono: 1 → 2"
     assert consulta.llegada({"llego_via": "NODO", "llego_en": "2026-09-27 08:10:00"}) == "Pendrive · 27/09/2026 08:10"
     assert "no aplicado" in consulta.llegada({"llego_via": "NODO:TIENDA_MAS_NUEVA"})
+    assert consulta.llegada({"base": "TIENDA"}) == "En esta tienda"
+    assert "COB-98" in consulta.resumen({
+        "accion": "ABONO",
+        "detalle": json.dumps({"monto": 100, "cobro_id": 98, "medio": "QR", "descripcion": "Cajero (QR: F9 MANUAL)"}),
+    })
+    assert "F9 MANUAL" in consulta.resumen({
+        "accion": "ABONO",
+        "detalle": json.dumps({"monto": 100, "descripcion": "Cajero (QR: F9 MANUAL)"}),
+    })
 
 
 def test_huella_texto():

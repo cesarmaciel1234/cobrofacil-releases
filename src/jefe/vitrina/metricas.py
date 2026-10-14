@@ -122,52 +122,56 @@ def pagos_clientes(desde=None, hasta=None) -> float:
         return 0.0
 
 
-def _es_digital(metodo: str) -> bool:
-    m = (metodo or "").upper()
-    claves = (
-        "QR", "TARJETA", "TRANSFER", "MERCADO", "POINT",
-        "DEBITO", "CRÉDITO", "CREDITO", "MP",
-    )
-    return any(k in m for k in claves)
-
-
-def digitales(desde=None, hasta=None) -> tuple[int, int]:
-    """
-    (sin_firmar, total_digitales) del rango.
-    Sin firmar = digitales cuyo id no está como ticket en `mp_vinculos` de esta PC
-    ni en `mp_pagos.ticket` de la tienda (mismo criterio que Ticket = — en el monitor MP).
-    """
+def cobros_auditoria(desde=None, hasta=None) -> dict:
+    """Mismos totales que el monitor. No vuelve a contar ventas por su cuenta."""
+    vacio = {
+        "digitales_sin_firma": 0,
+        "digitales_total": 0,
+        "cuenta_dni": 0,
+        "mp_sin_ticket": 0,
+        "tickets_digitales": 0.0,
+        "firmados": 0.0,
+        "sin_firmar_monto": 0.0,
+        "cliente": 0.0,
+        "bruto": 0.0,
+    }
     d0 = (desde or _hoy())[:10]
     d1 = (hasta or d0)[:10]
     try:
-        from src.cajero.paso6_cobro.vinculo_mp.libro import _leer
+        from src.motor_auditoria_digital import snapshot
+        from src.motor_auditoria_digital.cruces.totales import de_filas
 
-        filas = _db().execute_query(
-            f"""
-            SELECT id, metodo_pago
-            FROM ventas
-            WHERE estado IN {VIGENTES} AND fecha >= ? AND fecha < ?
-            """,
-            _rango(d0, d1),
-        ) or []
-        lista = [r for r in filas if _es_digital(str(_val(r, "metodo_pago", 1) or ""))]
-        total = len(lista)
-        if total == 0:
-            return 0, 0
-        firmados = set()
-        for mes in _leer().values():
-            if not isinstance(mes, dict):
-                continue
-            for dato in mes.values():
-                if isinstance(dato, dict) and dato.get("ticket"):
-                    firmados.add(str(dato["ticket"]).strip())
-        from src.motor_cobros_digitales.veredicto.conciliar import tickets_firmados
-
-        firmados |= tickets_firmados(d0, d1)
-        sin = sum(1 for r in lista if str(_val(r, "id", 0) or "").strip() not in firmados)
-        return sin, total
+        filas = snapshot(d0, d1)
+        t = de_filas(filas)
+        vacio["tickets_digitales"] = float(t.get("tickets") or 0)
+        vacio["firmados"] = float(t.get("firmados") or 0)
+        vacio["sin_firmar_monto"] = float(t.get("sin_firmar") or 0)
+        vacio["cliente"] = float(t.get("cliente") or 0)
+        vacio["bruto"] = float(t.get("bruto") or 0)
+        sin = 0
+        tot = 0
+        sueltos = 0
+        for p in filas:
+            estado = str(p.get("estado") or "").upper()
+            if estado == "SIN TICKET":
+                sueltos += 1
+            elif estado in ("SIN FIRMAR", "F9 MANUAL"):
+                sin += 1
+                tot += 1
+            elif estado == "FIRMADO":
+                tot += 1
+        vacio["digitales_sin_firma"] = sin
+        vacio["digitales_total"] = tot
+        vacio["mp_sin_ticket"] = sueltos
     except Exception:
-        return 0, 0
+        pass
+    return vacio
+
+
+def digitales(desde=None, hasta=None) -> tuple[int, int]:
+    """(sin_firmar, total_digitales). No mezcla cuenta/DNI."""
+    d = cobros_auditoria(desde, hasta)
+    return d["digitales_sin_firma"], d["digitales_total"]
 
 
 def deuda_clientes() -> float:

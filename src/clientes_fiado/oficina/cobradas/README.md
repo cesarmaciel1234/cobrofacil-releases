@@ -8,4 +8,6 @@ Si no hay cliente, devuelve `(False, 0.0, "")`. Si el movimiento queda escrito, 
 
 No registra la venta del paso 6. El ticket de saldo del cajero usa esos tres números: saldo anterior, crédito y saldo.
 
+Cada ABONO tiene ticket de cobro `COB-{cc.id}` (`consultas/ids.ticket_cobro`). No es `ventas.id`. La planilla de admin lo muestra en «Ticket cobro». «Id de pago» es el id MP, `F9 MANUAL` o `Caja` si el medio fue efectivo. `fecha_corta` unifica día y hora con la auditoría. `titulo_persona` evita `CAJERO` en mayúsculas pegado al perfil.
+
 `auditoria.py` cruza fichas, cobros y ventas Fiado o Clientes. La hoja Auditoria del Excel de ganancias la escribe. `lista.py` arma cada fila de la planilla. `medio_de` usa `medio_pago`. Si esa columna vino vacía, toma el texto del paréntesis de la descripción. `detalle_de` lee el id o `F9 MANUAL` que va después de los dos puntos. `MotorCuenta.total_cobros` suma los ABONO. `listar_cobros` los devuelve del más nuevo al más viejo. Si la base todavía no tiene `medio_pago`, la consulta ancha falla en silencio y `listar_cobros` repite la lectura sin esas columnas. El medio sale del paréntesis.

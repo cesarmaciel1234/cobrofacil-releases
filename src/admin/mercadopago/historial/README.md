@@ -1,6 +1,8 @@
 # Historial del monitor
 
-El CSV local `reportes/mercado_pago_sync.csv`. La grilla y las tarjetas leen de acá.
+El CSV local `reportes/mercado_pago_sync.csv`. La grilla lo usa como fuente de cobros MP. Las tarjetas las suma `motor_auditoria_digital/cruces/totales`: bruto/neto MP vs suma de tickets digitales vs firmados vs F9. Fiado y clientes no entran.
+
+La auditoría la arma `src/motor_auditoria_digital/`. Este historial solo guarda el CSV MP y mezcla el nodo. `tickets_digitales.py` queda como puente por si un import viejo lo pide.
 
 `archivo.py`
 
@@ -11,6 +13,7 @@ El CSV local `reportes/mercado_pago_sync.csv`. La grilla y las tarjetas leen de 
 - Al abrir el monitor, se combina la copia del nodo antes de pintar la grilla. **Actualizar** baja el mes actual desde la API y después sincroniza al nodo; cada pago que llega en vivo también se guarda allí. La escritura al USB desde el hilo de pagos se agrupa brevemente y se hace en segundo plano.
 - El cambio de estado lleva su propia marca de tiempo para que omitir/restaurar viaje sin reemplazar cambios más recientes.
 - `mp_vinculos.json` viaja junto con el CSV. Los vínculos se combinan por mes e ID de pago; si el mismo pago tiene dos vínculos, se conserva el más antiguo porque una asociación existente no se pisa en el flujo local.
+- `tickets_digitales.json` viaja igual: tickets QR / tarjeta / transferencia por número. No se borra al salir de la red. Si hay copia local y de nodo, gana la local.
 - Después de combinar el nodo se despierta el motor de cobros digitales para publicar los vínculos en `mp_pagos` de la tienda; si no hay LAN disponible, el motor conserva el reintento periódico.
 
 El historial largo (tabla `mp_pagos` de la tienda, recuperar lo que entró con la PC apagada, enlace ticket ↔ pago y veredicto) es otra rama: `src/motor_cobros_digitales/plano.md`.

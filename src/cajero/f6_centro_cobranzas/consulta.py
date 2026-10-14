@@ -62,6 +62,31 @@ def parse_consulta_cobranza(texto: str) -> dict:
 
     return {"tipo": "nombre", "valor": raw, "etiqueta": f"Nombre «{raw}»"}
 
+def buscar_cuentas(texto: str, limite: int = 5) -> list:
+    """Busca clientes por DNI o nombre. Incluye al día: se puede cobrar y dejar a favor. No crea clientes."""
+    q = (texto or "").strip()
+    solo_num = q.replace(".", "").replace(" ", "").replace("-", "")
+    if len(q) < 3:
+        return []
+    sql = """
+        SELECT c.id, c.nombre, c.dni, c.telefono, c.direccion,
+               c.deuda_actual, c.limite_credito, c.tipo_cliente
+        FROM clientes c
+        WHERE 1=1
+    """
+    params: list = []
+    if solo_num.isdigit():
+        dni = cerebro.normalizar_dni(q) or solo_num
+        sql += " AND REPLACE(REPLACE(COALESCE(c.dni,''), '.', ''), '-', '') LIKE ?"
+        params.append(f"{dni}%")
+    else:
+        sql += " AND (c.nombre LIKE ? OR c.nombre LIKE ?)"
+        params.extend([f"{q}%", f"% {q}%"])
+    sql += f" ORDER BY ABS(c.deuda_actual) DESC, c.nombre ASC LIMIT {int(limite)}"
+    rows = db_manager.execute_query(sql, tuple(params)) or []
+    return [dict(r) for r in rows]
+
+
 def buscar_deudores(consulta: str, limite: int = 50) -> list:
     p = parse_consulta_cobranza(consulta)
     base = """

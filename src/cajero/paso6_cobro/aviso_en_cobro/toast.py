@@ -1,6 +1,6 @@
 import threading
 
-from PyQt6.QtCore import Qt, QEventLoop, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QEventLoop, QPoint, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QLabel, QPushButton, QVBoxLayout
 
 
@@ -255,6 +255,17 @@ class EsperaPoint(QFrame):
     def ubicar(self):
         hoja = self.parentWidget()
         if hoja is None:
+            return
+        cobro = hoja
+        while cobro is not None and not hasattr(cobro, "panel_tarjeta"):
+            cobro = cobro.parentWidget()
+        caja = getattr(cobro, "panel_tarjeta", None) if cobro else None
+        if caja is not None and caja.isVisible() and caja.width() > 40:
+            self.setMinimumSize(0, 0)
+            self.setMaximumSize(16777215, 16777215)
+            pos = caja.mapTo(hoja, QPoint(0, 0))
+            self.setGeometry(pos.x(), pos.y(), caja.width(), caja.height())
+            self.raise_()
             return
         margen = 36
         ancho = max(480, hoja.width() - margen * 2)

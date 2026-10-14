@@ -1,4 +1,3 @@
-import datetime
 import io
 import uuid
 
@@ -9,9 +8,9 @@ try:
 except Exception:
     _QR_L = 1
 
-from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient, fecha_busqueda_mp
+from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient
 from src.config import config
-from src.services.mercadopago_instore import url_crear_qr
+from src.services.mercadopago_instore import url_crear_qr, url_orden_pos
 
 _cuenta_cache = {"token": "", "user": "", "pos": ""}
 
@@ -155,19 +154,158 @@ def _qr_con_monto(token, monto, ref):
         return ""
 
 
-def pago_aprobado(token, ref):
-    begin = fecha_busqueda_mp(datetime.timedelta(minutes=15))
-    end = fecha_busqueda_mp()
-    url = (
-        "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc"
-        f"&limit=10&status=approved&external_reference={ref}"
-        f"&range=date_created&begin_date={begin}&end_date={end}"
-    )
+_TIMEOUT_VIVO = 1.2
+
+
+def pago_de_orden(data, ref, monto=None):
+    """Si esa orden ya está paga y es esta referencia, arma el dict del cobro."""
+    if not isinstance(data, dict) or not ref:
+        return None
+    ext = str(data.get("external_reference") or "")
+    if ext and ext != str(ref):
+        return None
+    if not ext and monto is not None:
+        try:
+            total = float(
+                data.get("total_amount")
+                or data.get("paid_amount")
+                or data.get("total_paid_amount")
+                or 0
+            )
+        except (TypeError, ValueError):
+            total = 0.0
+        if total > 0 and abs(total - float(monto)) > 0.05:
+            return None
+    estado = str(
+        data.get("order_status") or data.get("status") or ""
+    ).lower()
+    pagos = data.get("payments")
+    if isinstance(pagos, dict):
+        pagos = pagos.get("payments") or []
+    if not isinstance(pagos, list):
+        txs = data.get("transactions")
+        if isinstance(txs, dict):
+            pagos = txs.get("payments") or []
+        else:
+            pagos = []
+    pago = _pago_de_lista(pagos)
+    cerrado = estado in ("paid", "closed", "processed", "approved")
+    if pago:
+        pago["external_reference"] = str(ref)
+        return pago
+    if cerrado and (not ext or ext == str(ref)):
+        pid = data.get("id")
+        if pid:
+            return {
+                "id": pid,
+                "status": "approved",
+                "external_reference": str(ref),
+                "transaction_amount": data.get("total_amount")
+                or data.get("paid_amount")
+                or data.get("total_paid_amount"),
+            }
+    return None
+
+
+def _pago_de_lista(pagos):
+    for item in pagos or []:
+        if not isinstance(item, dict):
+            continue
+        estado = str(item.get("status") or "").lower()
+        if estado not in ("approved", "accredited", "paid", "processed"):
+            continue
+        pid = item.get("id") or item.get("payment_id") or item.get("reference_id")
+        if not pid:
+            continue
+        return {
+            "id": pid,
+            "status": "approved",
+            "transaction_amount": item.get("transaction_amount")
+            or item.get("total_paid_amount")
+            or item.get("amount")
+            or item.get("paid_amount"),
+        }
+    return None
+
+
+def _get_json(token, url, timeout=_TIMEOUT_VIVO):
     try:
-        resp = MPApiClient.get(url, token, timeout=4)
+        resp = MPApiClient.get(url, token, timeout=timeout)
         if resp is None or resp.status_code != 200:
             return None
-        pagos = (resp.json() or {}).get("results") or []
+        return resp.json()
     except Exception:
         return None
-    return pagos[0] if pagos else None
+
+
+def _ordenes(data):
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        return [data]
+    return []
+
+
+def pago_aprobado(token, ref, monto=None):
+    """El teléfono ya pagó: lee la orden del POS. /payments/search es el último recurso."""
+    if not token or not ref:
+        return None
+    user_id, pos = _cuenta_qr(token)
+    if user_id and pos:
+        for url in (url_orden_pos(user_id, pos), url_crear_qr(user_id, pos)):
+            for orden in _ordenes(_get_json(token, url)):
+                pago = pago_de_orden(orden, ref, monto)
+                if pago:
+                    return pago
+    data = _get_json(
+        token,
+        "https://api.mercadopago.com/merchant_orders/search"
+        f"?external_reference={ref}&limit=5",
+    )
+    if isinstance(data, dict):
+        for orden in data.get("elements") or data.get("results") or []:
+            pago = pago_de_orden(orden, ref, monto)
+            if pago:
+                return pago
+    data = _get_json(
+        token,
+        "https://api.mercadopago.com/v1/payments/search?sort=date_created"
+        f"&criteria=desc&limit=5&status=approved&external_reference={ref}",
+        timeout=1.8,
+    )
+    if isinstance(data, dict):
+        pagos = data.get("results") or []
+        if pagos and isinstance(pagos[0], dict):
+            return pagos[0]
+    if monto is not None:
+        return pago_por_importe(token, monto)
+    return None
+
+
+def pagos_aprobados_recientes(token):
+    if not token:
+        return []
+    data = _get_json(
+        token,
+        "https://api.mercadopago.com/v1/payments/search?sort=date_created"
+        "&criteria=desc&limit=10&status=approved",
+        timeout=1.8,
+    )
+    if not isinstance(data, dict):
+        return []
+    return [p for p in (data.get("results") or []) if isinstance(p, dict)]
+
+
+def pago_por_importe(token, monto):
+    """Transferencia o QR sin referencia: el último aprobado del mismo importe."""
+    if not token or float(monto or 0) <= 0:
+        return None
+    esperado = float(monto)
+    for pago in pagos_aprobados_recientes(token):
+        try:
+            importe = float(pago.get("transaction_amount") or 0)
+        except (TypeError, ValueError):
+            continue
+        if abs(importe - esperado) <= 0.05:
+            return pago
+    return None

@@ -1,7 +1,8 @@
 """Escucha la transferencia del abono como el cobro. F9 es manual. No abre la venta."""
+import threading
 import time
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
 
 from src.cajero.ingresar_efectivo.medios.aviso import AvisoAbono
@@ -39,8 +40,11 @@ class LienzoTransferencia(QWidget):
         self.lbl_f9.hide()
         lay.addWidget(self.lbl_f9)
         self.toast = AvisoAbono(self)
+        self._senal_vivo = _SenalVivo(self)
+        self._senal_vivo.dato.connect(self._pintar_vivo)
+        self._en_vuelo = False
         self._reloj = QTimer(self)
-        self._reloj.setInterval(1000)
+        self._reloj.setInterval(800)
         self._reloj.timeout.connect(self._mirar)
 
     def arrancar(self, monto):
@@ -51,18 +55,20 @@ class LienzoTransferencia(QWidget):
         self._oferta_monto = 0.0
         self._tpv_listo = _luz_tpv()
         self.toast.cerrar()
-        self.lbl_f9.setVisible(self._tpv_listo)
+        self.lbl_f9.setVisible(not self._tpv_listo)
         if self._tpv_listo:
             self.estado.setText(f"Escuchando la transferencia (${self._monto:,.2f})")
         else:
-            self.estado.setText("Sin TPV. Enter registra el abono.")
+            self.estado.setText("Sin internet. F9 registra el abono de emergencia.")
         self.show()
         try:
             from src.services.mp_escucha import EscuchaMP
             EscuchaMP.asegurar()
         except Exception:
             pass
+        self._en_vuelo = False
         self._reloj.start()
+        self._mirar()
 
     def cerrar(self):
         self._generacion += 1
@@ -77,17 +83,19 @@ class LienzoTransferencia(QWidget):
     def tecla(self, k):
         if k in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             if self.toast.tiene_accion():
-                self.toast.aceptar()
                 return True
             if not self._tpv_listo:
                 self._reloj.stop()
                 self.listo.emit("ENTER")
                 return True
-            self.toast.alarma("Espere la transferencia.")
+            self.toast.alarma("Espere el monto exacto.")
             return True
         if k == Qt.Key.Key_F9:
-            if not self._tpv_listo:
+            if self.toast.tiene_accion():
+                self.toast.aceptar()
                 return True
+            if self._tpv_listo:
+                return False
             if getattr(self, "_manual", False):
                 return True
             self._manual = True
@@ -104,6 +112,24 @@ class LienzoTransferencia(QWidget):
             self._aplicar()
         except Exception:
             pass
+        if self._en_vuelo or not self.isVisible():
+            return
+        self._en_vuelo = True
+        monto = self._monto
+        generacion = self._generacion
+
+        def _trabajo():
+            try:
+                from src.cajero.paso6_cobro.transferencia_en_cobro.escucha import ultimo_libre
+                pago = ultimo_libre()
+            except Exception:
+                pago = None
+            self._senal_vivo.dato.emit({
+                "generacion": generacion,
+                "pago": pago,
+            })
+
+        threading.Thread(target=_trabajo, daemon=True).start()
 
     def _aplicar(self):
         from src.admin.mercadopago.mercadopago_main import Admin10MP
@@ -129,15 +155,13 @@ class LienzoTransferencia(QWidget):
         self._tomar(pago_id, monto)
 
     def _ofrecer(self, pago_id, monto, nombre=None):
-        quien = str(nombre or "").strip()
-        if quien.lower() in ("", "none", "none none", "cliente", "desconocido", "transferencia recibida"):
-            texto = f"Llegó ${float(monto):,.2f}. ¿Asociar al abono o espere otro monto?"
-        else:
-            texto = f"Llegó ${float(monto):,.2f} de {quien}. ¿Asociar al abono o espere otro monto?"
+        from src.cajero.paso6_cobro.transferencia_en_cobro.escucha import texto_enlazar
+
+        self.lbl_f9.show()
         self.toast.mostrar(
-            texto,
+            texto_enlazar(monto, nombre, "abono"),
             accion=lambda: self._tomar(str(pago_id), float(monto)),
-            rotulo="Asociar",
+            rotulo="F9 emergencia",
         )
 
     def _tomar(self, pago_id, monto=None):
@@ -167,7 +191,35 @@ class LienzoTransferencia(QWidget):
         self._oferta = None
         self.toast.cerrar()
         self._reloj.stop()
+        self._en_vuelo = False
         self.listo.emit(str(pago_id))
+
+    def _pintar_vivo(self, dato):
+        self._en_vuelo = False
+        if not dato or dato.get("generacion") != self._generacion:
+            return
+        pago = dato.get("pago")
+        if not isinstance(pago, dict) or not pago.get("id"):
+            return
+        try:
+            importe = float(pago.get("transaction_amount") or self._monto)
+        except (TypeError, ValueError):
+            importe = self._monto
+        if abs(importe - self._monto) > 0.05:
+            pago_id = str(pago.get("id"))
+            if self._oferta != pago_id:
+                nombre = ""
+                try:
+                    from src.admin.mercadopago.historial.archivo import _rotulo
+
+                    _, nombre = _rotulo(pago)
+                except Exception:
+                    nombre = ""
+                self._oferta = pago_id
+                self._oferta_monto = importe
+                self._ofrecer(pago_id, importe, nombre)
+            return
+        self._tomar(str(pago.get("id")), importe)
 
     def _al_volver(self):
         self.cerrar()
@@ -188,3 +240,7 @@ def _luz_tpv():
         return bool(token and device) or bool(token and user and pos)
     except Exception:
         return False
+
+
+class _SenalVivo(QObject):
+    dato = pyqtSignal(object)

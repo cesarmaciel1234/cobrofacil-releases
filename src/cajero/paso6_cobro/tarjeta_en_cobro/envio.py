@@ -58,7 +58,7 @@ def detalle_orden(token, intent_id):
         return "", None
     url = f"https://api.mercadopago.com/v1/orders/{intent_id}"
     try:
-        response = MPApiClient.get(url, token, timeout=5)
+        response = MPApiClient.get(url, token, timeout=1.8)
     except Exception:
         return "", None
     if response.status_code != 200:

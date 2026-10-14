@@ -13,7 +13,7 @@ La carpeta contiene el monitor de pagos del panel admin.
 3. Omitir/restaurar pagos o asociarlos a tickets mientras se trabaja. Los cambios se conservan localmente.
 4. Al volver a tener conexión, usar **Actualizar**: baja los pagos aprobados del mes y combina ambas copias por ID, llevando también los cambios de omitido/restaurado y los vínculos al nodo.
 
-La columna Ticket combina el vínculo local/nodo con `mp_pagos.ticket` de la base compartida. Así las asociaciones subidas por otra caja aparecen también en este monitor; la tabla se consulta fuera del hilo de interfaz cada 5 segundos. Asociar un pago en caja o sincronizar el nodo despierta el motor de subida sin esperar el ciclo periódico.
+La columna Ticket sale del vínculo (`mp_vinculos.json`) cuando el pago digital ya firmó la venta. Las ventas QR/tarjeta/transferencia sin transferencia aparecen igual: fecha, monto y número de ticket, sin ID ni cliente de Mercado Pago.
 
 El historial conserva los meses previamente guardados y la API completa el mes actual durante **Actualizar**. El historial puede contener nombres y correos de pagadores. Proteger el nodo como los demás datos del negocio. La consulta en vivo sigue dependiendo de conexión y del token de Mercado Pago; la copia no crea pagos ni permite conciliar cobros a la API sin red. Si el nodo está desconectado, el monitor informa que la actualización del nodo quedó pendiente.
 

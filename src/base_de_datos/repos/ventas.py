@@ -149,27 +149,36 @@ def calcular_devolucion(venta, caja_accion: int) -> dict:
 
 
 def _anular_cargo(cursor, id_venta):
-    """Baja la deuda del ticket que se cancela. Si no hubo cargo, no toca la cuenta."""
+    """El ticket sigue. En cuenta corriente queda CARGO · CANCELADO y una ANULACION. Resta la deuda una vez."""
+    from src.clientes_fiado.oficina.cuenta.motor import MARCA_CANCELADO, cargo_inactivo
+
     cursor.execute(
-        "SELECT cliente_id, monto FROM cuenta_corriente "
+        "SELECT id, cliente_id, monto, descripcion FROM cuenta_corriente "
         "WHERE venta_id = ? AND tipo = 'CARGO' ORDER BY id DESC LIMIT 1",
         (id_venta,),
     )
     cargo = cursor.fetchone()
     if not cargo:
         return
+    cid = _celda(cargo, "cliente_id", 1)
+    cargo_id = _celda(cargo, "id", 0)
+    desc = str(_celda(cargo, "descripcion", 3) or "").strip()
+    try:
+        monto = float(_celda(cargo, "monto", 2) or 0)
+    except (TypeError, ValueError):
+        monto = 0.0
     cursor.execute(
         "SELECT id FROM cuenta_corriente WHERE venta_id = ? AND tipo = 'ANULACION' LIMIT 1",
         (id_venta,),
     )
-    if cursor.fetchone():
-        return
-    cid = _celda(cargo, "cliente_id", 0)
-    try:
-        monto = float(_celda(cargo, "monto", 1) or 0)
-    except (TypeError, ValueError):
-        monto = 0.0
-    if not cid or monto <= 0:
+    ya_anulado = bool(cursor.fetchone())
+    if cargo_id and not cargo_inactivo(desc):
+        original = desc or f"Ticket #{id_venta}"
+        cursor.execute(
+            "UPDATE cuenta_corriente SET descripcion = ? WHERE id = ?",
+            (f"{MARCA_CANCELADO}{original}", cargo_id),
+        )
+    if ya_anulado or not cid or monto <= 0:
         return
     bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
     cursor.execute(
@@ -186,11 +195,21 @@ def _anular_cargo(cursor, id_venta):
         "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
         (nueva, cid),
     )
+    nota = f"Ticket cancelado #{id_venta} (F3)"
     cursor.execute(
         "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
         "VALUES (?, 'ANULACION', ?, ?, ?, ?)",
-        (cid, monto, nueva, f"Anulación Ticket #{id_venta}", id_venta),
+        (cid, monto, nueva, nota, id_venta),
     )
+    try:
+        from src.clientes_fiado.oficina.huella.eventos import movimiento_en
+
+        movimiento_en(
+            cursor, "ANULACION", cid, monto, nota,
+            extra={"venta_id": id_venta, "cargo_id": cargo_id},
+        )
+    except Exception:
+        pass
 
 
 class VentasRepoMixin:

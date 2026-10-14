@@ -20,7 +20,7 @@ El insert nuevo incluye `request_id`. Si la columna no existe, el except cae al 
 
 ### Cancelar un ticket
 
-Regla de la tienda: al cancelar, al cliente se le devuelve el total **en efectivo** y se descuenta del cierre del turno. Fiado y Clientes no devuelven efectivo: `_anular_cargo` baja la deuda.
+Regla de la tienda: al cancelar, al cliente se le devuelve el total **en efectivo** y se descuenta del cierre del turno. Fiado y Clientes no devuelven efectivo: `_anular_cargo` baja la deuda, marca el cargo `CANCELADO ·` y deja una fila `Ticket cancelado #N (F3)` en cuenta corriente. El ticket sigue en F3 y en el historial del cliente.
 
 `calcular_devolucion(venta, caja_accion)` (función suelta, sin base) decide cuánto sale del cajón:
 

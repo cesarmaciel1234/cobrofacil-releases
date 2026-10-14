@@ -113,7 +113,7 @@ class TecladoNumericoLateral(QFrame):
         self.btn_fiscal.clicked.connect(lambda: self.key_clicked.emit("F10"))
         kb_layout.addWidget(self.btn_fiscal)
 
-        self.lbl_emergencia = QPushButton("Presione F9\nEmergencia")
+        self.lbl_emergencia = QPushButton("F9 sin internet\nEmergencia")
         self.lbl_emergencia.setCursor(Qt.CursorShape.PointingHandCursor)
         self.lbl_emergencia.setMinimumHeight(64)
         self.lbl_emergencia.setStyleSheet(

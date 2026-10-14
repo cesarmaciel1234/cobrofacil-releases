@@ -156,7 +156,6 @@ class PanelFiadoCobro(QFrame):
         self.lienzo_qr.volver.connect(self._volver_de_lienzo)
         
         self.lienzo_tarjeta.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Tarjeta", det))
-        self.lienzo_tarjeta.fallo.connect(lambda text: self._volver_de_lienzo())
         self.lienzo_tarjeta.volver.connect(self._volver_de_lienzo)
         
         self.lienzo_transferencia.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Transferencia", det))

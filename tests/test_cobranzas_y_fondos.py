@@ -192,6 +192,22 @@ def test_planilla_lee_el_medio_registrado():
     assert fila["medio"] == "Efectivo"
     assert fila["quien"] == "María"
     assert fila["monto"] == 10000
+    assert fila["detalle"] == "Caja"
+    f9 = armar({
+        "id": 98,
+        "fecha": "2026-10-12 23:57:23",
+        "nombre": "cesar",
+        "monto": 100,
+        "medio_pago": "QR",
+        "descripcion": "Cajero CAJERO (QR: F9 MANUAL)",
+        "perfil": "Cajero",
+        "registrado_por": "CAJERO",
+        "saldo_resultante": 2800,
+    })
+    assert f9["ticket_cobro"] == "COB-98"
+    assert f9["detalle"] == "F9 MANUAL"
+    assert f9["quien"] == "Cajero"
+    assert f9["fecha"].startswith("12/10/2026")
 
 
 def test_el_abono_del_cajero_no_tira(monkeypatch):
@@ -742,11 +758,11 @@ def test_anular_baja_la_deuda_una_sola_vez():
     assert updates == [(0.0, 3)]
     altas = [p for q, p in cur.sql if q.startswith("INSERT INTO cuenta_corriente")]
     assert altas and altas[0][0] == 3
-    assert altas[0][3].startswith("Anulación Ticket #12")
+    assert "cancelado" in str(altas[0][3]).lower()
 
-    otra = _Cur([{"cliente_id": 3, "monto": 100}, {"id": 1}])
+    otra = _Cur([{"id": 9, "cliente_id": 3, "monto": 100, "descripcion": "Venta"}, {"id": 1}])
     _anular_cargo(otra, 12)
-    assert not any(q.startswith("UPDATE") for q, _p in otra.sql)
+    assert not any(q.startswith("UPDATE clientes") for q, _p in otra.sql)
 
 
 def test_persistir_avisa_credito_insuficiente(monkeypatch):

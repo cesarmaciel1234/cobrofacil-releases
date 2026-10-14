@@ -157,9 +157,7 @@ class PanelCobranza(QFrame):
         )
         lay.addWidget(self.lbl_mid)
 
-        lay.addStretch()
-
-        # Selector de Medios
+        # Selector de Medios (ocupa el hueco: botones o lienzo de tarjeta/QR)
         self.panel_selector = PanelSelectorCobranza()
         self.cont_botones = self.panel_selector.cont_botones
         self.cont_lienzos = self.panel_selector.cont_lienzos
@@ -183,7 +181,6 @@ class PanelCobranza(QFrame):
         self.lienzo_qr.volver.connect(self._volver_de_lienzo)
         
         self.lienzo_tarjeta.listo.connect(lambda det: self._on_lienzo_listo("Tarjeta", det))
-        self.lienzo_tarjeta.fallo.connect(lambda text: self._volver_de_lienzo())
         self.lienzo_tarjeta.volver.connect(self._volver_de_lienzo)
 
         self.lienzo_transferencia.listo.connect(lambda det: self._on_lienzo_listo("Transferencia", det))
@@ -192,7 +189,7 @@ class PanelCobranza(QFrame):
         self.lienzo_mixto.listo.connect(self._iniciar_cobro_mixto_secuencial)
         self.lienzo_mixto.volver.connect(self._volver_de_lienzo)
 
-        lay.addWidget(self.panel_selector)
+        lay.addWidget(self.panel_selector, 1)
         
         self._modo = "preparando_pago"
 

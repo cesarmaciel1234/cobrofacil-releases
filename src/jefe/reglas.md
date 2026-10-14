@@ -19,7 +19,7 @@ La contabilidad pide colores a `contabilidad/shared_globals.py`, `PAL`. Esa pale
 | `reportes/` | Ventas, auditoría, historial | `reportes/reglas.md` |
 | `contabilidad/` | ERP del dueño, base aparte | `contabilidad/plano.md` |
 | `ia/` | Cerebro Jefe (frases, no inventa números) | `jefe_ia_proactiva.py` |
-| `vitrina/` | Publicidad izquierda del home (4 plazas). El nombre es `vitrina`, no `vitina` | `vitrina/reglas.md` |
+| `vitrina/` | KPIs izquierda del home. El nombre es `vitrina`, no `vitina` | `vitrina/reglas.md` |
 | `promedios/` | Costos de carne, cerdo y pollo | `promedios/plano.md` |
 | `nodo_portable/` | Copia USB / OneDrive | `nodo_portable/plano.md` |
 | `componentes_visuales/` | Tarjetas del home | `componentes_visuales/README.md` |

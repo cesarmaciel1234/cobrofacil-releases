@@ -22,8 +22,9 @@ class LienzoQr(QWidget):
         self._armar()
         self._senal = _Senal(self)
         self._senal.dato.connect(self._pintar)
+        self._en_vuelo = False
         self._reloj = QTimer(self)
-        self._reloj.setInterval(1000)
+        self._reloj.setInterval(800)
         self._reloj.timeout.connect(self._consultar_pago)
 
     def _armar(self):
@@ -99,7 +100,7 @@ class LienzoQr(QWidget):
     def tecla(self, k):
         if k != Qt.Key.Key_F9:
             return False
-        if self._modo not in ("buscando", "esperando", "foto", "manual"):
+        if self._modo not in ("foto", "manual"):
             return False
         if getattr(self, "_manual", False):
             return True
@@ -128,28 +129,32 @@ class LienzoQr(QWidget):
         )
 
     def _consultar_pago(self):
-        if self._modo != "esperando" or not self._ref:
+        if self._modo != "esperando" or not self._ref or self._en_vuelo:
             return
         ref = self._ref
         token = self._token
         generacion = self._generacion
-        self.estado.setText("Verificando pago en Mercado Pago…")
+        self._en_vuelo = True
+
+        monto = self._monto
 
         def _trabajo():
             try:
                 from src.cajero.paso6_cobro.qr_en_cobro.pedido import pago_aprobado
-                pago = pago_aprobado(token, ref)
+                pago = pago_aprobado(token, ref, monto)
             except Exception:
                 pago = None
             if pago:
                 self._senal.dato.emit({
                     "generacion": generacion,
+                    "vuelo": True,
                     "pagado": True,
                     "pago_id": str((pago or {}).get("id") or ref),
                 })
             else:
                 self._senal.dato.emit({
                     "generacion": generacion,
+                    "vuelo": True,
                     "esperando_aun": True,
                 })
 
@@ -164,6 +169,8 @@ class LienzoQr(QWidget):
     def _aplicar(self, dato):
         if not dato or dato.get("generacion") != self._generacion:
             return
+        if dato.get("vuelo"):
+            self._en_vuelo = False
         if dato.get("esperando_aun"):
             if self._modo == "esperando":
                 self.estado.setText("Esperando escaneo del cliente…")
@@ -192,10 +199,12 @@ class LienzoQr(QWidget):
         self._token = pedido.get("token") or ""
         self._borrar_url = pedido.get("borrar_url") or ""
         self._modo = "esperando"
+        self._en_vuelo = False
         self.estado.hide()
         self.btn_imagen.hide()
         self.btn_registrar.hide()
         self._reloj.start()
+        self._consultar_pago()
 
     def _foto(self, texto):
         self._modo = "foto"

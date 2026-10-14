@@ -1,3 +1,3 @@
 # Opciones
 
-Tres tarjetas para Cambio, Fiado y Otros, dentro de una hoja con margen interior amplio. Cada tarjeta muestra un icono en una insignia de color, el nombre de la opción y una explicación breve. `boton_opcion(icono, titulo, color, descripcion)` configura apariencia y accesibilidad. El resaltado depende del foco de teclado; mover el mouse no lo activa. Tab recorre las tarjetas y las flechas izquierda/derecha (o arriba/abajo) mueven la selección; Enter/Espacio activa la enfocada. El fondo, borde, icono y título usan el acento de esa tarjeta. El gris `#334155` queda atrás, igual que en el paso 6. No cobra ni cambia la navegación con Escape.
+Quedó de cuando F2 juntaba tarjetas. El F2 vivo abre una sola hoja de ingreso. No uses estas tarjetas para cobranza (F6) ni retiro (F5).

@@ -1,6 +1,6 @@
 # Retiro de caja
 
-Saca efectivo. No es el ingreso ni el cobro. Se abre con F5.
+F5 del paso 5: saca efectivo de la caja. No es F2 (entra plata) ni F6 (cobranza de fiado / cuenta corriente).
 
 La ventana es `dialogo_retiro.py`, clase `DialogoRetiroEfectivo`. `__init__.py` la exporta. No existe `dialogo.py` en esta carpeta. No corrijas este nombre: `dialogo.py` es el ingreso, en `ingresar_efectivo/`.
 

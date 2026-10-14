@@ -1,13 +1,13 @@
-"""Ventana de lectura del desglose de una venta desde el historial del cliente."""
+"""Panel de lectura del desglose de una venta, dentro del historial del cliente."""
 
 from __future__ import annotations
 
 from src.utils.qt_compat import qt_exec
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
-from src.utils.medio_pago import etiqueta_pago
     QApplication,
     QDialog,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -15,6 +15,8 @@ from src.utils.medio_pago import etiqueta_pago
     QTableWidgetItem,
     QVBoxLayout,
 )
+
+from src.utils.medio_pago import etiqueta_pago
 
 
 class _CargarTicket(QThread):
@@ -36,72 +38,88 @@ class _CargarTicket(QThread):
             self.listo.emit(None, str(error))
 
 
-class DialogoDetalleTicket(QDialog):
-    def __init__(self, ticket: str, parent=None):
+class PanelDetalleTicket(QFrame):
+    """Desglose del ticket en la misma ventana del historial. No abre otro diálogo."""
+
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.ticket = ticket
-        self.setWindowTitle(f"Detalle del ticket #{ticket}")
-        self.setMinimumSize(650, 430)
-        self.resize(760, 520)
-        self.setStyleSheet("QDialog { background: #F1F5F9; }")
+        self._carga = None
+        self.setStyleSheet(
+            "QFrame#panelTicket { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; }"
+        )
+        self.setObjectName("panelTicket")
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(22, 20, 22, 18)
-        layout.setSpacing(12)
+        layout.setContentsMargins(16, 14, 16, 14)
+        layout.setSpacing(8)
 
-        self.titulo = QLabel(f"DETALLE DEL TICKET  #{ticket}")
-        self.titulo.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E293B;")
+        self.titulo = QLabel("TICKET")
+        self.titulo.setStyleSheet("font-size: 14px; font-weight: 900; color: #1E293B; border: none;")
         layout.addWidget(self.titulo)
 
-        self.resumen = QLabel("Buscando la venta y sus artículos…")
-        self.resumen.setStyleSheet("font-size: 13px; color: #64748B;")
+        self.resumen = QLabel("Pulse el número de ticket para ver los artículos aquí.")
+        self.resumen.setWordWrap(True)
+        self.resumen.setStyleSheet("font-size: 12px; color: #64748B; border: none;")
         layout.addWidget(self.resumen)
 
         self.tabla = QTableWidget(0, 4)
         self.tabla.setHorizontalHeaderLabels(["Cant.", "Descripción", "Precio", "Importe"])
         self.tabla.horizontalHeader().setStretchLastSection(True)
-        self.tabla.setColumnWidth(0, 75)
-        self.tabla.setColumnWidth(2, 120)
-        self.tabla.setColumnWidth(3, 130)
+        self.tabla.setColumnWidth(0, 70)
+        self.tabla.setColumnWidth(2, 110)
+        self.tabla.setColumnWidth(3, 120)
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.tabla.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.tabla.setAlternatingRowColors(True)
+        self.tabla.setMinimumHeight(140)
         self.tabla.setStyleSheet(
             "QTableWidget { background: white; alternate-background-color: #F8FAFC; "
-            "border: 1px solid #CBD5E1; font-size: 13px; }"
+            "border: 1px solid #CBD5E1; font-size: 12px; }"
             "QHeaderView::section { background: #E2E8F0; color: #334155; "
-            "font-weight: 800; padding: 9px; border: none; }"
+            "font-weight: 800; padding: 8px; border: none; }"
         )
         layout.addWidget(self.tabla, stretch=1)
 
         pie = QHBoxLayout()
         self.origen = QLabel("")
-        self.origen.setStyleSheet("font-size: 11px; color: #64748B;")
+        self.origen.setStyleSheet("font-size: 11px; color: #64748B; border: none;")
         pie.addWidget(self.origen, stretch=1)
         self.total = QLabel("")
-        self.total.setStyleSheet("font-size: 17px; font-weight: 900; color: #1E40AF;")
+        self.total.setStyleSheet("font-size: 15px; font-weight: 900; color: #1E40AF; border: none;")
         pie.addWidget(self.total)
         layout.addLayout(pie)
 
-        botones = QHBoxLayout()
-        botones.addStretch()
-        cerrar = QPushButton("CERRAR")
-        cerrar.setCursor(Qt.CursorShape.PointingHandCursor)
-        cerrar.setStyleSheet(
-            "QPushButton { background: #3B82F6; color: white; font-weight: 900; "
-            "padding: 10px 24px; border-radius: 8px; border: none; }"
-            "QPushButton:hover { background: #2563EB; }"
-        )
-        cerrar.clicked.connect(self.accept)
-        botones.addWidget(cerrar)
-        layout.addLayout(botones)
+    def mensaje(self, texto: str):
+        self._cancelar()
+        self.titulo.setText("TICKET")
+        self.resumen.setText(texto)
+        self.resumen.setToolTip("")
+        self.origen.setText("")
+        self.total.setText("")
+        self.tabla.setRowCount(0)
 
+    def cargar(self, ticket: str):
+        self._cancelar()
+        self.titulo.setText(f"TICKET  #{ticket}")
+        self.resumen.setText("Buscando la venta y sus artículos…")
+        self.resumen.setToolTip("")
+        self.origen.setText("")
+        self.total.setText("")
+        self.tabla.setRowCount(0)
         app = QApplication.instance()
         self._carga = _CargarTicket(ticket, app)
         self._carga.listo.connect(self._mostrar)
         self._carga.finished.connect(self._carga.deleteLater)
         self._carga.start()
+
+    def _cancelar(self):
+        if self._carga is not None:
+            try:
+                self._carga.listo.disconnect(self._mostrar)
+            except TypeError:
+                pass
+            self._carga = None
 
     @staticmethod
     def _monto(valor) -> float:
@@ -147,6 +165,27 @@ class DialogoDetalleTicket(QDialog):
         if not items:
             self.resumen.setText(self.resumen.text() + "  ·  El ticket no tiene renglones disponibles.")
         self.total.setText(f"Total: ${self._monto(venta.get('total')):,.2f}")
+
+
+class DialogoDetalleTicket(QDialog):
+    """Resguardo: el historial ya no abre esta ventana."""
+
+    def __init__(self, ticket: str, parent=None):
+        super().__init__(parent)
+        self.ticket = ticket
+        self.setWindowTitle(f"Detalle del ticket #{ticket}")
+        self.setMinimumSize(650, 430)
+        self.resize(760, 520)
+        layout = QVBoxLayout(self)
+        self.panel = PanelDetalleTicket(self)
+        layout.addWidget(self.panel)
+        botones = QHBoxLayout()
+        botones.addStretch()
+        cerrar = QPushButton("CERRAR")
+        cerrar.clicked.connect(self.accept)
+        botones.addWidget(cerrar)
+        layout.addLayout(botones)
+        self.panel.cargar(ticket)
 
 
 def abrir_detalle_ticket(ticket: str, parent=None):

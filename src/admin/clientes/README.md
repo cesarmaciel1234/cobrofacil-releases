@@ -1,14 +1,14 @@
 # Clientes en admin
 
-Pantalla clara. Lista, alta, ficha, límite, abono e historial. Abonar abre el Centro de Cobranzas de F6 y registra con `cerebro.abonar_caja`. En el historial, el lápiz verde carga un saldo manual por `cerebro.cargar_manual`. El lápiz amarillo edita la ficha.
+Pantalla clara. Lista, alta, ficha, límite, abono e historial. **Abonar** abre F6 (`perfil=Admin`); el cobro se asienta una sola vez ahí. Sirve con deuda 0: el excedente queda a favor. **Límite** cambia el cupo. **Editar** la ficha. **Recalcular** simula precios de hoy y un % de financiación, sin escribir la cuenta.
 
 La tarjeta Cobros suma los abonos. El botón Planilla de cobros abre la grilla: fecha, cliente, DNI, monto, medio, perfil, quién cobró y saldo. El medio es el de «¿Con qué paga?»: Efectivo, Transferencia, Tarjeta o QR.
 
 Si hay ventas Fiado o Clientes completadas sin cargo, aparece una franja ámbar. CUADRAR abre la lista. Cargar en la cuenta escribe el cargo solo cuando el nombre de la venta coincide con un solo cliente. Si el abono es en efectivo y la caja no lo anota, el aviso dice que la cuenta sí bajó. Tras un abono ok, el cartel usa el mismo texto del mensajero de cobro (`COBRO EXITOSO` con nombre, pago y saldo).
 
-El guardado no está en esta carpeta. Entra por `src/clientes_fiado`, objeto `cerebro`. El plano está en `src/clientes_fiado/plano.md`.
+El guardado no está en esta carpeta. Entra por `src/clientes_fiado`, objeto `cerebro`. El plano de esta pantalla es `plano.md`. El crédito: `src/clientes_fiado/plano.md`.
 
-En el historial del cliente, pulsar el número azul de Ticket de una fila `CARGO` abre el desglose de la venta. La lectura va por un motor independiente y se ejecuta fuera del hilo de interfaz. Ver `componentes/README.md` y `plano.md`.
+En el historial del cliente, pulsar el número azul de Ticket muestra el desglose abajo, en la misma ventana. `ELIMINAR TICKET / DEUDA` marca el cargo `BORRADO` sin borrar el renglón. Ver `componentes/README.md` y `plano.md`.
 
 La lista calcula los días de atraso con `cerebro.ultimos_cargos()` por lotes de hasta 500 IDs. Esto evita que, al abrir o filtrar la cartera desde una esclava, la pantalla espere una ida y vuelta a la maestra por cada cliente con deuda. No volver a llamar `ultimo_cargo()` dentro del ciclo que dibuja las filas: para esa lista se debe conservar la consulta agrupada.
 

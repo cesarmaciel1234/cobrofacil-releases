@@ -1,8 +1,9 @@
-import datetime
+import threading
+
 import requests
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QMessageBox
-from PyQt6.QtCore import QTimer, Qt
-from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient, fecha_busqueda_mp
+from PyQt6.QtCore import QTimer, Qt, pyqtSignal
+
 
 class MPPollingDialog(QDialog):
     def __init__(self, parent_dlg, token, device_id, intent_id, monto_original, modo="Tarjeta"):
@@ -53,7 +54,7 @@ class MPPollingDialog(QDialog):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.check_status)
-        self.timer.start(2500)
+        self.timer.start(800)
 
     def check_status(self):
         from src.cajero.paso6_cobro.tarjeta_en_cobro.envio import estado_intent
@@ -89,14 +90,17 @@ class QRDialog(QDialog):
     _MP_BLUE = "#009EE3"
     _MP_BLUE_DK = "#007EB5"
     _MP_BG = "#F7FCFF"
+    _llegada = pyqtSignal(object)
 
     def __init__(self, parent_dlg, pixmap, monto, token, ref, url_crear_qr, headers_mp):
         super().__init__(parent_dlg)
         self.pagado = False
+        self._en_vuelo = False
         self.token = token
         self.ref = ref
         self.url_crear_qr_func = url_crear_qr
         self.headers_mp = headers_mp
+        self._llegada.connect(self._pintar_pago)
 
         self.setWindowTitle("Cobro QR - Mercado Pago")
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
@@ -158,26 +162,36 @@ class QRDialog(QDialog):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.buscar_pago)
-        self.timer.start(3000)
+        self.timer.start(800)
+        QTimer.singleShot(0, self.buscar_pago)
 
     def buscar_pago(self):
-        try:
-            begin = fecha_busqueda_mp(datetime.timedelta(minutes=5))
-            end = fecha_busqueda_mp()
-            search_url = f"https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=10&status=approved&external_reference={self.ref}&range=date_created&begin_date={begin}&end_date={end}"
-            r = MPApiClient.get(search_url, self.token, timeout=5)
-            if r.status_code == 200:
-                results = r.json().get("results", [])
-                if results:
-                    self.timer.stop()
-                    self.pagado = True
-                    self.lbl_estado.setText("PAGO APROBADO!")
-                    self.lbl_estado.setStyleSheet(
-                        f"font-size: 15px; color: {QRDialog._MP_BLUE_DK}; font-weight: 900; border: none;"
-                    )
-                    QTimer.singleShot(1000, self.accept)
-        except:
-            pass
+        if self.pagado or self._en_vuelo:
+            return
+        self._en_vuelo = True
+        token, ref = self.token, self.ref
+
+        def _trabajo():
+            try:
+                from src.cajero.paso6_cobro.qr_en_cobro.pedido import pago_aprobado
+                pago = pago_aprobado(token, ref)
+            except Exception:
+                pago = None
+            self._llegada.emit(pago)
+
+        threading.Thread(target=_trabajo, daemon=True).start()
+
+    def _pintar_pago(self, pago):
+        self._en_vuelo = False
+        if not pago or self.pagado:
+            return
+        self.timer.stop()
+        self.pagado = True
+        self.lbl_estado.setText("PAGO APROBADO!")
+        self.lbl_estado.setStyleSheet(
+            f"font-size: 15px; color: {QRDialog._MP_BLUE_DK}; font-weight: 900; border: none;"
+        )
+        QTimer.singleShot(200, self.accept)
 
     def cancelar(self):
         self.timer.stop()

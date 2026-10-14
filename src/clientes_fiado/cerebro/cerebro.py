@@ -110,6 +110,9 @@ class CerebroClientesFiado:
     def cargar_manual(self, cliente_id, monto, descripcion):
         return self.cuenta.cargar_manual(cliente_id, monto, descripcion)
 
+    def borrar_cargo(self, movimiento_id, cliente_id):
+        return self.cuenta.borrar_cargo(movimiento_id, cliente_id)
+
     def ventas_sin_cargo(self):
         return self.cuenta.ventas_sin_cargo()
 

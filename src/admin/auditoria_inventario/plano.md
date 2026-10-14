@@ -20,9 +20,9 @@ Al mostrarse, `showEvent` aplica el perfil, el tema claro u oscuro y a los 80 ms
 - cajas si es CJ, CAJA o CAJAS
 - si no, unidades
 
-Escanear (`_on_codigo_escaneado`) busca la fila por código o por id. Si es kilos, metros o litros, abre `DialogoConteo` y ese número reemplaza el conteo. Si es unidades o cajas, suma 1 al conteo que ya había. El cajero no entra a esa suma.
+Escanear (`_on_codigo_escaneado`) busca la fila por id, código exacto o un tramo del código (si hay dos códigos juntos). Un código de barras de 8 dígitos o más abre el diálogo a los 180 ms, aunque el lector no mande Enter. Cualquier unidad abre `DialogoConteo`. El cajero no entra.
 
-Doble clic o editar abre `DialogoConteo`. El teclado escribe el número con coma. `valor()` lo pasa a float. Aceptar escribe el conteo en la celda. No toca la base todavía.
+Doble clic o editar también abre `DialogoConteo`. El teclado escribe el número con coma. `valor()` lo pasa a float. Guardar llama `_aplicar_conteo_fila`: SET de stock ya, pinta la fila en verde y deja el buscador listo para el próximo escaneo. No hay que esperar al botón verde.
 
 Al cambiar el conteo, `_on_item_changed` calcula diferencia = conteo − stock del sistema. Azul si sobra, rojo si falta. `_actualizar_kpis` cuenta SKU, contados, faltante y sobrante.
 
@@ -38,7 +38,7 @@ El conector es `obtener_conector_auditoria()` en `motor_conector_auditoria.py`. 
 
 `obtener_inventario_para_auditoria` usa una caché de 15 segundos. Si se fuerza o venció, `_actualizar_cache` lee `MotorAuditoria.obtener_inventario`: `SELECT` de `productos` ordenado por departamento y nombre. Si eso falla, cae a `MotorCatalogo.obtener_productos`.
 
-`solicitar_ajuste_stock` rechaza stock negativo. Si la diferencia es cero, no escribe. Si hay diferencia:
+`solicitar_ajuste_stock` lee el producto vivo con `MotorAuditoria.leer_producto` (SELECT en la misma base del UPDATE). No depende del catálogo para aplicar. Rechaza stock negativo. Si la diferencia es cero, no escribe. Si hay diferencia:
 
 1. `MotorAuditoria.aplicar_ajuste_stock` hace un solo `UPDATE productos SET stock = ? WHERE id = ?`. Es un SET al conteo, no una resta de venta.
 2. Después `registrar_ajuste` hace un INSERT en `auditorias_inventario`. Ese insert no vuelve a tocar `productos.stock`.

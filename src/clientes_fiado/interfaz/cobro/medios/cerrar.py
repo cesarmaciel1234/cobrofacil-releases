@@ -22,7 +22,8 @@ def avisar(nombre, monto, saldo):
     quien = (nombre or "cliente").strip() or "cliente"
     texto = (
         f"✅ COBRO EXITOSO — {quien}"
-        f" · pago {_plata(monto)} · saldo {_plata(saldo)}"
+        f" · pago {_plata(monto)} · "
+        + (f"a favor {_plata(abs(float(saldo or 0)))}" if float(saldo or 0) < -0.009 else f"saldo {_plata(saldo)}")
     )
     try:
         from src.notificaciones.motor.estado import publicar
@@ -36,7 +37,7 @@ def avisar(nombre, monto, saldo):
 def asentar(cliente_id, monto, deuda, perfil, quien, resultado, imprimir_saldo=True):
     try:
         if resultado is None or not getattr(resultado, "ok", False):
-            return {"ok": False, "aviso": "No se pudo cobrar la cuenta. La venta sigue."}
+            return {"ok": False, "aviso": "No se pudo cobrar. Intentá de nuevo."}
         from src.clientes_fiado.cerebro.cerebro import cerebro
 
         opciones_impresion = {} if imprimir_saldo else {"imprimir_saldo": False}
@@ -60,4 +61,4 @@ def asentar(cliente_id, monto, deuda, perfil, quien, resultado, imprimir_saldo=T
             "aviso": "",
         }
     except Exception:
-        return {"ok": False, "aviso": "No se pudo cobrar la cuenta. La venta sigue."}
+        return {"ok": False, "aviso": "No se pudo registrar el pago. La cuenta no se modificó."}

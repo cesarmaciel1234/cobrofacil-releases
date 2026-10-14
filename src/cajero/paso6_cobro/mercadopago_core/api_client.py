@@ -1,4 +1,5 @@
 import datetime
+import threading
 from urllib.parse import quote
 
 import requests
@@ -15,6 +16,7 @@ def fecha_busqueda_mp(resta=None):
 
 class MPApiClient:
     _sesion = None
+    _lock = threading.Lock()
 
     @classmethod
     def sesion(cls):
@@ -34,16 +36,20 @@ class MPApiClient:
         headers = MPApiClient.get_headers(token)
         if extra_headers:
             headers.update(extra_headers)
-        return MPApiClient.sesion().post(url, json=payload, headers=headers, timeout=timeout)
+        with MPApiClient._lock:
+            return MPApiClient.sesion().post(url, json=payload, headers=headers, timeout=timeout)
 
     @staticmethod
     def put(url, payload, token, timeout=10):
-        return MPApiClient.sesion().put(url, json=payload, headers=MPApiClient.get_headers(token), timeout=timeout)
+        with MPApiClient._lock:
+            return MPApiClient.sesion().put(url, json=payload, headers=MPApiClient.get_headers(token), timeout=timeout)
 
     @staticmethod
     def get(url, token, timeout=10):
-        return MPApiClient.sesion().get(url, headers=MPApiClient.get_headers(token, False), timeout=timeout)
+        with MPApiClient._lock:
+            return MPApiClient.sesion().get(url, headers=MPApiClient.get_headers(token, False), timeout=timeout)
 
     @staticmethod
     def delete(url, token, timeout=5):
-        return MPApiClient.sesion().delete(url, headers=MPApiClient.get_headers(token, False), timeout=timeout)
+        with MPApiClient._lock:
+            return MPApiClient.sesion().delete(url, headers=MPApiClient.get_headers(token, False), timeout=timeout)

@@ -403,23 +403,18 @@ class AdminClientes(QWidget):
                     it_dias.setForeground(QColor("#059669"))
                 self.tabla.setItem(i, 7, it_dias)
 
-                if deuda > 0.009:
-                    btn_sim = QPushButton("🔄 Recalcular")
-                    btn_sim.setCursor(Qt.CursorShape.PointingHandCursor)
-                    btn_sim.setFixedHeight(32)
-                    btn_sim.setStyleSheet(
-                        "background-color: #F8FAFC; color: #2563EB; border: 1px solid #CBD5E1; "
-                        "font-weight: bold; border-radius: 6px; padding: 4px 10px; font-size: 12px;"
-                    )
-                    btn_sim.clicked.connect(
-                        lambda ch, cid=c['id'], cnom=c['nombre']: self._abrir_recalculo(cid, cnom)
-                    )
-                    self.tabla.setCellWidget(i, 8, btn_sim)
-                else:
-                    it_rec = QTableWidgetItem("—")
-                    it_rec.setForeground(QColor("#CBD5E1"))
-                    it_rec.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                    self.tabla.setItem(i, 8, it_rec)
+                btn_sim = QPushButton("🔄 Recalcular")
+                btn_sim.setCursor(Qt.CursorShape.PointingHandCursor)
+                btn_sim.setFixedHeight(32)
+                btn_sim.setToolTip("Simula precios de hoy y un % de financiación. No cambia la deuda.")
+                btn_sim.setStyleSheet(
+                    "background-color: #F8FAFC; color: #2563EB; border: 1px solid #CBD5E1; "
+                    "font-weight: bold; border-radius: 6px; padding: 4px 10px; font-size: 12px;"
+                )
+                btn_sim.clicked.connect(
+                    lambda ch, cid=c['id'], cnom=c['nombre']: self._abrir_recalculo(cid, cnom)
+                )
+                self.tabla.setCellWidget(i, 8, btn_sim)
 
                 acc_w = QWidget()
                 acc_lay = QHBoxLayout(acc_w)
@@ -430,20 +425,16 @@ class AdminClientes(QWidget):
                 btn_abonar.setCursor(Qt.CursorShape.PointingHandCursor)
                 btn_abonar.setFixedHeight(32)
                 btn_abonar.setMinimumWidth(68)
-                if deuda <= 0:
-                    btn_abonar.setEnabled(False)
-                    btn_abonar.setStyleSheet(
-                        "background-color: #94A3B8; color: white; border-radius: 6px; "
-                        "padding: 4px 10px; font-size: 12px; font-weight: bold; border: none;"
-                    )
-                else:
-                    btn_abonar.setStyleSheet(
-                        "background-color: #3B82F6; color: white; border-radius: 6px; "
-                        "padding: 4px 10px; font-size: 12px; font-weight: bold; border: none;"
-                    )
-                    btn_abonar.clicked.connect(
-                        lambda ch, cid=c['id'], cnom=c['nombre'], cdeu=deuda: self.abonar_deuda_admin(cid, cnom, cdeu)
-                    )
+                btn_abonar.setToolTip(
+                    "Cobra aunque no haya deuda: el excedente queda saldo a favor."
+                )
+                btn_abonar.setStyleSheet(
+                    "background-color: #3B82F6; color: white; border-radius: 6px; "
+                    "padding: 4px 10px; font-size: 12px; font-weight: bold; border: none;"
+                )
+                btn_abonar.clicked.connect(
+                    lambda ch, cid=c['id'], cnom=c['nombre'], cdeu=deuda: self.abonar_deuda_admin(cid, cnom, cdeu)
+                )
                 acc_lay.addWidget(btn_abonar)
 
                 btn_limite = QPushButton("Límite")
@@ -600,7 +591,7 @@ class AdminClientes(QWidget):
 
     def abonar_deuda_admin(self, cliente_id, nombre, deuda_actual):
         from src.utils.qt_compat import qt_exec
-        from src.cajero.ingresar_efectivo import DialogoIngresoEfectivo
+        from src.cajero.f6_centro_cobranzas import DialogoCentroCobranzas
         from src.clientes_fiado.cerebro.cerebro import cerebro
 
         cliente = cerebro.obtener(cliente_id) or {
@@ -608,50 +599,24 @@ class AdminClientes(QWidget):
             "nombre": nombre,
             "deuda_actual": deuda_actual,
         }
-        dlg = DialogoIngresoEfectivo(parent=self)
+        dlg = DialogoCentroCobranzas(parent=self, perfil="Admin")
         dlg.abrir_para_cliente(cliente)
-        if not (qt_exec(dlg) and dlg.tipo_ingreso == "FIADO" and dlg.monto_ingresado > 0 and dlg.cliente_id):
+        if not (qt_exec(dlg) and dlg.monto_ingresado > 0 and dlg.cliente_id):
             return
-        from src.clientes_fiado.interfaz.cobro.medios.cerrar import asentar
-        from src.config import config
-
-        quien = (config.current_user or {}).get("username") or ""
         resultado = getattr(dlg, "resultado", None)
         if resultado is None or not getattr(resultado, "ok", False):
             return
-        hecho = asentar(
-            dlg.cliente_id, dlg.monto_ingresado, dlg.deuda_actual,
-            "Admin", quien, resultado,
+        saldo = float(getattr(resultado, "saldo", 0) or 0)
+        if saldo < -0.009:
+            extra = f"Saldo a favor ${abs(saldo):,.2f}"
+        else:
+            extra = f"Saldo ${saldo:,.2f}"
+        QMessageBox.information(
+            self,
+            "Cobro",
+            f"Cobro asentado · {getattr(resultado, 'nombre', None) or nombre}\n"
+            f"Pago ${float(getattr(resultado, 'monto', 0) or 0):,.2f} · {extra}",
         )
-        if not hecho["ok"]:
-            QMessageBox.warning(self, "Abono", hecho["aviso"])
-            return
-        medio = resultado.medio
-        if hecho["entra_caja"]:
-            from src.cajero.paso5_terminal.logica.movimientos_caja_service import MovimientosCajaService
-
-            try:
-                entro = MovimientosCajaService().registrar_ingreso_efectivo(
-                    hecho["monto_caja"],
-                    quien or "Admin",
-                    f"Pago de clientes: {hecho['nombre']} (Efectivo)",
-                    config.get("caja_id", 1),
-                )
-            except Exception:
-                entro = False
-            if not entro:
-                QMessageBox.warning(
-                    self,
-                    "Caja",
-                    "El abono quedó en la cuenta del cliente. El efectivo no entró a la caja.",
-                )
-                self.cargar_clientes()
-                return
-        mensaje = hecho.get("mensaje") or (
-            f"✅ COBRO EXITOSO — {hecho.get('nombre') or nombre}"
-            f" · saldo ${float(hecho.get('saldo') or 0):,.2f}"
-        )
-        QMessageBox.information(self, "Éxito", f"{mensaje}\n({medio})")
         try:
             win = self.window()
             pantallas = getattr(win, "screens", None) or []

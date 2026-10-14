@@ -2,17 +2,23 @@
 
 Acá se llevan los créditos. El paso 5 ya vendió y el paso 6 ya registró el medio. Esta carpeta no cobra esa venta.
 
-`cuenta/motor.py`, clase `MotorCuenta`, es el libro. Lee y escribe `clientes` y `cuenta_corriente`. La cartera consulta los últimos cargos en lote por `ultimos_cargos`, no con una ida y vuelta remota por cliente.
+```
+oficina/
+  cuenta/               MotorCuenta — libro clientes y cuenta_corriente
+  consulta_historial/   lector para admin y F6
+  ticket/               MotorTicket — desglose de venta
+  cobradas/             abonos / planilla
+  cobranza/             listado de deudores (no es F6)
+  por_cobrar/           quién debe
+  saldos/               cupo
+  cartel/               saludo del cobro
+  huella/               auditoría de ficha
+```
 
-`ticket/motor.py`, clase `MotorTicket`, es un lector de solo consulta para abrir el desglose de ventas enlazadas a cargos. No modifica el libro de deuda.
+`cuenta/motor.py` lee y escribe. `ultimos_cargos` va por lotes. `borrar_cargo` marca `BORRADO ·`. F3 cancela con `_anular_cargo` en `repos/ventas.py` y marca `CANCELADO ·`.
 
-Tres mesas, sobre ese mismo libro:
+`consulta_historial/motor.py` arma las filas. Lo preguntan hilos de admin y de F6. Si uno se cae, el otro sigue.
 
-- `por_cobrar/` mira quién debe.
-- `cobradas/` anota el abono.
-- `saldos/` dice si el cupo alcanza, y el garante lo consulta antes del ok.
-- `cartel/` llena el saludo de la confirmación. Si el nombre no está, deja `Sin datos`.
+`ticket/motor.py` solo consulta. Si no hay copia de la venta, informa; no toca la deuda.
 
-El cargo de una venta fiada no se escribe acá. Lo escribe `_aplicar_fiado`, en la misma transacción que el ticket. `cuenta/cuadre.py` anota después el ticket que se vendió y no dejó cargo. Cancelar ese ticket anula el cargo en la misma transacción de la cancelación.
-
-`ticket/motor.py`, clase `MotorTicket`, lee los renglones de una venta existente para el desglose del historial. Busca en la base activa, el espejo portable y la SQLite local pendiente; no modifica el libro de deuda.
+`cobranza/consulta.py` no es F6: F6 tiene `f6_centro_cobranzas/consulta.py`.

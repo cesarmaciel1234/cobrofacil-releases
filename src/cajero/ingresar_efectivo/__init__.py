@@ -1,4 +1,4 @@
-"""Ingreso de dinero desde el cajero. F6 abre este diálogo."""
+"""F2 del paso 5: ingresar efectivo a la caja."""
 
 from src.cajero.ingresar_efectivo.dialogo import DialogoIngresoEfectivo
 

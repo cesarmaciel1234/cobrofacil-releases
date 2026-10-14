@@ -1,14 +1,13 @@
-"""Fiado: busca al cliente y toma el abono (F6)."""
+"""Paso 5 F6: cobranza de cuentas. No crea clientes (eso es paso 6 crédito)."""
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QStackedWidget
 )
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 
-# Importar motores globales
-from src.motores_empresariales.motor_busqueda_clientes.motor_busqueda import MotorBusquedaClientes
 from src.motores_empresariales.motor_cobranzas_medios.motor_cobranza import MotorCobranzaMedios, ResultadoAbonoPrevio
+from src.cajero.f6_centro_cobranzas.consulta import buscar_cuentas
 
 # Componentes modulares copiados para F6
 from src.cajero.f6_centro_cobranzas.componentes_f6.ui_buscador.panel_buscador import PanelBuscadorClientes
@@ -17,19 +16,24 @@ from src.cajero.f6_centro_cobranzas.componentes_f6.ui_selector.panel_selector im
 from src.utils.dinero import redondear_dinero
 
 class CentroCobranzasPanel(QWidget):
-    """Panel F6 - FIADO modularizado."""
+    """Panel F6 del paso 5: solo cobranza con medios de pago."""
     pago_listo = pyqtSignal(int, float)
     abono_registrado = pyqtSignal(ResultadoAbonoPrevio)
     cambio = pyqtSignal(str)
     cancelado = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, perfil="Cajero"):
         super().__init__(parent)
+        self._perfil = (perfil or "Cajero").strip() or "Cajero"
         self._cliente_id = None
         self._cliente_nombre = ""
         self._deuda_actual = 0.0
         self._monto = 0.0
         self._modo = "buscando"
+        self._cola_digital = None
+        self._mixto_detalle = None
+        self._hilo_hist = None
+        self._hist_gen = 0
         
         self.setStyleSheet("background: transparent; border: none;")
         self._build()
@@ -64,25 +68,22 @@ class CentroCobranzasPanel(QWidget):
         self.stack = QStackedWidget()
         lay.addWidget(self.stack)
 
-        # Motores
-        self.motor_busqueda = MotorBusquedaClientes(self)
-        self.motor_cobranza = MotorCobranzaMedios(self)
+        self.motor_cobranza = MotorCobranzaMedios(self, perfil=self._perfil)
         self.motor_cobranza.set_pedir_pin_callback(self._pin)
         self.motor_cobranza.abono_registrado.connect(self.abono_registrado.emit)
         self.motor_cobranza.pago_listo.connect(lambda cid, m: self._finalizado_ok(cid, m))
         self.motor_cobranza.error_cobranza.connect(lambda e: self._volver_de_lienzo())
-        
         self.motor = self.motor_cobranza
 
-        # 1. Buscador
+        self._q = ""
+        self._timer_busca = QTimer(self)
+        self._timer_busca.setSingleShot(True)
+        self._timer_busca.timeout.connect(self._consultar_cuentas)
+
         self.panel_buscador = PanelBuscadorClientes()
         self.panel_buscador.caja_busqueda.installEventFilter(self)
-        self.panel_buscador.texto_cambiado.connect(self.motor_busqueda.buscar_texto)
-        self.motor_busqueda.sugerencias_listas.connect(self.panel_buscador.mostrar_sugerencias)
+        self.panel_buscador.texto_cambiado.connect(self._on_texto_busqueda)
         self.panel_buscador.cliente_elegido.connect(self.seleccionar_cliente_directo)
-        self.panel_buscador.creacion_solicitada.connect(self.motor_busqueda.buscar_estricto)
-        self.motor_busqueda.limite_aprobado.connect(self._al_limite_aprobado)
-        self.motor_busqueda.error_busqueda.connect(self._mostrar_error_busqueda)
         self.stack.addWidget(self.panel_buscador)
 
         # 2. Cobranza
@@ -130,16 +131,15 @@ class CentroCobranzasPanel(QWidget):
         self.lienzo_efectivo.listo.connect(lambda monto: self._finalizar_cobranza_con_motor(monto, "Efectivo", None))
         self.lienzo_efectivo.volver.connect(self._volver_de_lienzo)
         
-        self.lienzo_qr.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "QR", det))
+        self.lienzo_qr.listo.connect(lambda det: self._digital_listo("QR", det))
         self.lienzo_qr.volver.connect(self._volver_de_lienzo)
         
-        self.lienzo_tarjeta.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Tarjeta", det))
-        self.lienzo_tarjeta.fallo.connect(lambda text: self._volver_de_lienzo())
+        self.lienzo_tarjeta.listo.connect(lambda det: self._digital_listo("Tarjeta", det))
         self.lienzo_tarjeta.volver.connect(self._volver_de_lienzo)
         
-        self.lienzo_transferencia.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Transferencia", det))
+        self.lienzo_transferencia.listo.connect(lambda det: self._digital_listo("Transferencia", det))
         self.lienzo_transferencia.volver.connect(self._volver_de_lienzo)
-        self.lienzo_mixto.listo.connect(lambda det: self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Mixto", det))
+        self.lienzo_mixto.listo.connect(self._armar_cola_mixto)
         self.lienzo_mixto.volver.connect(self._volver_de_lienzo)
 
         row_center.addWidget(self.card)
@@ -155,31 +155,52 @@ class CentroCobranzasPanel(QWidget):
             return True
         return False
 
-    def _mostrar_error_busqueda(self, msg):
-        self.panel_buscador.lbl_error.setText(msg)
-        self.panel_buscador.lbl_error.show()
-        from PyQt6.QtCore import QTimer
-        QTimer.singleShot(3500, self.panel_buscador.lbl_error.hide)
+    def _on_texto_busqueda(self, texto):
+        self._q = (texto or "").strip()
+        if len(self._q) < 3:
+            self.panel_buscador.mostrar_sugerencias([])
+            return
+        self._timer_busca.start(160)
+
+    def _consultar_cuentas(self):
+        try:
+            filas = buscar_cuentas(self._q)
+        except Exception:
+            filas = []
+        self.panel_buscador.mostrar_sugerencias(filas)
 
     def seleccionar_cliente_directo(self, ficha, monto_sugerido=None):
-        self._modo = "buscando"
+        f = dict(ficha) if hasattr(ficha, "keys") else {}
+        if f.get("id") and f.get("deuda_actual") is None and f.get("deuda") is None:
+            try:
+                from src.clientes_fiado.cerebro.cerebro import cerebro
+                full = cerebro.obtener(f.get("id"))
+                if full and hasattr(full, "keys"):
+                    f = dict(full)
+            except Exception:
+                pass
         self._monto_sugerido_externo = monto_sugerido
-        self.motor_busqueda.aprobar_credito(ficha)
+        self._cliente_id = f.get("id")
+        self._cliente_nombre = str(f.get("nombre") or f.get("nombre_completo") or "")
+        try:
+            self._deuda_actual = float(f.get("deuda_actual") if f.get("deuda_actual") is not None else f.get("deuda") or 0)
+        except (TypeError, ValueError):
+            self._deuda_actual = 0.0
+        self._mostrar_ficha()
 
-    def _al_limite_aprobado(self, datos):
-        self._cliente_id = datos['id']
-        self._cliente_nombre = datos['nombre']
-        self._deuda_actual = float(datos.get('deuda', 0))
-        
+    def _mostrar_ficha(self):
         self.card.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
         self.estado.setText(f"Hola {self._cliente_nombre}")
         
-        if self._deuda_actual < 0:
+        if self._deuda_actual < -0.009:
             self.detalle.setText(f"Saldo a favor: ${abs(self._deuda_actual):,.2f}")
             self.detalle.setStyleSheet("color: #10B981; font-size: 36px; font-weight: 900; background: transparent; border: none;")
-        else:
+        elif self._deuda_actual > 0.009:
             self.detalle.setText(f"Deuda actual: ${self._deuda_actual:,.2f}")
             self.detalle.setStyleSheet("color: #B91C1C; font-size: 36px; font-weight: 900; background: transparent; border: none;")
+        else:
+            self.detalle.setText("Al día · se puede cobrar y deja saldo a favor")
+            self.detalle.setStyleSheet("color: #047857; font-size: 22px; font-weight: 900; background: transparent; border: none;")
             
         self.icono.hide()
         
@@ -201,15 +222,64 @@ class CentroCobranzasPanel(QWidget):
         self._modo = "vista_cliente"
         self.stack.setCurrentWidget(self.vista_cobranza)
         self.setFocus()
+        self._pedir_historial()
+
+    def _pedir_historial(self):
+        lbl = getattr(self.panel_estado, "lbl_historial", None)
+        if lbl is None:
+            return
+        lbl.setText("Historial…")
+        lbl.show()
+        self._hist_gen += 1
+        gen = self._hist_gen
+        if self._hilo_hist is not None:
+            try:
+                self._hilo_hist.listo.disconnect()
+            except TypeError:
+                pass
+        try:
+            from src.cajero.f6_centro_cobranzas.consulta_historial.hilo import HiloMovimientosCajero
+        except Exception:
+            lbl.hide()
+            return
+        self._hilo_hist = HiloMovimientosCajero(self._cliente_id, self)
+        self._hilo_hist.listo.connect(lambda movs, err, g=gen: self._mostrar_historial(movs, err, g))
+        self._hilo_hist.finished.connect(self._hilo_hist.deleteLater)
+        self._hilo_hist.start()
+
+    def _mostrar_historial(self, movs, error, gen):
+        if gen != self._hist_gen:
+            return
+        lbl = getattr(self.panel_estado, "lbl_historial", None)
+        if lbl is None:
+            return
+        if error:
+            lbl.hide()
+            return
+        lineas = []
+        for dato in list(movs or [])[:4]:
+            lineas.append(str(dato.get("linea") or ""))
+        if not lineas:
+            lbl.setText("Sin movimientos previos.")
+            lbl.show()
+            return
+        lbl.setText("\n".join(lineas))
+        lbl.show()
 
 
     def _mostrar_controles_pago(self):
         self._modo = "preparando_pago"
         self.btn_iniciar_pago.hide()
         self.btn_imprimir_resumen.hide()
+        if getattr(self.panel_estado, "lbl_historial", None):
+            self.panel_estado.lbl_historial.hide()
         
-        monto_sugerido = self._deuda_actual if self._deuda_actual > 0 else 0.0
-        self.txt_monto_abono.setText(f"{monto_sugerido:.2f}".replace('.', ','))
+        monto_sugerido = self._deuda_actual if self._deuda_actual > 0.009 else 0.0
+        if monto_sugerido > 0:
+            self.txt_monto_abono.setText(f"{monto_sugerido:.2f}".replace('.', ','))
+        else:
+            self.txt_monto_abono.clear()
+            self.txt_monto_abono.setPlaceholderText("Monto a cobrar (queda a favor)")
         self.txt_monto_abono.show()
         self.btn_abono_libre.show()
         self.instruccion.show()
@@ -241,6 +311,19 @@ class CentroCobranzasPanel(QWidget):
         if not texto.strip(): return
         monto = redondear_dinero(float(texto))
         if monto <= 0: return
+        deuda_viva = max(0.0, float(self._deuda_actual or 0))
+        extra = redondear_dinero(monto - deuda_viva)
+        if extra > 0.009:
+            from PyQt6.QtWidgets import QMessageBox
+            aviso = QMessageBox(self)
+            aviso.setIcon(QMessageBox.Icon.Information)
+            aviso.setWindowTitle("Saldo a favor")
+            aviso.setText(
+                f"La deuda es ${deuda_viva:,.2f}. Este cobro deja ${extra:,.2f} a favor."
+            )
+            aviso.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+            if aviso.exec() != QMessageBox.StandardButton.Ok:
+                return
 
         self._monto_a_cobrar = monto
         
@@ -250,6 +333,9 @@ class CentroCobranzasPanel(QWidget):
         self.cont_botones.hide()
         self.instruccion.hide()
         
+        self._abrir_lienzo(metodo, monto)
+
+    def _abrir_lienzo(self, metodo, monto):
         self.cont_lienzos.show()
         if metodo == "Efectivo":
             self.cont_lienzos.setCurrentWidget(self.lienzo_efectivo)
@@ -266,7 +352,45 @@ class CentroCobranzasPanel(QWidget):
         elif metodo == "Mixto":
             self.cont_lienzos.setCurrentWidget(self.lienzo_mixto)
             self.lienzo_mixto.arrancar(monto)
+
+    def _digital_listo(self, nombre, detalle):
+        if getattr(self, "_cola_digital", None) is not None:
+            self._seguir_cola_digital()
+            return
+        self._finalizar_cobranza_con_motor(self._monto_a_cobrar, nombre, detalle)
+
+    def _armar_cola_mixto(self, partes):
+        partes = partes or {}
+        self._mixto_detalle = partes
+        self._cola_digital = [
+            (clave, float(partes.get(clave) or 0))
+            for clave in ("Transferencia", "Tarjeta", "QR")
+            if float(partes.get(clave) or 0) > 0.009
+        ]
+        self._seguir_cola_digital()
+
+    def _seguir_cola_digital(self):
+        cola = getattr(self, "_cola_digital", None)
+        if not cola:
+            detalle = getattr(self, "_mixto_detalle", {}) or {}
+            self._cola_digital = None
+            self._mixto_detalle = None
+            self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Mixto", detalle)
+            return
+        clave, valor = cola.pop(0)
+        self._abrir_lienzo(clave, valor)
             
+    def tecla(self, k):
+        """Flechas de esta hoja. No abre F2 ni F5."""
+        if k in (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down):
+            if self._modo == "vista_cliente":
+                if k in (Qt.Key.Key_Right, Qt.Key.Key_Down):
+                    self.btn_iniciar_pago.setFocus()
+                else:
+                    self.btn_imprimir_resumen.setFocus()
+            return True
+        return False
+
     def keyPressEvent(self, event):
         from PyQt6.QtCore import Qt
         if event.key() == Qt.Key.Key_Escape:
@@ -283,6 +407,9 @@ class CentroCobranzasPanel(QWidget):
             elif self._modo == "cobrando_lienzo":
                 self._volver_de_lienzo()
                 return
+        if self.tecla(event.key()):
+            event.accept()
+            return
         super().keyPressEvent(event)
         
     def _volver_al_buscador(self):
@@ -303,6 +430,8 @@ class CentroCobranzasPanel(QWidget):
         self.setFocus()
 
     def _volver_de_lienzo(self):
+        self._cola_digital = None
+        self._mixto_detalle = None
         self._modo = "preparando_pago"
         self._cerrar_lienzos()
         self.txt_monto_abono.show()

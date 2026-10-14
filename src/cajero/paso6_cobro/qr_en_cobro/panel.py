@@ -26,9 +26,10 @@ class PanelQrCobro(QFrame):
         self._token = ""
         self._borrar_url = ""
         self._generacion = 0
+        self._en_vuelo = False
         self._llegada.connect(self._pintar)
         self._reloj = QTimer(self)
-        self._reloj.setInterval(3000)
+        self._reloj.setInterval(800)
         self._reloj.timeout.connect(self._consultar_pago)
         self.hide()
         self._armar()
@@ -186,29 +187,39 @@ class PanelQrCobro(QFrame):
         self.cambio_modo.emit("foto")
 
     def _consultar_pago(self):
-        if self._modo != "esperando" or not self._ref:
+        if self._modo != "esperando" or not self._ref or self._en_vuelo:
             return
         ref = self._ref
         token = self._token
         generacion = self._generacion
+        self._en_vuelo = True
+
+        monto = self._monto
 
         def _trabajo():
             try:
-                pago = pago_aprobado(token, ref)
+                pago = pago_aprobado(token, ref, monto)
             except Exception:
                 pago = None
-            if pago:
-                self._llegada.emit({"generacion": generacion, "pagado": True, "pago": pago})
+            self._llegada.emit({
+                "generacion": generacion,
+                "vuelo": True,
+                "pagado": bool(pago),
+                "pago": pago,
+            })
 
         threading.Thread(target=_trabajo, daemon=True).start()
 
     def _pintar(self, dato):
         if not dato or dato.get("generacion") != self._generacion:
             return
-        if dato.get("pagado"):
+        if dato.get("vuelo"):
+            self._en_vuelo = False
+        if dato.get("pagado") and dato.get("pago"):
             if self._modo != "esperando":
                 return
             self._modo = "oculto"
+            self._en_vuelo = False
             self._reloj.stop()
             self._pago = dato.get("pago") or {}
             self.estado.setText("Pago recibido.")
@@ -231,9 +242,11 @@ class PanelQrCobro(QFrame):
             self._token = pedido.get("token") or ""
             self._borrar_url = pedido.get("borrar_url") or ""
             self._modo = "esperando"
+            self._en_vuelo = False
             self.estado.setText("Que el cliente escanee. La venta se cierra sola.")
             self._marcar("vivo")
             self._reloj.start()
+            self._consultar_pago()
             self.cambio_modo.emit("esperando")
             return
         self._modo = "manual"

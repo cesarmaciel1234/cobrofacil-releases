@@ -31,9 +31,27 @@ class DialogoRecalculoFiado(QDialog):
         lbl_tit.setStyleSheet("font-size: 16px; font-weight: 900;  border: none;")
         lay.addWidget(lbl_tit)
 
-        lbl_sub = QLabel("Calcula la deuda si los productos fiados se cobraran a los precios de HOY.")
+        lbl_sub = QLabel(
+            "Simula la deuda a precios de hoy. El % de financiación es una vista previa: no escribe la cuenta."
+        )
+        lbl_sub.setWordWrap(True)
         lbl_sub.setStyleSheet(" font-size: 12px; border: none;")
         lay.addWidget(lbl_sub)
+
+        fila_pct = QHBoxLayout()
+        lbl_pct = QLabel("Financiación %")
+        lbl_pct.setStyleSheet("font-size: 13px; border: none;")
+        self.sp_pct = QDoubleSpinBox()
+        self.sp_pct.setRange(0, 100)
+        self.sp_pct.setDecimals(1)
+        self.sp_pct.setSuffix(" %")
+        self.sp_pct.setValue(0)
+        self.sp_pct.setToolTip("Después este % podrá aplicarse a la cuenta. Hoy solo muestra el número.")
+        self.sp_pct.valueChanged.connect(self._pintar_resumen)
+        fila_pct.addWidget(lbl_pct)
+        fila_pct.addWidget(self.sp_pct)
+        fila_pct.addStretch()
+        lay.addLayout(fila_pct)
 
         self.tabla = QTableWidget(0, 5)
         self.tabla.setHorizontalHeaderLabels(["Fecha", "Producto", "Cant", "P. Original", "P. Hoy"])
@@ -59,6 +77,8 @@ class DialogoRecalculoFiado(QDialog):
         h_btns.addWidget(btn_imprimir)
         lay.addLayout(h_btns)
 
+        self._total_original = 0.0
+        self._total_hoy = 0.0
         self._cargar_datos()
 
     def _cargar_datos(self):
@@ -69,6 +89,7 @@ class DialogoRecalculoFiado(QDialog):
             FROM cuenta_corriente c
             JOIN ventas v ON c.venta_id = v.id
             WHERE c.cliente_id = ? AND c.tipo = 'CARGO'
+              AND (c.descripcion IS NULL OR c.descripcion NOT LIKE 'BORRADO · %')
             ORDER BY c.fecha DESC
         ''', (self.cliente_id,))
 
@@ -118,9 +139,25 @@ class DialogoRecalculoFiado(QDialog):
                     "fecha": f_corta, "nombre": d['nombre'], "cant": cant, "p_orig": p_orig, "p_hoy": p_hoy
                 })
 
-        dif = total_hoy - total_original
+        self._total_original = total_original
+        self._total_hoy = total_hoy
+        self._pintar_resumen()
+
+    def _pintar_resumen(self):
+        original = float(getattr(self, "_total_original", 0) or 0)
+        hoy = float(getattr(self, "_total_hoy", 0) or 0)
+        pct = float(self.sp_pct.value()) if hasattr(self, "sp_pct") else 0.0
+        con_pct = hoy * (1 + pct / 100.0)
+        dif = hoy - original
         color = "#DC2626" if dif > 0 else "#10B981"
-        self.lbl_resumen.setText(f"Deuda Histórica: ${total_original:,.2f}  |  Deuda a Precios de Hoy: <span style='color:{color}'>${total_hoy:,.2f}</span> (+${dif:,.2f})")
+        extra = ""
+        if pct > 0:
+            extra = f"  |  Con {pct:g}%: <span style='color:#1D4ED8'>${con_pct:,.2f}</span>"
+        self.lbl_resumen.setText(
+            f"Deuda histórica: ${original:,.2f}  |  A precios de hoy: "
+            f"<span style='color:{color}'>${hoy:,.2f}</span> ({dif:+,.2f}){extra}"
+        )
+        self.lbl_resumen.setTextFormat(Qt.TextFormat.RichText)
 
     def _imprimir(self):
         try:

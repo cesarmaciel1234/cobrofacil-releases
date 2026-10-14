@@ -8,9 +8,9 @@ Esta hoja vive dentro de F6. No abre la venta.
 2. Saluda «Hola nombre» y pregunta el medio.
 3. Efectivo: el monto a abonar ya está definido; pide aparte el efectivo recibido y muestra el vuelto. Al confirmar, pide PIN y, solo si se autoriza, abre el cajón y registra el abono. Si el PIN se cancela o falla, mantiene el recibido y no abre el cajón.
 4. Transferencia, tarjeta y QR: el clic pide PIN antes de iniciar el motor.
-5. Transferencia: EscuchaMP + toast Asociar; F9 = `F9 MANUAL`.
-6. Tarjeta: Point; F9 suelta y asienta `F9 MANUAL`.
-7. QR: `pedir_qr_pos` en esta hoja; F9 = `F9 MANUAL`.
+5. Transferencia: `pago_llegado`. Si llega el importe, asienta. F9 solo sin internet.
+6. Tarjeta: Point; si FINISHED, asienta. F9 solo si la terminal no arrancó.
+7. QR: `pago_aprobado`; si llega el importe, asienta. F9 solo en foto / sin TPV.
 8. Mixto: reparte; corre los motores digitales en cola.
 9. `cerrar_con_medio` → paso 5 / admin llaman `medios/cerrar.asentar`.
 10. Si algo falla, aviso y la venta sigue.

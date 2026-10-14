@@ -4,11 +4,13 @@ Leé esto antes de “arreglar” F9, el PIN de fiado o el token de Mercado Pago
 
 ## F9 sin PIN
 
-F9 es cobro de emergencia (QR, Point, transferencia) cuando no hay internet o Mercado Pago no responde.
+F9 es cobro de emergencia cuando **no hay internet** (luz TPV roja). Con red, QR / tarjeta / transferencia cierran solos: el cajero no toca F9. No borres F9.
 
 El perfil jefe marca el pago digital como no firmado. F9 sirve para **amaestrar** a los cajeros en cancha: que sepan cerrar la venta a mano. Cuando el equipo esté entrenado, el jefe podrá **ocultar F9** o **ponerle PIN**. Eso todavía no está. No lo implementes en este pase.
 
 No borres F9. No le pidas PIN ahora.
+
+El cobro F9 se anota en `motor_auditoria_digital` (hilo aparte) para el monitor. Si esa nota falla, la venta igual queda.
 
 ## PIN de fiado / cuenta corriente
 

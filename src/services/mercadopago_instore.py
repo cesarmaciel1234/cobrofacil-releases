@@ -153,3 +153,11 @@ def url_crear_qr(user_id: str, external_pos_id: str) -> str:
         "https://api.mercadopago.com/instore/orders/qr/seller/collectors/"
         f"{quote(str(user_id), safe='')}/pos/{quote(str(external_pos_id), safe='')}/qrs"
     )
+
+
+def url_orden_pos(user_id: str, external_pos_id: str) -> str:
+    """Orden actual del POS. Es el mismo estado que ve el teléfono, no el índice de /payments."""
+    return (
+        "https://api.mercadopago.com/instore/qr/seller/collectors/"
+        f"{quote(str(user_id), safe='')}/pos/{quote(str(external_pos_id), safe='')}/orders"
+    )

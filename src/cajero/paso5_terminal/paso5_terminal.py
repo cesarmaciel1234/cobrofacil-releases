@@ -23,6 +23,7 @@ from src.cajero.paso5_terminal.dialogos.dialogo_editar_cantidad import DialogoEd
 from src.cajero.paso5_terminal.dialogos.pin.dialogo_pin import DialogoPIN
 from src.cajero.sacar_efectivo import DialogoRetiroEfectivo
 from src.cajero.ingresar_efectivo import DialogoIngresoEfectivo
+from src.cajero.f6_centro_cobranzas import DialogoCentroCobranzas
 from src.cajero.paso5_terminal.dialogos.candado.dialogo_candado import DialogoCandado
 from src.cajero.paso5_terminal.logica.terminal_controller import TerminalController
 
@@ -494,8 +495,8 @@ class Paso5Terminal(QWidget):
             elif tecla_str == "F3": self.abrir_historial_dia()
             elif tecla_str == "F12": self.finalizar_venta()
             elif tecla_str == "F5": self.abrir_retiro_efectivo()
-            elif tecla_str == "F6": self.abrir_ingreso_efectivo("FIADO")
-            elif tecla_str == "F2": self.abrir_ingreso_efectivo("OTROS")
+            elif tecla_str == "F6": self.abrir_centro_cobranzas()
+            elif tecla_str == "F2": self.abrir_ingreso_efectivo()
             elif tecla_str == "F7": self._leer_bascula()
             elif tecla_str == "F8": self._swap_ticket_espera()
             elif tecla_str == "F4": self.abrir_cierre_caja()
@@ -577,8 +578,8 @@ class Paso5Terminal(QWidget):
         elif k == Qt.Key.Key_F3: self.abrir_historial_dia()
         elif k == Qt.Key.Key_F12: self.finalizar_venta()
         elif k == Qt.Key.Key_F5: self.abrir_retiro_efectivo()
-        elif k == Qt.Key.Key_F6: self.abrir_ingreso_efectivo("FIADO")
-        elif k == Qt.Key.Key_F2: self.abrir_ingreso_efectivo("OTROS")
+        elif k == Qt.Key.Key_F6: self.abrir_centro_cobranzas()
+        elif k == Qt.Key.Key_F2: self.abrir_ingreso_efectivo()
         elif k == Qt.Key.Key_F7: self._leer_bascula()
         elif k == Qt.Key.Key_F8: self._swap_ticket_espera()
         elif k == Qt.Key.Key_F4: self.abrir_cierre_caja()
@@ -946,10 +947,10 @@ class Paso5Terminal(QWidget):
                     self.abrir_retiro_efectivo()
                     return True
                 elif key == Qt.Key.Key_F6:
-                    self.abrir_ingreso_efectivo("FIADO")
+                    self.abrir_centro_cobranzas()
                     return True
                 elif key == Qt.Key.Key_F2:
-                    self.abrir_ingreso_efectivo("OTROS")
+                    self.abrir_ingreso_efectivo()
                     return True
                 elif key == Qt.Key.Key_F11:
                     self.llamar_supervisor()
@@ -1942,7 +1943,7 @@ class Paso5Terminal(QWidget):
         self._respiracion_anim.start()
 
     def abrir_retiro_efectivo(self):
-        """Abre el panel rápido de retiro de efectivo de caja (F5)."""
+        """F5: sacar efectivo de la caja. No es ingreso ni cobranza."""
         from src.config import config
         c_id = config.get("caja_id", 1)
         efectivo = self.controller.movimientos_caja.obtener_efectivo_caja(c_id)
@@ -1969,10 +1970,33 @@ class Paso5Terminal(QWidget):
 
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
-    def abrir_ingreso_efectivo(self, modo_inicial=None):
-        """Abre el panel de ingreso manual de dinero a la caja (F6 o F2)."""
+    def abrir_centro_cobranzas(self):
+        """F6: cobranza de fiado y cuenta corriente. No mueve efectivo suelto de caja."""
         try:
-            self._abrir_ingreso_efectivo(modo_inicial)
+            self._abrir_centro_cobranzas()
+        except Exception:
+            try:
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "Cobranza", "No se pudo abrir el centro de cobranzas. La venta sigue.")
+            except Exception:
+                pass
+        QTimer.singleShot(50, self.txt_scan.setFocus)
+
+    def _abrir_centro_cobranzas(self):
+        dlg = DialogoCentroCobranzas(parent=self)
+        if not qt_exec(dlg):
+            return
+        resultado = getattr(dlg, "resultado", None)
+        if resultado is None or not getattr(resultado, "ok", False):
+            return
+        self._refrescar_notificaciones()
+        self.flash_feedback(success=True)
+        self.monitor_cajon_bloqueante(manual=True)
+
+    def abrir_ingreso_efectivo(self):
+        """F2: ingresar efectivo a la caja. No es retiro ni cobranza."""
+        try:
+            self._abrir_ingreso_efectivo()
         except Exception:
             try:
                 from PyQt6.QtWidgets import QMessageBox
@@ -1981,58 +2005,31 @@ class Paso5Terminal(QWidget):
                 pass
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
-    def _abrir_ingreso_efectivo(self, modo_inicial=None):
+    def _abrir_ingreso_efectivo(self):
         dlg = DialogoIngresoEfectivo(parent=self)
-        if modo_inicial:
-            dlg._directo = True
-            dlg._set_modo(modo_inicial)
         if not (qt_exec(dlg) and dlg.monto_ingresado > 0):
             return
-        es_fiado = getattr(dlg, "tipo_ingreso", "") == "FIADO" and getattr(dlg, "cliente_id", None)
-        resultado = getattr(dlg, "resultado", None) if es_fiado else None
-        if es_fiado and (resultado is None or not getattr(resultado, "ok", False)):
+        pin_dlg = DialogoPIN(CajeroActivo.nombre, parent=self)
+        if not (qt_exec(pin_dlg) and pin_dlg.ok):
             return
-        if not es_fiado:
-            pin_dlg = DialogoPIN(CajeroActivo.nombre, parent=self)
-            if not (qt_exec(pin_dlg) and pin_dlg.ok):
-                return
         monto = dlg.monto_ingresado
         motivo = getattr(dlg, "motivo", "Ingreso manual de efectivo en terminal")
         usuario = CajeroActivo.nombre
         from src.config import config
         c_id = config.get("caja_id", 1)
-        entra_caja = True
-
-        if es_fiado:
-            self._refrescar_notificaciones()
+        try:
+            ok_caja = self.controller.movimientos_caja.registrar_ingreso_efectivo(
+                monto, usuario, motivo, c_id,
+            )
+        except Exception:
+            ok_caja = False
+        if ok_caja:
             self.flash_feedback(success=True)
             self.monitor_cajon_bloqueante(manual=True)
-            return
-
-        # F2 (OTROS INGRESOS)
-        if entra_caja:
-            try:
-                ok_caja = self.controller.movimientos_caja.registrar_ingreso_efectivo(
-                    monto, usuario, motivo, c_id,
-                )
-            except Exception:
-                ok_caja = False
-            if ok_caja:
-                self.flash_feedback(success=True)
-                self.monitor_cajon_bloqueante(manual=True)
-                self.check_alertas_efectivo()
-            else:
-                from PyQt6.QtWidgets import QMessageBox
-                if es_fiado:
-                    QMessageBox.warning(
-                        self,
-                        "Caja",
-                        "El abono quedó en la cuenta del cliente. El efectivo no entró a la caja.",
-                    )
-                else:
-                    QMessageBox.critical(self, "Error", "No se pudo registrar el ingreso en la base de datos.")
-        elif es_fiado:
-            self.flash_feedback(success=True)
+            self.check_alertas_efectivo()
+        else:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.critical(self, "Error", "No se pudo registrar el ingreso en la base de datos.")
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -2058,18 +2055,18 @@ class Paso5Terminal(QWidget):
             self.finalizar_venta()
             return
 
-        # F5: Retiro
+        # F5: sacar efectivo
         if k == Qt.Key.Key_F5:
             self.abrir_retiro_efectivo()
             return
 
-        # F6: Cobranza
+        # F6: cobranza fiado / cuenta corriente
         if k == Qt.Key.Key_F6:
-            self.abrir_ingreso_efectivo("FIADO")
+            self.abrir_centro_cobranzas()
             return
-        # F2: Ingreso Manual
+        # F2: ingresar efectivo
         if k == Qt.Key.Key_F2:
-            self.abrir_ingreso_efectivo("OTROS")
+            self.abrir_ingreso_efectivo()
             return
 
         # F4: Cierre de Caja

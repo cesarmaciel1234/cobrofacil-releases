@@ -135,7 +135,9 @@ class MotorConectorAuditoria:
 
         from src.cerebro_global.auditoria.motor_auditoria import MotorAuditoria
 
-        producto = self.buscar_producto_por_id(producto_id)
+        producto = MotorAuditoria.leer_producto(db, producto_id)
+        if not producto:
+            producto = self.buscar_producto_por_id(producto_id)
         if not producto:
             return False, f"Producto ID {producto_id} no encontrado"
 
@@ -144,15 +146,16 @@ class MotorConectorAuditoria:
         if abs(diferencia) < 1e-9:
             return True, "Sin cambio"
 
+        pid = producto.get("id", producto_id)
         ajuste = {
-            "id": producto_id,
+            "id": pid,
             "nombre": producto.get("nombre", ""),
             "stock_sistema": stock_anterior,
             "stock_fisico": float(stock_nuevo),
             "diferencia": diferencia,
         }
 
-        if not MotorAuditoria.aplicar_ajuste_stock(db, producto_id, float(stock_nuevo)):
+        if not MotorAuditoria.aplicar_ajuste_stock(db, pid, float(stock_nuevo)):
             return False, "No se pudo actualizar el stock"
 
         MotorAuditoria.registrar_ajuste(db, ajuste, usuario, motivo)

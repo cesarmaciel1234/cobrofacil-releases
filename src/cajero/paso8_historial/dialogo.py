@@ -88,6 +88,9 @@ class DialogoHistorialDia(QDialog):
             self.tabla_tickets.setItem(i, 2, QTableWidgetItem(hora_fmt))
 
             is_cancelled = str(r["estado"]).upper().startswith("CANCELAD")
+            it_folio = self.tabla_tickets.item(i, 0)
+            if is_cancelled:
+                it_folio.setToolTip("CANCELADO. Queda en el historial y en la cuenta del cliente.")
             it_total = QTableWidgetItem(fmt_moneda(r["total"]))
             it_total.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             it_total.setForeground(QColor("#ef4444" if is_cancelled else "#1E3A8A"))
@@ -106,11 +109,22 @@ class DialogoHistorialDia(QDialog):
                 cli_val = ""
             cli_name = str(cli_val or "").strip()
             self.tabla_tickets.setItem(i, 5, QTableWidgetItem(cli_name))
-            if r["id"] in notas_dict:
-                self.tabla_tickets.item(i, 0).setForeground(QColor("#D97706")) # Naranja oscuro
+            if is_cancelled:
+                from PyQt6.QtGui import QFont, QBrush
+                tachado = QFont()
+                tachado.setStrikeOut(True)
+                gris = QColor("#94A3B8")
+                for col in range(6):
+                    celda = self.tabla_tickets.item(i, col)
+                    if not celda:
+                        continue
+                    celda.setFont(tachado)
+                    celda.setForeground(gris)
+                    celda.setBackground(QBrush(QColor("#F8FAFC")))
+            elif r["id"] in notas_dict:
+                self.tabla_tickets.item(i, 0).setForeground(QColor("#D97706"))
                 self.tabla_tickets.item(i, 1).setForeground(QColor("#D97706"))
                 self.tabla_tickets.item(i, 2).setForeground(QColor("#D97706"))
-                # Make folio bold
                 font = self.tabla_tickets.item(i, 0).font()
                 font.setBold(True)
                 self.tabla_tickets.item(i, 0).setFont(font)

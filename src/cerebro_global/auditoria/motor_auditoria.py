@@ -81,15 +81,42 @@ class MotorAuditoria:
             return False
 
     @staticmethod
+    def leer_producto(db_admin, producto_id):
+        """Lee id, código, nombre y stock vivos de productos. Misma base que el UPDATE."""
+        if not db_admin or producto_id is None:
+            return None
+        try:
+            pid = int(producto_id)
+        except (TypeError, ValueError):
+            return None
+        try:
+            res = db_admin.execute_query(
+                "SELECT id, codigo, nombre, stock FROM productos WHERE id = ?",
+                (pid,),
+            )
+            if not res:
+                return None
+            fila = res[0]
+            return dict(fila) if not isinstance(fila, dict) else fila
+        except Exception as e:
+            logger.error(f"Error leyendo producto id={producto_id}: {e}")
+            return None
+
+    @staticmethod
     def aplicar_ajuste_stock(db_admin, producto_id, stock_fisico):
         """SET de stock al conteo físico. Un solo UPDATE por producto."""
         if not db_admin:
             return False
         try:
+            pid = int(producto_id)
+        except (TypeError, ValueError):
+            logger.error(f"ID de producto inválido: {producto_id}")
+            return False
+        try:
             return bool(
                 db_admin.execute_non_query(
                     "UPDATE productos SET stock = ? WHERE id = ?",
-                    (stock_fisico, producto_id),
+                    (float(stock_fisico), pid),
                 )
             )
         except Exception as e:

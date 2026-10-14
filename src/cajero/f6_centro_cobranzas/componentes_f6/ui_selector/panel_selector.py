@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QSizePolicy
 from PyQt6.QtCore import pyqtSignal, Qt
 
 from src.cajero.ingresar_efectivo.medios.efectivo.lienzo import LienzoEfectivo
@@ -61,6 +61,7 @@ class PanelSelectorCobranza(QWidget):
 
         # LIENZOS PARA COBRO
         self.cont_lienzos = QStackedWidget()
+        self.cont_lienzos.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.lienzo_efectivo = LienzoEfectivo()
         self.lienzo_qr = LienzoQr()
         self.lienzo_tarjeta = LienzoTarjeta()
@@ -73,4 +74,4 @@ class PanelSelectorCobranza(QWidget):
         self.cont_lienzos.addWidget(self.lienzo_mixto)
         
         self.cont_lienzos.hide()
-        lay.addWidget(self.cont_lienzos)
+        lay.addWidget(self.cont_lienzos, 1)

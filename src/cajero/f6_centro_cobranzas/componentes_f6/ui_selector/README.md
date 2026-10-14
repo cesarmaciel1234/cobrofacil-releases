@@ -1,6 +1,8 @@
 # Selector Cobranza
 
-Qué hace: Mantiene los botones de métodos de pago (Efectivo, Tarjeta, etc.) y el stack de lienzos (`LienzoEfectivo`, `LienzoQr`, etc.).
+Qué hace: botones de medio y los lienzos (`LienzoEfectivo`, `LienzoQr`, `LienzoTarjeta`, `LienzoTransferencia`, `LienzoMixto`).
+
+QR, tarjeta y transferencia cierran solos cuando Mercado Pago aprueba el importe. F9 es emergencia, no el camino normal. Mixto reparte y después corre esos lienzos en cola: cada uno espera su plata y recién entonces asienta.
 
 Qué función: `PanelSelectorCobranza` en `panel_selector.py`
 

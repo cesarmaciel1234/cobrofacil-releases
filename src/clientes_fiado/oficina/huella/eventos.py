@@ -146,13 +146,23 @@ def editar(cliente_id, cambios: dict, accion: str = "EDICION") -> bool:
     return bool(ok)
 
 
-def movimiento_en(cursor, accion: str, cliente_id, monto: float, descripcion: str, medio: str = "") -> bool:
-    """CARGO o ABONO manual, dentro de la misma transacción que la deuda."""
+def movimiento_en(cursor, accion: str, cliente_id, monto: float, descripcion: str, medio: str = "", extra=None) -> bool:
+    """CARGO, ABONO, ANULACION o BORRADO, dentro de la misma transacción que la deuda."""
     try:
         cursor.execute("SELECT uid, nombre FROM clientes WHERE id = ?", (cliente_id,))
         ficha = _dic(cursor.fetchone(), ("uid", "nombre"))
     except Exception:
         return False
-    fila = fila_evento(accion, cliente_uid=ficha.get("uid"), cliente_id=cliente_id, nombre=ficha.get("nombre"),
-                       detalle={"monto": float(monto or 0), "descripcion": descripcion, "medio": medio or ""})
+    detalle = {"monto": float(monto or 0), "descripcion": descripcion, "medio": medio or ""}
+    if extra:
+        for clave, valor in dict(extra).items():
+            if valor not in (None, ""):
+                detalle[clave] = valor
+    fila = fila_evento(
+        accion,
+        cliente_uid=ficha.get("uid"),
+        cliente_id=cliente_id,
+        nombre=ficha.get("nombre"),
+        detalle=detalle,
+    )
     return guardar_en(cursor, fila)

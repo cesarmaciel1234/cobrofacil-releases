@@ -1,5 +1,7 @@
 # veredicto — ¿el cobro digital es verdadero?
 
+`medios.py`, `clase(metodo)`: `digital` (QR, tarjeta, transferencia, Point), `cuenta` (fiado / clientes / DNI), `efectivo` u `otro`. MasCredito no es digital. Lo consulta `motor_auditoria_digital`; no escribe acá.
+
 `conciliar.py`. Solo lee. Fechas `YYYY-MM-DD`, las dos incluidas. Ventas `COMPLETADA` (del turno) y `CERRADA` (después del Z). El cruce venta ↔ pago va por `mp_pagos.venta_id`.
 
 `_rango(desde, hasta)` arma `fecha >= desde AND fecha < día siguiente`. No usar `date(fecha)` en los filtros: la base deja de usar el índice y con años de ventas se vuelve lento.

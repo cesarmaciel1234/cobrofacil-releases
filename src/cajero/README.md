@@ -10,9 +10,10 @@ Leé esto antes de diagnosticar o de proponer un corte.
 |---|---|---|
 | `paso5_terminal/` | Venta | `paso5_terminal.py`, clase `Paso5Terminal` |
 | `paso6_cobro/` | Cobro | `paso6_cobro.py` |
-| `paso8_historial/` | Historial, F3 | `dialogo.py`, clase `DialogoHistorialDia` |
-| `ingresar_efectivo/` | Ingreso, F6 (Centro de Cobranzas) | `dialogo.py` |
-| `sacar_efectivo/` | Retiro, F5 | `dialogo_retiro.py`, clase `DialogoRetiroEfectivo` |
+| `paso8_historial/` | Historial, F3 | `punta del piramide.md` · `dialogo.py`, clase `DialogoHistorialDia` |
+| `ingresar_efectivo/` | F2: entra efectivo a la caja | `dialogo.py` |
+| `sacar_efectivo/` | F5: sale efectivo de la caja | `dialogo_retiro.py`, clase `DialogoRetiroEfectivo` |
+| `f6_centro_cobranzas/` | F6: cobranza fiado / cuenta corriente | `punta del piramide.md` · `dialogo.py`, clase `DialogoCentroCobranzas` |
 
 `cajero_activo.py` guarda la estación (cajero 1 o 2). No es una pantalla.
 
@@ -98,7 +99,7 @@ El asistente es `ChatManualWidget` en `componentes_barra_inferior/chatbot/`. No 
 
 El teclado en pantalla no se abre al escribir ni al tomar el foco el escáner. Se abre si Windows ve tactil (`GetSystemMetrics` 94 y 95) y el cuadro se tocó (`MouseFocusReason`). `teclado_virtual_modo` en `nunca` lo apaga. El botón TECLADO lo abre a mano. La cabecera es un color solo, sin degradé. El candado, el retiro, el ingreso, el historial y el cierre no desenfocan la venta.
 
-Esas ventanas, y F11, tapan la venta con el gris `#334155` (`src/utils/fondo_gris.py`), el mismo del paso 6. La hoja de cada una queda clara al frente. F6 abre tres tarjetas blancas: Cambio, Fiado y Otros. Fiado, al confirmar, pide el medio en `ingresar_efectivo/fiado/cobro/`. El clic pide el PIN y usa el motor. El QR se dibuja en esa hoja, no en la venta. La cuenta la escribe `medios/cerrar.py`. Si falla, avisa y la venta sigue. Cambio y Otros no usan esa puerta. El paso 6 no la importa. El cierre de caja del cajero es `DialogoCierreCaja`. El ingreso normal de perfiles no usa ese gris.
+Esas ventanas, y F11, tapan la venta con el gris `#334155` (`src/utils/fondo_gris.py`), el mismo del paso 6. En el paso 5: **F2** mete efectivo a la caja; **F5** saca efectivo de la caja; **F6** cobra fiado y cuenta corriente. No hay un diálogo que mezcle esas teclas. El QR del abono de F6 se dibuja en `ingresar_efectivo/medios/` (solo el lienzo). El cierre de caja del cajero es `DialogoCierreCaja`. El ingreso normal de perfiles no usa ese gris.
 
 ### Cobro
 
@@ -108,14 +109,14 @@ La clave interna de crédito es Clientes (no `crédito`: esa clave de REGISTRO e
 
 ### Seguridad en Centro de Cobranzas (F6)
 
-El módulo `ingresar_efectivo/fiado` incluye protecciones para operar en entornos con pantallas expuestas al público:
+El módulo `f6_centro_cobranzas` incluye protecciones para operar en entornos con pantallas expuestas al público:
 - Búsqueda por nombre limitada a 5 resultados para evitar exposición masiva de datos de clientes
 - Deudas ocultas en la lista de resultados (solo visible al seleccionar un cliente específico)
 - Validación de sobreabono con confirmación explícita del cajero
 - Timer de búsqueda optimizado a 200ms para balancear velocidad y rendimiento
 - Mensajes de UX mejorados para claridad y profesionalismo
 
-Ver detalles en `ingresar_efectivo/fiado/README.md`.
+Ver detalles en `f6_centro_cobranzas/README.md`.
 
 La venta se escribe en `persistir_cobro`, que llama `db_manager.guardar_venta_completa`. Cabecera, renglones, stock y fiado van en esa transacción. El plano está en `src/base_de_datos/plano.md`.
 

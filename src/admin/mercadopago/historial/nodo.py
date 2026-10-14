@@ -150,19 +150,51 @@ def _mezclar_vinculos(local_path: str, nodo_path: str) -> None:
             raise
 
 
+def _mezclar_tickets(local_path: str, nodo_path: str) -> None:
+    """Une tickets digitales por número. No borra. Si hay los dos, gana el local."""
+    local_existe = os.path.isfile(local_path)
+    nodo_existe = os.path.isfile(nodo_path)
+    if not local_existe and not nodo_existe:
+        return
+    local = _leer_vinculos(local_path) if local_existe else {}
+    nodo = _leer_vinculos(nodo_path) if nodo_existe else {}
+    unido = dict(nodo)
+    unido.update(local)
+    contenido = json.dumps(unido, ensure_ascii=False, indent=2)
+    for path in (local_path, nodo_path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        fd, temporal = tempfile.mkstemp(prefix=".tickets_digitales_", suffix=".json", dir=os.path.dirname(path))
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(contenido)
+            os.replace(temporal, path)
+        except Exception:
+            try:
+                os.remove(temporal)
+            except FileNotFoundError:
+                pass
+            raise
+
+
 def sincronizar_nodo(root: str) -> None:
-    """Une historial y vínculos locales con el nodo y deja ambas copias iguales."""
+    """Une historial, vínculos y tickets digitales con el nodo y deja ambas copias iguales."""
     from src.cajero.paso6_cobro.vinculo_mp import libro
+    from src.motor_auditoria_digital.libro_tickets import libro as tickets_lib
+    from src.motor_auditoria_digital.libro_cobranzas import libro as cobranzas_lib
 
     csv_nodo = _ruta_nodo(root, os.path.basename(archivo.RUTA))
     vinculos_nodo = _ruta_nodo(root, os.path.basename(libro.RUTA))
-    with archivo._LOCK, libro._LOCK:
+    tickets_nodo = _ruta_nodo(root, os.path.basename(tickets_lib.RUTA))
+    cobranzas_nodo = _ruta_nodo(root, os.path.basename(cobranzas_lib.RUTA))
+    with archivo._LOCK, libro._LOCK, tickets_lib._LOCK, cobranzas_lib._LOCK:
         _leer_csv(archivo.RUTA)
         _leer_csv(csv_nodo)
         _leer_vinculos(libro.RUTA)
         _leer_vinculos(vinculos_nodo)
         _mezclar_csv(archivo.RUTA, csv_nodo)
         _mezclar_vinculos(libro.RUTA, vinculos_nodo)
+        _mezclar_tickets(tickets_lib.RUTA, tickets_nodo)
+        _mezclar_tickets(cobranzas_lib.RUTA, cobranzas_nodo)
     try:
         from src.motor_cobros_digitales import despertar
 
@@ -171,6 +203,12 @@ def sincronizar_nodo(root: str) -> None:
         from src.logger import logger
 
         logger.warning(f"[Cobros digitales] No se pudo despertar el motor tras sincronizar el nodo: {error}")
+    try:
+        from src.motor_auditoria_digital.empleado import despertar as despertar_auditoria
+
+        despertar_auditoria()
+    except Exception:
+        pass
 
 
 def sincronizar_nodo_configurado() -> bool:

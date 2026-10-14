@@ -100,13 +100,12 @@ def test_click_en_ticket_de_cargo_abre_su_desglose(monkeypatch):
     item_ticket.setData(Qt.ItemDataRole.UserRole, "10899983")
     tabla.setItem(0, 5, item_ticket)
     abiertos = []
-    monkeypatch.setattr(
-        "src.admin.clientes.componentes.dialogo_ticket.abrir_detalle_ticket",
-        lambda ticket, parent: abiertos.append(ticket),
-    )
-
     historial.DialogoHistorialCliente._abrir_ticket(
-        SimpleNamespace(tabla=tabla),
+        SimpleNamespace(
+            tabla=tabla,
+            _mostrar_ticket=lambda ticket: abiertos.append(ticket),
+            panel_ticket=SimpleNamespace(mensaje=lambda *_a, **_k: None),
+        ),
         0,
         5,
     )

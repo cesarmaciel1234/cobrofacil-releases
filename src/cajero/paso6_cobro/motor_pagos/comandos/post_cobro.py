@@ -42,6 +42,30 @@ def post_cobro(datos, id_v, resultado_venta):
                 vista.cargar_datos_locales()
         except Exception as e:
             logger.warning("No se vinculo el pago MP: %s", e)
+    if datos.get("emergencia"):
+        try:
+            from src.motor_auditoria_digital import anotar_f9
+
+            anotar_f9(id_v, (resultado_venta or {}).get("total") or datos.get("total_final"), datos.get("metodo"))
+        except Exception:
+            pass
+    try:
+        from src.motor_cobros_digitales.veredicto.medios import clase
+        from src.motor_auditoria_digital.libro_tickets.libro import fusionar
+
+        tipo = clase(datos.get("metodo"))
+        if tipo == "digital":
+            from datetime import datetime as _dt
+
+            fusionar([{
+                "ticket": str(id_v),
+                "fecha": _dt.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "monto": float((resultado_venta or {}).get("total") or datos.get("total_final") or 0),
+                "metodo": datos.get("metodo") or "",
+                "clase": "digital",
+            }], avisar=True)
+    except Exception:
+        pass
     try:
         from src.base_de_datos.diario_ventas_externo import encolar_venta
 

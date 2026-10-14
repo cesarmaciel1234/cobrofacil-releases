@@ -111,8 +111,18 @@ class Jefe0Dashboard(QWidget):
 
             desde, hasta = self._rango_vitrina()
             self.panel_pub.set_ganancia(metricas.ganancia(desde, hasta))
-            sin, tot = metricas.digitales(desde, hasta)
-            self.panel_pub.set_cobros_dia(metricas.redondeo(desde, hasta), sin, tot)
+            aud = metricas.cobros_auditoria(desde, hasta)
+            self.panel_pub.set_cobros_dia(
+                metricas.redondeo(desde, hasta),
+                aud["digitales_sin_firma"],
+                aud["digitales_total"],
+                aud.get("cuenta_dni") or 0,
+                aud.get("mp_sin_ticket") or 0,
+                aud.get("tickets_digitales") or 0,
+                aud.get("cliente") or 0,
+                aud.get("sin_firmar_monto") or 0,
+                aud.get("firmados") or 0,
+            )
             self.panel_pub.set_tickets_dia(*metricas.tickets(desde, hasta))
             self.panel_pub.set_cancelaciones_dia(metricas.cancelaciones(desde, hasta))
         except Exception:
@@ -252,6 +262,9 @@ class Jefe0Dashboard(QWidget):
 
         self.panel_pub = PanelPublicidad()
         self.panel_pub.periodo_cambiado.connect(self._on_periodo_vitrina)
+        _hoy = datetime.datetime.now()
+        self._vitrina_desde = _hoy.strftime("%Y-%m-01")
+        self._vitrina_hasta = _hoy.strftime("%Y-%m-%d")
         self.btn_export_ganancias = self.panel_pub.btn_export
         self.btn_export_ganancias.clicked.connect(self._exportar_ganancias)
         page_lay.addWidget(self.panel_pub, 1)

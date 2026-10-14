@@ -1,65 +1,106 @@
-from PyQt6.QtWidgets import QWidget, QGridLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QLineEdit
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 
-class PanelRedondeoRecargo(QWidget):
-    """
-    Panel para aplicar un descuento (redondeo) o recargo.
-    Contiene campos de texto y botones para alternar entre % y $.
-    """
+_HOJA = """
+QFrame#PanelRedondeoRecargo {
+    background: transparent;
+    border: none;
+}
+QFrame#CajaRedondeo, QFrame#CajaRecargo {
+    background: transparent;
+    border: none;
+}
+QLabel#TituloRedondeo, QLabel#TituloRecargo {
+    color: #1E3A8A;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.4px;
+    background: transparent;
+    border: none;
+}
+QPushButton#BtnSimboloRedondeo, QPushButton#BtnSimboloRecargo {
+    background: #FACC15;
+    color: #0F172A;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 900;
+}
+QPushButton#BtnSimboloRedondeo:hover, QPushButton#BtnSimboloRecargo:hover {
+    background: #EAB308;
+}
+QLineEdit#MontoRedondeo, QLineEdit#MontoRecargo {
+    background: #FFFFFF;
+    color: #0F172A;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 900;
+    padding: 4px 8px;
+}
+QLineEdit#MontoRedondeo:focus {
+    border: 2px solid #10B981;
+}
+QLineEdit#MontoRecargo:focus {
+    border: 2px solid #F59E0B;
+}
+"""
+
+
+class PanelRedondeoRecargo(QFrame):
+    """Redondeo y recargo compactos. Letras en negrita. $ por defecto; solo clic cambia a %."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        grid_desc_rec = QGridLayout(self)
-        grid_desc_rec.setContentsMargins(0, 0, 0, 0)
-        grid_desc_rec.setSpacing(8)
+        self.setObjectName("PanelRedondeoRecargo")
+        self.setStyleSheet(_HOJA)
+        fila = QHBoxLayout(self)
+        fila.setContentsMargins(0, 0, 0, 0)
+        fila.setSpacing(10)
 
-        # REDONDEO
-        lay_lbl_desc = QHBoxLayout()
-        lay_lbl_desc.setContentsMargins(0, 0, 0, 0)
-        self.lbl_desc = QLabel("Redondeo:")
-        self.lbl_desc.setObjectName("InputLabel")
-        
-        self.btn_tipo_desc = QPushButton("$ ▾")
-        self.btn_tipo_desc.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_tipo_desc.setFixedSize(48, 32)
-        self.btn_tipo_desc.setStyleSheet(
-            "QPushButton { background: #E2E8F0; color: #1E293B; border-radius: 6px; font-weight: bold; border: 1px solid #CBD5E1; } "
-            "QPushButton:hover { background: #CBD5E1; border: 1px solid #94A3B8; }"
+        self.lbl_desc, self.btn_tipo_desc, self.txt_desc = self._grupo(
+            fila, "REDONDEO", "CajaRedondeo", "TituloRedondeo",
+            "BtnSimboloRedondeo", "MontoRedondeo",
         )
-        
-        lay_lbl_desc.addWidget(self.lbl_desc)
-        lay_lbl_desc.addWidget(self.btn_tipo_desc)
-        lay_lbl_desc.addStretch()
-        grid_desc_rec.addLayout(lay_lbl_desc, 0, 0)
-        
-        self.txt_desc = QLineEdit("")
-        self.txt_desc.setObjectName("InputDesc")
-        self.txt_desc.setFixedHeight(48)
-        self.txt_desc.setStyleSheet("font-size: 20px; font-weight: bold; border-radius: 8px; border: 1px solid #CBD5E1;")
-        self.txt_desc.setPlaceholderText("0.00")
-        grid_desc_rec.addWidget(self.txt_desc, 0, 1)
-
-        # RECARGO
-        lay_lbl_rec = QHBoxLayout()
-        lay_lbl_rec.setContentsMargins(0, 0, 0, 0)
-        self.lbl_rec = QLabel("Recargo:")
-        self.lbl_rec.setObjectName("InputLabel")
-        
-        self.btn_tipo_rec = QPushButton("$ ▾")
-        self.btn_tipo_rec.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_tipo_rec.setFixedSize(48, 32)
-        self.btn_tipo_rec.setStyleSheet(
-            "QPushButton { background: #E2E8F0; color: #1E293B; border-radius: 6px; font-weight: bold; border: 1px solid #CBD5E1; } "
-            "QPushButton:hover { background: #CBD5E1; border: 1px solid #94A3B8; }"
+        self.lbl_rec, self.btn_tipo_rec, self.txt_rec = self._grupo(
+            fila, "RECARGO", "CajaRecargo", "TituloRecargo",
+            "BtnSimboloRecargo", "MontoRecargo",
         )
-        
-        lay_lbl_rec.addWidget(self.lbl_rec)
-        lay_lbl_rec.addWidget(self.btn_tipo_rec)
-        lay_lbl_rec.addStretch()
-        grid_desc_rec.addLayout(lay_lbl_rec, 0, 2)
+        self.resetear_pesos()
 
-        self.txt_rec = QLineEdit("")
-        self.txt_rec.setObjectName("InputRec")
-        self.txt_rec.setFixedHeight(48)
-        self.txt_rec.setStyleSheet("font-size: 20px; font-weight: bold; border-radius: 8px; border: 1px solid #CBD5E1;")
-        self.txt_rec.setPlaceholderText("0.00")
-        grid_desc_rec.addWidget(self.txt_rec, 0, 3)
+    def _grupo(self, fila, titulo, id_caja, id_lbl, id_btn, id_txt):
+        caja = QFrame()
+        caja.setObjectName(id_caja)
+        caja_lay = QHBoxLayout(caja)
+        caja_lay.setContentsMargins(0, 0, 0, 0)
+        caja_lay.setSpacing(6)
+        lbl = QLabel(titulo)
+        lbl.setObjectName(id_lbl)
+        fuente = QFont()
+        fuente.setPixelSize(13)
+        fuente.setBold(True)
+        lbl.setFont(fuente)
+        txt = QLineEdit("")
+        txt.setObjectName(id_txt)
+        txt.setFixedHeight(32)
+        txt.setFont(QFont("Segoe UI", 11, QFont.Weight.Black))
+        txt.setPlaceholderText("0,00")
+        btn = QPushButton("$")
+        btn.setObjectName(id_btn)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        btn.setDefault(False)
+        btn.setAutoDefault(False)
+        btn.setFixedSize(32, 32)
+        btn.setFont(QFont("Segoe UI", 11, QFont.Weight.Black))
+        btn.setToolTip("Clic para %. Enter no lo cambia.")
+        caja_lay.addWidget(lbl, 0)
+        caja_lay.addWidget(txt, 1)
+        caja_lay.addWidget(btn, 0)
+        fila.addWidget(caja, 1)
+        return lbl, btn, txt
+
+    def resetear_pesos(self):
+        self.btn_tipo_desc.setText("$")
+        self.btn_tipo_rec.setText("$")

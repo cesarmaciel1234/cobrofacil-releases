@@ -37,7 +37,6 @@ class FilaSugerencia(QFrame):
 class PanelBuscadorClientes(QWidget):
     texto_cambiado = pyqtSignal(str)
     cliente_elegido = pyqtSignal(dict)
-    creacion_solicitada = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -51,7 +50,7 @@ class PanelBuscadorClientes(QWidget):
         self.lbl_titulo.setStyleSheet("color: #0F172A; font-size: 32px; font-weight: 900; letter-spacing: 2px;")
         lay.addWidget(self.lbl_titulo)
 
-        self.lbl_subtitulo = QLabel("Pida el DNI o el nombre del cliente.")
+        self.lbl_subtitulo = QLabel("Cobranza de fiado y cuenta corriente. DNI o nombre.")
         self.lbl_subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_subtitulo.setStyleSheet("color: #64748B; font-size: 18px; font-weight: 700; margin-bottom: 10px;")
         lay.addWidget(self.lbl_subtitulo)
@@ -74,7 +73,7 @@ class PanelBuscadorClientes(QWidget):
         self.caja_busqueda.returnPressed.connect(self.aceptar_actual)
         lay_busq.addWidget(self.caja_busqueda)
         
-        self.lbl_sin_coincidencia = QLabel("No hay coincidencia. Presione ENTER para guardar como nuevo cliente")
+        self.lbl_sin_coincidencia = QLabel("No hay coincidencia. F6 no crea clientes.")
         self.lbl_sin_coincidencia.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_sin_coincidencia.setStyleSheet("color: #64748B; font-size: 18px; font-weight: 700; margin-top: 10px;")
         self.lbl_sin_coincidencia.hide()
@@ -166,37 +165,14 @@ class PanelBuscadorClientes(QWidget):
                     )
                     
     def aceptar_actual(self):
-        texto = self.caja_busqueda.text().strip()
-        
         if not hasattr(self, '_clientes_actuales') or not self._clientes_actuales:
-            if texto:
-                self.creacion_solicitada.emit(texto)
-                return True
             return False
-            
         if self._indice_seleccionado >= 0 and self._indice_seleccionado < len(self._clientes_actuales):
             c = self._clientes_actuales[self._indice_seleccionado]
-            c_dict = dict(c) if hasattr(c, "keys") else (c if isinstance(c, dict) else {})
-            self.cliente_elegido.emit(c_dict)
-            return True
-            
-        if len(self._clientes_actuales) == 1:
+        elif len(self._clientes_actuales) == 1:
             c = self._clientes_actuales[0]
-            c_dict = dict(c) if hasattr(c, "keys") else (c if isinstance(c, dict) else {})
-            self.cliente_elegido.emit(c_dict)
-            return True
-            
-        if texto:
-            self.creacion_solicitada.emit(texto)
-            return True
-            
-        return False
-        
-        indice = 0 if self._indice_seleccionado < 0 else self._indice_seleccionado
-        if indice < len(self._clientes_actuales):
-            c = self._clientes_actuales[indice]
-            c_dict = dict(c) if hasattr(c, "keys") else (c if isinstance(c, dict) else {})
-            self.cliente_elegido.emit(c_dict)
-            return True
-            
-        return False
+        else:
+            return False
+        c_dict = dict(c) if hasattr(c, "keys") else (c if isinstance(c, dict) else {})
+        self.cliente_elegido.emit(c_dict)
+        return True

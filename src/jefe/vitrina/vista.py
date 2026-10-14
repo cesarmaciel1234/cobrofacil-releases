@@ -1,14 +1,13 @@
-"""Cara izquierda del panel jefe. Pinta. No decide qué es oferta."""
+"""Cara izquierda del panel jefe. Pinta KPIs. No muestra ofertas."""
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QFrame, QGridLayout, QHBoxLayout, QPushButton, QSizePolicy, QVBoxLayout, QWidget,
+)
 
 from src.jefe.reportes.financiero.dinero import fmt_plata
 from src.jefe.reportes.letra import etiqueta, fuente_limpia
-from src.jefe.vitrina.consulta import listar
-from src.jefe.vitrina.tarjeta import TarjetaOferta
 
-# (texto del botón, nombre que entiende periodo.resolver)
 PERIODOS = (
     ("Hoy", "Hoy"),
     ("Semana", "Semana Actual"),
@@ -33,17 +32,14 @@ def _dia_corto(iso: str) -> str:
 
 
 class PanelPublicidad(QWidget):
-    # desde, hasta ('YYYY-MM-DD'), etiqueta
     periodo_cambiado = pyqtSignal(str, str, str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("PanelPublicidad")
         self.setFont(fuente_limpia(13))
-        self._idx = 0
-        self._ofertas = []
-        self._es_hoy = True
-        self._periodo_btn = "Hoy"
+        self._es_hoy = False
+        self._periodo_btn = "Mes"
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -54,7 +50,7 @@ class PanelPublicidad(QWidget):
             "color: #0F172A; background: transparent; border: none; "
             "font-weight: 400; letter-spacing: 0px;"
         )
-        self.lbl_sub = etiqueta("Vitrina de tienda", 12)
+        self.lbl_sub = etiqueta("Vitrina de tienda · Mes", 12)
         self.lbl_sub.setStyleSheet(
             "color: #64748B; background: transparent; border: none; "
             "font-weight: 400; letter-spacing: 0px;"
@@ -70,7 +66,7 @@ class PanelPublicidad(QWidget):
             b.setCursor(Qt.CursorShape.PointingHandCursor)
             b.setFont(fuente_limpia(11))
             b.setFixedHeight(28)
-            b.setStyleSheet(_BTN_ACTIVO if texto == "Hoy" else _BTN_IDLE)
+            b.setStyleSheet(_BTN_ACTIVO if texto == "Mes" else _BTN_IDLE)
             b.clicked.connect(lambda _c=False, t=texto: self._elegir_periodo(t))
             fila_sub.addWidget(b)
             self._botones_periodo[texto] = b
@@ -87,7 +83,7 @@ class PanelPublicidad(QWidget):
 
         kpis = QHBoxLayout()
         kpis.setSpacing(10)
-        self.lbl_gan = self._chip("Ganancia parcial", "—")
+        self.lbl_gan = self._chip("Ganancia · Mes", "—")
         self.lbl_inv = self._chip("Inventario al costo", "—")
         kpis.addWidget(self.lbl_gan, 1)
         kpis.addWidget(self.lbl_inv, 1)
@@ -95,34 +91,43 @@ class PanelPublicidad(QWidget):
 
         cuentas = QHBoxLayout()
         cuentas.setSpacing(10)
-        self.lbl_pagos = self._chip("Pagos clientes", "—")
+        self.lbl_pagos = self._chip("Pagos clientes · Mes", "—")
         self.lbl_deuda = self._chip("Deuda clientes", "—")
         cuentas.addWidget(self.lbl_pagos, 1)
         cuentas.addWidget(self.lbl_deuda, 1)
         root.addLayout(cuentas)
 
+        digitales = QHBoxLayout()
+        digitales.setSpacing(10)
+        self.lbl_tickets_dig = self._chip("Tickets digitales · Mes", "—")
+        self.lbl_cliente = self._chip("Cliente · Mes", "—")
+        digitales.addWidget(self.lbl_tickets_dig, 1)
+        digitales.addWidget(self.lbl_cliente, 1)
+        root.addLayout(digitales)
+
         extras = QHBoxLayout()
         extras.setSpacing(10)
-        self.lbl_redondeo = self._chip("Redondeo del día", "—")
-        self.lbl_digitales = self._chip("Digitales sin firmar / total", "—")
+        self.lbl_sin_firmar = self._chip("Sin firmar / F9 · Mes", "—")
+        self.lbl_redondeo = self._chip("Redondeo · Mes", "—")
+        extras.addWidget(self.lbl_sin_firmar, 1)
         extras.addWidget(self.lbl_redondeo, 1)
-        extras.addWidget(self.lbl_digitales, 1)
         root.addLayout(extras)
 
         caja = QHBoxLayout()
         caja.setSpacing(10)
-        self.lbl_tickets = self._chip("Tickets del día", "—")
-        self.lbl_cancel = self._chip("Cancelaciones del día", "—")
+        self.lbl_tickets = self._chip("Tickets · Mes", "—")
+        self.lbl_cancel = self._chip("Cancelaciones · Mes", "—")
         caja.addWidget(self.lbl_tickets, 1)
         caja.addWidget(self.lbl_cancel, 1)
         root.addLayout(caja)
 
-        # (chip, título en Hoy, título con período). Inventario y deuda son foto del momento.
         self._periodales = (
             (self.lbl_gan, "Ganancia parcial", "Ganancia"),
             (self.lbl_pagos, "Pagos clientes", "Pagos clientes"),
+            (self.lbl_tickets_dig, "Tickets digitales", "Tickets digitales"),
+            (self.lbl_cliente, "Cliente", "Cliente"),
+            (self.lbl_sin_firmar, "Sin firmar / F9", "Sin firmar / F9"),
             (self.lbl_redondeo, "Redondeo del día", "Redondeo"),
-            (self.lbl_digitales, "Digitales sin firmar / total", "Digitales sin firmar / total"),
             (self.lbl_tickets, "Tickets del día", "Tickets"),
             (self.lbl_cancel, "Cancelaciones del día", "Cancelaciones"),
         )
@@ -138,77 +143,68 @@ class PanelPublicidad(QWidget):
         )
         root.addWidget(self.btn_export)
 
-        escena = QFrame()
-        escena.setObjectName("VitrinaEscena")
-        escena.setMinimumHeight(360)
-        escena.setStyleSheet(
-            "QFrame#VitrinaEscena { background: #0B1220; border-radius: 18px; "
-            "border: 1px solid #1E293B; }"
-        )
-        sc = QVBoxLayout(escena)
-        sc.setContentsMargins(16, 14, 16, 14)
-        sc.setSpacing(12)
+        huecos = QGridLayout()
+        huecos.setSpacing(10)
+        huecos.setRowStretch(0, 1)
+        huecos.setRowStretch(1, 1)
+        huecos.setColumnStretch(0, 1)
+        huecos.setColumnStretch(1, 1)
+        for i in range(4):
+            huecos.addWidget(self._hueco(), i // 2, i % 2)
+        root.addLayout(huecos, 1)
 
-        cabeza = QHBoxLayout()
-        chip = QLabel("EN PANTALLA")
-        chip.setFont(fuente_limpia(10))
-        chip.setStyleSheet(
+        QTimer.singleShot(0, lambda: self._elegir_periodo("Mes"))
+
+    def _hueco(self) -> QFrame:
+        f = QFrame()
+        f.setMinimumHeight(88)
+        f.setStyleSheet(
+            "QFrame { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px; }"
+        )
+        lay = QVBoxLayout(f)
+        lay.setContentsMargins(14, 12, 14, 12)
+        t = etiqueta("Reservado", 11)
+        t.setStyleSheet(
             "color: #94A3B8; background: transparent; border: none; "
             "font-weight: 400; letter-spacing: 0px;"
         )
-        self.lbl_marca = QLabel("4 plazas")
-        self.lbl_marca.setFont(fuente_limpia(12))
-        self.lbl_marca.setStyleSheet(
+        v = etiqueta("—", 16)
+        v.setStyleSheet(
             "color: #CBD5E1; background: transparent; border: none; "
             "font-weight: 400; letter-spacing: 0px;"
         )
-        cabeza.addWidget(chip)
-        cabeza.addStretch()
-        cabeza.addWidget(self.lbl_marca)
-        sc.addLayout(cabeza)
-
-        grilla = QGridLayout()
-        grilla.setSpacing(10)
-        grilla.setRowStretch(0, 1)
-        grilla.setRowStretch(1, 1)
-        grilla.setColumnStretch(0, 1)
-        grilla.setColumnStretch(1, 1)
-        self._tarjetas = [TarjetaOferta(i + 1) for i in range(4)]
-        for i, t in enumerate(self._tarjetas):
-            grilla.addWidget(t, i // 2, i % 2)
-        sc.addLayout(grilla, 1)
-
-        self.lbl_estado = QLabel("Cuatro plazas. Solo descuentos reales.")
-        self.lbl_estado.setWordWrap(True)
-        self.lbl_estado.setFont(fuente_limpia(11))
-        self.lbl_estado.setStyleSheet(
-            "color: #64748B; background: transparent; border: none; "
+        d = etiqueta("Espacio para una tarjeta", 10)
+        d.setStyleSheet(
+            "color: #CBD5E1; background: transparent; border: none; "
             "font-weight: 400; letter-spacing: 0px;"
         )
-        sc.addWidget(self.lbl_estado)
-        root.addWidget(escena, 1)
-
-        self._timer = QTimer(self)
-        self._timer.timeout.connect(self._rotar)
-        self._timer.start(6000)
-        QTimer.singleShot(200, self.refrescar_vitrina)
+        lay.addWidget(t)
+        lay.addWidget(v)
+        lay.addWidget(d)
+        lay.addStretch()
+        return f
 
     def _chip(self, titulo: str, valor: str) -> QFrame:
         f = QFrame()
+        f.setMinimumHeight(96)
+        f.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         f.setStyleSheet(
             "QFrame { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; }"
         )
         lay = QVBoxLayout(f)
-        lay.setContentsMargins(14, 12, 14, 12)
+        lay.setContentsMargins(16, 12, 16, 12)
+        lay.setSpacing(4)
         t = etiqueta(titulo, 11)
         t.setStyleSheet(
             "color: #64748B; background: transparent; border: none; "
             "font-weight: 400; letter-spacing: 0px;"
         )
         v = etiqueta(valor, 16)
+        v.setWordWrap(False)
+        v.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         v.setStyleSheet(
             "color: #0F172A; background: transparent; border: none; "
-            "font-weight: 400; letter-spacing: 0px;"
+            "font-weight: 500; letter-spacing: 0px;"
         )
         d = etiqueta("", 10)
         d.setStyleSheet(
@@ -216,11 +212,32 @@ class PanelPublicidad(QWidget):
             "font-weight: 400; letter-spacing: 0px;"
         )
         d.hide()
+        fila = QHBoxLayout()
+        fila.setContentsMargins(0, 0, 0, 0)
+        fila.setSpacing(12)
+        fila.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        fila.addWidget(v, 1)
+        sep = QFrame()
+        sep.setFixedWidth(1)
+        sep.setFixedHeight(22)
+        sep.setStyleSheet("background: #E2E8F0; border: none;")
+        sep.hide()
+        fila.addWidget(sep, 0, Qt.AlignmentFlag.AlignVCenter)
+        r = etiqueta("", 18)
+        r.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        r.setStyleSheet(
+            "color: #B45309; background: transparent; border: none; "
+            "font-weight: 600; letter-spacing: 0px;"
+        )
+        r.hide()
+        fila.addWidget(r, 0, Qt.AlignmentFlag.AlignVCenter)
         lay.addWidget(t)
-        lay.addWidget(v)
+        lay.addLayout(fila, 1)
         lay.addWidget(d)
         f._titulo = t
         f._valor = v
+        f._sep = sep
+        f._ratio = r
         f._detalle = d
         return f
 
@@ -269,11 +286,39 @@ class PanelPublicidad(QWidget):
         self.lbl_pagos._valor.setText(fmt_plata(pagos))
         self.lbl_deuda._valor.setText(fmt_plata(deuda))
 
-    def set_cobros_dia(self, redondeo: float, digitales_sin_firmar: int, digitales_total: int = 0):
+    def set_cobros_dia(
+        self,
+        redondeo: float,
+        digitales_sin_firmar: int,
+        digitales_total: int = 0,
+        cuenta_dni: int = 0,
+        mp_sin_ticket: int = 0,
+        tickets_digitales: float = 0,
+        cliente: float = 0,
+        sin_firmar_monto: float = 0,
+        firmados: float = 0,
+    ):
         self.lbl_redondeo._valor.setText(fmt_plata(redondeo))
-        sin = int(digitales_sin_firmar or 0)
-        tot = int(digitales_total or 0)
-        self.lbl_digitales._valor.setText(f"{sin} / {tot}" if tot else str(sin))
+        self.lbl_tickets_dig._valor.setText(fmt_plata(tickets_digitales))
+        self._poner_detalle(
+            self.lbl_tickets_dig,
+            f"Firmados {fmt_plata(firmados)}" if firmados else "",
+        )
+        self.lbl_cliente._valor.setText(fmt_plata(cliente))
+        self._poner_detalle(self.lbl_cliente, "Cobranza QR / tarjeta / transferencia")
+        self.lbl_sin_firmar._valor.setText(fmt_plata(sin_firmar_monto))
+        sin_n = int(digitales_sin_firmar or 0)
+        tot_n = int(digitales_total or 0)
+        self.lbl_sin_firmar._ratio.setText(f"{sin_n} / {tot_n}")
+        self.lbl_sin_firmar._ratio.show()
+        self.lbl_sin_firmar._sep.show()
+        if tot_n:
+            self._poner_detalle(
+                self.lbl_sin_firmar,
+                f"{sin_n} tickets no firmados de {tot_n}",
+            )
+        else:
+            self._poner_detalle(self.lbl_sin_firmar, "")
 
     def set_tickets_dia(self, cantidad: int, total: float):
         cantidad = int(cantidad or 0)
@@ -300,34 +345,8 @@ class PanelPublicidad(QWidget):
         self.lbl_saludo.setText(texto)
 
     def set_origen(self, texto: str):
-        """Franja ámbar: sin maestra, de cuándo es la copia que se está viendo. Vacío = en vivo."""
         self.lbl_origen.setText(texto)
         self.lbl_origen.setVisible(bool(texto))
 
     def refrescar_vitrina(self):
-        self._ofertas = listar()
-        self._idx = 0
-        self._pintar()
-
-    def _rotar(self):
-        if len(self._ofertas) > 4:
-            self._idx = (self._idx + 4) % len(self._ofertas)
-            self._pintar()
-
-    def _pintar(self):
-        n = len(self._ofertas)
-        if n == 0:
-            for t in self._tarjetas:
-                t.vaciar()
-            self.lbl_marca.setText("0 ofertas reales")
-            self.lbl_estado.setText("Sin ofertas activas. No se inventan avisos.")
-            return
-        for i, t in enumerate(self._tarjetas):
-            if n > 4:
-                t.cargar(self._ofertas[(self._idx + i) % n])
-            elif i < n:
-                t.cargar(self._ofertas[i])
-            else:
-                t.vaciar()
-        self.lbl_marca.setText(f"{min(n, 4)} de {n} ofertas")
-        self.lbl_estado.setText("Lista en blanco. Tachado naranja. Precio menor vigente.")
+        return

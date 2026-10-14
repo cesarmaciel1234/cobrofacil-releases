@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit
 from PyQt6.QtCore import Qt
 
 class PanelOtrosIngresos(QWidget):
-    """Panel para Otros Ingresos manuales."""
+    """Monto y motivo del F2: plata que entra a la caja."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self._build()
@@ -28,7 +28,7 @@ class PanelOtrosIngresos(QWidget):
         lay.addWidget(self.txt_monto)
 
         self.txt_desc = QLineEdit()
-        self.txt_desc.setPlaceholderText("Descripción (Ej: Aporte inicial, Varios)...")
+        self.txt_desc.setPlaceholderText("Motivo (Ej: Fondo de cambio, aporte)...")
         self.txt_desc.setStyleSheet("font-size: 14px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; margin-top: 15px;")
         lay.addWidget(self.txt_desc)
         lay.addStretch(1)
@@ -47,7 +47,7 @@ class PanelOtrosIngresos(QWidget):
 
     def descripcion(self):
         desc = self.txt_desc.text().strip()
-        return desc if desc else "Otros Ingresos Manuales"
+        return desc if desc else "Ingreso de efectivo a caja"
 
     def reset(self):
         self.txt_monto.clear()

@@ -1,3 +1,3 @@
-# Otros ingresos
+# Formulario F2
 
-Ingresos que no son cambio ni fiado.
+Monto y motivo de la plata que entra a la caja. Lo arma `dialogo.py`.

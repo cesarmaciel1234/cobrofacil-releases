@@ -9,7 +9,7 @@ Cada cliente nace con un `uid` que dice dónde y cuándo: `NOMBREPC-XXXX-AAAAMMD
 - `eventos.py`:
   - `alta(campos, via)`: INSERT con huella + evento `ALTA`. La usan `ClienteRepository` (fiado express, cuenta corriente) y `MotorCuenta.alta_regular` (cartera).
   - `editar(id, cambios, accion)`: UPDATE + `actualizado_en` + evento con `antes` / `despues` de lo que cambió. Nunca toca `deuda_actual`.
-  - `movimiento_en(cursor, 'CARGO'|'ABONO', ...)`: dentro de la transacción de `cargar_manual` / `abonar`, con SAVEPOINT. Si el libro falla, el movimiento igual entra.
+  - `movimiento_en(cursor, 'CARGO'|'ABONO'|'ANULACION'|'BORRADO', ..., extra=)`: dentro de la transacción, con SAVEPOINT. `extra` lleva `cobro_id`, `cargo_id` o `venta_id` para cuadrar con la planilla. Si el libro falla, el movimiento igual entra.
 - `absorber.py`: la tienda aplica eventos hechos sin red (`base = 'LOCAL'`).
 - `consulta.py`: `listar(texto)` y `huella_texto(cliente)` para la cartera. Solo lee.
 

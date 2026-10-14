@@ -9,6 +9,7 @@ Es el único encargado de enlazar número de ticket con id de pago de Mercado Pa
 No tiene pantalla propia. Se ve en:
 
 - Jefe, vitrina: «Digitales sin firmar / total» usa `veredicto.conciliar.tickets_firmados`.
+- Auditoría digital (`src/motor_auditoria_digital/`): consulta este motor (`medios.clase`, firmas) y no escribe acá.
 - Monitor MP: la columna Ticket combina el libro local con `mp_pagos.ticket`; las firmas de otra PC de la LAN aparecen al refrescar la consulta de fondo.
 - Logs: `[Cobros digitales] bajados=… enlazados=…`.
 - `estado()` devuelve el último turno en memoria (para una pantalla futura, sin tocar red ni base).

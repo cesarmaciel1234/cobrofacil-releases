@@ -2,5 +2,5 @@
 
 Qué hace: Contiene la interfaz visual para buscar un cliente por DNI o Nombre. Muestra una caja de texto grande y un menú desplegable de sugerencias.
 Qué función: PanelBuscadorClientes en panel_buscador.py
-Cómo funciona: El cajero escribe, la caja emite 	exto_cambiado. El motor local escucha, busca en la BD y llama a mostrar_sugerencias(lista). Si el cajero hace clic en un resultado o da Enter, emite cliente_elegido.
-Qué no debe cambiar una mejora futura: Debe mantenerse 100% visual (frontend). Las consultas a la base de datos se hacen desde el motor, no desde aquí.
+Cómo funciona: El cajero escribe, la caja emite texto_cambiado. El panel F6 busca cuentas con `consulta.buscar_cuentas` y llama a mostrar_sugerencias. Clic o Enter elige un cliente existente. No hay alta de cliente.
+Qué no debe cambiar una mejora futura: F6 no crea clientes. El alta vive en crédito del paso 6.

@@ -8,7 +8,8 @@ from PyQt6.QtWidgets import (
     QPushButton, QMessageBox, QFrame, QGridLayout,
     QWidget, QApplication, QSizePolicy, QStackedWidget
 )
-from PyQt6.QtCore import Qt, QTimer, QEvent, QPropertyAnimation, QEasingCurve
+import threading
+from PyQt6.QtCore import Qt, QTimer, QEvent, QPropertyAnimation, QEasingCurve, pyqtSignal
 from PyQt6.QtGui import QFont, QIcon, QPixmap, QColor, QKeyEvent, QKeySequence, QShortcut
 from src.base_de_datos.database import db_manager
 from src.config import config
@@ -48,8 +49,11 @@ class Paso6Cobro(QDialog):
     PASO 6: VENTANA DE COBRO ELITE 2026
     Diseño premium, sombras cinemáticas y lógica infalible.
     """
+    _senal_transf = pyqtSignal(object, float)
+
     def __init__(self, total, items_carrito, parent=None):
         super().__init__(parent)
+        self._senal_transf.connect(self._llegada_transferencia)
         import uuid
         self.request_id = str(uuid.uuid4())
         self.total_original = total
@@ -92,12 +96,19 @@ class Paso6Cobro(QDialog):
         self._procesando_pago = False
         self._mp_screen_shown = False
         self._tarjeta_ya_cerrado = False
+        self._qr_ya_cerrado = False
+        self._mp_vuelo = False
+        self._es_autonomo = False
         self._point_en_curso = False
         self._emergencia_pendiente = False
         self.resultado_venta = None
         self._condiciones_ticket_custom = {}
         self._fiado_flujo_activo = False
         self._fiado_cliente_id = None
+        if hasattr(self, "panel_redondeo_recargo"):
+            self.panel_redondeo_recargo.resetear_pesos()
+            self.txt_desc.clear()
+            self.txt_rec.clear()
         try:
             from src.cajero.paso6_cobro.rutas_de_cobro.salida.proceso import salir_a_metodos
             salir_a_metodos(self)
@@ -674,8 +685,9 @@ class Paso6Cobro(QDialog):
                 self.btn_aviso_mp.show()
                 from src.services.mp_escucha import EscuchaMP
                 EscuchaMP.asegurar()
-                self.timer_mp.start(1000)
-                self.timer_spinner.start(60) # Gira y palpita rápido
+                self.timer_mp.start(800)
+                self.timer_spinner.start(60)
+                self.verificar_pago_mp_automatico()
             else:
                 if hasattr(self, "panel_alias"):
                     self.panel_alias.ocultar()
@@ -721,7 +733,7 @@ class Paso6Cobro(QDialog):
         if key == "Tarjeta":
             self._pintar_luz_tpv()
             if hasattr(self, "panel_tarjeta"):
-                self.panel_tarjeta.ocultar()
+                self.panel_tarjeta.show()
             if self._tpv_point_listo() and not getattr(self, "_point_en_curso", False):
                 QTimer.singleShot(0, self._cobrar_tarjeta_point)
         elif hasattr(self, "panel_tarjeta"):
@@ -966,54 +978,102 @@ class Paso6Cobro(QDialog):
         try:
             import time
             from src.admin.mercadopago.mercadopago_main import Admin10MP
+            esperado = getattr(self, "_mixto_espera_transferencia", None)
+            if esperado is None:
+                esperado = self.total_final
             if hasattr(Admin10MP, 'ultimo_pago_detectado') and Admin10MP.ultimo_pago_detectado is not None:
                 pago = Admin10MP.ultimo_pago_detectado
                 ahora = time.time()
 
-                # Validar que el pago haya ocurrido hace menos de 90 segundos
                 if ahora - pago['timestamp'] <= 90:
                     from src.cajero.paso6_cobro.vinculo_mp.libro import asociado
                     if asociado(pago.get("id")):
                         Admin10MP.ultimo_pago_detectado = None
-                        return
-                    monto_pago = pago['monto']
-                    esperado = getattr(self, "_mixto_espera_transferencia", None)
-                    if esperado is None:
-                        esperado = self.total_final
-                    if abs(monto_pago - esperado) > 0.05:
-                        if getattr(self, "_mp_oferta_id", None) != str(pago.get("id")):
-                            self._mp_oferta_id = str(pago.get("id"))
-                            self._ofrecer_vinculo(pago.get("id"), monto_pago, pago.get("nombre"))
-                        return
-                    Admin10MP.ultimo_pago_detectado = None
-                    self._mp_pago_usado = {"id": pago.get("id"), "monto": monto_pago}
-                    self._es_autonomo = True
-
-                    self.timer_mp.stop()
-                    self.timer_spinner.stop()
-
-                    self.lbl_mp_status.setStyleSheet("background: #DCFCE7; color: #166534; font-size: 20px; font-weight: 900; border-radius: 12px; padding: 10px; margin-top: 10px;")
-
-                    self.lbl_mp_status.setText(f"✅ ¡PAGO DE {pago['nombre'].upper()} DETECTADO Y APROBADO!")
-                    theme = config.get("theme", "light")
-                    if theme == "dark":
-                        self.lbl_mp_status.setProperty("estado", "success")
-                        self.lbl_mp_status.style().unpolish(self.lbl_mp_status)
-                        self.lbl_mp_status.style().polish(self.lbl_mp_status)
                     else:
-                        self.lbl_mp_status.setProperty("estado", "success")
-                        self.lbl_mp_status.style().unpolish(self.lbl_mp_status)
-                        self.lbl_mp_status.style().polish(self.lbl_mp_status)
-
-                    if getattr(self, "_mixto_espera_transferencia", None) is not None:
-                        self._mixto_espera_transferencia = None
-                        self.lbl_mp_status.hide()
-                        self._mixto_i += 1
-                        QTimer.singleShot(200, self._seguir_mixto)
-                    else:
-                        QTimer.singleShot(1500, self._cerrar_como_eligio)
+                        monto_pago = pago['monto']
+                        if abs(monto_pago - esperado) > 0.05:
+                            if getattr(self, "_mp_oferta_id", None) != str(pago.get("id")):
+                                self._mp_oferta_id = str(pago.get("id"))
+                                self._ofrecer_vinculo(pago.get("id"), monto_pago, pago.get("nombre"))
+                        else:
+                            Admin10MP.ultimo_pago_detectado = None
+                            self._tomar_transferencia_autonomo(
+                                pago.get("id"), monto_pago, pago.get("nombre")
+                            )
+                            return
+            self._buscar_transferencia_propia(esperado)
         except Exception as e:
             print(f"Error verificando auto-pago MP: {e}")
+
+    def _buscar_transferencia_propia(self, esperado):
+        if getattr(self, "_mp_vuelo", False):
+            return
+        self._mp_vuelo = True
+        monto = float(esperado or 0)
+
+        def _trabajo():
+            try:
+                from src.cajero.paso6_cobro.transferencia_en_cobro.escucha import ultimo_libre
+                pago = ultimo_libre()
+            except Exception:
+                pago = None
+            self._senal_transf.emit(pago, monto)
+
+        threading.Thread(target=_trabajo, daemon=True).start()
+
+    def _llegada_transferencia(self, pago, esperado):
+        self._mp_vuelo = False
+        if not pago or not self.isVisible():
+            return
+        if self.current_metodo != "Transferencia" and getattr(
+            self, "_mixto_espera_transferencia", None
+        ) is None:
+            return
+        try:
+            monto_pago = float(pago.get("transaction_amount") or esperado or 0)
+        except (TypeError, ValueError):
+            monto_pago = float(esperado or 0)
+        nombre = ""
+        try:
+            from src.admin.mercadopago.historial.archivo import _rotulo
+
+            _, nombre = _rotulo(pago)
+        except Exception:
+            nombre = ""
+        if abs(monto_pago - float(esperado or 0)) > 0.05:
+            if getattr(self, "_mp_oferta_id", None) != str(pago.get("id")):
+                self._mp_oferta_id = str(pago.get("id"))
+                self._ofrecer_vinculo(pago.get("id"), monto_pago, nombre)
+            return
+        self._tomar_transferencia_autonomo(pago.get("id"), monto_pago, nombre)
+
+    def _tomar_transferencia_autonomo(self, pago_id, monto_pago, nombre=""):
+        try:
+            from src.cajero.paso6_cobro.vinculo_mp.libro import asociar
+
+            asociar(str(pago_id), float(monto_pago), "venta")
+        except Exception:
+            pass
+        self._anotar_pago_mp(
+            {"id": pago_id, "transaction_amount": monto_pago},
+            monto_pago,
+        )
+        self._es_autonomo = True
+        self.timer_mp.stop()
+        self.timer_spinner.stop()
+        quien = str(nombre or "cliente").upper()
+        self.lbl_mp_status.setStyleSheet(
+            "background: #DCFCE7; color: #166534; font-size: 20px; font-weight: 900; "
+            "border-radius: 12px; padding: 10px; margin-top: 10px;"
+        )
+        self.lbl_mp_status.setText(f"PAGO DE {quien} APROBADO")
+        if getattr(self, "_mixto_espera_transferencia", None) is not None:
+            self._mixto_espera_transferencia = None
+            self.lbl_mp_status.hide()
+            self._mixto_i += 1
+            QTimer.singleShot(200, self._seguir_mixto)
+            return
+        self._cerrar_como_eligio()
 
     def _validar_pago(self):
         """ Centraliza la validación para evitar redundancias y errores de arqueo. """
@@ -1197,16 +1257,16 @@ class Paso6Cobro(QDialog):
 
     def _toggle_tipo_desc(self):
         if "$" in self.btn_tipo_desc.text():
-            self.btn_tipo_desc.setText("% ▾")
+            self.btn_tipo_desc.setText("%")
         else:
-            self.btn_tipo_desc.setText("$ ▾")
+            self.btn_tipo_desc.setText("$")
         self.on_descuento_changed(self.txt_desc.text())
 
     def _toggle_tipo_rec(self):
         if "$" in self.btn_tipo_rec.text():
-            self.btn_tipo_rec.setText("% ▾")
+            self.btn_tipo_rec.setText("%")
         else:
-            self.btn_tipo_rec.setText("$ ▾")
+            self.btn_tipo_rec.setText("$")
         self.on_recargo_changed(self.txt_rec.text())
 
     def on_descuento_changed(self, text):
@@ -1374,6 +1434,7 @@ class Paso6Cobro(QDialog):
                 "request_id": getattr(self, "request_id", None),
                 "mp_pago": getattr(self, "_mp_pago_usado", None),
                 "mp_pagos": list(getattr(self, "_mp_pagos", None) or []),
+                "emergencia": bool(emergencia),
             }
 
             exito, mensaje = MotorPrincipalCobros.iniciar_transaccion(
@@ -1538,7 +1599,7 @@ class Paso6Cobro(QDialog):
         listo = bool(token and device) or bool(token and user and self._pos_qr())
         self._tpv_listo = listo
         if hasattr(self, "teclado_lateral"):
-            self.teclado_lateral.mostrar_emergencia(listo)
+            self.teclado_lateral.mostrar_emergencia(not listo)
         color = "#22C55E" if listo else "#EF4444"
         texto = "TPV listo" if listo else "TPV sin activar"
         estilo = (
@@ -1638,7 +1699,6 @@ class Paso6Cobro(QDialog):
 
     def _enter_cobro(self):
         if hasattr(self, "aviso_toast") and self.aviso_toast.tiene_accion():
-            self.aviso_toast.aceptar()
             return
         self._pintar_luz_tpv()
         if not getattr(self, "_tpv_listo", False) and self.current_metodo not in ("Fiado", "Clientes"):
@@ -1654,6 +1714,10 @@ class Paso6Cobro(QDialog):
         if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
             return
 
+        if hasattr(self, "aviso_toast") and self.aviso_toast.tiene_accion():
+            self.aviso_toast.aceptar()
+            return
+
         if hasattr(self, "panel_fiado") and self.panel_fiado.isVisible():
             if hasattr(self.panel_fiado, "procesar_f9"):
                 if self.panel_fiado.procesar_f9():
@@ -1662,7 +1726,7 @@ class Paso6Cobro(QDialog):
         if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
             return
 
-        if not getattr(self, "_tpv_listo", False):
+        if getattr(self, "_tpv_listo", False):
             return
 
         if getattr(self, "_point_en_curso", False):
@@ -1708,20 +1772,19 @@ class Paso6Cobro(QDialog):
         return float(self.total_final or 0)
 
     def _ofrecer_vinculo(self, pago_id, monto, nombre=None):
-        """El monto no coincide: el cartel deja atar esa transferencia a esta venta."""
+        """El monto no coincide: F9 enlaza al ticket; si no, se espera el exacto."""
         importe = float(monto or 0)
-        quien = str(nombre or "").strip()
-        if quien.lower() in ("", "none", "none none", "cliente", "desconocido", "transferencia recibida"):
-            texto = f"Llegó ${importe:,.2f}. ¿Asociar al ticket o espere otro monto?"
-        else:
-            texto = f"Llegó ${importe:,.2f} de {quien}. ¿Asociar al ticket o espere otro monto?"
+        from src.cajero.paso6_cobro.transferencia_en_cobro.escucha import texto_enlazar
+
         if not hasattr(self, "aviso_toast"):
             return
         self.aviso_toast.mostrar(
-            texto,
+            texto_enlazar(importe, nombre, "ticket"),
             accion=lambda: self._vincular_transferencia(str(pago_id), importe),
-            rotulo="Asociar",
+            rotulo="F9 emergencia",
         )
+        if hasattr(self, "teclado_lateral"):
+            self.teclado_lateral.mostrar_emergencia(True)
 
     def _vincular_transferencia(self, pago_id, monto):
         """La diferencia queda en redondeo o recargo y esa transferencia no se vuelve a usar."""
@@ -1773,6 +1836,7 @@ class Paso6Cobro(QDialog):
             self._cerrar_como_eligio()
         finally:
             self._vinculando = False
+            self._pintar_luz_tpv()
 
     def _aviso_tarjeta(self, modo):
         if modo == "fallo" and self.panel_tarjeta.isVisible():
@@ -2007,6 +2071,7 @@ class Paso6Cobro(QDialog):
             pass
 
     def _cerrar_venta_por_qr(self, monto):
+        self._es_autonomo = True
         self._anotar_pago_mp(getattr(self.panel_qr, "_pago", None), monto)
         if getattr(self, "_mixto_esperando_qr", False):
             self._mixto_esperando_qr = False
@@ -2118,7 +2183,6 @@ class Paso6Cobro(QDialog):
             if hasattr(self, "panel_fiado") and hasattr(self.panel_fiado, "via_cobranza"):
                 cob = self.panel_fiado.via_cobranza
                 if hasattr(cob, "lienzo_tarjeta") and cob.cont_lienzos.currentWidget() == cob.lienzo_tarjeta:
-                    cob.lienzo_tarjeta.arrancar(cob._monto_a_cobrar, descripcion="Abono de Cuenta")
                     return
         if getattr(self, '_fiado_flujo_activo', False): return
         if self.current_metodo == "QR":

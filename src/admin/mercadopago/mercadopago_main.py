@@ -1,6 +1,4 @@
 from src.utils.qt_compat import qt_exec
-from datetime import datetime
-import time
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QDateEdit, QCheckBox,
@@ -10,9 +8,6 @@ from PyQt6.QtGui import QColor, QFont
 
 from src.admin.mercadopago.historial.archivo import leer, omitir
 from src.admin.mercadopago.historial.sincronizar import bajar_mes
-
-
-
 
 
 class _BajadaMes(QThread):
@@ -61,14 +56,9 @@ class Admin10MP(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.poller = None
-        self.pagos_hoy = []
         self.todos_los_pagos = []
         Admin10MP.vista = self
         self._marcas_archivos = None
-        self._ultima_consulta_tickets = 0.0
-        self._tickets_db = {}
-        self._carga_tickets = None
         self._reloj_ticket = QTimer(self)
         self._reloj_ticket.timeout.connect(self._refrescar_si_cambio)
         self._reloj_nodo = QTimer(self)
@@ -100,7 +90,7 @@ class Admin10MP(QWidget):
         hl.addWidget(btn_volver)
 
         hl.addSpacing(20)
-        lbl_title = QLabel("Monitor de Mercado Pago (Tiempo Real)")
+        lbl_title = QLabel("Auditoría de cobros digitales")
         lbl_title.setStyleSheet("font-size: 22px; font-weight: bold;")
         hl.addWidget(lbl_title)
         hl.addStretch()
@@ -167,20 +157,47 @@ class Admin10MP(QWidget):
             lbl_value.setStyleSheet(f"font-size: 24px; font-weight: 900; color: {color_hex}; font-family: 'Segoe UI Black';")
 
             cl.addWidget(lbl_title)
-            cl.addWidget(lbl_value)
+            fila = QHBoxLayout()
+            fila.setContentsMargins(0, 0, 0, 0)
+            fila.setSpacing(12)
+            fila.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+            fila.addWidget(lbl_value, 1)
+            sep = QFrame()
+            sep.setFixedWidth(1)
+            sep.setFixedHeight(28)
+            sep.setStyleSheet("background: #E2E8F0; border: none;")
+            sep.hide()
+            fila.addWidget(sep, 0, Qt.AlignmentFlag.AlignVCenter)
+            lbl_ratio = QLabel("")
+            lbl_ratio.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            lbl_ratio.setStyleSheet(
+                "font-size: 22px; font-weight: 900; color: #B45309; font-family: 'Segoe UI Black';"
+            )
+            lbl_ratio.hide()
+            fila.addWidget(lbl_ratio, 0, Qt.AlignmentFlag.AlignVCenter)
+            card._sep = sep
+            cl.addLayout(fila)
+            lbl_nota = QLabel("")
+            lbl_nota.setStyleSheet("font-size: 11px; color: #64748B; font-weight: 600; background: transparent;")
+            lbl_nota.hide()
+            cl.addWidget(lbl_nota)
+            card._ratio = lbl_ratio
+            card._nota = lbl_nota
             return card, lbl_value
 
-        self.card_total_mes, self.lbl_kpi_total_mes = create_kpi_card("📅 ACUMULADO BRUTO MES", "$0.00", "#ea580c")
-        self.card_neto_mes, self.lbl_kpi_neto_mes = create_kpi_card("💵 ACUMULADO NETO MES", "$0.00", "#10b981")
-        self.card_total, self.lbl_kpi_total = create_kpi_card("💰 RECAUDADO HOY", "$0.00", "#3b82f6")
-        self.card_count, self.lbl_kpi_count = create_kpi_card("✅ TRANSACCIONES HOY", "0", "#0284c7")
-        self.card_avg, self.lbl_kpi_avg = create_kpi_card("📈 TICKET PROMEDIO", "$0.00", "#f59e0b")
+        self.card_total_mes, self.lbl_kpi_total_mes = create_kpi_card("BRUTO MP", "$0.00", "#ea580c")
+        self.card_neto_mes, self.lbl_kpi_neto_mes = create_kpi_card("NETO MP", "$0.00", "#10b981")
+        self.card_total, self.lbl_kpi_total = create_kpi_card("TICKETS DIGITALES", "$0.00", "#0284c7")
+        self.card_count, self.lbl_kpi_count = create_kpi_card("FIRMADOS EN TICKET", "$0.00", "#059669")
+        self.card_avg, self.lbl_kpi_avg = create_kpi_card("SIN FIRMAR / F9", "$0.00", "#d97706")
+        self.card_cliente, self.lbl_kpi_cliente = create_kpi_card("CLIENTE", "$0.00", "#0369A1")
 
         kpi_lay.addWidget(self.card_total_mes)
         kpi_lay.addWidget(self.card_neto_mes)
         kpi_lay.addWidget(self.card_total)
         kpi_lay.addWidget(self.card_count)
         kpi_lay.addWidget(self.card_avg)
+        kpi_lay.addWidget(self.card_cliente)
 
         body.addLayout(kpi_lay)
         body.addSpacing(15)
@@ -190,7 +207,7 @@ class Admin10MP(QWidget):
         filter_lay.setSpacing(10)
 
         self.txt_buscar = QLineEdit()
-        self.txt_buscar.setPlaceholderText("🔍 Buscar por Cliente, ID de Pago o Fecha...")
+        self.txt_buscar.setPlaceholderText("Buscar concepto, ID de pago, ticket de venta o COB-…")
         self.txt_buscar.setStyleSheet("""
             QLineEdit {
                 padding: 8px 12px;
@@ -205,26 +222,28 @@ class Admin10MP(QWidget):
         """)
         self.txt_buscar.textChanged.connect(self.aplicar_filtros)
 
-        from PyQt6.QtWidgets import QComboBox
-        self.cmb_fecha = QComboBox()
-        self.cmb_fecha.addItems(["Todos los registros", "Solo Hoy", "Este Mes", "Día Específico..."])
-        self.cmb_fecha.setStyleSheet("""
-            QComboBox {
-                padding: 8px 12px;
-                border: 1px solid #CBD5E1;
-                border-radius: 6px;
-                background: white;
-                font-size: 14px;
-                min-width: 150px;
-            }
-        """)
-        self.cmb_fecha.currentIndexChanged.connect(self.on_combo_fecha_changed)
+        self._periodo = "Mes"
+        self._botones_periodo = {}
+        _idle = (
+            "QPushButton { background: #FFFFFF; color: #475569; border: 1px solid #E2E8F0; "
+            "border-radius: 14px; padding: 6px 14px; font-weight: 600; }"
+            "QPushButton:hover { background: #EEF2FF; color: #4338CA; }"
+        )
+        _activo = (
+            "QPushButton { background: #0F172A; color: #FFFFFF; border: 1px solid #0F172A; "
+            "border-radius: 14px; padding: 6px 14px; font-weight: 600; }"
+        )
+        self._estilo_periodo_idle = _idle
+        self._estilo_periodo_activo = _activo
+        for texto in ("Hoy", "Semana", "Mes", "Año", "Período"):
+            b = QPushButton(texto)
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.setStyleSheet(_activo if texto == "Mes" else _idle)
+            b.clicked.connect(lambda _c=False, t=texto: self._elegir_periodo(t))
+            self._botones_periodo[texto] = b
 
         from PyQt6.QtCore import QDate
-        self.date_picker = QDateEdit()
-        self.date_picker.setCalendarPopup(True)
-        self.date_picker.setDate(QDate.currentDate())
-        self.date_picker.setStyleSheet("""
+        estilo_fecha = """
             QDateEdit {
                 padding: 8px 12px;
                 border: 1px solid #CBD5E1;
@@ -233,43 +252,46 @@ class Admin10MP(QWidget):
                 font-size: 14px;
                 min-width: 120px;
             }
-        """)
-        self.date_picker.dateChanged.connect(self.aplicar_filtros)
-        self.date_picker.hide()
+        """
+        self.date_desde = QDateEdit()
+        self.date_desde.setCalendarPopup(True)
+        self.date_desde.setDate(QDate.currentDate().addDays(-7))
+        self.date_desde.setStyleSheet(estilo_fecha)
+        self.date_desde.dateChanged.connect(self.aplicar_filtros)
+        self.date_desde.hide()
+        self.date_hasta = QDateEdit()
+        self.date_hasta.setCalendarPopup(True)
+        self.date_hasta.setDate(QDate.currentDate())
+        self.date_hasta.setStyleSheet(estilo_fecha)
+        self.date_hasta.dateChanged.connect(self.aplicar_filtros)
+        self.date_hasta.hide()
 
-        self.chk_cargas = QCheckBox("Cargas Propias")
-        self.chk_cargas.setChecked(False)
-        self.chk_cargas.setStyleSheet("""
-            QCheckBox {
-                font-size: 13px;
+        self.chk_firmados = QCheckBox("Firmados")
+        self.chk_firmados.setChecked(True)
+        self.chk_firmados.setToolTip("Venta o cobranza con id de Mercado Pago enlazado al ticket o al COB-")
+        self.chk_firmados.setStyleSheet("QCheckBox { font-size: 13px; font-weight: 700; color: #047857; }")
+        self.chk_firmados.stateChanged.connect(self.aplicar_filtros)
 
-                font-weight: bold;
-            }
-        """)
-        self.chk_cargas.stateChanged.connect(self.aplicar_filtros)
-
-        self.chk_omitidos = QCheckBox("Omitidos")
-        self.chk_omitidos.setChecked(False)
-        self.chk_omitidos.setStyleSheet("""
-            QCheckBox {
-                font-size: 13px;
-
-                font-weight: bold;
-            }
-        """)
-        self.chk_omitidos.stateChanged.connect(self.aplicar_filtros)
+        self.chk_pendientes = QCheckBox("Pendientes")
+        self.chk_pendientes.setChecked(True)
+        self.chk_pendientes.setToolTip("Sin ticket, sin firmar o F9: falta enlace digital")
+        self.chk_pendientes.setStyleSheet("QCheckBox { font-size: 13px; font-weight: 700; color: #B45309; }")
+        self.chk_pendientes.stateChanged.connect(self.aplicar_filtros)
 
         filter_lay.addWidget(self.txt_buscar, stretch=1)
-        filter_lay.addWidget(self.cmb_fecha)
-        filter_lay.addWidget(self.date_picker)
-        filter_lay.addWidget(self.chk_cargas)
-        filter_lay.addWidget(self.chk_omitidos)
+        for texto in ("Hoy", "Semana", "Mes", "Año", "Período"):
+            filter_lay.addWidget(self._botones_periodo[texto])
+        filter_lay.addWidget(self.date_desde)
+        filter_lay.addWidget(self.date_hasta)
+        filter_lay.addWidget(self.chk_firmados)
+        filter_lay.addWidget(self.chk_pendientes)
         body.addLayout(filter_lay)
         body.addSpacing(10)
 
-        # Tabla de Pagos
-        self.tabla = QTableWidget(0, 6)
-        self.tabla.setHorizontalHeaderLabels(["Fecha", "ID de Pago", "Cliente", "Monto", "Estado", "Ticket"])
+        self.tabla = QTableWidget(0, 7)
+        self.tabla.setHorizontalHeaderLabels([
+            "Fecha", "ID de pago", "Concepto", "Monto", "Estado", "Ticket venta", "Ticket cobro",
+        ])
         self.tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tabla.setStyleSheet("background: white; alternate- font-size: 14px;")
         self.tabla.setAlternatingRowColors(True)
@@ -277,6 +299,15 @@ class Admin10MP(QWidget):
         self.tabla.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tabla.customContextMenuRequested.connect(self.mostrar_menu_contextual)
         body.addWidget(self.tabla)
+        self.lbl_leyenda = QLabel(
+            "Ticket venta = qué se vendió  ·  Ticket cobro = COB-… abono F6  ·  "
+            "ID de pago = Mercado Pago o F9 MANUAL"
+        )
+        self.lbl_leyenda.setWordWrap(True)
+        self.lbl_leyenda.setStyleSheet(
+            "color: #64748B; font-size: 12px; padding: 8px 2px 0 2px; background: transparent;"
+        )
+        body.addWidget(self.lbl_leyenda)
 
         layout.addLayout(body)
 
@@ -439,9 +470,12 @@ class Admin10MP(QWidget):
         import os
         from src.admin.mercadopago.historial.archivo import RUTA as csv_mp
         from src.cajero.paso6_cobro.vinculo_mp.libro import RUTA as vinculos
+        from src.motor_auditoria_digital.libro_f9.libro import RUTA as f9
+        from src.motor_auditoria_digital.libro_tickets.libro import RUTA as tickets_dig
+        from src.motor_auditoria_digital.libro_cobranzas.libro import RUTA as cobranzas_dig
 
         marcas = []
-        for ruta in (csv_mp, vinculos):
+        for ruta in (csv_mp, vinculos, f9, tickets_dig, cobranzas_dig):
             try:
                 marcas.append(os.path.getmtime(ruta))
             except OSError:
@@ -469,107 +503,162 @@ class Admin10MP(QWidget):
         puesto = barra.value()
         datos = leer()
         self.todos_los_pagos = datos["pagos"]
-        self.lbl_kpi_total_mes.setText(f"${datos['total_mes']:,.2f}")
-        self.lbl_kpi_neto_mes.setText(f"${datos['neto_mes']:,.2f}")
-        self.lbl_kpi_total.setText(f"${datos['total_hoy']:,.2f}")
-        self.lbl_kpi_count.setText(str(datos["cant_hoy"]))
-        cant = datos["cant_hoy"]
-        prom = (datos["total_hoy"] / cant) if cant else 0
-        self.lbl_kpi_avg.setText(f"${prom:,.2f}")
+        try:
+            from src.motor_auditoria_digital import despertar
+
+            despertar()
+        except Exception:
+            pass
         self.aplicar_filtros()
         barra.setValue(puesto)
 
     def aplicar_filtros(self):
         """
-        Aplica los filtros de texto, fecha, cargas propias y omitidos a la lista de pagos.
+        Aplica período, texto y los dos filtros de negocio: firmados vs pendientes.
         """
         filtro_texto = self.txt_buscar.text().lower().strip()
-        filtro_fecha = self.cmb_fecha.currentText()
 
-        now = datetime.now()
-        mes_str = now.strftime("%Y-%m")
-        hoy_str = now.strftime("%Y-%m-%d")
+        ver_firmados = self.chk_firmados.isChecked()
+        ver_pendientes = self.chk_pendientes.isChecked()
 
-        show_cargas = self.chk_cargas.isChecked()
-        show_omitidos = self.chk_omitidos.isChecked()
+        from src.motor_auditoria_digital.consultas.rango import filtro as rango_filtro
 
-        pagos_filtrados = []
-        for p in getattr(self, "todos_los_pagos", []):
-            # Filtro por Cargas Propias
-            if p["op_type"] == "account_fund" and not show_cargas:
-                continue
+        d0, d1 = rango_filtro(
+            getattr(self, "_periodo", "Mes"),
+            self.date_desde.date().toString("yyyy-MM-dd"),
+            self.date_hasta.date().toString("yyyy-MM-dd"),
+        )
+        try:
+            from src.motor_auditoria_digital import snapshot as filas_auditoria
 
-            # Filtro por Omitidos
-            if p["estado"] == "OMITIDO" and not show_omitidos:
-                continue
+            crudo = filas_auditoria(d0, d1)
+        except Exception:
+            crudo = []
+        if not crudo:
+            from src.motor_auditoria_digital.consultas.rango import en_rango
 
-            # Filtro por Fecha
-            if filtro_fecha == "Solo Hoy" and not p["fecha"].startswith(hoy_str):
-                continue
-            if filtro_fecha == "Este Mes" and not p["fecha"].startswith(mes_str):
-                continue
-            if filtro_fecha == "Día Específico...":
-                fecha_sel = self.date_picker.date().toString("yyyy-MM-dd")
-                if not p["fecha"].startswith(fecha_sel):
+            crudo = []
+            for p in list(getattr(self, "todos_los_pagos", []) or []):
+                if not en_rango(p.get("fecha") or "", d0, d1):
                     continue
+                p.setdefault("ticket", "—")
+                p.setdefault("estado", p.get("estado") or "")
+                p.setdefault("monto_mp", p.get("monto") or 0)
+                p.setdefault("neto", p.get("neto") or p.get("monto") or 0)
+                crudo.append(p)
 
-            # Filtro por Texto
+        filas = []
+        for p in crudo:
+            op = p.get("op_type") or ""
+            estado = str(p.get("estado") or "")
+            fecha = str(p.get("fecha") or "")
+            if op == "account_fund" or estado in ("CUENTA / DNI", "OMITIDO", "CARGA DE FONDOS"):
+                continue
+            grupo = self._grupo_fila(p)
+            if ver_firmados and ver_pendientes:
+                if grupo not in ("firmado", "pendiente"):
+                    continue
+            elif ver_firmados:
+                if grupo != "firmado":
+                    continue
+            elif ver_pendientes:
+                if grupo != "pendiente":
+                    continue
             if filtro_texto:
-                match = (
-                    filtro_texto in p["fecha"].lower() or
-                    filtro_texto in p["id"].lower() or
-                    filtro_texto in p["nombre"].lower() or
-                    filtro_texto in p["email"].lower() or
-                    filtro_texto in f"${p['monto']:.2f}"
-                )
-                if not match:
+                blob = " ".join([
+                    fecha, str(p.get("id") or ""), str(p.get("nombre") or ""),
+                    str(p.get("email") or ""), str(p.get("ticket") or ""),
+                    str(p.get("ticket_venta") or ""), str(p.get("ticket_cobro") or ""),
+                    f"{float(p.get('monto') or 0):.2f}", estado,
+                ]).lower()
+                if filtro_texto not in blob:
                     continue
+            filas.append(p)
 
-            pagos_filtrados.append(p)
+        try:
+            from src.motor_auditoria_digital.cruces.totales import de_filas
 
-        from src.cajero.paso6_cobro.vinculo_mp.libro import asociado
-
-        tickets = {}
-        for pago in pagos_filtrados:
-            vinculo = asociado(pago["id"]) or {}
-            if vinculo.get("ticket"):
-                tickets[pago["id"]] = str(vinculo["ticket"])
+            t = de_filas(filas)
+        except Exception:
+            t = {
+                "bruto": 0.0, "neto": 0.0, "tickets": 0.0, "firmados": 0.0,
+                "sin_firmar": 0.0, "cliente": 0.0, "n_sin_firmar": 0, "n_tickets": 0,
+            }
+        self.lbl_kpi_total_mes.setText(f"${t['bruto']:,.2f}")
+        self.lbl_kpi_neto_mes.setText(f"${t['neto']:,.2f}")
+        self.lbl_kpi_total.setText(f"${t['tickets']:,.2f}")
+        self.lbl_kpi_count.setText(f"${t['firmados']:,.2f}")
+        self.lbl_kpi_avg.setText(f"${t['sin_firmar']:,.2f}")
+        self.lbl_kpi_cliente.setText(f"${t.get('cliente', 0):,.2f}")
+        sin_n = int(t.get("n_sin_firmar") or 0)
+        tot_n = int(t.get("n_tickets") or 0)
+        self.card_avg._ratio.setText(f"{sin_n} / {tot_n}")
+        self.card_avg._ratio.show()
+        self.card_avg._sep.show()
+        if tot_n:
+            self.card_avg._nota.setText(f"{sin_n} tickets no firmados de {tot_n}")
+            self.card_avg._nota.show()
+        else:
+            self.card_avg._nota.hide()
 
         self.tabla.setRowCount(0)
-        for p in pagos_filtrados:
+        for p in filas:
             row = self.tabla.rowCount()
             self.tabla.insertRow(row)
-            self.tabla.setItem(row, 0, QTableWidgetItem(p["fecha"]))
-            self.tabla.setItem(row, 1, QTableWidgetItem(p["id"]))
-
-            # Nombre de Cliente o Carga
-            nombre_display = p["nombre"]
-            if p["op_type"] == "account_fund":
-                nombre_display = "Carga de Fondos (Autotransferencia)"
-            self.tabla.setItem(row, 2, QTableWidgetItem(nombre_display))
-
-            item_monto = QTableWidgetItem(f"${p['monto']:.2f}")
-            item_monto.setForeground(QColor("#059669"))
+            estado = str(p.get("estado") or "")
+            self.tabla.setItem(row, 0, QTableWidgetItem(str(p.get("fecha") or "")))
+            self.tabla.setItem(row, 1, QTableWidgetItem(str(p.get("id") or "—") or "—"))
+            self.tabla.setItem(row, 2, QTableWidgetItem(str(p.get("nombre") or "—")))
+            item_monto = QTableWidgetItem(f"${float(p.get('monto') or 0):.2f}")
             item_monto.setFont(QFont("Segoe UI", 12, QFont.Bold))
-            self.tabla.setItem(row, 3, item_monto)
-
-            if p["op_type"] == "account_fund":
-                item_estado = QTableWidgetItem("CARGA DE FONDOS")
-                item_estado.setForeground(QColor("#8B5CF6")) # Violeta
+            if estado in ("F9 MANUAL", "SIN FIRMAR"):
+                item_monto.setForeground(QColor("#B45309"))
+            elif estado in ("SIN TICKET",):
+                item_monto.setForeground(QColor("#DC2626"))
+            elif estado in ("CUENTA / DNI", "CLIENTE", "COBRANZA"):
+                item_monto.setForeground(QColor("#0369A1"))
             else:
-                item_estado = QTableWidgetItem(p["estado"].upper())
-                if p["estado"].upper() == "APPROVED":
-                    item_estado.setForeground(QColor("#059669"))
-                elif p["estado"].upper() == "OMITIDO":
-                    item_estado.setForeground(QColor("#94A3B8"))
+                item_monto.setForeground(QColor("#059669"))
+            self.tabla.setItem(row, 3, item_monto)
+            item_estado = QTableWidgetItem(estado)
+            colores = {
+                "APPROVED": "#059669",
+                "FIRMADO": "#059669",
+                "SIN TICKET": "#DC2626",
+                "SIN FIRMAR": "#B45309",
+                "F9 MANUAL": "#B45309",
+                "COBRANZA": "#0369A1",
+            }
+            item_estado.setForeground(QColor(colores.get(estado, "#334155")))
             self.tabla.setItem(row, 4, item_estado)
-            self.tabla.setItem(row, 5, QTableWidgetItem(tickets.get(p["id"], "—")))
+            tv = str(p.get("ticket_venta") or "") or "—"
+            tc = str(p.get("ticket_cobro") or "") or "—"
+            self.tabla.setItem(row, 5, QTableWidgetItem(tv))
+            self.tabla.setItem(row, 6, QTableWidgetItem(tc))
 
-    def on_combo_fecha_changed(self, index):
-        if self.cmb_fecha.currentText() == "Día Específico...":
-            self.date_picker.show()
-        else:
-            self.date_picker.hide()
+    @staticmethod
+    def _grupo_fila(p):
+        """firmado = hay id MP enlazado. pendiente = falta firma o falta ticket."""
+        estado = str((p or {}).get("estado") or "").upper()
+        pago = str((p or {}).get("id") or "").strip()
+        tiene_pago = bool(pago) and pago not in ("—", "-", "F9 MANUAL")
+        if estado in ("FIRMADO", "APPROVED") and tiene_pago:
+            return "firmado"
+        if estado == "COBRANZA" and tiene_pago:
+            return "firmado"
+        if estado in ("SIN TICKET", "SIN FIRMAR", "F9 MANUAL"):
+            return "pendiente"
+        if estado in ("COBRANZA", "CLIENTE"):
+            return "pendiente"
+        return "otro"
+
+    def _elegir_periodo(self, texto):
+        self._periodo = texto
+        for t, b in self._botones_periodo.items():
+            b.setStyleSheet(self._estilo_periodo_activo if t == texto else self._estilo_periodo_idle)
+        es_periodo = texto == "Período"
+        self.date_desde.setVisible(es_periodo)
+        self.date_hasta.setVisible(es_periodo)
         self.aplicar_filtros()
 
     def mostrar_menu_contextual(self, pos):
@@ -580,6 +669,8 @@ class Admin10MP(QWidget):
         id_item = self.tabla.item(row, 1)
         if not id_item: return
         id_pago = id_item.text()
+        if not id_pago or id_pago in ("—", "F9 MANUAL"):
+            return
 
         from PyQt6.QtWidgets import QMenu
         from PyQt6.QtGui import QAction
