@@ -1,6 +1,6 @@
-"""Texto de una sola pasada. En Windows, dos font-weight en QSS = letras dobles.
+"""Calendarios y fechas: una sola pasada, peso 400.
 
-Usá etiqueta / vestir_fecha / vestir_calendario. Peso 400. Sin letter-spacing.
+Tablas, títulos y KPI de góndola: `src/utils/letra.py`. No mezclar 900 de QSS con setBold.
 """
 
 from PyQt6.QtCore import QLocale, Qt

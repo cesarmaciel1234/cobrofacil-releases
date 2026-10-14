@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QCheckBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-from PyQt6.QtGui import QColor, QFont, QBrush
+from PyQt6.QtGui import QColor, QBrush
 
 try:
     from src.base_de_datos.database import db_manager
@@ -17,6 +17,7 @@ except ImportError:
     from database import db_manager
 
 from src.creador_pdf_global.motor_pdf import EtiquetaRenderer, abrir_archivo_pdf
+from src.utils.letra import fuente_id, fuente_nombre, fuente_numero, QSS_KPI, QSS_TITULO
 
 class AdminEtiquetas(QWidget):
     request_dashboard = pyqtSignal()
@@ -49,7 +50,7 @@ class AdminEtiquetas(QWidget):
         header_layout.addWidget(self.btn_back)
 
         self.header_title = QLabel("🏭 PLANTA DE IMPRESIÓN & ETIQUETADO")
-        self.header_title.setStyleSheet("font-size: 24px; font-weight: 900; letter-spacing: 1px;")
+        self.header_title.setStyleSheet(QSS_TITULO)
         header_layout.addWidget(self.header_title)
         header_layout.addStretch()
 
@@ -149,7 +150,7 @@ class AdminEtiquetas(QWidget):
         lbl_tit.setStyleSheet("font-size: 13px; font-weight: 700; opacity: 0.7;")
 
         lbl_val = QLabel(initial_val)
-        lbl_val.setStyleSheet(f"font-size: 26px; font-weight: 900; color: {accent_color}; letter-spacing: -0.5px;")
+        lbl_val.setStyleSheet(QSS_KPI + f" color: {accent_color};")
         lbl_val.setWordWrap(True)
 
         lay.addWidget(lbl_tit)
@@ -259,7 +260,7 @@ class AdminEtiquetas(QWidget):
             # ID
             id_text = p_id_str + (" ✓" if is_printed else "")
             id_item = QTableWidgetItem(id_text)
-            id_item.setFont(QFont("Consolas", 10, QFont.Bold))
+            id_item.setFont(fuente_id())
             self.tabla.setItem(i, 1, id_item)
 
             # Nombre
@@ -269,7 +270,7 @@ class AdminEtiquetas(QWidget):
                 elif is_oferta: nom_text = "🔥 [OFERTA] " + nom_text
                 else: nom_text = "🏷️ [ETIQUETA] " + nom_text
             nom_item = QTableWidgetItem(nom_text)
-            nom_item.setFont(QFont("Segoe UI", 11, QFont.Bold))
+            nom_item.setFont(fuente_nombre())
             self.tabla.setItem(i, 2, nom_item)
 
             # Precio
@@ -278,7 +279,7 @@ class AdminEtiquetas(QWidget):
             except (TypeError, ValueError):
                 precio_txt = "$0.00"
             pr_item = QTableWidgetItem(precio_txt)
-            pr_item.setFont(QFont("Segoe UI", 11, QFont.Bold))
+            pr_item.setFont(fuente_numero())
             self.tabla.setItem(i, 3, pr_item)
 
             # Categoría

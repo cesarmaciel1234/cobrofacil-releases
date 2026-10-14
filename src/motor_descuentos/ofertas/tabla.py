@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QTableWidget, QAbstractItemView, QHeaderView, QTableWidgetItem
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtGui import QColor
+from src.utils.letra import fuente_nombre, fuente_numero
 
 
 def _n(v, d=0.0):
@@ -140,11 +141,14 @@ class TablaOfertas(QTableWidget):
                 it = QTableWidgetItem(v)
                 if j == 0:
                     it.setData(Qt.ItemDataRole.UserRole, str(r.get("id")))
+                    it.setFont(fuente_nombre())
                     if en_promo:
-                        it.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
                         it.setForeground(QColor("#C2410C"))
                     else:
                         it.setForeground(QColor("#0F172A"))
+                elif j in (1, 2, 4):
+                    it.setFont(fuente_numero())
+                    it.setForeground(QColor("#0F172A"))
                 else:
                     it.setForeground(QColor("#0F172A"))
 
@@ -153,7 +157,7 @@ class TablaOfertas(QTableWidget):
 
                 if j == 2 and en_promo:
                     it.setForeground(QColor("#EA580C"))
-                    it.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
+                    it.setFont(fuente_numero())
 
                 if j == 4:
                     if stock <= 0:

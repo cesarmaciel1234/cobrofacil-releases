@@ -122,6 +122,7 @@ class Jefe0Dashboard(QWidget):
                 aud.get("cliente") or 0,
                 aud.get("sin_firmar_monto") or 0,
                 aud.get("firmados") or 0,
+                aud.get("sin_ticket_monto") or 0,
             )
             self.panel_pub.set_tickets_dia(*metricas.tickets(desde, hasta))
             self.panel_pub.set_cancelaciones_dia(metricas.cancelaciones(desde, hasta))

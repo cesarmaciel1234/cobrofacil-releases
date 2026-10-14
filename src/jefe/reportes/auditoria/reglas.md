@@ -17,4 +17,4 @@ auditoria/
 - Fechas: `periodo/sql.where_fecha`. No copies DATE() ni LIKE.
 - Comparar: `financiero.rango_igual_anterior`.
 - Esclava: `db_manager` = maestra.
-- Letras: peso 400. Compat: `../vista_auditoria.py` reexporta `VistaAuditoria`.
+- Letras de góndola en la grilla (`src/utils/letra.py`). Calendarios: peso 400 en `../letra.py`. Compat: `../vista_auditoria.py` reexporta `VistaAuditoria`.

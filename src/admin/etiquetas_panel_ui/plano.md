@@ -4,6 +4,8 @@
 
 Admin → Etiquetas Góndolas. Se eligen productos y «Lanzar impresión góndola (PDF)». El PDF queda en `Etiquetas_Impresas`.
 
+Las letras de esta pantalla (Consolas Bold en id, Segoe UI Bold en nombre y precio, KPI 900 en QLabel) son la referencia del proyecto: `src/utils/letra.py`. Al tocar otro módulo admin/jefe se copian de ahí. No en el cajero.
+
 ## Fondo
 
 `AdminEtiquetas.generar_pdf` llama a `_armar_pdf_gondola`. El PDF lo escribe `EtiquetaRenderer.generar_pdf_gondola_personalizado` con `abrir_documento_pdf` (`QPdfWriter`).

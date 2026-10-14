@@ -108,8 +108,14 @@ class PanelPublicidad(QWidget):
         extras = QHBoxLayout()
         extras.setSpacing(10)
         self.lbl_sin_firmar = self._chip("Sin firmar / F9 · Mes", "—")
+        self.lbl_sin_ticket = self._chip("MP sin ticket · Mes", "—")
+        self.lbl_sin_ticket._ratio.setStyleSheet(
+            "color: #DC2626; background: transparent; border: none; "
+            "font-weight: 600; letter-spacing: 0px;"
+        )
         self.lbl_redondeo = self._chip("Redondeo · Mes", "—")
         extras.addWidget(self.lbl_sin_firmar, 1)
+        extras.addWidget(self.lbl_sin_ticket, 1)
         extras.addWidget(self.lbl_redondeo, 1)
         root.addLayout(extras)
 
@@ -127,6 +133,7 @@ class PanelPublicidad(QWidget):
             (self.lbl_tickets_dig, "Tickets digitales", "Tickets digitales"),
             (self.lbl_cliente, "Cliente", "Cliente"),
             (self.lbl_sin_firmar, "Sin firmar / F9", "Sin firmar / F9"),
+            (self.lbl_sin_ticket, "MP sin ticket", "MP sin ticket"),
             (self.lbl_redondeo, "Redondeo del día", "Redondeo"),
             (self.lbl_tickets, "Tickets del día", "Tickets"),
             (self.lbl_cancel, "Cancelaciones del día", "Cancelaciones"),
@@ -297,13 +304,17 @@ class PanelPublicidad(QWidget):
         cliente: float = 0,
         sin_firmar_monto: float = 0,
         firmados: float = 0,
+        sin_ticket_monto: float = 0,
     ):
         self.lbl_redondeo._valor.setText(fmt_plata(redondeo))
         self.lbl_tickets_dig._valor.setText(fmt_plata(tickets_digitales))
-        self._poner_detalle(
-            self.lbl_tickets_dig,
-            f"Firmados {fmt_plata(firmados)}" if firmados else "",
-        )
+        if firmados:
+            self._poner_detalle(
+                self.lbl_tickets_dig,
+                f"Con ticket · firmados {fmt_plata(firmados)}",
+            )
+        else:
+            self._poner_detalle(self.lbl_tickets_dig, "Con ticket · libro de ventas")
         self.lbl_cliente._valor.setText(fmt_plata(cliente))
         self._poner_detalle(self.lbl_cliente, "Cobranza QR / tarjeta / transferencia")
         self.lbl_sin_firmar._valor.setText(fmt_plata(sin_firmar_monto))
@@ -319,6 +330,18 @@ class PanelPublicidad(QWidget):
             )
         else:
             self._poner_detalle(self.lbl_sin_firmar, "")
+        n_suelto = int(mp_sin_ticket or 0)
+        self.lbl_sin_ticket._valor.setText(fmt_plata(sin_ticket_monto))
+        self.lbl_sin_ticket._ratio.setText(str(n_suelto))
+        self.lbl_sin_ticket._ratio.show()
+        self.lbl_sin_ticket._sep.show()
+        if n_suelto:
+            self._poner_detalle(
+                self.lbl_sin_ticket,
+                f"{n_suelto} cobro{'s' if n_suelto != 1 else ''} en MP sin ticket para facturar",
+            )
+        else:
+            self._poner_detalle(self.lbl_sin_ticket, "Nada suelto: todo tiene ticket")
 
     def set_tickets_dia(self, cantidad: int, total: float):
         cantidad = int(cantidad or 0)

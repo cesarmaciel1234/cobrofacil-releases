@@ -30,6 +30,7 @@ from src.historial_ventas import motor_historial
 from src.historial_ventas.notas_manager import cargar_todas_notas, cargar_nota
 from src.jefe.reportes.financiero.dinero import fmt_plata
 from src.jefe.reportes.letra import etiqueta, fuente_limpia, paleta_clara, vestir_fecha
+from src.utils.letra import vestir_id, vestir_nombre, vestir_numero
 from src.jefe.reportes.vista_financiero import _FIN, _aplicar_paleta_tabla
 from src.utils.qt_compat import qt_exec
 from src.utils.medio_pago import etiqueta_pago
@@ -331,8 +332,8 @@ class VistaHistorial(QWidget):
             hora = dt.strftime("%H:%M") if dt else f_str[11:16]
             cancel = str(r["estado"] or "").upper().startswith("CANCELAD")
             caja = r["caja_id"] if "caja_id" in r.keys() else 1
-            self.tabla.setItem(i, 0, QTableWidgetItem(str(r["id"])))
-            self.tabla.setItem(i, 1, QTableWidgetItem(str(caja or 1)))
+            self.tabla.setItem(i, 0, vestir_id(QTableWidgetItem(str(r["id"]))))
+            self.tabla.setItem(i, 1, vestir_id(QTableWidgetItem(str(caja or 1))))
             
             try:
                 c_arts = r["cant_arts"]
@@ -341,7 +342,7 @@ class VistaHistorial(QWidget):
             self.tabla.setItem(i, 2, QTableWidgetItem(str(int(float(c_arts or 0)))))
             self.tabla.setItem(i, 3, QTableWidgetItem(hora))
             
-            tot = QTableWidgetItem(fmt_plata(r["total"]))
+            tot = vestir_numero(QTableWidgetItem(fmt_plata(r["total"])))
             tot.setForeground(QColor("#B91C1C" if cancel else "#0F172A"))
             if not cancel:
                 tot.setBackground(QBrush(QColor("#F0FDF4")))

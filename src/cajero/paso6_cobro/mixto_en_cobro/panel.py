@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, QEvent, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QVBoxLayout
 
 from src.utils.dinero import redondear_dinero
@@ -79,6 +79,7 @@ class PanelMixtoCobro(QFrame):
             f"font-size: 22px; font-weight: 800; color: {color}; }}"
         )
         caja.textChanged.connect(lambda _texto, campo=caja: self._marcar(campo))
+        caja.installEventFilter(self)
         return caja
 
     def campos(self):
@@ -133,17 +134,36 @@ class PanelMixtoCobro(QFrame):
             ("cliente", self.txt_cliente),
         )
 
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.FocusIn and obj in self.campos():
+            self._completar_falta(obj)
+        return super().eventFilter(obj, event)
+
     def completar_cliente(self):
         """Un solo medio con plata y un resto: ese resto queda en el cliente."""
-        otros = [clave for clave, valor in self._valores.items() if clave != "cliente" and valor > 0.009]
-        if (self._valores.get("cliente") or 0) > 0.009 or len(otros) != 1:
+        self._completar_falta(self.txt_cliente)
+
+    def _completar_falta(self, campo):
+        """Si hay un solo medio cargado y este casillero está vacío, pone lo que falta."""
+        if campo is None or self._numero(campo.text()) > 0.009:
+            return
+        clave_este = None
+        for clave, caja in self._claves():
+            if caja is campo:
+                clave_este = clave
+                break
+        if clave_este is None:
+            return
+        otros = [clave for clave, valor in self._valores.items() if clave != clave_este and valor > 0.009]
+        if len(otros) != 1:
             return
         falta = redondear_dinero(self._total - sum(self._valores.values()))
         if falta <= 0.009:
             return
-        self.txt_cliente.blockSignals(True)
-        self.txt_cliente.setText(f"{falta:.2f}")
-        self.txt_cliente.blockSignals(False)
+        campo.blockSignals(True)
+        campo.setText(f"{falta:.2f}")
+        campo.blockSignals(False)
+        campo.selectAll()
         self._recalcular()
 
     def _recalcular(self):

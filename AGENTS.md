@@ -14,6 +14,10 @@ Si un sector se ve chico (letras, tiles, botones), agrandar **solo en ese módul
 
 Detalle: `src/utils/README.md` y `.cursor/rules/escalado-global-no-tocar.mdc`.
 
+## Letras de góndola
+
+Referencia: Admin → Etiquetas de góndola. Al tocar un módulo de admin, jefe, inventario, promociones o reportes, aplicar `src/utils/letra.py` (id Consolas Bold, nombre y números Segoe UI Bold; títulos/KPI en QLabel con weight 900). No en `src/cajero`. Detalle: `src/utils/README.md` y `.cursor/rules/letras-gondola.mdc`.
+
 Antes de diagnosticar, editar o dar por lista una versión de `src/cajero`, leer `src/cajero/README.md`: las secciones «Parece un defecto y no se toca» y «Producción». Esa carpeta es base: no lleva `plano.md`. La nota de cada rama se llama `punta del piramide.md`. No borrar ni “juntar” lo que esa nota marca. No reemplazarla por un informe de riesgo nuevo.
 
 Antes de diagnosticar o editar `src/jefe`, leer `src/jefe/reglas.md`. Esa carpeta es base: no lleva `plano.md`. El tema es el global (`estilo_dia.qss` / `estilo_noche.qss`). `theme_pro.py` está retirado. El sqlite del nodo portable no se reemplaza por `db_manager`.

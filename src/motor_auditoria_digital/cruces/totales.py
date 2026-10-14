@@ -10,6 +10,8 @@ def de_filas(filas):
     cliente = 0.0
     n_sin_firmar = 0
     n_tickets = 0
+    sin_ticket = 0.0
+    n_sin_ticket = 0
     for p in filas or []:
         try:
             estado = str(p.get("estado") or "").upper()
@@ -28,6 +30,8 @@ def de_filas(filas):
             if estado == "SIN TICKET":
                 bruto += monto_mp
                 neto += neto_fila
+                sin_ticket += monto_mp
+                n_sin_ticket += 1
                 continue
             if estado in ("F9 MANUAL", "SIN FIRMAR"):
                 plata = monto_ticket or float(p.get("monto") or 0)
@@ -55,4 +59,6 @@ def de_filas(filas):
         "cliente": cliente,
         "n_sin_firmar": n_sin_firmar,
         "n_tickets": n_tickets,
+        "sin_ticket": sin_ticket,
+        "n_sin_ticket": n_sin_ticket,
     }

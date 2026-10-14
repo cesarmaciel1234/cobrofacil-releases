@@ -129,6 +129,7 @@ def cobros_auditoria(desde=None, hasta=None) -> dict:
         "digitales_total": 0,
         "cuenta_dni": 0,
         "mp_sin_ticket": 0,
+        "sin_ticket_monto": 0.0,
         "tickets_digitales": 0.0,
         "firmados": 0.0,
         "sin_firmar_monto": 0.0,
@@ -148,21 +149,10 @@ def cobros_auditoria(desde=None, hasta=None) -> dict:
         vacio["sin_firmar_monto"] = float(t.get("sin_firmar") or 0)
         vacio["cliente"] = float(t.get("cliente") or 0)
         vacio["bruto"] = float(t.get("bruto") or 0)
-        sin = 0
-        tot = 0
-        sueltos = 0
-        for p in filas:
-            estado = str(p.get("estado") or "").upper()
-            if estado == "SIN TICKET":
-                sueltos += 1
-            elif estado in ("SIN FIRMAR", "F9 MANUAL"):
-                sin += 1
-                tot += 1
-            elif estado == "FIRMADO":
-                tot += 1
-        vacio["digitales_sin_firma"] = sin
-        vacio["digitales_total"] = tot
-        vacio["mp_sin_ticket"] = sueltos
+        vacio["digitales_sin_firma"] = int(t.get("n_sin_firmar") or 0)
+        vacio["digitales_total"] = int(t.get("n_tickets") or 0)
+        vacio["mp_sin_ticket"] = int(t.get("n_sin_ticket") or 0)
+        vacio["sin_ticket_monto"] = float(t.get("sin_ticket") or 0)
     except Exception:
         pass
     return vacio

@@ -4,6 +4,8 @@
 
 Las pantallas están en `src/jefe/reportes/`, entre ellas `vista_financiero.py`. También miran esta regla `reportes_main.py` y `jefe_reportes.py` cuando arman el rótulo.
 
+Grillas de auditoría e historial: letras de góndola (`src/utils/letra.py`). Calendarios: `letra.py` de esta carpeta.
+
 No se muestra «Día 1», «Día 17» ni «Mes 2». El día se escribe con la abreviatura y la fecha, por ejemplo Lun 17. Sale de `weekday()` de esa fecha. El mes se escribe Ene, Feb, Mar.
 
 ## Fondo

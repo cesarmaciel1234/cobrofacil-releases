@@ -8,7 +8,7 @@ Todas reciben `desde` / `hasta` ('YYYY-MM-DD', los dos días incluidos). Sin fec
 - `cancelaciones(desde, hasta)`: ventas `CANCELADA` por `fecha_cancel` (si falta, la fecha de la venta). `{'cant', 'monto', 'cuando', 'usuario'}` de la última; `cuando` = 'YYYY-MM-DD HH:MM'.
 - `pagos_clientes(desde, hasta)`: abonos de `cuenta_corriente`.
 - `digitales(desde, hasta)`: `(sin_firmar, total)` solo QR/tarjeta/transferencia/Point. Fiado, Clientes y MasCredito no entran: son cuenta/DNI.
-- `cobros_auditoria(desde, hasta)`: mismos montos que el monitor (`tickets_digitales`, `cliente`, `sin_firmar_monto`, `firmados`) más conteos. La vitrina muestra el monto y `5/25` (no firmados / tickets digitales).
+- `cobros_auditoria(desde, hasta)`: mismos montos que el monitor (`tickets_digitales`, `cliente`, `sin_firmar_monto`, `firmados`, `sin_ticket_monto`) más conteos. La vitrina muestra el `5/25` (no firmados / tickets digitales) y aparte MP sin ticket.
 
 - `deuda_clientes()` e `inventario_costo()`: los mismos números que `cerebro.resumen_cuentas()` y `WorkerAnaliticaJefe`. El panel los usa sin maestra.
 

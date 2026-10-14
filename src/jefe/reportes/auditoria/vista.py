@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -27,6 +27,7 @@ from src.jefe.reportes.auditoria.kpis import pie, tarjeta_comparativa
 from src.jefe.reportes.financiero.dinero import fmt_plata
 from src.jefe.reportes.financiero.paleta import _FIN, _aplicar_paleta_tabla
 from src.jefe.reportes.letra import etiqueta, fuente_limpia
+from src.utils.letra import vestir_id, vestir_nombre, vestir_numero
 from src.jefe.reportes.periodo import montar_botones_periodo, pintar_activo, resolver_rango_periodo
 
 
@@ -221,8 +222,12 @@ class VistaAuditoria(QWidget):
                 it = QTableWidgetItem(txt)
                 it.setBackground(bg)
                 it.setForeground(QColor("#0F172A"))
-                it.setFont(QFont("Segoe UI", 9))
-                if c in (5, 7, 8):
+                if c == 0:
+                    vestir_id(it)
+                elif c == 4:
+                    vestir_nombre(it)
+                elif c in (5, 7, 8):
+                    vestir_numero(it)
                     it.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 self.table_audit.setItem(row, c, it)
         self.audit_offset += 100

@@ -6,7 +6,7 @@ import src.utils.qt_compat  # noqa: F401 — enums Qt6 (Qt + widgets)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
-    QAbstractItemView, QListWidget, QListWidgetItem, QDialog, QPushButton, QGridLayout,
+    QAbstractItemView, QDialog, QPushButton, QGridLayout,
     QComboBox, QDoubleSpinBox, QMessageBox, QScrollArea, QSizePolicy,
 )
 from PyQt6.QtCore import Qt, QTimer, QDate, QTime, QObject, pyqtSignal, QRect, QEvent
@@ -390,72 +390,83 @@ class Paso5Terminal(QWidget):
         self.panel_busqueda.hide()
         self.panel_busqueda.setGraphicsEffect(None)
         self.panel_busqueda.setStyleSheet(
-            "QFrame#TerminalBusquedaPanel { background: #FFFFFF; border: 1px solid #2563EB; }"
+            "QFrame#TerminalBusquedaPanel { background: #334155; border: 1px solid #1E293B; }"
         )
         bus_lay = QVBoxLayout(self.panel_busqueda)
         bus_lay.setContentsMargins(0, 0, 0, 0)
         bus_lay.setSpacing(0)
 
-        cab = QWidget()
-        cab.setFixedHeight(48)
-        cab.setStyleSheet("background: #F1F5F9; border: none; border-bottom: 1px solid #E2E8F0;")
-        cab_l = QHBoxLayout(cab)
-        cab_l.setContentsMargins(28, 0, 28, 0)
-        cab_l.setSpacing(28)
-        _hstyle = "font-size: 14px; font-weight: 800; color: #64748B; background: transparent; letter-spacing: 0.8px;"
-        h_nom = QLabel("PRODUCTO")
-        h_nom.setStyleSheet(_hstyle)
-        h_pre = QLabel("PRECIO")
-        h_pre.setFixedWidth(180)
-        h_pre.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        h_pre.setStyleSheet(_hstyle)
-        h_stk = QLabel("STOCK")
-        h_stk.setFixedWidth(170)
-        h_stk.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        h_stk.setStyleSheet(_hstyle)
-        cab_l.addWidget(h_nom, 1)
-        cab_l.addWidget(h_pre)
-        cab_l.addWidget(h_stk)
-        bus_lay.addWidget(cab)
-
-        self.list_results = QListWidget()
+        self.list_results = QTableWidget(0, 3)
         self.list_results.setObjectName("TerminalListResults")
+        self.list_results.setHorizontalHeaderLabels(["PRODUCTO", "PRECIO", "STOCK"])
+        self.list_results.verticalHeader().setVisible(False)
+        self.list_results.verticalHeader().setDefaultSectionSize(44)
+        self.list_results.setShowGrid(False)
+        self.list_results.setAlternatingRowColors(False)
+        self.list_results.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.list_results.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.list_results.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.list_results.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.list_results.setTabKeyNavigation(False)
+        self.list_results.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerItem)
+        self.list_results.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.list_results.setWordWrap(False)
+        hdr = self.list_results.horizontalHeader()
+        hdr.setStretchLastSection(False)
+        hdr.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
+        hdr.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
+        hdr.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
+        hdr.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.list_results.setTextElideMode(Qt.TextElideMode.ElideRight)
+        h_pre = self.list_results.horizontalHeaderItem(1)
+        if h_pre:
+            h_pre.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        h_stk = self.list_results.horizontalHeaderItem(2)
+        if h_stk:
+            h_stk.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self._fuente_busq_nom = QFont("Segoe UI")
+        self._fuente_busq_nom.setPixelSize(21)
+        self._fuente_busq_nom.setBold(True)
         self.list_results.itemClicked.connect(self.seleccionar_item_busqueda)
         self.list_results.installEventFilter(self)
         self.list_results.setGraphicsEffect(None)
-        self.list_results.setUniformItemSizes(True)
-        self.list_results.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerItem)
-        self.list_results.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._search_sel_row = -1
-        self.list_results.setAlternatingRowColors(False)
-        self.list_results.itemSelectionChanged.connect(self._update_search_colors)
-        self.list_results.setSpacing(0)
         self.list_results.setStyleSheet("""
-            QListWidget#TerminalListResults {
+            QTableWidget#TerminalListResults {
                 border: none;
-                background-color: #FFFFFF;
-                color: #0F172A;
-                outline: none;
-            }
-            QListWidget#TerminalListResults::item {
-                padding: 0px;
-                border: none;
-                border-bottom: 1px solid #F1F5F9;
-                min-height: 72px;
-            }
-            QListWidget#TerminalListResults::item:selected {
-                background-color: #2563EB;
+                background-color: #334155;
                 color: #FFFFFF;
+                outline: none;
+                font-size: 18px;
+                font-weight: 700;
+                gridline-color: #334155;
+            }
+            QTableWidget#TerminalListResults::item {
+                padding: 4px 8px;
+                border: none;
+                border-bottom: 1px solid #475569;
+            }
+            QTableWidget#TerminalListResults::item:selected {
+                background-color: #1D4ED8;
+                color: #FFFFFF;
+            }
+            QTableWidget#TerminalListResults QHeaderView::section {
+                background: #1E293B;
+                color: #E2E8F0;
+                border: none;
+                border-bottom: 1px solid #475569;
+                padding: 6px 8px;
+                font-size: 13px;
+                font-weight: 800;
             }
         """)
         bus_lay.addWidget(self.list_results, 1)
 
         self.lbl_busqueda_pie = QLabel("Enter agregar   ·   Esc cerrar")
-        self.lbl_busqueda_pie.setFixedHeight(36)
+        self.lbl_busqueda_pie.setFixedHeight(32)
         self.lbl_busqueda_pie.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_busqueda_pie.setStyleSheet(
-            "font-size: 13px; font-weight: 600; color: #64748B; background: #F8FAFC; "
-            "border: none; border-top: 1px solid #E2E8F0;"
+            "font-size: 13px; font-weight: 600; color: #E2E8F0; background: #1E293B; "
+            "border: none; border-top: 1px solid #475569;"
         )
         bus_lay.addWidget(self.lbl_busqueda_pie)
 
@@ -956,12 +967,12 @@ class Paso5Terminal(QWidget):
                     self.llamar_supervisor()
                     return True
                 elif key == Qt.Key.Key_Down:
-                    if not self.list_results.isHidden() and self.list_results.count() > 0:
+                    if not self.list_results.isHidden() and self.list_results.rowCount() > 0:
                         self.list_results.setFocus()
-                        if self.list_results.count() > 1:
-                            self.list_results.setCurrentRow(1)
+                        if self.list_results.rowCount() > 1:
+                            self._marcar_fila_busqueda(1)
                         else:
-                            self.list_results.setCurrentRow(0)
+                            self._marcar_fila_busqueda(0)
                         return True
                     elif self.tabla.rowCount() > 0:
                         self.tabla.setFocus()
@@ -970,9 +981,9 @@ class Paso5Terminal(QWidget):
                         QTimer.singleShot(0, self._on_tabla_nav_row_only)
                         return True
                 elif key == Qt.Key.Key_Up:
-                    if not self.list_results.isHidden() and self.list_results.count() > 0:
+                    if not self.list_results.isHidden() and self.list_results.rowCount() > 0:
                         self.list_results.setFocus()
-                        self.list_results.setCurrentRow(self.list_results.count() - 1)
+                        self._marcar_fila_busqueda(self.list_results.rowCount() - 1)
                         return True
                     elif self.tabla.rowCount() > 0:
                         self.tabla.setFocus()
@@ -1196,76 +1207,66 @@ class Paso5Terminal(QWidget):
         if getattr(self, "list_results", None) is not None:
             self.list_results.show()
 
-    def _color_stock_busqueda(self, selected, stock_val):
-        if selected:
-            return "#DBEAFE"
-        if stock_val <= 0:
-            return "#B91C1C"
-        if stock_val <= 5:
-            return "#C2410C"
-        return "#64748B"
+    def _marcar_fila_busqueda(self, row):
+        if row < 0 or row >= self.list_results.rowCount():
+            return
+        self.list_results.setCurrentCell(row, 0)
+        self.list_results.selectRow(row)
 
-    def _pintar_fila_busqueda(self, row, selected):
-        item = self.list_results.item(row)
-        if not item:
-            return
-        w = self.list_results.itemWidget(item)
-        if not w:
-            return
-        lbl_n = w.findChild(QLabel, "lbl_n")
-        lbl_p = w.findChild(QLabel, "lbl_p")
-        lbl_s = w.findChild(QLabel, "lbl_s")
-        if not (lbl_n and lbl_p and lbl_s):
-            return
-        prod = item.data(Qt.UserRole) or {}
-        try:
-            if hasattr(prod, "get"):
-                stk = float(prod.get("stock") or 0)
-            else:
-                stk = float(prod["stock"] or 0)
-        except Exception:
-            stk = 0.0
-        col_s = self._color_stock_busqueda(selected, stk)
-        if selected:
-            lbl_n.setStyleSheet("font-size: 22px; font-weight: 700; background: transparent; color: #FFFFFF;")
-            lbl_p.setStyleSheet("font-size: 21px; font-weight: 700; background: transparent; color: #FFFFFF;")
-        else:
-            lbl_n.setStyleSheet("font-size: 22px; font-weight: 700; background: transparent; color: #0F172A;")
-            lbl_p.setStyleSheet("font-size: 21px; font-weight: 700; background: transparent; color: #047857;")
-        lbl_s.setStyleSheet(f"font-size: 18px; font-weight: 600; background: transparent; color: {col_s};")
-
-    def _update_search_colors(self):
-        if not hasattr(self, "list_results"):
-            return
+    def _producto_de_busqueda(self):
         row = self.list_results.currentRow()
-        prev = getattr(self, "_search_sel_row", -1)
-        if prev >= 0 and prev != row:
-            self._pintar_fila_busqueda(prev, False)
-        if row >= 0:
-            self._pintar_fila_busqueda(row, True)
-        self._search_sel_row = row
+        if row < 0:
+            return None
+        celda = self.list_results.item(row, 0)
+        if celda is None:
+            return None
+        return celda.data(Qt.UserRole)
+
+    def _columnas_lineales_busqueda(self, ancho):
+        """Tres cajas fijas: nombre | precio | stock. El sobrante va a stock, no al medio."""
+        if ancho < 240:
+            return
+        w_pre = 132
+        w_stk = max(168, int(ancho * 0.22))
+        w_nom = ancho - w_pre - w_stk
+        if w_nom > 420:
+            w_stk += w_nom - 420
+            w_nom = 420
+        if w_nom < 220:
+            w_nom = max(180, ancho - w_pre - 140)
+            w_stk = max(120, ancho - w_nom - w_pre)
+        self.list_results.setColumnWidth(0, w_nom)
+        self.list_results.setColumnWidth(1, w_pre)
+        self.list_results.setColumnWidth(2, w_stk)
 
     def _layout_list_results_popup(self, metrics=None):
         if not hasattr(self, "panel_busqueda") or not hasattr(self, "txt_scan"):
             return
-        w = max(int(self.width() * 0.72), 980)
-        w = min(w, max(720, self.width() - 48))
-        n = max(1, self.list_results.count())
-        vis = min(n, 10)
-        row_h = 72
-        h = 48 + vis * row_h + 36
+        n = max(1, self.list_results.rowCount())
+        vis = min(n, 8)
+        row_h = 44
+        h = 36 + vis * row_h + 32
         max_h = max(360, int(self.height() * 0.68))
         h = min(h, max_h)
         from PyQt6.QtCore import QPoint
+        if hasattr(self, "tabla") and self.tabla.width() > 200:
+            pos_t = self.tabla.mapTo(self, QPoint(0, 0))
+            x = pos_t.x()
+            w = self.tabla.width()
+        else:
+            pos = self.txt_scan.mapTo(self, QPoint(0, 0))
+            x = pos.x()
+            w = max(int(self.width() * 0.88), 720)
+            w = min(w, max(720, self.width() - 16))
+        if x + w > self.width() - 8:
+            x = max(8, self.width() - w - 8)
         pos = self.txt_scan.mapTo(self, QPoint(0, 0))
-        x = pos.x()
-        if x + w > self.width() - 16:
-            x = max(16, self.width() - w - 16)
-        y = pos.y() - h - 10
-        if y < 8:
-            y = 8
-            h = max(280, pos.y() - 18)
+        y = pos.y() - h - 8
+        if y < 6:
+            y = 6
+            h = max(280, pos.y() - 14)
         self.panel_busqueda.setGeometry(x, y, w, h)
+        self._columnas_lineales_busqueda(max(200, w - 2))
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -1443,85 +1444,67 @@ class Paso5Terminal(QWidget):
             self._ocultar_busqueda()
             return
         res = self.controller.carrito.buscar_productos(txt)
-        self.list_results.clear()
-
-        if res:
-            for r in res:
-                stk = float(r['stock'] or 0.0)
-                stk_str = self._fmt_stock_mostrar(r, stk)
-
-                item = QListWidgetItem()
-                item.setData(Qt.UserRole, r)
-                self.list_results.addItem(item)
-
-                w = QWidget()
-                w.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-                lay = QHBoxLayout(w)
-                lay.setContentsMargins(28, 14, 28, 14)
-                lay.setSpacing(28)
-                w.setFixedHeight(72)
-
-                lbl_n = QLabel(str(r['nombre']))
-                lbl_n.setObjectName("lbl_n")
-                lbl_n.setStyleSheet("font-size: 22px; font-weight: 700; background: transparent; color: #0F172A;")
-                lbl_n.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-
-                lbl_p = QLabel(f"${r['precio']:.2f}")
-                lbl_p.setObjectName("lbl_p")
-                lbl_p.setFixedWidth(180)
-                lbl_p.setStyleSheet("font-size: 21px; font-weight: 700; background: transparent; color: #047857;")
-                lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-
-                lbl_s = QLabel(stk_str)
-                lbl_s.setObjectName("lbl_s")
-                lbl_s.setFixedWidth(170)
-                col_s = self._color_stock_busqueda(False, stk)
-                lbl_s.setStyleSheet(f"font-size: 15px; font-weight: 600; background: transparent; color: {col_s};")
-                lbl_s.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-
-                lay.addWidget(lbl_n, 1)
-                lay.addWidget(lbl_p)
-                lay.addWidget(lbl_s)
-
-                item.setSizeHint(w.sizeHint())
-                self.list_results.setItemWidget(item, w)
-            self._search_sel_row = -1
-            self.list_results.setCurrentRow(0)
-            self._update_search_colors()
-            nres = self.list_results.count()
+        hay = bool(res)
+        self.list_results.setUpdatesEnabled(False)
+        self.list_results.blockSignals(True)
+        try:
+            self.list_results.clearContents()
+            self.list_results.setRowCount(0)
+            if hay:
+                blanco = QColor("#FFFFFF")
+                verde = QColor("#86EFAC")
+                gris = QColor("#E2E8F0")
+                self.list_results.setRowCount(len(res))
+                for i, r in enumerate(res):
+                    stk = float(r['stock'] or 0.0)
+                    nom = QTableWidgetItem(str(r['nombre']))
+                    nom.setData(Qt.UserRole, r)
+                    nom.setForeground(blanco)
+                    nom.setFont(self._fuente_busq_nom)
+                    pre = QTableWidgetItem(f"${r['precio']:.2f}")
+                    pre.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                    pre.setForeground(verde)
+                    stk_i = QTableWidgetItem(self._fmt_stock_mostrar(r, stk))
+                    stk_i.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                    stk_i.setForeground(gris)
+                    self.list_results.setItem(i, 0, nom)
+                    self.list_results.setItem(i, 1, pre)
+                    self.list_results.setItem(i, 2, stk_i)
+            else:
+                self.list_results.setRowCount(1)
+                vacio = QTableWidgetItem(f"Sin resultados para «{txt}»")
+                vacio.setData(Qt.UserRole, None)
+                vacio.setForeground(QColor("#FCA5A5"))
+                vacio.setFlags(Qt.ItemFlag.ItemIsEnabled)
+                self.list_results.setItem(0, 0, vacio)
+                self.list_results.setItem(0, 1, QTableWidgetItem(""))
+                self.list_results.setItem(0, 2, QTableWidgetItem(""))
+                self.list_results.clearSelection()
+        finally:
+            self.list_results.blockSignals(False)
+            self.list_results.setUpdatesEnabled(True)
+        if hay:
+            self._marcar_fila_busqueda(0)
+            nres = self.list_results.rowCount()
             if hasattr(self, "lbl_busqueda_pie"):
                 self.lbl_busqueda_pie.setText(f"{nres} resultado{'s' if nres != 1 else ''}   ·   Enter agregar   ·   Esc cerrar")
-            self._mostrar_busqueda()
-        else:
-            item = QListWidgetItem()
-            item.setData(Qt.UserRole, None)
-            vacio = QLabel(f"Sin resultados para «{txt}»")
-            vacio.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            vacio.setStyleSheet("font-size: 16px; font-weight: 700; color: #B91C1C; background: transparent;")
-            vacio.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-            item.setSizeHint(vacio.sizeHint())
-            self.list_results.addItem(item)
-            self.list_results.setItemWidget(item, vacio)
-            self.list_results.clearSelection()
-            if hasattr(self, "lbl_busqueda_pie"):
-                self.lbl_busqueda_pie.setText("Esc cerrar")
-            self._mostrar_busqueda()
+        elif hasattr(self, "lbl_busqueda_pie"):
+            self.lbl_busqueda_pie.setText("Esc cerrar")
+        self._mostrar_busqueda()
 
     def seleccionar_item_busqueda(self):
-        current = self.list_results.currentItem()
-        if current:
-            p = current.data(Qt.UserRole)
-            if p:
-                # Si el usuario había ingresado un multiplicador en el texto, lo rescatamos
-                txt_raw = self.txt_scan.text().strip()
-                cant_multi = 1.0
-                if '*' in txt_raw:
-                    try: cant_multi = float(txt_raw.split('*')[0].replace(',', '.'))
-                    except: pass
-                self.agregar_a_tabla(p, cant_multi)
-                self.txt_scan.clear()
-                self._ocultar_busqueda()
-                self.txt_scan.setFocus()
+        p = self._producto_de_busqueda()
+        if p:
+            # Si el usuario había ingresado un multiplicador en el texto, lo rescatamos
+            txt_raw = self.txt_scan.text().strip()
+            cant_multi = 1.0
+            if '*' in txt_raw:
+                try: cant_multi = float(txt_raw.split('*')[0].replace(',', '.'))
+                except: pass
+            self.agregar_a_tabla(p, cant_multi)
+            self.txt_scan.clear()
+            self._ocultar_busqueda()
+            self.txt_scan.setFocus()
 
     def procesar_scan(self):
         from src.utils.barcode_parser import BarcodeParser
@@ -1545,16 +1528,14 @@ class Paso5Terminal(QWidget):
 
         # 2. Si no fue un código exacto, pero la lista de resultados está visible y hay selección
         if not self.list_results.isHidden():
-            current = self.list_results.currentItem()
-            if current:
-                p = current.data(Qt.UserRole)
-                if p:
-                    _, cantidad = BarcodeParser.parse_scan_text(txt_raw)
-                    self.agregar_a_tabla(p, cantidad)
-                    self.txt_scan.clear()
-                    self._ocultar_busqueda()
-                    self.txt_scan.setFocus()
-                    return
+            p = self._producto_de_busqueda()
+            if p:
+                _, cantidad = BarcodeParser.parse_scan_text(txt_raw)
+                self.agregar_a_tabla(p, cantidad)
+                self.txt_scan.clear()
+                self._ocultar_busqueda()
+                self.txt_scan.setFocus()
+                return
 
         if error_msg:
             from PyQt6.QtWidgets import QMessageBox

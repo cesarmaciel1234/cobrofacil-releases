@@ -15,3 +15,17 @@ Piezas transversales (DPI, Qt, paths). No es un módulo de pantalla.
 Motivo: en laptop 14" un bump de 0.70 → 0.88 agranda cajero y todo lo demás. Modularizar exige que el trabajo en un sector no mueva el zoom del proceso.
 
 Referencia de tipografía local legible: `src/admin/configuracion/componentes/config_button.py` (`max(15, scale_px(16))` en el texto del tile).
+
+## `letra.py` — letras de góndola
+
+Misma lectura que Admin → Etiquetas de góndola.
+
+| Pieza | Función |
+|---|---|
+| Id / PLU | `fuente_id` / `vestir_id` (Consolas Bold) |
+| Nombre | `fuente_nombre` / `vestir_nombre` (Segoe UI Bold) |
+| Precio, stock, totales | `fuente_numero` / `vestir_numero` |
+| Título de pantalla | `QSS_TITULO` en QLabel |
+| Número grande de KPI | `QSS_KPI` en QLabel |
+
+Al tocar un módulo (inventario, promociones, reportes jefe, resto admin/jefe), vestir las tablas con estas funciones. No QSS 900 + `setBold` juntos. No en el cajero. Calendarios: `src/jefe/reportes/letra.py`.

@@ -10,7 +10,7 @@ Al mostrarse, `showEvent` aplica el perfil, el tema claro u oscuro y a los 80 ms
 
 `_es_lectura` es verdadero solo si el rol es `cajero`. Ese perfil ve la lista y no puede sumar conteos ni aplicar stock. Admin y jefe sí.
 
-`cargar_datos` pide el inventario al conector y arma la tabla. Columnas: id, código, nombre, departamento, stock del sistema, conteo real, diferencia. El stock del sistema no se edita. El conteo real, en admin, nace vacío y en ámbar. En el id de la fila se guardan `es_pesable` y `unidad`.
+`cargar_datos` pide el inventario al conector y arma la tabla. Columnas: id, código, nombre, departamento, stock del sistema, conteo real, diferencia. Letras de góndola (`src/utils/letra.py`): id/código Consolas Bold, nombre y stock Segoe UI Bold. El stock del sistema no se edita. El conteo real, en admin, nace vacío y en ámbar. En el id de la fila se guardan `es_pesable` y `unidad`.
 
 `_info_unidad` elige la unidad:
 

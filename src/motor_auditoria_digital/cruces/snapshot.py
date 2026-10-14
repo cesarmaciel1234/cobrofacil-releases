@@ -47,6 +47,20 @@ def armar(desde, hasta):
         from src.motor_auditoria_digital.consultas.cobranzas import listar as cobranzas
 
         por_pago, _firmados = mapas()
+        lista_pagos = []
+        try:
+            lista_pagos = list(pagos_mp() or [])
+        except Exception:
+            lista_pagos = []
+        try:
+            from src.motor_cobros_digitales.libro.tabla import tickets_por_pago
+
+            extra = tickets_por_pago([str(p.get("id") or "") for p in lista_pagos]) or {}
+            for pid, nro in extra.items():
+                if pid and nro and pid not in por_pago:
+                    por_pago[pid] = nro
+        except Exception:
+            pass
         f9 = lista_f9()
         abonos = []
         try:
@@ -65,7 +79,7 @@ def armar(desde, hasta):
         por_ticket = {str(v.get("ticket") or ""): v for v in ventas if v.get("ticket")}
         vistos = set()
 
-        for p in pagos_mp():
+        for p in lista_pagos:
             try:
                 if str(p.get("estado") or "").upper() == "OMITIDO":
                     continue
@@ -215,7 +229,58 @@ def armar(desde, hasta):
                 ))
             except Exception:
                 continue
+        filas = _cerrar_parejas_unicas(filas)
         filas.sort(key=lambda r: r.get("fecha") or "", reverse=True)
     except Exception:
         return filas
     return filas
+
+
+def _cerrar_parejas_unicas(filas):
+    """Pago MP y ticket del mismo monto, únicos y a pocos minutos: una sola fila FIRMADO. No escribe la base."""
+    try:
+        from src.motor_cobros_digitales.enlace.automatico import _dt, parejas
+    except Exception:
+        return filas
+    sueltos = []
+    ventas = []
+    idx_pago = {}
+    idx_venta = {}
+    for i, f in enumerate(filas or []):
+        est = str(f.get("estado") or "").upper()
+        if est == "SIN TICKET":
+            pid = str(f.get("id") or "").strip()
+            cuando = _dt(f.get("fecha"))
+            if pid and pid not in ("—", "-") and cuando:
+                sueltos.append((pid, cuando, float(f.get("monto_mp") or f.get("monto") or 0)))
+                idx_pago[pid] = i
+        elif est == "SIN FIRMAR":
+            nro = str(f.get("ticket_venta") or "").strip()
+            cuando = _dt(f.get("fecha"))
+            if nro and nro not in ("—", "-") and cuando:
+                ventas.append((nro, cuando, float(f.get("monto_ticket") or f.get("monto") or 0)))
+                idx_venta[nro] = i
+    if not sueltos or not ventas:
+        return filas
+    quitar = set()
+    try:
+        pares = parejas(ventas, sueltos)
+    except Exception:
+        return filas
+    for pid, nro in pares:
+        i_p = idx_pago.get(pid)
+        i_v = idx_venta.get(nro)
+        if i_p is None or i_v is None:
+            continue
+        pago = filas[i_p]
+        venta = filas[i_v]
+        pago["estado"] = "FIRMADO"
+        pago["ticket_venta"] = nro
+        pago["ticket"] = nro
+        pago["monto_ticket"] = float(venta.get("monto_ticket") or venta.get("monto") or 0)
+        pago["monto"] = pago["monto_ticket"] or float(pago.get("monto") or 0)
+        pago["nombre"] = venta.get("nombre") or pago.get("nombre")
+        quitar.add(i_v)
+    if not quitar:
+        return filas
+    return [f for i, f in enumerate(filas) if i not in quitar]

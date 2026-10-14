@@ -22,9 +22,10 @@ Hoy / Semana / **Mes** (defecto) / Año / Período. Emite `periodo_cambiado`. El
 | Inventario al costo | foto del momento |
 | Pagos clientes | abonos de `cuenta_corriente` |
 | Deuda clientes | foto del momento |
-| Tickets digitales | `cobros_auditoria.tickets_digitales` (mismo motor que el monitor) |
+| Tickets digitales | `cobros_auditoria.tickets_digitales` (mismo motor que el monitor). Plata **con ticket**: entra al libro de ventas y a la facturación. |
 | Cliente | cobranza F6 digital del período (factura el mes del cobro) |
-| Sin firmar / F9 | monto a la izquierda; `5/25` a la derecha (no firmados / tickets digitales). Abajo: «5 tickets no firmados de 25». MP sin ticket no se mezcla acá. |
+| Sin firmar / F9 | monto a la izquierda; `5/25` a la derecha (no firmados / tickets digitales). Abajo: «5 tickets no firmados de 25». El ticket ya existe: se puede facturar. Falta el id MP. |
+| MP sin ticket | cobros de Mercado Pago **sin** ticket de venta. Monto y cantidad. No se mezcla con el 5/25. No está en `ventas`: hay que asociar o emitir ticket para facturarlo. |
 | Redondeo | `SUM(descuento)` |
 | Tickets | todas las ventas vigentes |
 | Cancelaciones | por `fecha_cancel` |

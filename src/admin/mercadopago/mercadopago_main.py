@@ -190,6 +190,10 @@ class Admin10MP(QWidget):
         self.card_total, self.lbl_kpi_total = create_kpi_card("TICKETS DIGITALES", "$0.00", "#0284c7")
         self.card_count, self.lbl_kpi_count = create_kpi_card("FIRMADOS EN TICKET", "$0.00", "#059669")
         self.card_avg, self.lbl_kpi_avg = create_kpi_card("SIN FIRMAR / F9", "$0.00", "#d97706")
+        self.card_suelto, self.lbl_kpi_suelto = create_kpi_card("MP SIN TICKET", "$0.00", "#dc2626")
+        self.card_suelto._ratio.setStyleSheet(
+            "font-size: 22px; font-weight: 900; color: #DC2626; font-family: 'Segoe UI Black';"
+        )
         self.card_cliente, self.lbl_kpi_cliente = create_kpi_card("CLIENTE", "$0.00", "#0369A1")
 
         kpi_lay.addWidget(self.card_total_mes)
@@ -197,6 +201,7 @@ class Admin10MP(QWidget):
         kpi_lay.addWidget(self.card_total)
         kpi_lay.addWidget(self.card_count)
         kpi_lay.addWidget(self.card_avg)
+        kpi_lay.addWidget(self.card_suelto)
         kpi_lay.addWidget(self.card_cliente)
 
         body.addLayout(kpi_lay)
@@ -583,6 +588,7 @@ class Admin10MP(QWidget):
             t = {
                 "bruto": 0.0, "neto": 0.0, "tickets": 0.0, "firmados": 0.0,
                 "sin_firmar": 0.0, "cliente": 0.0, "n_sin_firmar": 0, "n_tickets": 0,
+                "sin_ticket": 0.0, "n_sin_ticket": 0,
             }
         self.lbl_kpi_total_mes.setText(f"${t['bruto']:,.2f}")
         self.lbl_kpi_neto_mes.setText(f"${t['neto']:,.2f}")
@@ -600,6 +606,16 @@ class Admin10MP(QWidget):
             self.card_avg._nota.show()
         else:
             self.card_avg._nota.hide()
+        self.lbl_kpi_suelto.setText(f"${float(t.get('sin_ticket') or 0):,.2f}")
+        n_suelto = int(t.get("n_sin_ticket") or 0)
+        self.card_suelto._ratio.setText(str(n_suelto))
+        self.card_suelto._ratio.show()
+        self.card_suelto._sep.show()
+        if n_suelto:
+            self.card_suelto._nota.setText(f"{n_suelto} cobro{'s' if n_suelto != 1 else ''} MP sin ticket")
+            self.card_suelto._nota.show()
+        else:
+            self.card_suelto._nota.hide()
 
         self.tabla.setRowCount(0)
         for p in filas:

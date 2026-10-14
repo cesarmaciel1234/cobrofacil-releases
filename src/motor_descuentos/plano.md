@@ -12,7 +12,7 @@ Hub admin «Motor de promociones». Cada tarjeta abre un módulo aislado; al vol
 | Imprenta / PDF | Solo PDF para clientes | Lee ofertas; no las edita |
 | Mayoreo | Global: Inventario + Promedios jefe (`MotorMayoreo`) | No es oferta de cartelería |
 
-Tema claro (`#F8FAFC` / blancos). No usa `styles.qss` del cajero.
+Tema claro (`#F8FAFC` / blancos). No usa `styles.qss` del cajero. Tablas: letras de góndola (`src/utils/letra.py`).
 
 ## Fondo
 

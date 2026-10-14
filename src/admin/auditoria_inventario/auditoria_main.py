@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QBrush, QKeyEvent
 from src.cerebro_global.auditoria.motor_conector_auditoria import obtener_conector_auditoria
 from src.utils.theme_manager import theme_manager
+from src.utils.letra import vestir_id, vestir_nombre, vestir_numero
 from src.config import config
 
 
@@ -669,6 +670,12 @@ class AuditoriaMain(QWidget):
             for col, val in enumerate([p_id, codigo, nombre, depto, stock]):
                 item = QTableWidgetItem(val)
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                if col in (self.COL_ID, self.COL_COD):
+                    vestir_id(item)
+                elif col == self.COL_NOM:
+                    vestir_nombre(item)
+                elif col == self.COL_SIST:
+                    vestir_numero(item)
                 self.tabla.setItem(i, col, item)
             id_item = self.tabla.item(i, self.COL_ID)
             id_item.setData(Qt.ItemDataRole.UserRole + 1, bool(row.get("es_pesable")))
