@@ -6,7 +6,7 @@ Esta hoja vive dentro de F6. No abre la venta.
 
 1. Fiado confirma cliente y monto a abonar → `pagina.abrir`.
 2. Saluda «Hola nombre» y pregunta el medio.
-3. Efectivo: el monto a abonar ya está definido; pide aparte el efectivo recibido y muestra el vuelto. Al confirmar, pide PIN y, solo si se autoriza, abre el cajón y registra el abono. Si el PIN se cancela o falla, mantiene el recibido y no abre el cajón.
+3. Efectivo: el monto a abonar ya está definido; pide aparte el efectivo recibido y muestra el vuelto. Dice «Presione Enter para cobrar». Al confirmar, pide PIN y, solo si se autoriza, abre el cajón y registra el abono. Si el PIN se cancela o falla, mantiene el recibido y no abre el cajón.
 4. Transferencia, tarjeta y QR: el clic pide PIN antes de iniciar el motor.
 5. Transferencia: `pago_llegado`. Si llega el importe, asienta. F9 solo sin internet.
 6. Tarjeta: Point; si FINISHED, asienta. F9 solo si la terminal no arrancó.

@@ -112,8 +112,10 @@ class Jefe0Dashboard(QWidget):
             desde, hasta = self._rango_vitrina()
             self.panel_pub.set_ganancia(metricas.ganancia(desde, hasta))
             aud = metricas.cobros_auditoria(desde, hasta)
+            redondeo_f3, desc_oferta = metricas.redondeo_y_descuento(desde, hasta)
             self.panel_pub.set_cobros_dia(
-                metricas.redondeo(desde, hasta),
+                redondeo_f3,
+                desc_oferta,
                 aud["digitales_sin_firma"],
                 aud["digitales_total"],
                 aud.get("cuenta_dni") or 0,

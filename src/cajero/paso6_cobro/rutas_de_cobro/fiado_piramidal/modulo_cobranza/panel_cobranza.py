@@ -398,11 +398,17 @@ class PanelCobranza(QFrame):
 
     def _on_lienzo_listo(self, medio, det):
         if getattr(self, "_detalles_mixto", None) is not None:
-            # Paso digital del cobro mixto completado con éxito
+            if str(det or "").upper() == "F9 MANUAL":
+                extra = dict(self._detalles_mixto)
+                extra["pago_id"] = "F9 MANUAL"
+                self._pasos_digitales_mixto = []
+                self._detalles_mixto = None
+                self.submetodo_cambiado.emit("")
+                self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Mixto", extra)
+                return
             self._ejecutar_siguiente_paso_mixto()
-        else:
-            # Cobro individual directo
-            self._finalizar_cobranza_con_motor(self._monto_a_cobrar, medio, det)
+            return
+        self._finalizar_cobranza_con_motor(self._monto_a_cobrar, medio, det)
 
     def _finalizar_cobranza_con_motor(self, monto_lienzo, medio, detalles):
         if not hasattr(self, '_monto_a_cobrar'):
@@ -411,10 +417,9 @@ class PanelCobranza(QFrame):
         
     def procesar_f9(self):
         from PyQt6.QtCore import Qt
-        if self._modo == "cobrando_lienzo":
-            actual = self.cont_lienzos.currentWidget()
-            if hasattr(actual, "tecla"):
-                return bool(actual.tecla(Qt.Key.Key_F9))
+        actual = self.cont_lienzos.currentWidget() if hasattr(self, "cont_lienzos") else None
+        if actual is not None and actual.isVisible() and hasattr(actual, "tecla"):
+            return bool(actual.tecla(Qt.Key.Key_F9))
         return False
 
     def eventFilter(self, watched, event):

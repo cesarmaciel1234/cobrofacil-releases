@@ -215,15 +215,14 @@ class PanelQrCobro(QFrame):
             return
         if dato.get("vuelo"):
             self._en_vuelo = False
-        if dato.get("pagado") and dato.get("pago"):
-            if self._modo != "esperando":
-                return
-            self._modo = "oculto"
-            self._en_vuelo = False
-            self._reloj.stop()
-            self._pago = dato.get("pago") or {}
-            self.estado.setText("Pago recibido.")
-            self.pago_listo.emit(self._monto)
+            if dato.get("pagado") and dato.get("pago"):
+                if self._modo != "esperando":
+                    return
+                self._modo = "oculto"
+                self._reloj.stop()
+                self._pago = dato.get("pago") or {}
+                self.estado.setText("Pago recibido.")
+                self.pago_listo.emit(self._monto)
             return
         pedido = dato.get("pedido") or {}
         if pedido.get("ok"):

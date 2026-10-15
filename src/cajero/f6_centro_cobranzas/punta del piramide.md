@@ -18,7 +18,7 @@ f6_centro_cobranzas/
 
 ## Frente
 
-Buscador por DNI o nombre (tope 5). Ficha: hola, deuda o a favor, o al día. PAGAR / ABONAR aunque no haya deuda: el excedente queda a favor. Medios: Efectivo, Tarjeta, QR, Transferencia, Mixto.
+Buscador por DNI o nombre (tope 5). Ficha: hola, deuda o a favor, o al día. PAGAR / ABONAR aunque no haya deuda: el excedente queda a favor, sin cartel. Medios: Efectivo, Tarjeta, QR, Transferencia, Mixto.
 
 Admin Abonar abre el mismo diálogo con `perfil=Admin`.
 
@@ -28,7 +28,7 @@ No pinta alta de cliente. Las flechas no saltan a F2.
 
 1. `consulta.buscar_cuentas` — tabla `clientes`. No crea filas.
 2. Hilo `consulta_historial/hilo.py` pregunta a `src/clientes_fiado/oficina/consulta_historial`. Si se cae, PAGAR sigue.
-3. QR / tarjeta / transferencia: el lienzo espera el importe y, si llega, llama `finalizar` solo. F9 es emergencia.
+3. QR / tarjeta / transferencia: el lienzo espera el importe y, si llega, llama `finalizar` solo. **F9** asocia (otro monto) o cierra a mano. **Enter no asocia**: espera el exacto.
 4. Mixto reparte y encadena esos lienzos. Recién después `MotorCobranzaMedios.finalizar` → `asentar` una vez (`COB-{id}`).
 5. Admin no vuelve a asentar.
 

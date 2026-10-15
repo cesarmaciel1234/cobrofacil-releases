@@ -42,8 +42,8 @@ def ganancia(desde=None, hasta=None):
         return calcular_ganancia_parcial(f"{d0} 00:00:00", f"{d1} 23:59:59")
     except Exception:
         return None
-def redondeo(desde=None, hasta=None) -> float:
-    """Suma de `descuento` (F3 redondeo + oferta en ticket) de ventas vigentes del rango."""
+def _suma_descuento_ticket(desde=None, hasta=None) -> float:
+    """Columna `ventas.descuento`: F3 + ofertas, como se guarda al cobrar."""
     try:
         filas = _db().execute_query(
             f"""
@@ -58,6 +58,53 @@ def redondeo(desde=None, hasta=None) -> float:
         return float(_val(filas[0], "total") or 0)
     except Exception:
         return 0.0
+
+
+def _suma_ofertas_lineas(desde=None, hasta=None) -> float:
+    """Ahorro de oferta: lista actual vs subtotal cobrado. No es F3."""
+    params = _rango(desde, hasta)
+    sql = f"""
+        SELECT COALESCE(SUM(
+            CASE
+                WHEN (d.cantidad * p.precio) - d.subtotal > 0.009
+                THEN (d.cantidad * p.precio) - d.subtotal
+                ELSE 0
+            END
+        ), 0) AS total
+        FROM {{tabla}} d
+        INNER JOIN ventas v ON v.id = d.id_venta
+        INNER JOIN productos p ON p.id = d.id_producto
+        WHERE v.estado IN {VIGENTES} AND v.fecha >= ? AND v.fecha < ?
+    """
+    for tabla in ("detalles_ventas", "detalle_ventas"):
+        try:
+            filas = _db().execute_query(sql.format(tabla=tabla), params)
+            if filas:
+                return float(_val(filas[0], "total") or 0)
+        except Exception:
+            continue
+    return 0.0
+
+
+def redondeo_y_descuento(desde=None, hasta=None) -> tuple[float, float]:
+    """(F3 redondeo, ofertas). Parte `ventas.descuento` para no mezclar las dos tarjetas."""
+    total = _suma_descuento_ticket(desde, hasta)
+    if total <= 0:
+        return 0.0, 0.0
+    ofertas = min(total, max(0.0, _suma_ofertas_lineas(desde, hasta)))
+    return round(total - ofertas, 2), round(ofertas, 2)
+
+
+def redondeo(desde=None, hasta=None) -> float:
+    """F3 del rango. Las ofertas van en `descuento()`."""
+    r, _o = redondeo_y_descuento(desde, hasta)
+    return r
+
+
+def descuento(desde=None, hasta=None) -> float:
+    """Ofertas del ticket (columna DES. TOTAL). El F3 va en `redondeo()`."""
+    _r, o = redondeo_y_descuento(desde, hasta)
+    return o
 
 
 def tickets(desde=None, hasta=None) -> tuple[int, float]:

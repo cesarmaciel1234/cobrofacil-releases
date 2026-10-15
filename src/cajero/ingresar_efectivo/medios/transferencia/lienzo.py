@@ -55,7 +55,7 @@ class LienzoTransferencia(QWidget):
         self._oferta_monto = 0.0
         self._tpv_listo = _luz_tpv()
         self.toast.cerrar()
-        self.lbl_f9.setVisible(not self._tpv_listo)
+        self.lbl_f9.show()
         if self._tpv_listo:
             self.estado.setText(f"Escuchando la transferencia (${self._monto:,.2f})")
         else:
@@ -94,8 +94,6 @@ class LienzoTransferencia(QWidget):
             if self.toast.tiene_accion():
                 self.toast.aceptar()
                 return True
-            if self._tpv_listo:
-                return False
             if getattr(self, "_manual", False):
                 return True
             self._manual = True
@@ -157,7 +155,7 @@ class LienzoTransferencia(QWidget):
     def _ofrecer(self, pago_id, monto, nombre=None):
         from src.cajero.paso6_cobro.transferencia_en_cobro.escucha import texto_enlazar
 
-        self.lbl_f9.show()
+        self.lbl_f9.hide()
         self.toast.mostrar(
             texto_enlazar(monto, nombre, "abono"),
             accion=lambda: self._tomar(str(pago_id), float(monto)),

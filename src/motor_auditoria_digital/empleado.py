@@ -5,20 +5,17 @@ from __future__ import annotations
 import threading
 import time
 
-_arrancado = False
-_cache = []
-_clave = None
 _lock = threading.Lock()
 _pedir = threading.Event()
+_estado = {"arrancado": False, "cache": [], "clave": None}
 
 
 def snapshot(desde, hasta, forzar=False):
     """Copia en memoria. Si el hilo todavía no armó, arma una vez y no tumba la UI."""
-    global _cache, _clave
     clave = (desde, hasta)
     with _lock:
-        if not forzar and _clave == clave and _cache:
-            return list(_cache)
+        if not forzar and _estado["clave"] == clave and _estado["cache"]:
+            return list(_estado["cache"])
     try:
         from src.motor_auditoria_digital.cruces.snapshot import armar
 
@@ -26,8 +23,8 @@ def snapshot(desde, hasta, forzar=False):
     except Exception:
         filas = []
     with _lock:
-        _cache = filas
-        _clave = clave
+        _estado["cache"] = filas
+        _estado["clave"] = clave
     _pedir.set()
     return list(filas)
 
@@ -46,7 +43,7 @@ def _jornada():
         _pedir.wait(45)
         _pedir.clear()
         with _lock:
-            clave = _clave
+            clave = _estado["clave"]
         if not clave:
             continue
         try:
@@ -56,21 +53,20 @@ def _jornada():
         except Exception:
             continue
         with _lock:
-            _cache = filas
-            _clave = clave
+            _estado["cache"] = filas
+            _estado["clave"] = clave
 
 
 def despertar():
-    global _cache, _clave
     with _lock:
-        _cache = []
-        _clave = None
+        _estado["cache"] = []
+        _estado["clave"] = None
     _pedir.set()
 
 
 def arrancar():
-    global _arrancado
-    if _arrancado:
-        return
-    _arrancado = True
+    with _lock:
+        if _estado["arrancado"]:
+            return
+        _estado["arrancado"] = True
     threading.Thread(target=_jornada, daemon=True, name="auditoria_digital").start()

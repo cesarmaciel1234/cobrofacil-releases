@@ -6,7 +6,7 @@ La nota de la rama es `punta del piramide.md`. Solo cobra fiado y cuenta corrien
 
 - **Búsqueda por nombre limitada**: Cuando se busca por nombre, se muestran máximo 5 resultados. Si hay más, se indica al cajero que refine la búsqueda usando DNI o teléfono. Esto evita exposiciones masivas de datos en pantallas públicas.
 - **Deudas ocultas en lista**: La lista de resultados no muestra montos de deuda por seguridad. Solo se revela la deuda al seleccionar un cliente específico.
-- **Saldo flexible**: Se puede cobrar sin deuda pendiente. El excedente queda a favor; el cajero confirma el monto extra.
+- **Saldo flexible**: Se puede cobrar sin deuda pendiente. El excedente queda a favor. No hay cartel de confirmación.
 - **Timer de búsqueda optimizado**: 200ms para balancear velocidad y rendimiento en bases de datos grandes.
 
 Al elegir cliente, un hilo propio (`consulta_historial/`) lee cargos, abonos, BORRADO y CANCELADO. No usa el hilo de admin. Si falla, la cobranza sigue.

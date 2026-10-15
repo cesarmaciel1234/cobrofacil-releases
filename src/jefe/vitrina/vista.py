@@ -114,9 +114,11 @@ class PanelPublicidad(QWidget):
             "font-weight: 600; letter-spacing: 0px;"
         )
         self.lbl_redondeo = self._chip("Redondeo · Mes", "—")
+        self.lbl_descuento = self._chip("Descuento · Mes", "—")
         extras.addWidget(self.lbl_sin_firmar, 1)
         extras.addWidget(self.lbl_sin_ticket, 1)
         extras.addWidget(self.lbl_redondeo, 1)
+        extras.addWidget(self.lbl_descuento, 1)
         root.addLayout(extras)
 
         caja = QHBoxLayout()
@@ -135,6 +137,7 @@ class PanelPublicidad(QWidget):
             (self.lbl_sin_firmar, "Sin firmar / F9", "Sin firmar / F9"),
             (self.lbl_sin_ticket, "MP sin ticket", "MP sin ticket"),
             (self.lbl_redondeo, "Redondeo del día", "Redondeo"),
+            (self.lbl_descuento, "Descuento del día", "Descuento"),
             (self.lbl_tickets, "Tickets del día", "Tickets"),
             (self.lbl_cancel, "Cancelaciones del día", "Cancelaciones"),
         )
@@ -296,6 +299,7 @@ class PanelPublicidad(QWidget):
     def set_cobros_dia(
         self,
         redondeo: float,
+        descuento: float,
         digitales_sin_firmar: int,
         digitales_total: int = 0,
         cuenta_dni: int = 0,
@@ -307,6 +311,9 @@ class PanelPublicidad(QWidget):
         sin_ticket_monto: float = 0,
     ):
         self.lbl_redondeo._valor.setText(fmt_plata(redondeo))
+        self._poner_detalle(self.lbl_redondeo, "F3 en el cobro")
+        self.lbl_descuento._valor.setText(fmt_plata(descuento))
+        self._poner_detalle(self.lbl_descuento, "Ofertas del ticket")
         self.lbl_tickets_dig._valor.setText(fmt_plata(tickets_digitales))
         if firmados:
             self._poner_detalle(

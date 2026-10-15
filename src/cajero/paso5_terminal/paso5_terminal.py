@@ -423,7 +423,7 @@ class Paso5Terminal(QWidget):
             h_pre.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         h_stk = self.list_results.horizontalHeaderItem(2)
         if h_stk:
-            h_stk.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            h_stk.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self._fuente_busq_nom = QFont("Segoe UI")
         self._fuente_busq_nom.setPixelSize(21)
         self._fuente_busq_nom.setBold(True)
@@ -1222,22 +1222,15 @@ class Paso5Terminal(QWidget):
             return None
         return celda.data(Qt.UserRole)
 
-    def _columnas_lineales_busqueda(self, ancho):
-        """Tres cajas fijas: nombre | precio | stock. El sobrante va a stock, no al medio."""
-        if ancho < 240:
-            return
-        w_pre = 132
-        w_stk = max(168, int(ancho * 0.22))
-        w_nom = ancho - w_pre - w_stk
-        if w_nom > 420:
-            w_stk += w_nom - 420
-            w_nom = 420
-        if w_nom < 220:
-            w_nom = max(180, ancho - w_pre - 140)
-            w_stk = max(120, ancho - w_nom - w_pre)
+    def _columnas_lineales_busqueda(self):
+        """Ancho justo: nombre | precio | stock, sin hueco a la derecha."""
+        w_nom = 340
+        w_pre = 128
+        w_stk = 210
         self.list_results.setColumnWidth(0, w_nom)
         self.list_results.setColumnWidth(1, w_pre)
         self.list_results.setColumnWidth(2, w_stk)
+        return w_nom + w_pre + w_stk + 2
 
     def _layout_list_results_popup(self, metrics=None):
         if not hasattr(self, "panel_busqueda") or not hasattr(self, "txt_scan"):
@@ -1249,24 +1242,22 @@ class Paso5Terminal(QWidget):
         max_h = max(360, int(self.height() * 0.68))
         h = min(h, max_h)
         from PyQt6.QtCore import QPoint
-        if hasattr(self, "tabla") and self.tabla.width() > 200:
-            pos_t = self.tabla.mapTo(self, QPoint(0, 0))
-            x = pos_t.x()
-            w = self.tabla.width()
-        else:
-            pos = self.txt_scan.mapTo(self, QPoint(0, 0))
-            x = pos.x()
-            w = max(int(self.width() * 0.88), 720)
-            w = min(w, max(720, self.width() - 16))
-        if x + w > self.width() - 8:
-            x = max(8, self.width() - w - 8)
         pos = self.txt_scan.mapTo(self, QPoint(0, 0))
+        x = pos.x()
+        if hasattr(self, "tabla") and self.tabla.width() > 200:
+            x = self.tabla.mapTo(self, QPoint(0, 0)).x()
+        w = self._columnas_lineales_busqueda()
+        tope = self.width() - 12
+        caja = getattr(getattr(self, "panel_totales", None), "caja_resumen", None)
+        if caja is not None and caja.isVisible():
+            tope = min(tope, caja.mapTo(self, QPoint(0, 0)).x() - 8)
+        if x + w > tope:
+            x = max(8, tope - w)
         y = pos.y() - h - 8
         if y < 6:
             y = 6
             h = max(280, pos.y() - 14)
         self.panel_busqueda.setGeometry(x, y, w, h)
-        self._columnas_lineales_busqueda(max(200, w - 2))
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -1465,7 +1456,7 @@ class Paso5Terminal(QWidget):
                     pre.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
                     pre.setForeground(verde)
                     stk_i = QTableWidgetItem(self._fmt_stock_mostrar(r, stk))
-                    stk_i.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                    stk_i.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
                     stk_i.setForeground(gris)
                     self.list_results.setItem(i, 0, nom)
                     self.list_results.setItem(i, 1, pre)

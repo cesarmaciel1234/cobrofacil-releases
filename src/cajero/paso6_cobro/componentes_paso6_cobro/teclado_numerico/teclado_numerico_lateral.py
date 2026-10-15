@@ -113,7 +113,7 @@ class TecladoNumericoLateral(QFrame):
         self.btn_fiscal.clicked.connect(lambda: self.key_clicked.emit("F10"))
         kb_layout.addWidget(self.btn_fiscal)
 
-        self.lbl_emergencia = QPushButton("F9 sin internet\nEmergencia")
+        self.lbl_emergencia = QPushButton("F9\nEmergencia")
         self.lbl_emergencia.setCursor(Qt.CursorShape.PointingHandCursor)
         self.lbl_emergencia.setMinimumHeight(64)
         self.lbl_emergencia.setStyleSheet(
@@ -122,11 +122,10 @@ class TecladoNumericoLateral(QFrame):
             "QPushButton:hover { background: #FFEDD5; border-color: #FB923C; }"
         )
         self.lbl_emergencia.clicked.connect(lambda: self.key_clicked.emit("F9"))
-        self.lbl_emergencia.hide()
         kb_layout.addWidget(self.lbl_emergencia)
 
-    def mostrar_emergencia(self, activo):
-        self.lbl_emergencia.setVisible(bool(activo))
+    def mostrar_emergencia(self, activo=True):
+        self.lbl_emergencia.show()
 
     def mostrar_fiscal(self, activo):
         self.btn_fiscal.show()

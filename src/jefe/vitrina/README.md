@@ -3,7 +3,9 @@
 Todas reciben `desde` / `hasta` ('YYYY-MM-DD', los dos días incluidos). Sin fechas = hoy. Cuentan ventas vigentes (`COMPLETADA` del turno + `CERRADA` después del Z) y filtran con rango (`fecha >= desde AND fecha < día siguiente a hasta`). Si la consulta falla, devuelven cero.
 
 - `ganancia(desde, hasta)`: la de `reportes/financiero.kpis_rango`. `None` si no hay costo cargado.
-- `redondeo(desde, hasta)`: suma `ventas.descuento` (F3 redondeo + oferta en ticket).
+- `redondeo_y_descuento(desde, hasta)`: `(F3, ofertas)`. Parte `ventas.descuento`.
+- `redondeo(desde, hasta)`: F3 del cobro.
+- `descuento(desde, hasta)`: ofertas del ticket (DES. TOTAL).
 - `tickets(desde, hasta)`: `(cantidad, total vendido)`. La vista muestra `77 · $1.657.988,50` y abajo el promedio.
 - `cancelaciones(desde, hasta)`: ventas `CANCELADA` por `fecha_cancel` (si falta, la fecha de la venta). `{'cant', 'monto', 'cuando', 'usuario'}` de la última; `cuando` = 'YYYY-MM-DD HH:MM'.
 - `pagos_clientes(desde, hasta)`: abonos de `cuenta_corriente`.

@@ -3,6 +3,13 @@ from src.cajero.paso6_cobro.aviso_en_cobro.toast import AvisoCobro
 
 
 class AvisoAbono(AvisoCobro):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.texto.setStyleSheet(
+            "background: transparent; border: none; color: #92400E;"
+            " font-size: 18px; font-weight: 800;"
+        )
+
     def ubicar(self):
         hoja = self.parentWidget()
         if hoja is None:

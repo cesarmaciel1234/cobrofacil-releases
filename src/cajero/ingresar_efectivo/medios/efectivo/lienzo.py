@@ -47,6 +47,12 @@ class LienzoEfectivo(QWidget):
             "color: #10B981; font-size: 36px; font-weight: 900; background: transparent; border: none;"
         )
         lay.addWidget(self.lbl_vuelto)
+        self.lbl_enter = QLabel("Presione Enter para cobrar")
+        self.lbl_enter.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_enter.setStyleSheet(
+            "color: #64748B; font-size: 15px; font-weight: 800; background: transparent; border: none;"
+        )
+        lay.addWidget(self.lbl_enter)
         self.aviso = QLabel("")
         self.aviso.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.aviso.setStyleSheet(

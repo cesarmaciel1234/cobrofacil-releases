@@ -69,7 +69,7 @@ class LienzoTarjeta(QWidget):
         )
         self.btn_cancelar.clicked.connect(self._al_volver)
         inner.addWidget(self.btn_cancelar)
-        self.lbl_f9 = QLabel("Sin red: F9 registra a mano")
+        self.lbl_f9 = QLabel("F9 registra a mano")
         self.lbl_f9.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_f9.setStyleSheet(
             "color: #9A3412; font-size: 14px; font-weight: 800; background: transparent; border: none;"
@@ -105,7 +105,7 @@ class LienzoTarjeta(QWidget):
         self._tope.stop()
         self.monto.setText(f"${importe:,.2f}")
         self.estado.setText("Pida al cliente que pase la tarjeta.")
-        self.lbl_f9.hide()
+        self.lbl_f9.show()
         self.btn_cancelar.setEnabled(True)
         self.show()
         generacion = self._generacion

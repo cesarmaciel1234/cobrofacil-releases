@@ -118,6 +118,13 @@ class MotorCobranzaMedios(QObject):
                         "metodo": metodo,
                         "pago_id": nota,
                     }], avisar=True)
+                    if str(nota).upper() == "F9 MANUAL":
+                        try:
+                            from src.motor_auditoria_digital import anotar_f9
+
+                            anotar_f9(ticket_cobro(cobro_id), monto, metodo)
+                        except Exception:
+                            pass
         except Exception:
             pass
 

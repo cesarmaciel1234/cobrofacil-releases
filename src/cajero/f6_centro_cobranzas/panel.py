@@ -311,19 +311,6 @@ class CentroCobranzasPanel(QWidget):
         if not texto.strip(): return
         monto = redondear_dinero(float(texto))
         if monto <= 0: return
-        deuda_viva = max(0.0, float(self._deuda_actual or 0))
-        extra = redondear_dinero(monto - deuda_viva)
-        if extra > 0.009:
-            from PyQt6.QtWidgets import QMessageBox
-            aviso = QMessageBox(self)
-            aviso.setIcon(QMessageBox.Icon.Information)
-            aviso.setWindowTitle("Saldo a favor")
-            aviso.setText(
-                f"La deuda es ${deuda_viva:,.2f}. Este cobro deja ${extra:,.2f} a favor."
-            )
-            aviso.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
-            if aviso.exec() != QMessageBox.StandardButton.Ok:
-                return
 
         self._monto_a_cobrar = monto
         
@@ -355,6 +342,13 @@ class CentroCobranzasPanel(QWidget):
 
     def _digital_listo(self, nombre, detalle):
         if getattr(self, "_cola_digital", None) is not None:
+            if str(detalle or "").upper() == "F9 MANUAL":
+                extra = dict(getattr(self, "_mixto_detalle", {}) or {})
+                extra["pago_id"] = "F9 MANUAL"
+                self._cola_digital = None
+                self._mixto_detalle = None
+                self._finalizar_cobranza_con_motor(self._monto_a_cobrar, "Mixto", extra)
+                return
             self._seguir_cola_digital()
             return
         self._finalizar_cobranza_con_motor(self._monto_a_cobrar, nombre, detalle)
@@ -499,11 +493,9 @@ class CentroCobranzasPanel(QWidget):
                 actual.tecla(Qt.Key.Key_Return)
 
     def procesar_f9(self):
-        if self._modo == "cobrando_lienzo":
-            actual = self.cont_lienzos.currentWidget()
-            if hasattr(actual, "tecla"):
-                actual.tecla(Qt.Key.Key_F9)
-                return True
+        actual = self.cont_lienzos.currentWidget() if hasattr(self, "cont_lienzos") else None
+        if actual is not None and actual.isVisible() and hasattr(actual, "tecla"):
+            return bool(actual.tecla(Qt.Key.Key_F9))
         return False
 
     def mostrar(self, _=None):

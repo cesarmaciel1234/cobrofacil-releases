@@ -1598,8 +1598,7 @@ class Paso6Cobro(QDialog):
         user = str(config.get("mp_user_id", "") or "").strip()
         listo = bool(token and device) or bool(token and user and self._pos_qr())
         self._tpv_listo = listo
-        if hasattr(self, "teclado_lateral"):
-            self.teclado_lateral.mostrar_emergencia(not listo)
+        self._actualizar_f9()
         color = "#22C55E" if listo else "#EF4444"
         texto = "TPV listo" if listo else "TPV sin activar"
         estilo = (
@@ -1710,6 +1709,10 @@ class Paso6Cobro(QDialog):
             return
         self.intentar_finalizar()
 
+    def _actualizar_f9(self):
+        if hasattr(self, "teclado_lateral"):
+            self.teclado_lateral.mostrar_emergencia(True)
+
     def _emergencia(self):
         if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
             return
@@ -1726,7 +1729,15 @@ class Paso6Cobro(QDialog):
         if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
             return
 
-        if getattr(self, "_tpv_listo", False):
+        sub = getattr(self, "_submetodo_cobranza", "") or ""
+        digital = self.current_metodo in ("QR", "Tarjeta", "Transferencia", "Mixto") or sub in (
+            "QR", "Tarjeta", "Transferencia", "Mixto"
+        )
+        if (
+            getattr(self, "_tpv_listo", False)
+            and not digital
+            and not getattr(self, "_point_en_curso", False)
+        ):
             return
 
         if getattr(self, "_point_en_curso", False):
@@ -2118,6 +2129,7 @@ class Paso6Cobro(QDialog):
     def _on_submetodo_cobranza_cambiado(self, submetodo):
         self._submetodo_cobranza = str(submetodo or "")
         self._ajustar_botones_mp()
+        self._actualizar_f9()
 
     def _ajustar_botones_mp(self):
         """Cada columna conserva el hueco. Solo se ve el botón del medio elegido."""

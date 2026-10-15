@@ -62,6 +62,13 @@ class LienzoQr(QWidget):
         lay.addLayout(fila)
         self.btn_imagen.hide()
         self.btn_registrar.hide()
+        self.lbl_f9 = QLabel("F9 registra a mano")
+        self.lbl_f9.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_f9.setStyleSheet(
+            "color: #9A3412; font-size: 14px; font-weight: 800; background: transparent; border: none;"
+        )
+        self.lbl_f9.hide()
+        lay.addWidget(self.lbl_f9)
 
     def arrancar(self, monto, title="Compra en Punto de Venta", description="Cobro de ticket via sistema POS"):
         self._monto = float(monto or 0)
@@ -77,6 +84,7 @@ class LienzoQr(QWidget):
         self.estado.setText("Buscando el QR de Mercado Pago…")
         self.btn_imagen.hide()
         self.btn_registrar.hide()
+        self.lbl_f9.show()
         self.show()
         generacion = self._generacion
 
@@ -100,7 +108,7 @@ class LienzoQr(QWidget):
     def tecla(self, k):
         if k != Qt.Key.Key_F9:
             return False
-        if self._modo not in ("foto", "manual"):
+        if self._modo == "oculto":
             return False
         if getattr(self, "_manual", False):
             return True
@@ -203,6 +211,7 @@ class LienzoQr(QWidget):
         self.estado.hide()
         self.btn_imagen.hide()
         self.btn_registrar.hide()
+        self.lbl_f9.show()
         self._reloj.start()
         self._consultar_pago()
 

@@ -16,7 +16,7 @@ No pinta: efectivo, fiado, clientes / cuenta corriente, DNI, el cobro en vivo, e
 
 ## Fondo
 
-`main.py` llama `arrancar()`. Hilo `auditoria_digital`.
+`main.py` llama `arrancar()`. Hilo `auditoria_digital`. El estado vive en un dict (`_estado`): no hay `global _clave`, así no vuelve el `UnboundLocalError` al abrir admin o jefe.
 
 ```
 motor_auditoria_digital/

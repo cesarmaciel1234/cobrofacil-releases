@@ -164,12 +164,10 @@ class PanelFiadoCobro(QFrame):
         self.hide()
 
     def procesar_f9(self):
-        if self._modo == "cobrando_lienzo":
-            actual = self.cont_lienzos.currentWidget()
-            if hasattr(actual, "tecla"):
-                from PyQt6.QtCore import Qt
-                actual.tecla(Qt.Key.Key_F9)
-                return True
+        actual = self.cont_lienzos.currentWidget() if hasattr(self, "cont_lienzos") else None
+        if actual is not None and actual.isVisible() and hasattr(actual, "tecla"):
+            from PyQt6.QtCore import Qt
+            return bool(actual.tecla(Qt.Key.Key_F9))
         return False
 
     def bloquea_enter(self):
