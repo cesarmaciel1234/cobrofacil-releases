@@ -51,6 +51,7 @@ def increment_stat(module_name):
 # ──────────────────────────────────────────────────────────────────────────────
 class Admin0Dashboard(QWidget):
     request_screen = pyqtSignal(int)
+    request_desanclar = pyqtSignal(int)
     request_logout = pyqtSignal()
 
     def __init__(self):
@@ -329,12 +330,17 @@ class Admin0Dashboard(QWidget):
             pass
         self.request_screen.emit(screen_idx)
 
+    def _on_card_desanclar(self, module_id, screen_idx):
+        increment_stat(module_id)
+        self.request_desanclar.emit(screen_idx)
+
     def _crear_cards(self):
         if self._cards_created:
             return
         for m_id, title, icon, palette, sub, screen_idx in self.modules_info:
             card = AdminCard(title, icon, palette, sub)
             card.clicked.connect(lambda s=screen_idx, mid=m_id: self._on_card_clicked(mid, s))
+            card.desanclar.connect(lambda s=screen_idx, mid=m_id: self._on_card_desanclar(mid, s))
             self.cards[m_id] = card
         self._cards_created = True
         self.card_inv = self.cards.get("inventario")

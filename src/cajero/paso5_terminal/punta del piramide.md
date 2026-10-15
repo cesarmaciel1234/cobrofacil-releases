@@ -15,7 +15,7 @@ paso5_terminal/
     apariencia/            azul Francia, rosa y el marco del cobro
 ```
 
-F10 sale de pantalla completa. El candado se aprieta con el botón.
+F10 sale de pantalla completa. El candado se aprieta con el botón. Un cajero por PC: si ya corre, el lanzador lo trae; no abre otro. F8 (auxiliar) no es un segundo proceso.
 
 ## Fondo
 

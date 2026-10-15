@@ -16,10 +16,12 @@ _COLOR_CACHE = {
 
 class AdminCard(QFrame):
     clicked = pyqtSignal()
+    desanclar = pyqtSignal()
 
     def __init__(self, title, icon, palette_name, sub, parent=None):
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setToolTip("Clic: este monitor.  Ctrl+clic o clic derecho: otro monitor (mismo proceso).")
 
         bg_soft, txt_dark = _COLOR_CACHE.get(palette_name, ("#F1F5F9", "#334155"))
 
@@ -68,6 +70,14 @@ class AdminCard(QFrame):
         lay.addWidget(lbl_sub)
 
     def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.RightButton:
+            self.desanclar.emit()
+            event.accept()
+            return
         if event.button() == Qt.MouseButton.LeftButton:
-            self.clicked.emit()
+            mods = event.modifiers()
+            if mods & Qt.KeyboardModifier.ControlModifier:
+                self.desanclar.emit()
+            else:
+                self.clicked.emit()
         super().mousePressEvent(event)

@@ -116,6 +116,7 @@ class Paso6Cobro(QDialog):
         self._mixto_vivo_hecho = None
         self._mixto_esperando_qr = False
         self._mixto_espera_transferencia = None
+        self._transf_desde = None
         self._mixto_confirmado = False
         self.valores_mixtos = None
         if hasattr(self, "panel_mixto"):
@@ -280,8 +281,7 @@ class Paso6Cobro(QDialog):
             "border: none; border-radius: 10px; font-size: 17px; font-weight: 800; } "
             "QPushButton:hover { background-color: #059669; }"
         )
-        self.btn_mas_credito.clicked.connect(lambda: self.procesar_click_metodo("Clientes"))
-        self.btn_mas_credito.hide()
+        self.btn_mas_credito.clicked.connect(self._abrir_centro_cobranzas)
 
         pie = QFrame()
         pie.setObjectName("Paso6MetodoPie")
@@ -293,6 +293,8 @@ class Paso6Cobro(QDialog):
         lay_btn.addWidget(btn_cancelar)
         lay_btn.addSpacing(16)
         lay_btn.addWidget(self.btn_otras)
+        lay_btn.addSpacing(16)
+        lay_btn.addWidget(self.btn_mas_credito)
         lay_btn.addStretch()
         page_method_lay.addWidget(pie)
         self.stack.addWidget(self.page_method)
@@ -684,6 +686,8 @@ class Paso6Cobro(QDialog):
             self.txt_pago.setText(self._monto(self.total_final))
 
             if key == "Transferencia":
+                from datetime import datetime, timezone
+                self._transf_desde = datetime.now(timezone.utc)
                 self.lbl_input1.hide()
                 self.txt_pago.hide()
                 self.panel_alias.mostrar()
@@ -805,8 +809,24 @@ class Paso6Cobro(QDialog):
         self.cmb_cliente.blockSignals(False)
 
     def _activar_mas_credito_express(self):
-        """La deuda se cobra en F6. Acá no se abre cobranza."""
-        self._activar_cliente_express()
+        """COBRANZA abre F6. No carga la deuda en el ticket."""
+        self._abrir_centro_cobranzas()
+
+    def _abrir_centro_cobranzas(self):
+        """F6: mismo diálogo que el paso 5. No cobra el carrito."""
+        try:
+            from src.cajero.f6_centro_cobranzas import DialogoCentroCobranzas
+            dlg = DialogoCentroCobranzas(parent=self)
+            qt_exec(dlg)
+        except Exception:
+            try:
+                QMessageBox.warning(
+                    self,
+                    "Cobranza",
+                    "No se pudo abrir el centro de cobranzas. La venta sigue.",
+                )
+            except Exception:
+                pass
 
     def _activar_cliente_express(self):
         """Clic en Clientes: la misma hoja del cobro, no una ventana oscura."""
@@ -1025,7 +1045,7 @@ class Paso6Cobro(QDialog):
         def _trabajo():
             try:
                 from src.cajero.paso6_cobro.transferencia_en_cobro.escucha import ultimo_libre
-                pago = ultimo_libre()
+                pago = ultimo_libre(desde=getattr(self, "_transf_desde", None))
             except Exception:
                 pago = None
             self._senal_transf.emit(pago, monto)
@@ -2064,6 +2084,8 @@ class Paso6Cobro(QDialog):
             self.panel_fiado.mostrar(monto, "Clientes")
             return
         if tipo == "transferencia":
+            from datetime import datetime, timezone
+            self._transf_desde = datetime.now(timezone.utc)
             self.panel_mixto.show()
             self._mixto_espera_transferencia = float(monto)
             from src.services.mp_escucha import EscuchaMP
@@ -2323,6 +2345,8 @@ class Paso6Cobro(QDialog):
         elif k == Qt.Key.Key_F4: self.abrir_recargo()
         
         elif k == Qt.Key.Key_F10: self._elegir_cierre("fiscal")
+        elif k == Qt.Key.Key_F6:
+            self._abrir_centro_cobranzas()
         elif k == Qt.Key.Key_F9: self._emergencia()
         elif k == Qt.Key.Key_F11:
             if self.btn_f11.isVisible():

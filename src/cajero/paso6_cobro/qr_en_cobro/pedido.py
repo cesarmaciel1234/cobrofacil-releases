@@ -1,5 +1,6 @@
 import io
 import uuid
+from datetime import datetime, timedelta, timezone
 
 import qrcode
 
@@ -8,7 +9,7 @@ try:
 except Exception:
     _QR_L = 1
 
-from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient
+from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient, fecha_busqueda_mp
 from src.config import config
 from src.services.mercadopago_instore import url_crear_qr, url_orden_pos
 
@@ -155,27 +156,64 @@ def _qr_con_monto(token, monto, ref):
 
 
 _TIMEOUT_VIVO = 1.2
+VENTANA_MAX_SEG = 180
+HOLGURA_ANTES_SEG = 5
+
+
+def _instante(valor):
+    if valor is None:
+        return None
+    if isinstance(valor, datetime):
+        t = valor
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=timezone.utc)
+        return t.astimezone(timezone.utc)
+    if isinstance(valor, (int, float)):
+        try:
+            return datetime.fromtimestamp(float(valor), tz=timezone.utc)
+        except (OSError, OverflowError, ValueError):
+            return None
+    return None
+
+
+def fecha_pago(pago):
+    if not isinstance(pago, dict):
+        return None
+    raw = pago.get("date_approved") or pago.get("date_created") or pago.get("date_last_updated") or ""
+    texto = str(raw).strip()
+    if not texto:
+        return None
+    try:
+        t = datetime.fromisoformat(texto.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    return t.astimezone(timezone.utc)
+
+
+def en_ventana(pago, desde=None, max_seg=VENTANA_MAX_SEG, holgura=HOLGURA_ANTES_SEG):
+    """Mínimo: no anterior a cuando se empezó a escuchar. Máximo: 3 minutos."""
+    t = fecha_pago(pago)
+    if t is None:
+        return False
+    ahora = datetime.now(timezone.utc)
+    edad = (ahora - t).total_seconds()
+    if edad > float(max_seg):
+        return False
+    inicio = _instante(desde)
+    if inicio is not None and t < inicio - timedelta(seconds=float(holgura)):
+        return False
+    return True
 
 
 def pago_de_orden(data, ref, monto=None):
-    """Si esa orden ya está paga y es esta referencia, arma el dict del cobro."""
+    """Si esa orden ya está paga y es ESTA referencia. El importe solo no cierra el ticket."""
     if not isinstance(data, dict) or not ref:
         return None
     ext = str(data.get("external_reference") or "")
-    if ext and ext != str(ref):
+    if ext != str(ref):
         return None
-    if not ext and monto is not None:
-        try:
-            total = float(
-                data.get("total_amount")
-                or data.get("paid_amount")
-                or data.get("total_paid_amount")
-                or 0
-            )
-        except (TypeError, ValueError):
-            total = 0.0
-        if total > 0 and abs(total - float(monto)) > 0.05:
-            return None
     estado = str(
         data.get("order_status") or data.get("status") or ""
     ).lower()
@@ -276,32 +314,38 @@ def pago_aprobado(token, ref, monto=None):
     if isinstance(data, dict):
         pagos = data.get("results") or []
         if pagos and isinstance(pagos[0], dict):
-            return pagos[0]
-    if monto is not None:
-        return pago_por_importe(token, monto)
+            pago = pagos[0]
+            if str(pago.get("external_reference") or "") == str(ref):
+                return pago
     return None
 
 
-def pagos_aprobados_recientes(token):
+def pagos_aprobados_recientes(token, desde=None):
     if not token:
         return []
+    begin = fecha_busqueda_mp(timedelta(seconds=VENTANA_MAX_SEG))
+    end = fecha_busqueda_mp()
     data = _get_json(
         token,
         "https://api.mercadopago.com/v1/payments/search?sort=date_created"
-        "&criteria=desc&limit=10&status=approved",
+        "&criteria=desc&limit=10&status=approved"
+        f"&range=date_created&begin_date={begin}&end_date={end}",
         timeout=1.8,
     )
     if not isinstance(data, dict):
         return []
-    return [p for p in (data.get("results") or []) if isinstance(p, dict)]
+    return [
+        p for p in (data.get("results") or [])
+        if isinstance(p, dict) and en_ventana(p, desde)
+    ]
 
 
-def pago_por_importe(token, monto):
-    """Transferencia o QR sin referencia: el último aprobado del mismo importe."""
+def pago_por_importe(token, monto, desde=None):
+    """Transferencia: mismo importe, creado después de escuchar y de no más de 3 min."""
     if not token or float(monto or 0) <= 0:
         return None
     esperado = float(monto)
-    for pago in pagos_aprobados_recientes(token):
+    for pago in pagos_aprobados_recientes(token, desde=desde):
         try:
             importe = float(pago.get("transaction_amount") or 0)
         except (TypeError, ValueError):

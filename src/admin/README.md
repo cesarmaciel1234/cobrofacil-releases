@@ -12,4 +12,6 @@ Al tocar un módulo de admin, se aplica esto:
 
 `theme_manager.apply_to_admin` ya pone esa base. Un estilo propio del módulo no la tapa con gris fino ni con sombra.
 
+Varios módulos a la vez: `ventanas_sueltas/` (mismo PID). No un segundo perfil admin.
+
 El cajero no usa esta hoja. Sigue oscuro, en el paso 5.

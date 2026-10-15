@@ -37,9 +37,9 @@ El Point de mixto cobra solo la parte de tarjeta, y solo después de cubrir el t
 Hay dos piezas y no son el mismo motor duplicado:
 
 1. **Motor real de la venta:** `motor_pagos/MotorPrincipalCobros`. Asienta el ticket. Crédito solo carga la venta a la cuenta.
-2. **Intermediario de cobranza:** `MotorCobranzaMedios` en **F6**. Cobra el abono. No se abre desde el paso 6.
+2. **Intermediario de cobranza:** `MotorCobranzaMedios` en **F6**. Cobra el abono.
 
-No fusionar cobranza con el cobro de una venta. Si el cupo no alcanza, PIN de supervisor o Esc. La deuda se cobra en F6.
+En el paso 6, **COBRANZA** (verde) y **F6** abren el mismo `DialogoCentroCobranzas` del paso 5. No cargan deuda en el ticket. No fusionar ese diálogo con el motor de la venta. Si el cupo no alcanza, PIN de supervisor o Esc.
 
 Mapa: paso 5 llena el carrito. Paso 6 cobra la venta (mixto puede incluir cliente). F6 / Admin Abonar cobran deuda con el mismo diálogo; mixto de F6 no pone resto a crédito.
 

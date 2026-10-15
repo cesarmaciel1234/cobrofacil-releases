@@ -67,6 +67,7 @@ class MainWindow(QMainWindow):
         self._came_from_cajero: bool = False
         self._nav_stack: list = []   # alias por retrocompatibilidad
         self._kiosk_mode: bool = False
+        self._sueltas: dict = {}
 
         # Inicializar cajÃ³n y cargar pantallas y atajos
         from src.hardware.cash_drawer import drawer_manager
@@ -616,6 +617,8 @@ class MainWindow(QMainWindow):
 
         if hasattr(s, 'request_screen'):
             s.request_screen.connect(self.switch_tab)
+        if hasattr(s, 'request_desanclar'):
+            s.request_desanclar.connect(self._desanclar_modulo)
 
         if hasattr(s, 'request_carteleria'):
             s.request_carteleria.connect(lambda: self.switch_tab(22)) # Carteleria entra al Dashboard 22, no directo a TV
@@ -745,6 +748,58 @@ class MainWindow(QMainWindow):
 
 
 
+    def _desanclar_modulo(self, index: int):
+        """Mismo proceso: el módulo sale a otra pantalla. No abre otro --role admin."""
+        from src.admin.ventanas_sueltas.gestor import marcador, poner_en_otro_monitor, se_puede, titulo
+        from src.admin.ventanas_sueltas.hoja import HojaSuelta
+
+        ok, msg = se_puede(index, self._sueltas)
+        if not ok:
+            if index in self._sueltas:
+                self.switch_tab(index)
+                return
+            QMessageBox.information(self, "Otro monitor", msg)
+            return
+        if index >= len(self.screens):
+            return
+        if self.screens[index] is None:
+            self._build_lazy_screen(index)
+        w = self.screens[index]
+        if w is None:
+            return
+        pos = self.stacked_widget.indexOf(w)
+        if pos < 0:
+            pos = index
+        self.stacked_widget.removeWidget(w)
+        ph = marcador(index, lambda i=index: self._traer_modulo(i))
+        self.stacked_widget.insertWidget(pos, ph)
+        hoja = HojaSuelta(index, titulo(index), w, parent=self)
+        hoja.cerrado.connect(self._traer_modulo)
+        self._sueltas[index] = hoja
+        poner_en_otro_monitor(hoja, self)
+        if self.stacked_widget.currentIndex() == pos:
+            self.stacked_widget.setCurrentIndex(0)
+
+    def _traer_modulo(self, index: int):
+        hoja = self._sueltas.pop(index, None)
+        w = self.screens[index] if index < len(self.screens) else None
+        if w is not None:
+            w.setParent(None)
+            old = self.stacked_widget.widget(index)
+            self.stacked_widget.insertWidget(index, w)
+            if old is not None and old is not w:
+                self.stacked_widget.removeWidget(old)
+                old.deleteLater()
+        if hoja is not None:
+            hoja._aviso = True
+            try:
+                hoja.cerrado.disconnect(self._traer_modulo)
+            except Exception:
+                pass
+            if hoja.isVisible():
+                hoja.hide()
+            hoja.deleteLater()
+
     def _show_terminal_window(self):
         """Terminal TPV â€” kiosco: pantalla completa sin recrear la ventana (F11 intacto)."""
         self._kiosk_mode = True
@@ -780,6 +835,14 @@ class MainWindow(QMainWindow):
                 pass
         role = config.current_role
         escalando = getattr(self, '_escalando', False)
+
+        if index in getattr(self, "_sueltas", {}):
+            hoja = self._sueltas.get(index)
+            if hoja is not None:
+                hoja.show()
+                hoja.raise_()
+                hoja.activateWindow()
+            return
 
         # Guard: jefe nunca va al dashboard del admin
         # (bypass durante escalada piramidal F11 Adminâ†’Jefe y descenso)
@@ -919,6 +982,11 @@ class MainWindow(QMainWindow):
         El loop en main.py captura cÃ³digos 99 y 888 y relanza launch_app().
         """
         from src.config import config
+        for idx in list(getattr(self, "_sueltas", {})):
+            try:
+                self._traer_modulo(idx)
+            except Exception:
+                pass
         config.current_user = None
         QApplication.exit(99)
 

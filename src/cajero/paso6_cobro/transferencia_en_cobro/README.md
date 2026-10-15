@@ -6,7 +6,7 @@ Ocupa el lugar del monto. El importe sigue siendo el de arriba: lo cambian el re
 
 `cuenta.py`, `datos_cuenta()`. Lee el token del TPV. El nombre sale de `users/me`. El alias, de la cuenta de Mercado Pago. Si la API no lo trae, queda el que se escribió con el lápiz.
 
-`escucha.py`, `pago_llegado` / `ultimo_libre` / `texto_enlazar`. Si el importe es el del ticket, cierra solo.
+`escucha.py`, `pago_llegado` / `ultimo_libre` / `texto_enlazar`. Si el importe es el del ticket **y** el cobro está en la ventana (después de abrir transferencia, no más de 3 minutos), cierra solo. Una transferencia de hace una hora no cierra.
 
 F9 queda siempre a la vista, debajo de F10.
 

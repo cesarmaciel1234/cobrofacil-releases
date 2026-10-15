@@ -50,7 +50,7 @@ Al confirmar, la misma hoja sigue el reparto: Point cobra solo la parte de tarje
 
 ## Producción
 
-Fiado y Clientes usan `OrquestadorFiadoPiramidal` en la hoja del cobro. Cancelar vuelve a los medios. No se vuelve a abrir la ventana oscura. Cobranza es F6.
+Fiado y Clientes usan `OrquestadorFiadoPiramidal` en la hoja del cobro. Cancelar vuelve a los medios. No se vuelve a abrir la ventana oscura. En la grilla de medios el botón **COBRANZA** y la tecla **F6** abren `DialogoCentroCobranzas`. No cobran el carrito.
 
 El ticket de cuenta corriente muestra saldo previo, esta compra y saldo restante. No hay voucher extra de saldo.
 

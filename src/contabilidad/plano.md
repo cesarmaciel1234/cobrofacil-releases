@@ -2,7 +2,7 @@
 
 ## Frente
 
-Pantalla del jefe. Barra con mes, año y backup. A la izquierda, la lista de vistas. El fondo sigue el día o la noche global.
+Pantalla del jefe. Barra con mes, año y backup. A la izquierda, la lista de vistas. El fondo sigue el día o la noche global. Un perfil contabilidad por PC: si ya corre, el lanzador lo trae.
 
 ## Fondo
 

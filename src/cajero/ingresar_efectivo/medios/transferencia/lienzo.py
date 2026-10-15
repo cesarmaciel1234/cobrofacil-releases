@@ -48,9 +48,11 @@ class LienzoTransferencia(QWidget):
         self._reloj.timeout.connect(self._mirar)
 
     def arrancar(self, monto):
+        from datetime import datetime, timezone
         self._generacion += 1
         self._manual = False
         self._monto = float(monto or 0)
+        self._desde = datetime.now(timezone.utc)
         self._oferta = None
         self._oferta_monto = 0.0
         self._tpv_listo = _luz_tpv()
@@ -119,7 +121,7 @@ class LienzoTransferencia(QWidget):
         def _trabajo():
             try:
                 from src.cajero.paso6_cobro.transferencia_en_cobro.escucha import ultimo_libre
-                pago = ultimo_libre()
+                pago = ultimo_libre(desde=getattr(self, "_desde", None))
             except Exception:
                 pago = None
             self._senal_vivo.dato.emit({

@@ -15,7 +15,7 @@ Leé esto antes de diagnosticar o de proponer un corte.
 | `sacar_efectivo/` | F5: sale efectivo de la caja | `dialogo_retiro.py`, clase `DialogoRetiroEfectivo` |
 | `f6_centro_cobranzas/` | F6: cobranza fiado / cuenta corriente | `punta del piramide.md` · `dialogo.py`, clase `DialogoCentroCobranzas` |
 
-`cajero_activo.py` guarda la estación (cajero 1 o 2). No es una pantalla.
+`cajero_activo.py` guarda la estación (cajero 1 o 2). No es una pantalla. **Una sola terminal por PC**: el candado `perfil_cajero.lock` y el lanzador no abren un segundo `--role cajero`. El auxiliar (F8) es el mismo proceso, otro cajón/impresora.
 
 ## Hechos medidos
 
@@ -113,7 +113,7 @@ Esas ventanas, y F11, tapan la venta con el gris `#334155` (`src/utils/fondo_gri
 
 ### Cobro
 
-Crédito (clave `Clientes`) carga la venta a la cuenta. La deuda se cobra solo en **F6**. No se abre cobranza dentro del paso 6. Si el cupo no alcanza: PIN de supervisor o Esc. El F5 del cobro se retiró.
+Crédito (clave `Clientes`) carga la venta a la cuenta. La deuda se cobra en **F6** (`DialogoCentroCobranzas`). En el paso 6 el botón **COBRANZA** y F6 abren ese diálogo: no mezclan el abono con el ticket. Si el cupo no alcanza: PIN de supervisor o Esc. El F5 del cobro se retiró.
 
 La clave interna de crédito es Clientes (no `crédito`: esa clave de REGISTRO es la tarjeta de crédito). La caja toma DNI o nombre. Un match: Enter. Varios: flechas o mouse y Enter. Un nombre nuevo crea con límite 50.000.
 

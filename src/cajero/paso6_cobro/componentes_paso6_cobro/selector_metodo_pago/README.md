@@ -1,6 +1,6 @@
 # Selector de método
 
-Tres tarjetas arriba y dos abajo. Las flechas marcan, no cobran.
+Tres tarjetas arriba y dos abajo. Las flechas marcan, no cobran. El pie tiene Volver, CRÉDITO y COBRANZA. COBRANZA abre F6.
 
 La punta de esta rama es `punta del piramide.md`.
 

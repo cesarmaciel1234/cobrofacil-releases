@@ -37,7 +37,7 @@ class PollingService:
         progreso.show()
 
         try:
-            begin_date = fecha_busqueda_mp(datetime.timedelta(hours=2))
+            begin_date = fecha_busqueda_mp(datetime.timedelta(seconds=180))
             end_date = fecha_busqueda_mp()
 
             url = f"https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=50&status=approved&range=date_created&begin_date={begin_date}&end_date={end_date}"
@@ -50,8 +50,12 @@ class PollingService:
                 results = data.get("results", [])
 
                 transferencia_encontrada = None
+                from src.cajero.paso6_cobro.qr_en_cobro.pedido import en_ventana
+                desde = getattr(self.parent, "_transf_desde", None)
 
                 for p in results:
+                    if not en_ventana(p, desde):
+                        continue
                     p_amount = p.get("transaction_amount")
                     p_id = str(p.get("id"))
 
@@ -129,7 +133,7 @@ class PollingService:
         progreso.setWindowModality(Qt.WindowModality.WindowModal)
         progreso.show()
         try:
-            begin_date = fecha_busqueda_mp(datetime.timedelta(hours=2))
+            begin_date = fecha_busqueda_mp(datetime.timedelta(seconds=180))
             end_date = fecha_busqueda_mp()
             url = (
                 "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc"
@@ -159,8 +163,10 @@ class PollingService:
                 aviso("No hay nueva transferencia.")
             return
 
+        from src.cajero.paso6_cobro.qr_en_cobro.pedido import en_ventana
         resultados = (resp.json() or {}).get("results") or []
-        pago = resultados[0] if resultados else None
+        desde = getattr(self.parent, "_transf_desde", None)
+        pago = next((p for p in resultados if isinstance(p, dict) and en_ventana(p, desde)), None)
         if not pago or asociado(str(pago.get("id"))):
             aviso = getattr(self.parent, "_avisar", None)
             if aviso:

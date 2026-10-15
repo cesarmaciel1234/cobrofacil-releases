@@ -155,6 +155,7 @@ class ProfileCard(QFrame):
         self.lbl_title.setStyleSheet(f"font-size: 13px; font-weight: 800; color: {WC['text']}; background: transparent; border: none;")
         self.lbl_desc.setText(self._original_desc)
         self.lbl_desc.setStyleSheet(f"font-size: 10px; font-weight: 500; color: {WC['text2']}; background: transparent; border: none;")
+        self.setCursor(Qt.PointingHandCursor)
 
     def set_active(self, active: bool):
         self.is_active = active
@@ -356,7 +357,7 @@ class PerfilPantalla(QDialog):
         content.addWidget(title)
         content.addSpacing(4)
 
-        subtitle = QLabel("Selecciona y ejecuta tus roles operativos de forma 100% independiente")
+        subtitle = QLabel("Un cajero, admin, jefe y contabilidad por PC · Cartelería aparte")
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setStyleSheet(f"""
             font-size: 12px; font-weight: 500;
@@ -392,7 +393,7 @@ class PerfilPantalla(QDialog):
         content.addSpacing(18)
 
         # Ayuda de teclado
-        hint = QLabel("← → para navegar · Enter / Clic para lanzar perfil autónomo")
+        hint = QLabel("← → navegar · Enter / clic: abrir o traer · un proceso por perfil (salvo cartelería)")
         hint.setAlignment(Qt.AlignCenter)
         hint.setStyleSheet(f"""
             font-size: 10px; font-weight: 600; color: {WC['text3']};
@@ -465,6 +466,7 @@ class PerfilPantalla(QDialog):
 
     def _apply_locked_profiles_ui(self):
         from src.utils.candados import PerfilLocker
+        from src.lanzador.cerebro.process_spawner import UN_SOLO_POR_PC
 
         buttons_map = {
             "cajero": self.btn_cajero,
@@ -498,16 +500,26 @@ class PerfilPantalla(QDialog):
                     border: none; border-radius: 6px; padding: 2px 8px;
                 """)
                 btn.lbl_title.setStyleSheet("font-size: 13px; font-weight: 900; color: #15803D; background: transparent; border: none;")
-                btn.lbl_desc.setText(f"🟢 ACTIVO (PID {pid})\nClic para administrar / reiniciar")
+                if rol in UN_SOLO_POR_PC:
+                    btn.lbl_desc.setText(f"🟢 ACTIVO (PID {pid})\nClic para traer al frente")
+                else:
+                    btn.lbl_desc.setText(f"🟢 ACTIVO (PID {pid})\nClic para administrar / reiniciar")
                 btn.lbl_desc.setStyleSheet("font-size: 10px; font-weight: 700; color: #16A34A; background: transparent; border: none;")
+                btn.setCursor(Qt.CursorShape.PointingHandCursor)
             else:
-                # Si el proceso fue iniciado previamente y se cerró/cayó
+                # Cajero/admin/jefe/contabilidad: si el usuario cerró, no reabrir solo.
+                if proc is not None and proc.poll() is not None and rol in UN_SOLO_POR_PC:
+                    self._subprocesos.pop(rol, None)
+                    self._reintentos[rol] = 0
+                    btn._set_idle_style()
+                    btn.setCursor(Qt.CursorShape.PointingHandCursor)
+                    continue
+                # Cartelería (y el resto): reintento si el subproceso cayó.
                 if proc is not None and proc.poll() is not None:
                     retry_count = self._reintentos.get(rol, 0)
                     if retry_count < self._max_reintentos:
                         self._reintentos[rol] = retry_count + 1
                         btn.set_retry_state(self._reintentos[rol], self._max_reintentos)
-                        # Re-lanzar de forma autónoma tras 1 segundo
                         QTimer.singleShot(1000, lambda r=rol: self._lanzar_proceso_autonomo(r))
                     else:
                         btn.set_failed_state()
@@ -539,9 +551,31 @@ class PerfilPantalla(QDialog):
         # Al hacer clic manual, resetear el contador de reintentos
         self._reintentos[rol] = 0
 
+        vivo = self._subprocesos.get(rol)
+        if vivo is not None and vivo.poll() is None:
+            from src.utils.candados import focus_pid_window
+            focus_pid_window(int(vivo.pid))
+            return
+
         if is_locked and pid:
             from src.utils.candados import focus_pid_window
             if focus_pid_window(pid):
+                return
+            from src.lanzador.cerebro.process_spawner import UN_SOLO_POR_PC
+
+            if rol in UN_SOLO_POR_PC:
+                resp = QMessageBox.question(
+                    self,
+                    f"{rol.capitalize()} en esta PC",
+                    f"Ya hay un {rol} en esta computadora y la ventana no respondió.\n\n"
+                    "¿Cerrar esa instancia colgada y abrir una sola?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
+                )
+                if resp == QMessageBox.StandardButton.Yes:
+                    PerfilLocker.force_unlock_and_kill(rol)
+                    self._roles_bloqueados.discard(self._ROLES.index(rol))
+                    self._lanzar_proceso_autonomo(rol)
                 return
             resp = QMessageBox.question(
                 self,
@@ -590,6 +624,8 @@ class PerfilPantalla(QDialog):
             proc = spawn_role_process(rol)
             self._subprocesos[rol] = proc
             QTimer.singleShot(1500, self._apply_locked_profiles_ui)
+        except RuntimeError:
+            self._apply_locked_profiles_ui()
         except Exception as e:
             if btn:
                 btn._set_idle_style()

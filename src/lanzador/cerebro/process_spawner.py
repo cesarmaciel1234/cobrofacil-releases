@@ -15,8 +15,23 @@ def build_role_command(rol: str) -> list[str]:
     return [sys.executable, main_script, "--role", rol]
 
 
+UN_SOLO_POR_PC = frozenset({"cajero", "admin", "jefe", "contabilidad"})
+
+
 def spawn_role_process(rol: str) -> subprocess.Popen:
-    """Lanza un perfil en proceso aparte (cajero/admin/jefe/carteleria)."""
+    """Lanza un perfil en proceso aparte.
+
+    Cajero, admin, jefe y contabilidad: un PID por PC. Si ya corre, enfoca.
+    Cartelería no entra en esa lista: el lanzador de TVs se toca después.
+    """
+    from src.utils.candados import PerfilLocker, focus_pid_window
+
+    rol = (rol or "").strip().lower()
+    if rol in UN_SOLO_POR_PC and PerfilLocker.check_is_locked(rol):
+        pid = PerfilLocker.get_locked_pid(rol)
+        if pid:
+            focus_pid_window(pid)
+        raise RuntimeError(f"El perfil {rol} ya está abierto en esta PC.")
     cmd = build_role_command(rol)
     kwargs = {}
     if sys.platform == "win32":

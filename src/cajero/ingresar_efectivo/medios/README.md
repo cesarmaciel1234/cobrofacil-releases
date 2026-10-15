@@ -8,7 +8,7 @@ Esta hoja vive dentro de F6. No abre la venta.
 2. Saluda «Hola nombre» y pregunta el medio.
 3. Efectivo: pregunta «¿Cuánto te dio en billetes?». El chip de arriba es lo que va a la cuenta. Falta: no cobra. Devolvé: Enter asienta el abono, no el billete. Vacío o texto raro no cobra.
 4. Transferencia, tarjeta y QR: el clic pide PIN antes de iniciar el motor.
-5. Transferencia: `pago_llegado`. Si llega el importe, asienta. F9 solo sin internet.
+5. Transferencia: `ultimo_libre` / `pago_llegado` con ventana de 3 minutos desde que arranca el lienzo. Un cobro de hace una hora no asienta. F9 solo sin internet.
 6. Tarjeta: Point; si FINISHED, asienta. F9 solo si la terminal no arrancó.
 7. QR: `pago_aprobado`; si llega el importe, asienta. F9 solo en foto / sin TPV.
 8. Mixto: reparte; corre los motores digitales en cola.

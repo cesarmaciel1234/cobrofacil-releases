@@ -361,7 +361,17 @@ def focus_pid_window(pid: int) -> bool:
         user32.EnumWindows(_recorrer, 0)
         if not encontradas:
             return False
-        hwnd = encontradas[0]
+
+        def _area(hwnd):
+            try:
+                from ctypes import wintypes as wt
+                rc = wt.RECT()
+                user32.GetWindowRect(hwnd, ctypes.byref(rc))
+                return max(0, rc.right - rc.left) * max(0, rc.bottom - rc.top)
+            except Exception:
+                return 0
+
+        hwnd = max(encontradas, key=_area)
         user32.ShowWindow(hwnd, 9)
         user32.SetForegroundWindow(hwnd)
         return True
