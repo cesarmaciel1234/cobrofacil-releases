@@ -1,7 +1,7 @@
 {
-  "app_version": "v50.2",
+  "app_version": "v50.3",
   "channel": "stable",
-  "build_date": "2026-10-15 17:16:02",
+  "build_date": "2026-10-15 18:43:22",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -1602,9 +1602,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "c066988746bde936af6e22c0bdd12808",
+      "checksum": "1e37561d9f3486cc9c0508dcdbf81498",
       "channel": "stable",
-      "size": 1174877
+      "size": 1176510
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
@@ -5652,9 +5652,9 @@
     },
     "src/cajero/README.md": {
       "version": "1.0.0",
-      "checksum": "80df6032e740954fbf19de86e379cc9d",
+      "checksum": "92b06bce3385617f4abe4be65a237f63",
       "channel": "stable",
-      "size": 13675
+      "size": 14543
     },
     "src/cajero/__init__.py": {
       "version": "1.0.0",
@@ -5706,15 +5706,15 @@
     },
     "src/cajero/f6_centro_cobranzas/punta del piramide.md": {
       "version": "1.0.0",
-      "checksum": "de994cc793d01a26731cee0cdfa493f3",
+      "checksum": "54a7476f88fe91077d5c30b9d9ea4139",
       "channel": "stable",
-      "size": 1776
+      "size": 1970
     },
     "src/cajero/f6_centro_cobranzas/README.md": {
       "version": "1.0.0",
-      "checksum": "c47c3b231cbf4505b898617502ae7afa",
+      "checksum": "08c317860749a6ced1834fa5f6639f98",
       "channel": "stable",
-      "size": 1636
+      "size": 1721
     },
     "src/cajero/f6_centro_cobranzas/__init__.py": {
       "version": "1.0.0",
@@ -5868,15 +5868,15 @@
     },
     "src/cajero/ingresar_efectivo/medios/qr/lienzo.py": {
       "version": "1.0.0",
-      "checksum": "8f3912d967536a99ebe9e5de96215303",
+      "checksum": "8c940a861e1112fca6698795fe99872f",
       "channel": "stable",
-      "size": 9674
+      "size": 10011
     },
     "src/cajero/ingresar_efectivo/medios/qr/README.md": {
       "version": "1.0.0",
-      "checksum": "8a9618d0611be2b82b991c4d4c62ed08",
+      "checksum": "c1f8ac1ee7067781d770789fe2f25f9f",
       "channel": "stable",
-      "size": 425
+      "size": 503
     },
     "src/cajero/ingresar_efectivo/medios/tarjeta/lienzo.py": {
       "version": "1.0.0",
@@ -5958,9 +5958,9 @@
     },
     "src/cajero/paso5_terminal/punta del piramide.md": {
       "version": "1.0.0",
-      "checksum": "98653333ba8d7aeb47f6477edd2efbd6",
+      "checksum": "8bd05b4a76140a85b7f3957b6b8e282f",
       "channel": "stable",
-      "size": 4856
+      "size": 4985
     },
     "src/cajero/paso5_terminal/README.md": {
       "version": "1.0.0",
@@ -6756,39 +6756,39 @@
     },
     "src/cajero/paso6_cobro/decisiones.md": {
       "version": "1.0.0",
-      "checksum": "3928bf597511b05a796e97f4b80512a0",
+      "checksum": "551ec6574f8d07ea3ee878ed6a5b680a",
       "channel": "stable",
-      "size": 3666
+      "size": 4197
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "995902fecc2b8198653b6b1e8a05d72f",
+      "checksum": "0e17cd129f5172129bd738b9f46842d9",
       "channel": "stable",
-      "size": 110617
+      "size": 110164
     },
     "src/cajero/paso6_cobro/plano.md": {
       "version": "1.0.0",
-      "checksum": "b2bfa3e0db4c506378e4bfea4ee19cf0",
+      "checksum": "08153d0cb2062fe40dd43b1e41036ff6",
       "channel": "stable",
-      "size": 2732
+      "size": 2869
     },
     "src/cajero/paso6_cobro/punta del piramide.md": {
       "version": "1.0.0",
-      "checksum": "207098de03ee9f9d94e89ace25fb8de4",
+      "checksum": "a8b1c0c9c28d6789e49988820ad544b9",
       "channel": "stable",
-      "size": 12670
+      "size": 12825
     },
     "src/cajero/paso6_cobro/README.md": {
       "version": "1.0.0",
-      "checksum": "c4d715136a3ff73f11565ae3aa0594e6",
+      "checksum": "56b5db4aea0dc23f5f5eb49c4bef67b3",
       "channel": "stable",
-      "size": 1301
+      "size": 1404
     },
     "src/cajero/paso6_cobro/reparacion.md": {
       "version": "1.0.0",
-      "checksum": "8e8055592b59ec3f6a1d7862e146a33f",
+      "checksum": "4a631edf9dece25c2fc734157d4fdd35",
       "channel": "stable",
-      "size": 5609
+      "size": 5659
     },
     "src/cajero/paso6_cobro/__init__.py": {
       "version": "1.0.0",
@@ -6966,9 +6966,9 @@
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/selector_metodo_pago/README.md": {
       "version": "1.0.0",
-      "checksum": "1b6ca65ab407eae080b78d8d468f1b3e",
+      "checksum": "79dd0fd7cfd4934d2b41741eef73bf5d",
       "channel": "stable",
-      "size": 652
+      "size": 682
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/selector_metodo_pago/ruta.py": {
       "version": "1.0.0",
@@ -6990,15 +6990,15 @@
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/selector_metodo_pago/flechas/README.md": {
       "version": "1.0.0",
-      "checksum": "ed035a43f9798a9f5f49c0a126685169",
+      "checksum": "15b403b99d31532da1eff92b1bbfc85f",
       "channel": "stable",
-      "size": 150
+      "size": 97
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/selector_metodo_pago/flechas/recorrido.py": {
       "version": "1.0.0",
-      "checksum": "9052f31c1014839bb4ac056216567843",
+      "checksum": "5f1c0a3eef761e8e4ec6d040122cea33",
       "channel": "stable",
-      "size": 2306
+      "size": 2178
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/selector_metodo_pago/flechas/__init__.py": {
       "version": "1.0.0",
@@ -7518,15 +7518,15 @@
     },
     "src/cajero/paso6_cobro/rutas_de_cobro/fiado_piramidal/orquestador_credito.py": {
       "version": "1.0.0",
-      "checksum": "3fc4c153e7a0623d73bdce88000fc74a",
+      "checksum": "1440b48cc69b33dd8346b3d8b016539c",
       "channel": "stable",
-      "size": 11773
+      "size": 12677
     },
     "src/cajero/paso6_cobro/rutas_de_cobro/fiado_piramidal/plano.md": {
       "version": "1.0.0",
-      "checksum": "685505030164be5e5bdfd026686ac0b2",
+      "checksum": "88607c2d5d1f4642200666b4cff254e4",
       "channel": "stable",
-      "size": 1598
+      "size": 2190
     },
     "src/cajero/paso6_cobro/rutas_de_cobro/fiado_piramidal/proceso.py": {
       "version": "1.0.0",
@@ -7536,9 +7536,9 @@
     },
     "src/cajero/paso6_cobro/rutas_de_cobro/fiado_piramidal/README.md": {
       "version": "1.0.0",
-      "checksum": "f6952e7333583c1e9d3d329b02ed8453",
+      "checksum": "e8d8de89dd99fe71ddf87a1b2c248ebc",
       "channel": "stable",
-      "size": 486
+      "size": 614
     },
     "src/cajero/paso6_cobro/rutas_de_cobro/fiado_piramidal/__init__.py": {
       "version": "1.0.0",
@@ -7554,9 +7554,9 @@
     },
     "src/cajero/paso6_cobro/rutas_de_cobro/fiado_piramidal/modulo_cobranza/README.md": {
       "version": "1.0.0",
-      "checksum": "4c754eb75309e07a87039a103835a1bc",
+      "checksum": "9e4d86ff16005a23954fcef69d2f3f4a",
       "channel": "stable",
-      "size": 915
+      "size": 1269
     },
     "src/cajero/paso6_cobro/rutas_de_cobro/fiado_piramidal/modulo_cobranza/__init__.py": {
       "version": "1.0.0",

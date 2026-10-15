@@ -281,7 +281,7 @@ class Paso6Cobro(QDialog):
             "border: none; border-radius: 10px; font-size: 17px; font-weight: 800; } "
             "QPushButton:hover { background-color: #059669; }"
         )
-        self.btn_mas_credito.clicked.connect(self._abrir_centro_cobranzas)
+        self.btn_mas_credito.clicked.connect(self._activar_mas_credito_express)
 
         pie = QFrame()
         pie.setObjectName("Paso6MetodoPie")
@@ -596,6 +596,9 @@ class Paso6Cobro(QDialog):
         self.setFocus()
 
     def procesar_click_metodo(self, key):
+        if key in ("MasCredito", "Cobranza"):
+            self._activar_mas_credito_express()
+            return
         if key not in ("Fiado", "Clientes"):
             # Efectivo, tarjeta, QR y mixto abren la hoja del monto.
             self.stack.setCurrentIndex(1)
@@ -609,10 +612,6 @@ class Paso6Cobro(QDialog):
         elif key == "Fiado":
             self.stack.setCurrentIndex(1)
             self._activar_fiado_express()
-            return
-        elif key == "MasCredito":
-            self.stack.setCurrentIndex(1)
-            self._activar_cliente_express()
             return
         else:
             self.set_metodo(key)
@@ -809,24 +808,12 @@ class Paso6Cobro(QDialog):
         self.cmb_cliente.blockSignals(False)
 
     def _activar_mas_credito_express(self):
-        """COBRANZA abre F6. No carga la deuda en el ticket."""
-        self._abrir_centro_cobranzas()
-
-    def _abrir_centro_cobranzas(self):
-        """F6: mismo diálogo que el paso 5. No cobra el carrito."""
-        try:
-            from src.cajero.f6_centro_cobranzas import DialogoCentroCobranzas
-            dlg = DialogoCentroCobranzas(parent=self)
-            qt_exec(dlg)
-        except Exception:
-            try:
-                QMessageBox.warning(
-                    self,
-                    "Cobranza",
-                    "No se pudo abrir el centro de cobranzas. La venta sigue.",
-                )
-            except Exception:
-                pass
+        """COBRANZA del paso 6: liquidar en esta hoja. No es el F6 del paso 5."""
+        if self.current_metodo != "MasCredito":
+            self._revertir_tras_fiado = self.current_metodo or "Efectivo"
+        self.stack.setCurrentIndex(1)
+        self.set_metodo("MasCredito")
+        self._mostrar_hoja_cuenta("MasCredito")
 
     def _activar_cliente_express(self):
         """Clic en Clientes: la misma hoja del cobro, no una ventana oscura."""
@@ -2345,8 +2332,6 @@ class Paso6Cobro(QDialog):
         elif k == Qt.Key.Key_F4: self.abrir_recargo()
         
         elif k == Qt.Key.Key_F10: self._elegir_cierre("fiscal")
-        elif k == Qt.Key.Key_F6:
-            self._abrir_centro_cobranzas()
         elif k == Qt.Key.Key_F9: self._emergencia()
         elif k == Qt.Key.Key_F11:
             if self.btn_f11.isVisible():

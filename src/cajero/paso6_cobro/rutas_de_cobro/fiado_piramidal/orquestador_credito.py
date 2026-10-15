@@ -120,8 +120,6 @@ class OrquestadorFiadoPiramidal(QFrame):
 
     def mostrar(self, monto, modo="Fiado"):
         self.show()
-        if (modo or "") == "MasCredito":
-            modo = "Clientes"
         self._modo = modo or "Fiado"
         self._monto_carrito = float(monto or 0)
         self._datos_cliente = {}
@@ -185,7 +183,10 @@ class OrquestadorFiadoPiramidal(QFrame):
             "compra": self._monto_carrito,
         }
         self._datos_cliente = datos
-        self._decidir_via_credito(datos)
+        if getattr(self, "_modo", "") == "MasCredito":
+            self._abrir_cobranza(datos)
+        else:
+            self._decidir_via_credito(datos)
 
     def _decidir_via_credito(self, datos):
         limite = float(datos.get("limite", 0) or 0)
@@ -203,6 +204,22 @@ class OrquestadorFiadoPiramidal(QFrame):
         monto_abono = float(_abono or 0.0)
         saldo_previo = float(self._datos_cliente.get("deuda", 0.0) or 0.0)
         saldo_final = saldo_previo + self._monto_carrito
+        lineas = [
+            "--------------------------------",
+            ">>> CUENTA CORRIENTE <<<",
+            f"CLIENTE: {self._datos_cliente.get('nombre') or ''}",
+            f"SALDO PREVIO:   ${saldo_previo:,.2f}",
+            f"ESTA COMPRA:    ${self._monto_carrito:,.2f}",
+        ]
+        if monto_abono > 0.009:
+            lineas.append(f"ABONO COBRANZA: ${monto_abono:,.2f}")
+        lineas.extend(
+            [
+                f"SALDO RESTANTE: ${saldo_final:,.2f}",
+                "--------------------------------",
+                "FIRMA: _________________________",
+            ]
+        )
         self.pago_completado.emit(
             {
                 "estado": "APROBADO",
@@ -212,24 +229,25 @@ class OrquestadorFiadoPiramidal(QFrame):
                 "condiciones_ticket": {
                     "es_cuenta_corriente": True,
                     "cliente_nombre": self._datos_cliente.get("nombre") or "",
-                    "lineas_extra": [
-                        "--------------------------------",
-                        ">>> CUENTA CORRIENTE <<<",
-                        f"CLIENTE: {self._datos_cliente.get('nombre') or ''}",
-                        f"SALDO PREVIO:   ${saldo_previo:,.2f}",
-                        f"ESTA COMPRA:    ${self._monto_carrito:,.2f}",
-                        f"SALDO RESTANTE: ${saldo_final:,.2f}",
-                        "--------------------------------",
-                        "FIRMA: _________________________",
-                    ],
+                    "lineas_extra": lineas,
                 },
             }
         )
 
     def _finalizar_desde_cobranza(self):
-        """La cobranza no cierra una venta. F6 asienta el abono."""
-        self.stack.setCurrentWidget(self.via_buscador)
-        self.via_buscador.focus_caja()
+        cliente_id = int(self._datos_cliente.get("id", 0) or 0)
+        monto_abono = float(getattr(self.via_cobranza, "_monto_a_cobrar", 0.0) or 0.0)
+        try:
+            from src.clientes_fiado.cerebro.cerebro import cerebro
+            from src.cajero.cajero_activo import CajeroActivo
+            cerebro.conceder_excepcion(cliente_id, self._monto_carrito, CajeroActivo.nombre)
+            cli = cerebro.obtener(cliente_id)
+            if cli:
+                c_dict = _fila_a_dict(cli)
+                self._datos_cliente["deuda"] = float(c_dict.get("deuda_actual", 0.0) or 0.0)
+        except Exception:
+            pass
+        self._emitir_aprobado_normal(cliente_id, monto_abono)
 
     def _refrescar_cliente(self):
         cid = self._datos_cliente.get("id")
@@ -251,13 +269,17 @@ class OrquestadorFiadoPiramidal(QFrame):
         self.via_buscador.focus_caja()
 
     def _abrir_cobranza(self, datos):
-        """No se cobra deuda en el cobro de una venta."""
-        return
+        self._datos_cliente = datos or self._datos_cliente
+        self.via_cobranza.poblar(self._datos_cliente)
+        self.stack.setCurrentWidget(self.via_cobranza)
 
     def _cliente_recien_creado(self, dict_datos):
         self._datos_cliente = _fila_a_dict(dict_datos)
         self._datos_cliente["compra"] = self._monto_carrito
-        self._decidir_via_credito(self._datos_cliente)
+        if getattr(self, "_modo", "") == "MasCredito":
+            self._abrir_cobranza(self._datos_cliente)
+        else:
+            self._decidir_via_credito(self._datos_cliente)
 
     def procesar_cobranza(self):
         return False

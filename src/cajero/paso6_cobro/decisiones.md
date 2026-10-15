@@ -1,6 +1,6 @@
 # Decisiones a propósito (no son defectos)
 
-Leé esto antes de “arreglar” F9, el PIN de fiado o el token de Mercado Pago.
+Leé esto antes de “arreglar” F9, el PIN de fiado, el token de Mercado Pago, F6 o el botón COBRANZA.
 
 ## F9 sin PIN
 
@@ -32,16 +32,27 @@ Esc con el cursor en el casillero (mixto o efectivo) también sale: no se queda 
 
 El Point de mixto cobra solo la parte de tarjeta, y solo después de cubrir el total. Enter (o F11 cubierto) manda el Point. Verde: palomita y, si hay efectivo, cajón. Después transferencia, QR o cliente. No se reescribe el reparto ni se manda el Point otra vez. Un excedente digital no es vuelto. Confirmar el cliente del resto no reclasifica la venta a Fiado. Un abono no cierra el carrito. F9 no saltea el cliente de ese resto.
 
-## Dos motores (no unificar)
+## F6 y COBRANZA del paso 6 (mismo motor, distinta entrada)
 
-Hay dos piezas y no son el mismo motor duplicado:
+**F6** es una tecla del **paso 5**. Cobranza pura: no hay carrito, no se vende nada. El cajero la aprieta y abre la ventana para cobrarle al cliente una deuda.
 
-1. **Motor real de la venta:** `motor_pagos/MotorPrincipalCobros`. Asienta el ticket. Crédito solo carga la venta a la cuenta.
-2. **Intermediario de cobranza:** `MotorCobranzaMedios` en **F6**. Cobra el abono.
+**COBRANZA** es un medio del **paso 6**. El cliente **está comprando**. Si además quiere pagar una deuda, toca ese botón en los medios de pago. Mismos medios (efectivo, tarjeta, QR, transferencia, mixto) y el mismo `MotorCobranzaMedios`. La diferencia es el ticket: acá hay venta.
 
-En el paso 6, **COBRANZA** (verde) y **F6** abren el mismo `DialogoCentroCobranzas` del paso 5. No cargan deuda en el ticket. No fusionar ese diálogo con el motor de la venta. Si el cupo no alcanza, PIN de supervisor o Esc.
+No abrir la ventana de F6 desde el cobro. No poner el carrito en F6.
 
-Mapa: paso 5 llena el carrito. Paso 6 cobra la venta (mixto puede incluir cliente). F6 / Admin Abonar cobran deuda con el mismo diálogo; mixto de F6 no pone resto a crédito.
+| | **F6 (paso 5)** | **COBRANZA (paso 6)** |
+|---|---|---|
+| Dónde | Tecla / botón en el carrito | Botón verde en los medios de pago |
+| Hay venta | No | Sí: el cliente compra |
+| Carrito | No lleva | Sí |
+| Motor del abono | `MotorCobranzaMedios` | El mismo |
+| Mixto | Abono. No pone resto a crédito | Venta (puede ir resto a cliente) |
+
+Hay **otro** motor, el de la venta: `MotorPrincipalCobros`. Asienta el ticket. CRÉDITO solo carga la compra a la cuenta. No unificar ese motor con F6.
+
+Si el cupo no alcanza en **CRÉDITO**, PIN de supervisor o Esc.
+
+Tabla corta también en `src/cajero/README.md`.
 
 ## Token de Mercado Pago en Admin
 

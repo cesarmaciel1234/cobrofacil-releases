@@ -18,7 +18,7 @@ src/cajero/paso6_cobro/
 ├── rutas_de_cobro/
 │   ├── salida/                   <-- ESC: vuelve limpio a la grilla
 │   ├── efectivo/  tarjeta/  qr/  transferencia/  mixto/
-│   └── fiado_piramidal/          <-- CRÉDITO y COBRANZA
+│   └── fiado_piramidal/          <-- CRÉDITO y COBRANZA del paso 6
 │
 ├── fiado_en_cobro/ui/buscador_clientes/   <-- Buscador que usa el orquestador
 │
@@ -34,7 +34,8 @@ src/cajero/paso6_cobro/
    - El cajero oprime el método deseado en la botonera lateral (o con atajos de teclado F1..F6).
    - El orquestador borra el panel anterior e inyecta la ruta nueva.
    - *¿Apretó Tarjeta?* Se inyecta la ruta `tarjeta/`.
-   - *¿Apretó ⚖ CRÉDITO o COBRANZA?* Se inyecta `fiado_piramidal/`. El F5 del cobro se retiró.
+   - *¿Apretó ⚖ CRÉDITO?* Se inyecta `fiado_piramidal/` (carga el ticket a la cuenta).
+   - *¿Apretó COBRANZA?* Se inyecta `fiado_piramidal/` en modo `MasCredito` (`PanelCobranza`). No es F6. El F5 del cobro se retiró.
   - *¿Apretó ESC?* `salida/proceso.py` suelta el proceso y vuelve a la grilla. No cierra el cobro.
 
 3. **Ejecución y Despacho:**

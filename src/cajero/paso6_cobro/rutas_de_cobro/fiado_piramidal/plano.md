@@ -2,11 +2,17 @@
 
 Rama: `src/cajero/paso6_cobro/rutas_de_cobro/fiado_piramidal/`
 
+Esto es **paso 6**. F6 es tecla del paso 5: cobranza pura, sin carrito. Acá el cliente está comprando. Mismo `MotorCobranzaMedios`. Tabla: `src/cajero/README.md`.
+
 ## Frente
 
-El cajero, en Paso 6, toca **⚖ CRÉDITO**. La hoja del cobro muestra el orquestador (`orquestador_credito.py`). La deuda se cobra en **F6**, nunca acá.
+El cajero, en los medios de pago, toca **⚖ CRÉDITO** o **COBRANZA**. La hoja muestra el orquestador (`orquestador_credito.py`).
 
-1. **Buscador** (`fiado_en_cobro/ui/buscador_clientes/`): DNI o nombre. Un match: Enter elige. Varios: flechas o mouse y Enter. Sin match: Enter crea.
+- **CRÉDITO:** el ticket va a la cuenta. No cobra plata ahora.
+- **COBRANZA:** el cliente compra y, si quiere, paga una deuda. `mostrar(..., "MasCredito")` → buscador → `PanelCobranza`. Mismos medios que F6.
+- **F6:** no está en esta hoja. Cobranza sin venta, en el paso 5.
+
+1. **Buscador** (`fiado_en_cobro/ui/buscador_clientes/`): DNI o nombre. Un match: Enter elige. Varios: flechas o mouse y Enter. Sin match: Enter crea. En COBRANZA el título dice COBRANZA y elige cliente para liquidar.
 2. **Crédito — verde** (`ruta1_margen_aprobado/`): el disponible cubre el carrito. Segundo Enter (350 ms) cierra la venta a cuenta.
 3. **Crédito — rojo** (`ruta2_limite_superado/`): el carrito supera el disponible. PIN de supervisor para excepción, o Esc. No hay botón de cobranza.
 4. **Cliente nuevo** (`ruta3_cliente_nuevo/`): alta exprés con límite 50.000.
@@ -19,7 +25,7 @@ ESC cierra el proceso entero y vuelve a la grilla. `reiniciar` no llama al cereb
 
 - Búsqueda: `MotorBusquedaClientes` → `cerebro.buscar`. No se lista toda la tabla `clientes` al abrir la hoja.
 - Saldo y límite: `cerebro.obtener`.
-- Cierre de la venta: el orquestador emite `pago_completado`; el motor real `finalizar` asienta el ticket. El abono de deuda no pasa por esta hoja.
+- Cierre de la venta: el orquestador emite `pago_completado`; el motor real `finalizar` asienta el ticket. En COBRANZA, `PanelCobranza` asienta el abono (QR/Point/transferencia al mismo nivel que el cobro del ticket) y después se cierra el ticket.
 
 ## Qué no romper
 

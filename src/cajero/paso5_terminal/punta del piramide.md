@@ -33,7 +33,7 @@ No partir la clase. No subir los imports internos al tope. No crear `plano.md` a
 
 ## Producción
 
-Los relojes están en `Paso5Terminal.__init__`: reloj 1 s, búsqueda de un solo tiro, foco del escáner 150 ms, stock 5 min si `stock_alerta_activa`, autocierre 1 min si `cierre_auto_activo`. Si el cajero toca el ticket, la lista o el asistente, el cursor vuelve al buscador a los 2 s. Si deja de escribir en el asistente, también. Un escaneo cierra el asistente y la lista, y carga el producto. F12 hace lo mismo antes de abrir el cobro. El cobro no se toca: es el paso 6.
+Los relojes están en `Paso5Terminal.__init__`: reloj 1 s, búsqueda de un solo tiro, foco del escáner 150 ms, stock 5 min si `stock_alerta_activa`, autocierre 1 min si `cierre_auto_activo`. Si el cajero toca el ticket, la lista o el asistente, el cursor vuelve al buscador a los 2 s. Si deja de escribir en el asistente, también. Un escaneo cierra el asistente y la lista, y carga el producto. F12 hace lo mismo antes de abrir el cobro. El cobro no se toca: es el paso 6. **F6** acá abre `DialogoCentroCobranzas` (deuda sin ticket). No es el botón COBRANZA del cobro. Tabla: `src/cajero/README.md`.
 
 Al presionar Enter en el buscador (`procesar_scan`), se prioriza que el texto ingresado coincida de manera exacta con el código o ID de un producto en base de datos. Solo si falla la búsqueda exacta y hay un menú de sugerencias visible, se carga el primer elemento preseleccionado. Así se evita agregar productos equivocados ante lecturas pausadas o parciales de escáner.
 Asimismo, al navegar la lista de resultados con la `Flecha Abajo` desde el buscador, el selector salta de forma instantánea al segundo ítem de la lista, ya que el primero se asume auto-seleccionado por defecto.

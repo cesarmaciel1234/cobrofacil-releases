@@ -53,7 +53,7 @@ def metodo_con_flecha(ventana, tecla):
 
 
 def atender_pagina_metodos(ventana, event):
-    """Enter elige. Escape vuelve al carrito. F6 abre cobranza."""
+    """Enter elige. Escape vuelve al carrito. El resto de teclas no pasa."""
     tecla = event.key()
     if event.isAutoRepeat() and not es_flecha(tecla):
         return
@@ -62,9 +62,6 @@ def atender_pagina_metodos(ventana, event):
             ventana.procesar_click_metodo(ventana.current_metodo)
     elif es_flecha(tecla):
         marcar_tarjeta(ventana, metodo_con_flecha(ventana, tecla))
-    elif tecla == Qt.Key.Key_F6:
-        if hasattr(ventana, "_abrir_centro_cobranzas"):
-            ventana._abrir_centro_cobranzas()
     elif tecla == Qt.Key.Key_Escape:
         ventana.reject()
     event.accept()

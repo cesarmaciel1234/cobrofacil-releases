@@ -1,6 +1,6 @@
 # Cobranza (F6 del paso 5)
 
-La nota de la rama es `punta del piramide.md`. Solo cobra fiado y cuenta corriente. F6 abre `dialogo.py` (`DialogoCentroCobranzas`). No crea clientes: eso es crédito del paso 6. No mete ni saca efectivo suelto (F2 entra, F5 sale). `consulta.buscar_cuentas` lista quien ya tiene deuda o saldo a favor. La lista muestra nombre y DNI; oculta importes hasta elegir. PAGAR/ABONAR abre los medios (Efectivo, Tarjeta, QR, Transferencia, Mixto) en `ui_selector`. PIN y asiento van por `MotorCobranzaMedios`. No abre la venta. Colores en `paleta.py`.
+La nota de la rama es `punta del piramide.md`. Solo cobra fiado y cuenta corriente **en el paso 5**. F6 abre `dialogo.py` (`DialogoCentroCobranzas`). No es el botón COBRANZA del paso 6. Tabla: `src/cajero/README.md`. No crea clientes: eso es crédito del paso 6. No mete ni saca efectivo suelto (F2 entra, F5 sale). `consulta.buscar_cuentas` lista quien ya tiene deuda o saldo a favor. La lista muestra nombre y DNI; oculta importes hasta elegir. PAGAR/ABONAR abre los medios (Efectivo, Tarjeta, QR, Transferencia, Mixto) en `ui_selector`. PIN y asiento van por `MotorCobranzaMedios`. No abre la venta. Colores en `paleta.py`.
 
 ## Seguridad para gran empresa
 

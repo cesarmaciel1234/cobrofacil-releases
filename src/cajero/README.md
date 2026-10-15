@@ -13,7 +13,27 @@ Leé esto antes de diagnosticar o de proponer un corte.
 | `paso8_historial/` | Historial, F3 | `punta del piramide.md` · `dialogo.py`, clase `DialogoHistorialDia` |
 | `ingresar_efectivo/` | F2: entra efectivo a la caja | `dialogo.py` |
 | `sacar_efectivo/` | F5: sale efectivo de la caja | `dialogo_retiro.py`, clase `DialogoRetiroEfectivo` |
-| `f6_centro_cobranzas/` | F6: cobranza fiado / cuenta corriente | `punta del piramide.md` · `dialogo.py`, clase `DialogoCentroCobranzas` |
+| `f6_centro_cobranzas/` | F6 del **paso 5**: deuda sin carrito | `punta del piramide.md` · `dialogo.py`, clase `DialogoCentroCobranzas` |
+
+### F6 y COBRANZA del paso 6
+
+Mismo motor de abono (`MotorCobranzaMedios`) y mismos medios. Distinta entrada. No unir las pantallas.
+
+**F6** es una tecla del paso 5. Cobranza pura: sin carrito, sin venta. Se aprieta F6 y se le cobra al cliente.
+
+**Paso 6** cobra la venta. Si el cliente compra y además quiere pagar una deuda, toca **COBRANZA** en los medios de pago.
+
+| | **F6** | **COBRANZA del paso 6** |
+|---|---|---|
+| Dónde | Paso 5, tecla F6 | Paso 6, botón verde en medios |
+| Venta | No | Sí |
+| Carrito | No | Sí |
+| Motor del abono | `MotorCobranzaMedios` | El mismo |
+| Mixto | No pone resto a crédito | Es venta |
+
+**CRÉDITO** (botón azul del paso 6) no es cobranza: carga el ticket a la cuenta. Admin Abonar usa F6, no el paso 6. El F5 del paso 5 saca efectivo; el F5 del cobro se retiró.
+
+Detalle: `paso6_cobro/decisiones.md`, `paso6_cobro/rutas_de_cobro/fiado_piramidal/plano.md`, `f6_centro_cobranzas/punta del piramide.md`.
 
 `cajero_activo.py` guarda la estación (cajero 1 o 2). No es una pantalla. **Una sola terminal por PC**: el candado `perfil_cajero.lock` y el lanzador no abren un segundo `--role cajero`. El auxiliar (F8) es el mismo proceso, otro cajón/impresora.
 
@@ -113,7 +133,7 @@ Esas ventanas, y F11, tapan la venta con el gris `#334155` (`src/utils/fondo_gri
 
 ### Cobro
 
-Crédito (clave `Clientes`) carga la venta a la cuenta. La deuda se cobra en **F6** (`DialogoCentroCobranzas`). En el paso 6 el botón **COBRANZA** y F6 abren ese diálogo: no mezclan el abono con el ticket. Si el cupo no alcanza: PIN de supervisor o Esc. El F5 del cobro se retiró.
+Crédito (clave `Clientes`) carga la venta a la cuenta. F6 y COBRANZA del cobro: ver la tabla de arriba. Si el cupo no alcanza: PIN de supervisor o Esc. El F5 del cobro se retiró.
 
 La clave interna de crédito es Clientes (no `crédito`: esa clave de REGISTRO es la tarjeta de crédito). La caja toma DNI o nombre. Un match: Enter. Varios: flechas o mouse y Enter. Un nombre nuevo crea con límite 50.000.
 

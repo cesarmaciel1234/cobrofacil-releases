@@ -4,7 +4,7 @@ La ventana de cobrar. El gris tapa el paso 5. `paso6_cobro.py` arma la ventana.
 
 Si algo de velocidad o ESC se rompe, `reparacion.md` de esta carpeta. No inventar otro arreglo.
 
-F9 sin PIN, PIN de fiado después, token en Admin: `decisiones.md`. No “arreglarlos” en este pase.
+F9 sin PIN, PIN de fiado después, token en Admin: `decisiones.md`. F6 y COBRANZA del cobro no son lo mismo: esa nota y `src/cajero/README.md`. No “arreglarlos” en este pase.
 
 La punta de esta rama es `punta del piramide.md`. Cada carpeta de adentro tiene su README.
 
@@ -14,6 +14,6 @@ Al abrir el cobro no se lee `clientes`. Esa lista entra en `_asegurar_lista_clie
 
 Fiado y Clientes salen de `src/clientes_fiado`. El frente del cobro es `rutas_de_cobro/fiado_piramidal/`. El motor del medio solo pide la orden ok. No comparte lógica con los otros cobros.
 
-Mixto encadena los medios en `mixto_en_cobro/`. No manda el Point antes de cubrir. El resto a cuenta no convierte la venta en Fiado. F6 y el botón COBRANZA abren el centro de cobranzas. Detalle en esa carpeta y en Producción de `punta del piramide.md`.
+Mixto encadena los medios en `mixto_en_cobro/`. No manda el Point antes de cubrir. El resto a cuenta no convierte la venta en Fiado. El botón COBRANZA es liquidación en esta hoja (`fiado_piramidal/`). F6 es el centro del paso 5. Detalle en Producción de `punta del piramide.md`.
 
 Esc es un paso atrás y deja el medio vacío (`decisiones.md`, `rutas_de_cobro/salida/`). Volver al mismo método no cobra el importe anterior.

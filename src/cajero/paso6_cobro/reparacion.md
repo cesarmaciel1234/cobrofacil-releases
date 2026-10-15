@@ -47,7 +47,7 @@ Archivos: `qr_en_cobro/pedido.py`, `qr_en_cobro/panel.py`, `mercadopago_core/api
 
 ## Crédito / cobranza — camino vivo
 
-`OrquestadorFiadoPiramidal` (no `PanelFiadoCobro`). Cancelar → `salir_a_metodos`. Crédito = `Clientes`. Cobranza = F6, no el cobro.
+`OrquestadorFiadoPiramidal` (no `PanelFiadoCobro`). Cancelar → `salir_a_metodos`. Crédito = `Clientes`. COBRANZA del paso 6 = `MasCredito` / `PanelCobranza`. F6 = centro del paso 5.
 
 `MotorCobranzaMedios` asienta el abono y avisa ok. El ticket lo cierra `MotorPrincipalCobros`. No son dos motores rivales: ver `decisiones.md`.
 

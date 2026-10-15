@@ -26,6 +26,11 @@ class LienzoQr(QWidget):
         self._reloj = QTimer(self)
         self._reloj.setInterval(800)
         self._reloj.timeout.connect(self._consultar_pago)
+        QTimer.singleShot(0, self._precargar)
+
+    def _precargar(self):
+        from src.cajero.paso6_cobro.qr_en_cobro.pedido import precargar_conexion
+        threading.Thread(target=precargar_conexion, name="qr-abono-precarga", daemon=True).start()
 
     def _armar(self):
         lay = QVBoxLayout(self)
@@ -132,7 +137,7 @@ class LienzoQr(QWidget):
             self._fuente.scaled(
                 lado, lado,
                 Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
+                Qt.TransformationMode.FastTransformation,
             )
         )
 
@@ -208,7 +213,8 @@ class LienzoQr(QWidget):
         self._borrar_url = pedido.get("borrar_url") or ""
         self._modo = "esperando"
         self._en_vuelo = False
-        self.estado.hide()
+        self.estado.show()
+        self.estado.setText("Que el cliente escanee. El cobro se cierra solo.")
         self.btn_imagen.hide()
         self.btn_registrar.hide()
         self.lbl_f9.show()

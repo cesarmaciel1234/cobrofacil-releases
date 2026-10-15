@@ -1,6 +1,8 @@
 # Punta — F6 centro de cobranzas
 
-Paso 5, tecla F6. Cobra fiado y cuenta corriente. No vende. No es F2. No es crédito del paso 6. El cobro de una venta nunca abre esta hoja.
+Paso 5, tecla **F6**. Cobranza pura: sin carrito, sin venta. El cajero la aprieta y cobra al cliente. No es F2. No es F5. No es **CRÉDITO**. El botón **COBRANZA** del paso 6 usa el mismo motor, pero ahí el cliente está comprando.
+
+Tabla: `src/cajero/README.md` y `paso6_cobro/decisiones.md`.
 
 ```
 f6_centro_cobranzas/
@@ -32,4 +34,4 @@ No pinta alta de cliente. Las flechas no saltan a F2.
 4. Mixto: solo dos medios. Point / tarjeta primero, después transferencia, después QR. Esc vacía el lienzo. Recién después `MotorCobranzaMedios.finalizar` → `asentar` una vez (`COB-{id}`). No es el mixto del paso 6 (ahí puede ir un resto a cliente).
 5. Admin Abonar abre esta misma hoja (`perfil=Admin`). No vuelve a asentar.
 
-Qué no romper: paso 6, F2, F5. No unir F6 con el cobro de la venta.
+Qué no romper: paso 6, F2, F5. No unir F6 con el cobro de la venta ni con el botón COBRANZA del paso 6.
