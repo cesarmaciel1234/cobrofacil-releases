@@ -18,9 +18,9 @@ f6_centro_cobranzas/
 
 ## Frente
 
-Buscador por DNI o nombre (tope 5). Ficha: hola, deuda o a favor, o al día. PAGAR / ABONAR aunque no haya deuda: el excedente queda a favor, sin cartel. Medios: Efectivo, Tarjeta, QR, Transferencia, Mixto.
+Buscador por DNI o nombre (tope 5). Ficha: hola, deuda o a favor, o al día. PAGAR / ABONAR aunque no haya deuda: el excedente queda a favor, sin cartel. Paso 1 monto a la cuenta. Paso 2 medio. Efectivo pregunta los billetes; si falta no cobra.
 
-Admin Abonar abre el mismo diálogo con `perfil=Admin`.
+Admin Abonar abre el mismo diálogo con `perfil=Admin`, va directo al monto y al medio, PIN apagado. El cobro se asienta una sola vez.
 
 No pinta alta de cliente. Las flechas no saltan a F2.
 

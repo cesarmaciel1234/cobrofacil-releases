@@ -284,29 +284,6 @@ class PanelFiadoCobro(QFrame):
         self.cambio.emit("confirmando")
         self.panel_aprobado.btn_confirmar.setFocus()
 
-    def activar_cobranza(self, monto_sugerido, deuda_actual):
-        self._modo = "cobranza"
-        self._deuda_actual = deuda_actual
-        nombre = getattr(self, "_cliente_nombre", "Cliente")
-        
-        self.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
-        self.estado.setText(f"Hola {nombre}")
-        total_pagar = float(deuda_actual) + float(self._monto)
-        self.detalle.setText(f"Total a pagar: ${total_pagar:,.2f}")
-        self.icono.hide()
-        
-        self.txt_monto_abono.setText(f"{monto_sugerido:.2f}".replace('.', ','))
-        self.txt_monto_abono.show()
-        self.btn_abono_libre.show()
-        
-        self.instruccion.hide()
-        self.cont_botones.show()
-        self._cerrar_lienzos()
-        
-        self.stack.setCurrentWidget(self.vista_cobranza)
-        self.txt_monto_abono.setFocus()
-        self.txt_monto_abono.selectAll()
-
     def _pin(self):
         try:
             from src.cajero.paso5_terminal.dialogos.pin.dialogo_pin import DialogoPIN

@@ -12,12 +12,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from src.admin.admin_card import AdminCard
-
-try:
-    from src.base_de_datos.database import db_manager
-except ImportError:
-    from database import db_manager
-
 from src.utils.theme_manager import theme_manager
 
 STATS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "module_stats.json")
@@ -65,6 +59,7 @@ class Admin0Dashboard(QWidget):
         self._current_visible = set()  # Cache de módulos visibles
         self.setup_ui()
         self._apply_theme()
+        self.cargar_datos()
         theme_manager.theme_changed.connect(lambda _: self._apply_theme())
         try:
             from src.utils.bot_state import update_bot_state
@@ -166,9 +161,10 @@ class Admin0Dashboard(QWidget):
         hero_lay.setContentsMargins(36, 0, 36, 0)
 
         hero_txt = QVBoxLayout()
+        from src.utils.letra import QSS_KPI
         self.greeting = QLabel("Buenos días 👋")
         self.greeting.setStyleSheet(
-            "font-size: 26px; font-weight: 900; color: #FFFFFF;"
+            f"{QSS_KPI} color: #FFFFFF;"
             " background: transparent; border: none;"
             " font-family: 'Segoe UI', 'Outfit', sans-serif;")
         self.desc = QLabel("PANEL DE ADMINISTRACIÓN  ·  TPV PRO 2026")
@@ -223,23 +219,17 @@ class Admin0Dashboard(QWidget):
         self.JEFE_MODULES = {"nexus_pro", "proveedores", "red_lan", "cierre"}
 
         self.cards = {}
-        # Diferir creación de cards hasta cargar_datos() para mejorar performance
-        # for m_id, title, icon, palette, sub, screen_idx in self.modules_info:
-        #     card = AdminCard(title, icon, palette, sub)
-        #     card.clicked.connect(lambda s=screen_idx, mid=m_id: self._on_card_clicked(mid, s))
-        #     self.cards[m_id] = card
-
-        # Alias para retrocompatibilidad (se crean bajo demanda)
-        self.card_inv    = None
-        self.card_ofertas= None
-        self.card_rep    = None
+        self.card_inv = None
+        self.card_ofertas = None
+        self.card_rep = None
         self.card_cierre = None
-        self.card_mp     = None
-        self.card_etiq   = None
-        self.card_conf   = None
-        self.card_hw     = None
-        self.card_vd     = None
-        self.card_cli    = None
+        self.card_mp = None
+        self.card_etiq = None
+        self.card_conf = None
+        self.card_hw = None
+        self.card_vd = None
+        self.card_cli = None
+        self._crear_cards()
 
         grid_container = QHBoxLayout()
         grid_container.addStretch(1)
@@ -339,6 +329,25 @@ class Admin0Dashboard(QWidget):
             pass
         self.request_screen.emit(screen_idx)
 
+    def _crear_cards(self):
+        if self._cards_created:
+            return
+        for m_id, title, icon, palette, sub, screen_idx in self.modules_info:
+            card = AdminCard(title, icon, palette, sub)
+            card.clicked.connect(lambda s=screen_idx, mid=m_id: self._on_card_clicked(mid, s))
+            self.cards[m_id] = card
+        self._cards_created = True
+        self.card_inv = self.cards.get("inventario")
+        self.card_ofertas = self.cards.get("ofertas")
+        self.card_rep = self.cards.get("reportes")
+        self.card_cierre = self.cards.get("cierre")
+        self.card_mp = self.cards.get("mercadopago")
+        self.card_etiq = self.cards.get("etiquetas")
+        self.card_conf = self.cards.get("configuracion")
+        self.card_hw = self.cards.get("hardware")
+        self.card_vd = self.cards.get("panel_fiscal")
+        self.card_cli = self.cards.get("clientes")
+
     def cargar_datos(self):
         from src.config import config
         stats    = load_stats()
@@ -359,25 +368,7 @@ class Admin0Dashboard(QWidget):
         filtered       = [m for m in self.modules_info if m[0] in visible_ids]
         sorted_modules = sorted(filtered, key=lambda m: stats.get(m[0], 0), reverse=True)
 
-        # Crear cards solo una vez
-        if not self._cards_created:
-            for m_id, title, icon, palette, sub, screen_idx in self.modules_info:
-                card = AdminCard(title, icon, palette, sub)
-                card.clicked.connect(lambda s=screen_idx, mid=m_id: self._on_card_clicked(mid, s))
-                self.cards[m_id] = card
-            self._cards_created = True
-
-            # Actualizar aliases
-            self.card_inv    = self.cards.get("inventario")
-            self.card_ofertas= self.cards.get("ofertas")
-            self.card_rep    = self.cards.get("reportes")
-            self.card_cierre = self.cards.get("cierre")
-            self.card_mp     = self.cards.get("mercadopago")
-            self.card_etiq   = self.cards.get("etiquetas")
-            self.card_conf   = self.cards.get("configuracion")
-            self.card_hw     = self.cards.get("hardware")
-            self.card_vd     = self.cards.get("panel_fiscal")
-            self.card_cli    = self.cards.get("clientes")
+        self._crear_cards()
 
         # Limpiar grid de forma segura
         for i in reversed(range(self.grid_layout.count())):

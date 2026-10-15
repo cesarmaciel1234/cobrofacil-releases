@@ -3,7 +3,7 @@ from PyQt6.QtCore import Qt
 
 class PanelBotonesAccion(QWidget):
     """
-    Panel derecho con las acciones de cobro (F1, F2, F3, F4, F5, F11, F12).
+    Panel derecho con las acciones de cobro (F1, F2, F3, F4, F7, F11, F12).
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -60,8 +60,6 @@ class PanelBotonesAccion(QWidget):
         self.pila_point.addWidget(QWidget())
         lay_registra.addWidget(self.pila_point, 1)
         
-        self.btn_f5 = QPushButton()
-        self.btn_f5.hide()
         self.pila_extra = QStackedWidget()
         self.pila_extra.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.pila_extra.setMinimumHeight(78)

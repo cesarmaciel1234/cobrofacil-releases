@@ -75,7 +75,14 @@ class PanelEstadoCredito(QWidget):
         # Spacer
         lay.addSpacing(20)
 
-        # Payment Input area
+        self.lbl_pregunta_monto = QLabel("1. ¿Cuánto paga a la cuenta?")
+        self.lbl_pregunta_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_pregunta_monto.setStyleSheet(
+            "color: #334155; font-size: 18px; font-weight: 800; background: transparent; border: none;"
+        )
+        self.lbl_pregunta_monto.hide()
+        lay.addWidget(self.lbl_pregunta_monto)
+
         lay_abono = QHBoxLayout()
         lay_abono.setContentsMargins(0, 0, 0, 0)
         lay_abono.setSpacing(15)
@@ -83,7 +90,7 @@ class PanelEstadoCredito(QWidget):
         self.txt_monto_abono = QLineEdit()
         self.txt_monto_abono.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.txt_monto_abono.setFixedHeight(80)
-        self.txt_monto_abono.setPlaceholderText("$ 0.00")
+        self.txt_monto_abono.setPlaceholderText("Ejemplo: 100")
         self.txt_monto_abono.setStyleSheet(
             "QLineEdit { background: #FFFFFF; color: #065F46; border: 4px solid #34D399; border-radius: 20px; font-size: 52px; font-weight: 900; padding-left: 10px; }"
             "QLineEdit:focus { border: 4px solid #059669; background: #ECFDF5; }"
@@ -91,23 +98,23 @@ class PanelEstadoCredito(QWidget):
         self.txt_monto_abono.hide()
         lay_abono.addWidget(self.txt_monto_abono, 1)
 
-        self.btn_abono_libre = QPushButton("$ Personalizado")
+        self.btn_abono_libre = QPushButton("Cambiar")
         self.btn_abono_libre.setFixedHeight(80)
         self.btn_abono_libre.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_abono_libre.setStyleSheet(
-            "QPushButton { background: #34D399; color: #FFFFFF; font-size: 20px; font-weight: 900; border-radius: 20px; border: 4px solid #10B981; }"
-            "QPushButton:hover { background: #10B981; border: 4px solid #059669; }"
+            "QPushButton { background: #F1F5F9; color: #334155; font-size: 16px; font-weight: 800; border-radius: 16px; border: 2px solid #CBD5E1; padding: 8px 14px; }"
+            "QPushButton:hover { background: #E2E8F0; }"
         )
         self.btn_abono_libre.hide()
         lay_abono.addWidget(self.btn_abono_libre)
 
         lay.addLayout(lay_abono)
 
-        self.instruccion = QLabel("?? Elige el metodo de pago o ajusta el monto ??")
+        self.instruccion = QLabel("2. Tocá cómo paga")
         self.instruccion.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.instruccion.setStyleSheet(
-            "QLabel { color: #FFFFFF; background-color: #10B981; font-size: 18px; font-weight: 900; border-radius: 16px; padding: 18px; "
-            "border-bottom: 5px solid #047857; text-transform: uppercase; letter-spacing: 2px; }"
+            "QLabel { color: #1E3A8A; background-color: #EFF6FF; font-size: 18px; font-weight: 800;"
+            " border-radius: 12px; padding: 12px; border: 2px solid #BFDBFE; }"
         )
         self.instruccion.hide()
         lay.addWidget(self.instruccion)

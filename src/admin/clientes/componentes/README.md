@@ -2,7 +2,7 @@
 
 Esta carpeta contiene los diálogos de la pantalla de cartera.
 
-`dialogo_historial_cliente.py` pide los movimientos al hilo `consulta/hilo.py`. El ticket se ve abajo (`PanelDetalleTicket`). Un abono muestra `COB-{id}`. Eliminar marca `BORRADO`. Cancelar en F3 llega como `CARGO · CANCELADO` y `TICKET CANCELADO`. `dialogo_recalculo_fiado.py` simula precios y %; no escribe.
+`dialogo_historial_cliente.py` pide los movimientos al hilo `consulta/hilo.py`. El ticket se ve abajo (`PanelDetalleTicket`). Un abono muestra `COB-{id}`. **ELIMINAR TICKET / DEUDA** marca un cargo vivo como `BORRADO` (no un abono ni una anulación). Si la fila ya está tachada, avisa. Cancelar en F3 llega como `CARGO · CANCELADO` y `TICKET CANCELADO`. `dialogo_recalculo_fiado.py` simula precios y %; no escribe.
 
 `dialogo_cobros.py` es la planilla. **Ticket cobro** = `COB-{cuenta_corriente.id}`. **Id de pago** = Mercado Pago, `F9 MANUAL` o `Caja` si fue efectivo. Filtro Hoy/Semana/Mes/Año. Si dos cobros coinciden en cliente, monto, medio y minuto, la fila se marca en ámbar: no se ocultan, cada una tiene su COB.
 

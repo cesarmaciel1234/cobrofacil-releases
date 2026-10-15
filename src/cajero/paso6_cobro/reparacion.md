@@ -7,7 +7,7 @@ Leé esto antes de tocar velocidad, ESC, QR, buscador o login. Si un síntoma vu
 - `Paso6Cobro._tpv_qr_listo` y `_tpv_point_listo` siguen con `config._load_config()` antes del token. `config.get` no recarga el disco.
 - El pedido del QR **nunca** corre en el hilo de la UI. `pedir_qr_pos` va en un `Thread`.
 - El cobro de QR **no** llama `asegurar_pos_qr`. Crear store/POS es de Admin → Terminales TPV.
-- F5 no abre cobranza. PIN de cobranza apagado. PIN solo si el cupo no alcanza. F9 sin PIN: ver `decisiones.md`.
+- El F5 del cobro se retiró. PIN de cobranza apagado. PIN solo si el cupo no alcanza. F9 sin PIN: ver `decisiones.md`.
 - Cobranza nunca manda un importe ≤ 0 a un medio. Con saldo a favor se cobra el ticket.
 - ESC en la grilla (página 0) cierra al carrito. ESC con un medio abierto vuelve a la grilla **sin** MariaDB y **sin** recargar config.
 - `Paso6Cobro` se reusa: `_precalentar_cobro` en el paso 5 + `preparar_para_venta`. El import de `Paso6Cobro` queda adentro del método del paso 5.

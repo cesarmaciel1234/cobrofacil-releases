@@ -60,9 +60,9 @@ class DialogoCentroCobranzas(QDialog):
         alto = max(400, min(800, self.height() - 40))
         self.hoja.setFixedSize(ancho, alto)
 
-    def abrir_para_cliente(self, cliente, monto_sugerido=None):
+    def abrir_para_cliente(self, cliente, monto_sugerido=None, ir_a_pago=False):
         ficha = dict(cliente) if hasattr(cliente, "keys") else {}
-        self.panel.seleccionar_cliente_directo(ficha, monto_sugerido)
+        self.panel.seleccionar_cliente_directo(ficha, monto_sugerido, ir_a_pago=ir_a_pago)
 
     def _on_abono(self, resultado):
         self.resultado = resultado

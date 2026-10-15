@@ -150,10 +150,10 @@ class PanelCobranza(QFrame):
         lay.addWidget(self.frame_monto)
 
         # Indicador de accion
-        self.lbl_mid = QLabel("SELECCIONE EL MEDIO DE PAGO PARA REGISTRAR EL INGRESO")
+        self.lbl_mid = QLabel("2. Tocá cómo paga")
         self.lbl_mid.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_mid.setStyleSheet(
-            "color: #475569; font-size: 12px; font-weight: 800; letter-spacing: 0.5px; margin-top: 4px;"
+            "color: #1E3A8A; font-size: 16px; font-weight: 800; margin-top: 4px;"
         )
         lay.addWidget(self.lbl_mid)
 
@@ -247,7 +247,7 @@ class PanelCobranza(QFrame):
         self.btn_pill_deuda.setVisible(deuda_p > 0.009)
         self.btn_pill_todo.setVisible(deuda_p > 0.009)
 
-        self.lbl_mid.setText("SELECCIONE EL MEDIO DE PAGO PARA REGISTRAR EL INGRESO")
+        self.lbl_mid.setText("2. Tocá cómo paga")
         self._escribir_monto(ticket)
         self._volver_de_lienzo()
 
@@ -450,6 +450,3 @@ class PanelCobranza(QFrame):
             self._iniciar_cobranza("Efectivo")
         else:
             super().keyPressEvent(event)
-
-# Alias de compatibilidad hacia atrás
-PuenteF5Cobranza = PanelCobranza

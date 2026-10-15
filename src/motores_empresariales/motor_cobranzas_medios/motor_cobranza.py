@@ -39,7 +39,11 @@ class MotorCobranzaMedios(QObject):
                 self.error_cobranza.emit(res.detalle or "Error en distribución mixta")
                 return
         else:
-            res = ResultadoMedio(True, metodo, (metodo == "Efectivo"), detalle)
+            es_ef = metodo == "Efectivo"
+            res = ResultadoMedio(
+                True, metodo, es_ef, detalle,
+                monto_caja=(float(monto) if es_ef else 0),
+            )
         
         cliente = cerebro.obtener(cliente_id)
         if not cliente: 

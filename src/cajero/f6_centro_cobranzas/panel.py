@@ -69,7 +69,6 @@ class CentroCobranzasPanel(QWidget):
         lay.addWidget(self.stack)
 
         self.motor_cobranza = MotorCobranzaMedios(self, perfil=self._perfil)
-        self.motor_cobranza.set_pedir_pin_callback(self._pin)
         self.motor_cobranza.abono_registrado.connect(self.abono_registrado.emit)
         self.motor_cobranza.pago_listo.connect(lambda cid, m: self._finalizado_ok(cid, m))
         self.motor_cobranza.error_cobranza.connect(lambda e: self._volver_de_lienzo())
@@ -126,7 +125,9 @@ class CentroCobranzasPanel(QWidget):
         self.panel_selector.btn_transferencia.clicked.connect(lambda: self._iniciar_cobranza("Transferencia"))
         self.panel_selector.btn_mixto.clicked.connect(lambda: self._iniciar_cobranza("Mixto"))
         
-        self.btn_abono_libre.clicked.connect(lambda: self._iniciar_cobranza("Efectivo"))
+        self.btn_abono_libre.clicked.connect(
+            lambda: (self.txt_monto_abono.setFocus(), self.txt_monto_abono.selectAll())
+        )
 
         self.lienzo_efectivo.listo.connect(lambda monto: self._finalizar_cobranza_con_motor(monto, "Efectivo", None))
         self.lienzo_efectivo.volver.connect(self._volver_de_lienzo)
@@ -146,15 +147,6 @@ class CentroCobranzasPanel(QWidget):
         row_center.addStretch(1)
         outer.addLayout(row_center)
 
-    def _pin(self):
-        from src.cajero.paso5_terminal.dialogos.pin.dialogo_pin import DialogoPIN
-        from src.utils.qt_compat import qt_exec
-        from src.cajero.cajero_activo import CajeroActivo
-        dlg = DialogoPIN(CajeroActivo.nombre, self)
-        if qt_exec(dlg) and dlg.ok:
-            return True
-        return False
-
     def _on_texto_busqueda(self, texto):
         self._q = (texto or "").strip()
         if len(self._q) < 3:
@@ -169,7 +161,7 @@ class CentroCobranzasPanel(QWidget):
             filas = []
         self.panel_buscador.mostrar_sugerencias(filas)
 
-    def seleccionar_cliente_directo(self, ficha, monto_sugerido=None):
+    def seleccionar_cliente_directo(self, ficha, monto_sugerido=None, ir_a_pago=False):
         f = dict(ficha) if hasattr(ficha, "keys") else {}
         if f.get("id") and f.get("deuda_actual") is None and f.get("deuda") is None:
             try:
@@ -180,6 +172,7 @@ class CentroCobranzasPanel(QWidget):
             except Exception:
                 pass
         self._monto_sugerido_externo = monto_sugerido
+        self._ir_a_pago = bool(ir_a_pago) or monto_sugerido is not None
         self._cliente_id = f.get("id")
         self._cliente_nombre = str(f.get("nombre") or f.get("nombre_completo") or "")
         try:
@@ -209,17 +202,18 @@ class CentroCobranzasPanel(QWidget):
         self.btn_abono_libre.hide()
         self.instruccion.hide()
         self.cont_botones.hide()
+        if getattr(self.panel_estado, "lbl_pregunta_monto", None):
+            self.panel_estado.lbl_pregunta_monto.hide()
         self._cerrar_lienzos()
         
         # Mostrar botones de accion iniciales
         self.btn_imprimir_resumen.show()
         self.btn_iniciar_pago.show()
         
-        if self._monto_sugerido_externo:
-            # Si entramos a F6 y ya nos habian pasado un monto para cobrar/pagar, vamos directo
+        if getattr(self, "_ir_a_pago", False) or getattr(self, "_monto_sugerido_externo", None):
             self._mostrar_controles_pago()
-        
-        self._modo = "vista_cliente"
+        else:
+            self._modo = "vista_cliente"
         self.stack.setCurrentWidget(self.vista_cobranza)
         self.setFocus()
         self._pedir_historial()
@@ -279,19 +273,22 @@ class CentroCobranzasPanel(QWidget):
             self.txt_monto_abono.setText(f"{monto_sugerido:.2f}".replace('.', ','))
         else:
             self.txt_monto_abono.clear()
-            self.txt_monto_abono.setPlaceholderText("Monto a cobrar (queda a favor)")
+            self.txt_monto_abono.setPlaceholderText("Ejemplo: 100 (queda a favor)")
+        if getattr(self.panel_estado, "lbl_pregunta_monto", None):
+            self.panel_estado.lbl_pregunta_monto.show()
         self.txt_monto_abono.show()
-        self.btn_abono_libre.show()
+        self.btn_abono_libre.hide()
         self.instruccion.show()
         self.cont_botones.show()
         self.txt_monto_abono.setFocus()
         self.txt_monto_abono.selectAll()
-        if getattr(self, '_monto_sugerido_externo', None):
-            self.txt_monto_abono.setText(str(float(self._monto_sugerido_externo)))
-            self._monto_sugerido_externo = None
-        if getattr(self, '_monto_sugerido_externo', None):
-            self.txt_monto_abono.setText(str(float(self._monto_sugerido_externo)))
-            self._monto_sugerido_externo = None
+        externo = getattr(self, "_monto_sugerido_externo", None)
+        self._monto_sugerido_externo = None
+        if externo:
+            try:
+                self.txt_monto_abono.setText(f"{float(externo):.2f}".replace(".", ","))
+            except (TypeError, ValueError):
+                pass
 
     def _imprimir_estado_cuenta(self):
         try:
@@ -319,6 +316,9 @@ class CentroCobranzasPanel(QWidget):
         self.btn_abono_libre.hide()
         self.cont_botones.hide()
         self.instruccion.hide()
+        if getattr(self.panel_estado, "lbl_pregunta_monto", None):
+            self.panel_estado.lbl_pregunta_monto.hide()
+        self.detalle.hide()
         
         self._abrir_lienzo(metodo, monto)
 
@@ -419,6 +419,9 @@ class CentroCobranzasPanel(QWidget):
         self.btn_abono_libre.hide()
         self.instruccion.hide()
         self.cont_botones.hide()
+        if getattr(self.panel_estado, "lbl_pregunta_monto", None):
+            self.panel_estado.lbl_pregunta_monto.hide()
+        self.detalle.show()
         self.btn_iniciar_pago.show()
         self.btn_imprimir_resumen.show()
         self.setFocus()
@@ -428,8 +431,11 @@ class CentroCobranzasPanel(QWidget):
         self._mixto_detalle = None
         self._modo = "preparando_pago"
         self._cerrar_lienzos()
+        self.detalle.show()
+        if getattr(self.panel_estado, "lbl_pregunta_monto", None):
+            self.panel_estado.lbl_pregunta_monto.show()
         self.txt_monto_abono.show()
-        self.btn_abono_libre.show()
+        self.btn_abono_libre.hide()
         self.instruccion.show()
         self.cont_botones.show()
         self.txt_monto_abono.setFocus()

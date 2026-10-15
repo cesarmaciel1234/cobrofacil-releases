@@ -307,13 +307,14 @@ def launch_app(direct_role=None):
     # Â¡Gracias al verdadero Lazy Loading, esto es instantÃ¡neo!
     main_window = MainWindow()
 
-    # Precarga extrema de animaciones pesadas
-    try:
-        from src.ui_components.welcome_transition import WelcomeOverlay
-        main_window._welcome_overlay = WelcomeOverlay(main_window)
-        main_window._welcome_overlay.hide()
-    except Exception as e:
-        print("Error precargando WelcomeOverlay:", e)
+    # Partículas numpy: solo caja. En admin/jefe el exe se queda 2 s en negro.
+    if direct_role == "cajero":
+        try:
+            from src.ui_components.welcome_transition import WelcomeOverlay
+            main_window._welcome_overlay = WelcomeOverlay(main_window)
+            main_window._welcome_overlay.hide()
+        except Exception as e:
+            print("Error precargando WelcomeOverlay:", e)
 
     # Cerramos Splash si existe y empezamos el flujo
     if splash:

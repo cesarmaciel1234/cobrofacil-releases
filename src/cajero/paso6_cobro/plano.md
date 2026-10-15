@@ -34,7 +34,7 @@ src/cajero/paso6_cobro/
    - El cajero oprime el método deseado en la botonera lateral (o con atajos de teclado F1..F6).
    - El orquestador borra el panel anterior e inyecta la ruta nueva.
    - *¿Apretó Tarjeta?* Se inyecta la ruta `tarjeta/`.
-   - *¿Apretó ⚖ CRÉDITO o COBRANZA?* Se inyecta `fiado_piramidal/`. F5 no entra en ese flujo.
+   - *¿Apretó ⚖ CRÉDITO o COBRANZA?* Se inyecta `fiado_piramidal/`. El F5 del cobro se retiró.
   - *¿Apretó ESC?* `salida/proceso.py` suelta el proceso y vuelve a la grilla. No cierra el cobro.
 
 3. **Ejecución y Despacho:**

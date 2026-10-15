@@ -1,6 +1,6 @@
 # Estado Crédito
 
-Qué hace: Contiene los elementos visuales que muestran el estado de la cuenta (icono, estado, detalle) y los controles para ingresar un abono libre.
+Qué hace: Estado de la cuenta (hola, deuda o a favor) y el paso 1: «¿Cuánto paga a la cuenta?». El paso 2 («Tocá cómo paga») queda arriba de los botones. `$ Personalizado` no cobra: el monto se escribe en el recuadro.
 
 Qué función: `PanelEstadoCredito` en `panel_estado.py`. `lbl_historial` muestra hasta 4 líneas que trae el hilo de F6. Si el hilo no contesta, el label se oculta y PAGAR sigue.
 

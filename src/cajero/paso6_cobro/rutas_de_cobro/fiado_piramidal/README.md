@@ -6,4 +6,4 @@ Qué función: `OrquestadorFiadoPiramidal.mostrar(monto, modo)` con `modo` `Clie
 
 Cómo funciona: `QStackedWidget` — buscador → verde, rojo, alta o cobranza. ESC emite `cancelado`. Paso 6 llama `salir_a_metodos`.
 
-Qué no debe cambiar: no volver a `PanelFiadoCobro` ni reactivar F5. No llamar `cerebro` en ESC.
+Qué no debe cambiar: no volver a `PanelFiadoCobro` ni rearmar un F5 de cobro. No llamar `cerebro` en ESC.

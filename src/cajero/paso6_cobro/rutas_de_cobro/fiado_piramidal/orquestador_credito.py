@@ -96,7 +96,6 @@ class OrquestadorFiadoPiramidal(QFrame):
         self.via_cobranza.abono_exitoso.connect(self._finalizar_desde_cobranza)
         self.via_cobranza.cancelado.connect(self._volver_de_cobranza)
         self.via_cobranza.submetodo_cambiado.connect(self.submetodo_cambiado.emit)
-        self.via_f5 = self.via_cobranza
 
         from .ruta3_cliente_nuevo.panel_nuevo import PanelClienteNuevo
         self.via_nuevo = PanelClienteNuevo(self)
@@ -332,8 +331,3 @@ class OrquestadorFiadoPiramidal(QFrame):
         actual = self.stack.currentWidget()
         if actual is not None:
             actual.keyPressEvent(event)
-
-    procesar_f5 = procesar_cobranza
-    _abrir_puente_f5 = _abrir_cobranza
-    _finalizar_desde_f5 = _finalizar_desde_cobranza
-    _volver_de_f5 = _volver_de_cobranza

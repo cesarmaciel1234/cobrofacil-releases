@@ -1,6 +1,6 @@
 # Clientes en admin
 
-Pantalla clara. Lista, alta, ficha, límite, abono e historial. **Abonar** abre F6 (`perfil=Admin`); el cobro se asienta una sola vez ahí. Sirve con deuda 0: el excedente queda a favor. **Límite** cambia el cupo. **Editar** la ficha. **Recalcular** simula precios de hoy y un % de financiación, sin escribir la cuenta.
+Pantalla clara. Lista, alta, ficha, límite, abono e historial. **Abonar** abre F6 (`perfil=Admin`) con la lógica de producción: paso 1 monto, paso 2 medio, efectivo pide billetes. El cobro se asienta una sola vez. Sirve con deuda 0: el excedente queda a favor. **Límite** cambia el cupo. **Editar** la ficha. **Recalcular** simula precios de hoy y un % de financiación, sin escribir la cuenta.
 
 La tarjeta Cobros suma los abonos. El botón Planilla de cobros abre la grilla: fecha, cliente, DNI, monto, medio, perfil, quién cobró y saldo. El medio es el de «¿Con qué paga?»: Efectivo, Transferencia, Tarjeta o QR.
 

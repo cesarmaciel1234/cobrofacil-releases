@@ -103,7 +103,7 @@ Esas ventanas, y F11, tapan la venta con el gris `#334155` (`src/utils/fondo_gri
 
 ### Cobro
 
-Crédito (clave `Clientes`) y Cobranza (clave `MasCredito`) se piden en `OrquestadorFiadoPiramidal` (`paso6_cobro/rutas_de_cobro/fiado_piramidal/`). No abren la ventana oscura. Cancelar vuelve a los medios. F5 no abre cobranza. El PIN de cobranza está apagado; el PIN de supervisor solo aparece si el cupo no alcanza.
+Crédito (clave `Clientes`) y Cobranza (clave `MasCredito`) se piden en `OrquestadorFiadoPiramidal` (`paso6_cobro/rutas_de_cobro/fiado_piramidal/`). No abren la ventana oscura. Cancelar vuelve a los medios. El F5 del cobro se retiró. El PIN de cobranza está apagado; el PIN de supervisor solo aparece si el cupo no alcanza.
 
 La clave interna de crédito es Clientes (no `crédito`: esa clave de REGISTRO es la tarjeta de crédito). La caja toma DNI o nombre. Un match: Enter. Varios: flechas o mouse y Enter. Un nombre nuevo crea con límite 50.000.
 
@@ -130,7 +130,7 @@ Un código numérico no dispara la búsqueda por nombre: Enter busca id o códig
 
 `_evaluar_combos`, cuando aplica un combo, manda un UDP `COMBO_TRIGGERED` al broadcast, puerto 37021, y cierra ese socket.
 
-F12 abre el cobro sin leer la tabla `clientes`. Crédito y cobranza buscan con `cerebro.buscar` al escribir. Fiado y Clientes autorizan en `src/clientes_fiado` y solo entonces mandan la orden ok al cobro. F5 no abre cobranza. El plano está en `paso6_cobro/rutas_de_cobro/fiado_piramidal/plano.md`. `_pintar_luz_tpv` lee el config una vez. `_tpv_point_listo` y `_tpv_qr_listo` siguen leyendo el config cada uno cuando se cobra con Point o QR. Con la luz en rojo, Enter llama `_guardar_sin_tpv`: guarda efectivo, tarjeta, transferencia, QR y mixto, sin Point, sin espera de transferencia y sin QR en vivo. Fiado y clientes siguen pidiendo el cliente. F9 no está. Con la luz en verde, Enter no registra mientras se espera: sale el cartel rojo. F9, debajo de F10, cobra a mano y no se aprieta con el mouse. Llega aunque el cursor esté en el monto o en el mixto. Si el Point está esperando, suelta esa espera y guarda.
+F12 abre el cobro sin leer la tabla `clientes`. Crédito y cobranza buscan con `cerebro.buscar` al escribir. Fiado y Clientes autorizan en `src/clientes_fiado` y solo entonces mandan la orden ok al cobro. El F5 del cobro se retiró. El plano está en `paso6_cobro/rutas_de_cobro/fiado_piramidal/plano.md`. `_pintar_luz_tpv` lee el config una vez. `_tpv_point_listo` y `_tpv_qr_listo` siguen leyendo el config cada uno cuando se cobra con Point o QR. Con la luz en rojo, Enter llama `_guardar_sin_tpv`: guarda efectivo, tarjeta, transferencia, QR y mixto, sin Point, sin espera de transferencia y sin QR en vivo. Fiado y clientes siguen pidiendo el cliente. F9 no está. Con la luz en verde, Enter no registra mientras se espera: sale el cartel rojo. F9, debajo de F10, cobra a mano y no se aprieta con el mouse. Llega aunque el cursor esté en el monto o en el mixto. Si el Point está esperando, suelta esa espera y guarda.
 
 El redondeo es automático. `redondear_dinero`, en `src/utils/dinero.py`, deja cada monto en dos centavos con `Decimal` y `ROUND_HALF_UP`. El total del cobro es la suma de los subtotales del ticket, redondeada en `finalizar_venta`. No se toma del rótulo grande. `recargar_total_final` vuelve a redondear después de F3 y F4. Al guardar, `armar_resultado_venta` y `persistir_cobro` redondean otra vez. No lo reemplaces por `round` de float. La nota completa está en `paso6_cobro/punta del piramide.md`, sección Redondeo.
 

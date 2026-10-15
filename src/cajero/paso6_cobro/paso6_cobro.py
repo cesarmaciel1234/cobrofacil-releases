@@ -105,6 +105,11 @@ class Paso6Cobro(QDialog):
         self._condiciones_ticket_custom = {}
         self._fiado_flujo_activo = False
         self._fiado_cliente_id = None
+        self._mp_pagos = []
+        self._mp_pago_usado = None
+        self._mp_oferta_id = None
+        self._submetodo_cobranza = ""
+        self._ticket_al_pagar = None
         if hasattr(self, "panel_redondeo_recargo"):
             self.panel_redondeo_recargo.resetear_pesos()
             self.txt_desc.clear()
@@ -552,8 +557,6 @@ class Paso6Cobro(QDialog):
         self.pila_point = self.panel_botones_accion.pila_point
         self.btn_f11 = self.panel_botones_accion.btn_f11
         self.btn_f11.clicked.connect(lambda: self.procesar_pago_mercadopago_point())
-        self.btn_f5 = self.panel_botones_accion.btn_f5
-        self.btn_f5.clicked.connect(self._f5_pagar_cuenta)
         self.pila_extra = self.panel_botones_accion.pila_extra
         self.btn_f12 = self.panel_botones_accion.btn_f12
         self.btn_f12.clicked.connect(lambda: self.verificar_transferencia_mp())
@@ -851,10 +854,6 @@ class Paso6Cobro(QDialog):
                 or getattr(self, "_mixto_espera_cuenta", False)
             )
         )
-
-    def _f5_pagar_cuenta(self):
-        """F5 del cobro no opera crédito ni cobranza. El botón está oculto."""
-        return False
 
     def _cuenta_completada(self, dict_datos):
         self._fiado_cliente_id = int(dict_datos.get('cliente_id', 0))

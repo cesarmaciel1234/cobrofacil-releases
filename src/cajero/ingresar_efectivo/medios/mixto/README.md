@@ -10,4 +10,4 @@ Permite distribuir el cobro de una transacción entre múltiples medios: Efectiv
 - `tecla(k)`: Atiende `ENTER` para confirmar o `ESC` para volver al selector de medios.
 
 ## Cómo funciona
-Devuelve un diccionario estructurado `{"Efectivo": e, "Tarjeta": t, "Transferencia": tr, "QR": q}` a través de la señal `listo`. El orquestador que lo invoque (por ejemplo, `PuenteF5Cobranza`) coordina la ejecución de los medios digitales en primer lugar y el asentamiento del efectivo y apertura del cajón al final.
+Devuelve un diccionario estructurado `{"Efectivo": e, "Tarjeta": t, "Transferencia": tr, "QR": q}` a través de la señal `listo`. El orquestador que lo invoque (`PanelCobranza`) coordina la ejecución de los medios digitales en primer lugar y el asentamiento del efectivo y apertura del cajón al final.

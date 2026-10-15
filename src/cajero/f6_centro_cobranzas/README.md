@@ -11,4 +11,4 @@ La nota de la rama es `punta del piramide.md`. Solo cobra fiado y cuenta corrien
 
 Al elegir cliente, un hilo propio (`consulta_historial/`) lee cargos, abonos, BORRADO y CANCELADO. No usa el hilo de admin. Si falla, la cobranza sigue.
 
-`IMPRIMIR RESUMEN` imprime el estado de la cuenta. El historial de ventas no se imprime acá. Al volver al paso 5, el mensajero es el del abono asentado.
+`IMPRIMIR RESUMEN` imprime el estado de la cuenta. Al volver al paso 5 o a Admin, el mensajero es el del abono asentado. PIN de cobranza apagado.

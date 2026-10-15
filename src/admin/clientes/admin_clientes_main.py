@@ -5,12 +5,13 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
                              QHeaderView, QLineEdit, QMessageBox, QDialog,
                              QFormLayout, QDoubleSpinBox, QComboBox)
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont, QColor, QCursor
+from PyQt6.QtGui import QColor, QCursor
 from src.base_de_datos.database import db_manager
 from src.repositories.cliente_repository import FIADO_EXPRESS_LIMITE_DEFAULT
 
 
 from src.admin.clientes.theme import _CLI
+from src.utils.letra import QSS_TITULO, vestir_id, vestir_nombre, vestir_numero
 
 from src.admin.clientes.componentes.metric_card import MetricCard
 from src.admin.clientes.componentes.dialogo_nuevo_cliente import DialogoNuevoCliente
@@ -51,9 +52,9 @@ class AdminClientes(QWidget):
         header_lay.addWidget(btn_back)
         header_lay.addSpacing(15)
 
-        lbl_titulo = QLabel("💎 CARTERA DE CLIENTES Y CRÉDITO")
+        lbl_titulo = QLabel("CARTERA DE CLIENTES Y CRÉDITO")
         lbl_titulo.setStyleSheet(
-            f"font-size: 22px; font-weight: 900; color: {_CLI['text']}; letter-spacing: 0.5px; border: none;"
+            f"{QSS_TITULO} color: {_CLI['text']}; border: none;"
         )
 
         self.btn_nuevo = QPushButton("+ NUEVO CLIENTE")
@@ -329,36 +330,33 @@ class AdminClientes(QWidget):
 
                 self.tabla.insertRow(i)
                 self.tabla.setRowHeight(i, 58)
-                it_id = QTableWidgetItem(str(c['id']))
+                it_id = vestir_id(QTableWidgetItem(str(c['id'])))
                 it_id.setData(Qt.ItemDataRole.UserRole, int(c['id']))
                 self.tabla.setItem(i, 0, it_id)
                 nombre_raw = str(c['nombre'] or '')
                 nombre_vis = nombre_raw.title() if (nombre_raw.islower() or nombre_raw.isupper()) else nombre_raw
-                it_nombre = QTableWidgetItem(nombre_vis)
+                it_nombre = vestir_nombre(QTableWidgetItem(nombre_vis))
                 it_nombre.setToolTip(huella_texto(c))
                 self.tabla.setItem(i, 1, it_nombre)
-                self.tabla.setItem(i, 2, QTableWidgetItem(dni or "—"))
-                it_tipo = QTableWidgetItem(tipo_txt)
+                self.tabla.setItem(i, 2, vestir_id(QTableWidgetItem(dni or "—")))
+                it_tipo = vestir_nombre(QTableWidgetItem(tipo_txt))
                 if tipo == 'express':
                     it_tipo.setForeground(QColor("#059669"))
-                    it_tipo.setFont(QFont("Arial", 10, QFont.Bold))
                 self.tabla.setItem(i, 3, it_tipo)
-                self.tabla.setItem(i, 4, QTableWidgetItem(f"${limite:,.2f}"))
+                self.tabla.setItem(i, 4, vestir_numero(QTableWidgetItem(f"${limite:,.2f}")))
 
                 if deuda > 0.009:
-                    it_deuda = QTableWidgetItem(f"${deuda:,.2f}")
+                    it_deuda = vestir_numero(QTableWidgetItem(f"${deuda:,.2f}"))
                     it_deuda.setForeground(QColor("#EF4444"))
-                    it_deuda.setFont(QFont("Arial", 10, QFont.Bold))
                 elif deuda < -0.009:
-                    it_deuda = QTableWidgetItem(f"+${abs(deuda):,.2f} a favor")
+                    it_deuda = vestir_numero(QTableWidgetItem(f"+${abs(deuda):,.2f} a favor"))
                     it_deuda.setForeground(QColor("#2563EB"))
-                    it_deuda.setFont(QFont("Arial", 10, QFont.Bold))
                 else:
-                    it_deuda = QTableWidgetItem("$0.00")
+                    it_deuda = vestir_numero(QTableWidgetItem("$0.00"))
                     it_deuda.setForeground(QColor("#64748B"))
                 self.tabla.setItem(i, 5, it_deuda)
 
-                it_disp = QTableWidgetItem(f"${disponible:,.2f}")
+                it_disp = vestir_numero(QTableWidgetItem(f"${disponible:,.2f}"))
                 if disponible <= 0:
                     it_disp.setForeground(QColor("#DC2626"))
                 elif disponible < limite * 0.2:
@@ -379,27 +377,25 @@ class AdminClientes(QWidget):
                     if plazo > 0:
                         restan = plazo - dias_corridos
                         if restan > 0:
-                            it_dias = QTableWidgetItem(f"⏳ {self._dias_txt(restan)}")
+                            it_dias = vestir_nombre(QTableWidgetItem(f"⏳ {self._dias_txt(restan)}"))
                             it_dias.setForeground(QColor("#D97706" if restan <= 3 else "#0F766E"))
                         elif restan == 0:
-                            it_dias = QTableWidgetItem("⚠ Vence hoy")
+                            it_dias = vestir_nombre(QTableWidgetItem("⚠ Vence hoy"))
                             it_dias.setForeground(QColor("#D97706"))
                         else:
-                            it_dias = QTableWidgetItem(f"🔴 {self._dias_txt(restan)}")
+                            it_dias = vestir_nombre(QTableWidgetItem(f"🔴 {self._dias_txt(restan)}"))
                             it_dias.setForeground(QColor("#DC2626"))
-                        it_dias.setFont(QFont("Arial", 10, QFont.Bold))
                         it_dias.setToolTip(f"Plazo {plazo} días · {self._dias_txt(dias_corridos)} desde el último cargo")
                     else:
-                        it_dias = QTableWidgetItem(self._dias_txt(dias_corridos))
+                        it_dias = vestir_nombre(QTableWidgetItem(self._dias_txt(dias_corridos)))
                         if dias_corridos > 30:
                             it_dias.setForeground(QColor("#DC2626"))
-                            it_dias.setFont(QFont("Arial", 10, QFont.Bold))
                         it_dias.setToolTip("Sin plazo: días corridos desde el último cargo")
                 elif deuda < -0.009:
-                    it_dias = QTableWidgetItem("A favor")
+                    it_dias = vestir_nombre(QTableWidgetItem("A favor"))
                     it_dias.setForeground(QColor("#2563EB"))
                 else:
-                    it_dias = QTableWidgetItem("Al día")
+                    it_dias = vestir_nombre(QTableWidgetItem("Al día"))
                     it_dias.setForeground(QColor("#059669"))
                 self.tabla.setItem(i, 7, it_dias)
 
@@ -599,24 +595,18 @@ class AdminClientes(QWidget):
             "nombre": nombre,
             "deuda_actual": deuda_actual,
         }
+        try:
+            deuda = float(cliente.get("deuda_actual") if cliente.get("deuda_actual") is not None else deuda_actual or 0)
+        except (TypeError, ValueError):
+            deuda = float(deuda_actual or 0)
+        sugerido = deuda if deuda > 0.009 else None
         dlg = DialogoCentroCobranzas(parent=self, perfil="Admin")
-        dlg.abrir_para_cliente(cliente)
-        if not (qt_exec(dlg) and dlg.monto_ingresado > 0 and dlg.cliente_id):
+        dlg.abrir_para_cliente(cliente, sugerido, ir_a_pago=True)
+        if not (qt_exec(dlg) and dlg.cliente_id):
             return
         resultado = getattr(dlg, "resultado", None)
         if resultado is None or not getattr(resultado, "ok", False):
             return
-        saldo = float(getattr(resultado, "saldo", 0) or 0)
-        if saldo < -0.009:
-            extra = f"Saldo a favor ${abs(saldo):,.2f}"
-        else:
-            extra = f"Saldo ${saldo:,.2f}"
-        QMessageBox.information(
-            self,
-            "Cobro",
-            f"Cobro asentado · {getattr(resultado, 'nombre', None) or nombre}\n"
-            f"Pago ${float(getattr(resultado, 'monto', 0) or 0):,.2f} · {extra}",
-        )
         try:
             win = self.window()
             pantallas = getattr(win, "screens", None) or []

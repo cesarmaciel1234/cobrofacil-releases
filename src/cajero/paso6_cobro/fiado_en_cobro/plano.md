@@ -14,4 +14,4 @@ Las consultas las hace `MotorBusquedaClientes` (`src/motores_empresariales/motor
 
 ## Qué no romper
 
-No reenganchar `paso6_cobro.py` a `PanelFiadoCobro`. F5 no cobra desde este panel.
+No reenganchar `paso6_cobro.py` a `PanelFiadoCobro`.

@@ -13,7 +13,7 @@ admin/clientes/
 
 ## Frente
 
-**Abonar** abre F6 con `perfil=Admin`. El cobro se asienta una sola vez. Sin deuda deja saldo a favor.
+**Abonar** abre F6 con `perfil=Admin`, la misma hoja que el cajero: monto, medio, billetes si es efectivo. El cobro se asienta una sola vez. Sin deuda deja saldo a favor. Sin PIN. El aviso es el mensajero `COBRO EXITOSO`, no un cartel extra.
 
 **Límite** cupo. **Editar** ficha. **Recalcular** simula precios de hoy y un % de financiación (no escribe).
 

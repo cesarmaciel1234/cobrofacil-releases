@@ -45,7 +45,11 @@ def armar_fila(fila) -> dict:
     borrado = tipo == "CARGO" and cargo_borrado(desc)
     cancelado = tipo == "CARGO" and cargo_cancelado(desc)
     mov_id = dato.get("id")
+    if mov_id is None:
+        mov_id = _celda(fila, "id", 0)
     venta_id = dato.get("venta_id")
+    if venta_id is None:
+        venta_id = _celda(fila, "venta_id", 6)
     if tipo == "CARGO" and cancelado:
         etiqueta = "CARGO · CANCELADO"
     elif tipo == "CARGO" and borrado:

@@ -954,6 +954,9 @@ class Paso5Terminal(QWidget):
                 elif key == Qt.Key.Key_F8:
                     self._swap_ticket_espera()
                     return True
+                elif key == Qt.Key.Key_F7:
+                    self._leer_bascula()
+                    return True
                 elif key == Qt.Key.Key_F5:
                     self.abrir_retiro_efectivo()
                     return True
@@ -2044,6 +2047,18 @@ class Paso5Terminal(QWidget):
         # F4: Cierre de Caja
         if k == Qt.Key.Key_F4:
             self.abrir_cierre_caja()
+            return
+
+        if k == Qt.Key.Key_F7:
+            self._leer_bascula()
+            return
+
+        if k == Qt.Key.Key_F8:
+            self._swap_ticket_espera()
+            return
+
+        if k == Qt.Key.Key_F11:
+            self.llamar_supervisor()
             return
 
         # Flecha Abajo desde el buscador

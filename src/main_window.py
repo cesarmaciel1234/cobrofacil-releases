@@ -486,6 +486,11 @@ class MainWindow(QMainWindow):
 
     def _pregwarm_screens_for_role(self, role: str):
         """Instancia mÃ³dulos frecuentes en idle para que la 1Âª navegaciÃ³n no congele."""
+        # El exe congela el hub si instancia inventario/cierre/MP en el hilo de UI.
+        if getattr(sys, "frozen", False):
+            return
+        if role == "admin":
+            return
         # En esclava / offline el prewarm martilla MariaDB y congela Admin
         try:
             from src.base_de_datos.database import db_manager
@@ -496,9 +501,7 @@ class MainWindow(QMainWindow):
                 return
         except Exception:
             pass
-        if role == "admin":
-            warm = (2, 7, 10)  # menos pantallas: evita freeze en PCs lentas
-        elif role == "jefe":
+        if role == "jefe":
             warm = (9, 20)
         else:
             return
@@ -794,11 +797,13 @@ class MainWindow(QMainWindow):
           - Los slots libres (6, 12, 15, 16) redirigen al home del rol.
         """
         from src.config import config
-        try:
-            from src.base_de_datos.database import db_manager
-            db_manager.asegurar_lectura_tienda()
-        except Exception:
-            pass
+        # El dashboard (0) no lee la tienda: no bloquear el primer paint.
+        if index != 0:
+            try:
+                from src.base_de_datos.database import db_manager
+                db_manager.asegurar_lectura_tienda()
+            except Exception:
+                pass
         role = config.current_role
         escalando = getattr(self, '_escalando', False)
 
@@ -914,8 +919,6 @@ class MainWindow(QMainWindow):
             if self.screens[0] is None:
                 self._build_lazy_screen(0)
             self.switch_tab(0)
-            # MÃ¡s tarde: no competir con el primer paint del dashboard
-            QTimer.singleShot(2500, lambda: self._pregwarm_screens_for_role("admin"))
 
     def _on_jefe_request_tab(self, tab_index: int):
         """El jefe pide un tab especÃ­fico del ERP contable (ej: 3 = Proveedores)."""

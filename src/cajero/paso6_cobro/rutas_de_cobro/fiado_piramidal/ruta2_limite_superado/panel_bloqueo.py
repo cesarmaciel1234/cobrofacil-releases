@@ -6,7 +6,6 @@ from src.clientes_fiado.interfaz.cobro.pin_admin import quien_autoriza
 class PanelLimiteSuperado(QFrame):
     pin_validado = pyqtSignal(int, float)
     solicita_cobranza = pyqtSignal(dict)
-    solicita_f5 = solicita_cobranza # Alias retrocompatible
 
     def __init__(self, parent=None):
         super().__init__(parent)

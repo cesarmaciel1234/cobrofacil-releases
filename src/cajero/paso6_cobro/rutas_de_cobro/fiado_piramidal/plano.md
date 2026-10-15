@@ -12,7 +12,7 @@ El cajero, en Paso 6, toca **⚖ CRÉDITO** o **COBRANZA**. La hoja del cobro mu
 4. **Cobranza** (`modulo_cobranza/`): pastillas Solo Carrito / Solo Deuda / Liquidar Todo, monto editable, medios Efectivo / Tarjeta / QR / Transferencia / Mixto. El importe por defecto es el ticket. Saldo a favor no se cobra. Sin PIN (aún: `decisiones.md`).
 5. **Cliente nuevo** (`ruta3_cliente_nuevo/`): alta exprés con límite 50.000.
 
-F5 no abre cobranza. F9 sigue siendo emergencia en lienzos digitales, sin PIN, para amaestrar. No lo saques.
+El F5 del cobro se retiró. F9 sigue siendo emergencia en lienzos digitales, sin PIN, para amaestrar. No lo saques.
 
 ESC cierra el proceso entero y vuelve a la grilla. `reiniciar` no llama al cerebro.
 
