@@ -9,7 +9,7 @@ Leé esto antes de tocar velocidad, ESC, QR, buscador o login. Si un síntoma vu
 - El cobro de QR **no** llama `asegurar_pos_qr`. Crear store/POS es de Admin → Terminales TPV.
 - El F5 del cobro se retiró. PIN de cobranza apagado. PIN solo si el cupo no alcanza. F9 sin PIN: ver `decisiones.md`.
 - Cobranza nunca manda un importe ≤ 0 a un medio. Con saldo a favor se cobra el ticket.
-- ESC en la grilla (página 0) cierra al carrito. ESC con un medio abierto vuelve a la grilla **sin** MariaDB y **sin** recargar config.
+- ESC en la grilla (página 0) cierra al carrito. ESC con un medio abierto vuelve a la grilla **sin** MariaDB y **sin** recargar config. El medio queda vacío: volver a entrar no trae el importe. Esc en el casillero llama `_esc_un_paso`.
 - `Paso6Cobro` se reusa: `_precalentar_cobro` en el paso 5 + `preparar_para_venta`. El import de `Paso6Cobro` queda adentro del método del paso 5.
 - El buscador de clientes reusa 5 filas. No `deleteLater` ni recrear widgets por tecla.
 - Búsqueda de producto: mínimo 3 letras, inicio de 1.ª o 2.ª palabra. Código de barras es exacto, no `LIKE %x%`.
@@ -23,6 +23,7 @@ Leé esto antes de tocar velocidad, ESC, QR, buscador o login. Si un síntoma vu
 | QR no sale y pide foto con TPV verde | Faltan `mp_user_id` y `mp_qr_pos_external_id` | Configurar en Admin → Terminales TPV. No crear el POS desde el cobro. |
 | QR tarda otra vez tras un cobro | Se perdió `requests.Session` o el cache `_cuenta_cache` | Restaurar `MPApiClient._sesion` y `_cuenta_cache` en `qr_en_cobro/pedido.py`. |
 | ESC congela | `salir_a_metodos` consultaba DB o `config._load_config` | `rutas_de_cobro/salida/proceso.py` solo suelta timers/Point/QR y página 0. |
+| Esc y al volver a Mixto cobra el importe anterior | El casillero no llamaba Esc; la cuenta mixto no vaciaba | `_esc_un_paso` en el filtro de teclas. `salir_a_metodos` vacía mixto, efectivo y cliente. |
 | F12 tarda / cobro se crea cada venta | Se descartó el diálogo precalentado | `preparar_para_venta` en `paso6_cobro.py`. No `new Paso6Cobro` en cada F12. |
 | Buscador producto lento o pega en el medio del nombre | `LIKE '%texto%'` o `SELECT *` en UI | `carrito_service.py`: 3 letras, prefijo de palabra. Código exacto. |
 | Buscador clientes rápido y después se congela | Recrear 5 widgets o emitir todo el índice por señal | Motor en RAM + lock. Emitir solo 5. Filas reusadas. |
@@ -46,7 +47,7 @@ Archivos: `qr_en_cobro/pedido.py`, `qr_en_cobro/panel.py`, `mercadopago_core/api
 
 ## Crédito / cobranza — camino vivo
 
-`OrquestadorFiadoPiramidal` (no `PanelFiadoCobro`). Cancelar → `salir_a_metodos`. Cobranza = `MasCredito`. Crédito = `Clientes`.
+`OrquestadorFiadoPiramidal` (no `PanelFiadoCobro`). Cancelar → `salir_a_metodos`. Crédito = `Clientes`. Cobranza = F6, no el cobro.
 
 `MotorCobranzaMedios` asienta el abono y avisa ok. El ticket lo cierra `MotorPrincipalCobros`. No son dos motores rivales: ver `decisiones.md`.
 

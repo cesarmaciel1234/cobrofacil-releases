@@ -59,7 +59,7 @@ El detalle de una venta enlazada a un cargo se lee por `oficina/ticket/motor.py`
 
 `oficina/cuenta/cuadre.py` lista las ventas `COMPLETADA` de Fiado o Clientes que no tienen `CARGO`. En admin, la franja ámbar abre esa lista. Cargar escribe el cargo en el cliente cuyo nombre coincide con uno solo. Si la venta quedó guardada como `Express` y el DNI, la carga en la ficha que ya tiene ese DNI. Cancelar el ticket llama `_anular_cargo` en la misma transacción: baja la deuda y deja una fila `ANULACION`. El cupo se vuelve a mirar dentro de la venta, con la ficha bloqueada. Si otra caja ya usó el cupo, la venta no se guarda. Una excepción de PIN o un ticket que ya se vendió (`ya_vendido`) no frena ese control.
 
-El historial de cuenta lo arma `oficina/consulta_historial`. Admin y F6 tienen cada uno un hilo que pregunta ahí. Si un hilo se cae, el otro perfil sigue. El desglose de un ticket es `oficina/ticket/motor.py`. `borrar_cargo` marca `BORRADO`. Cancelar en F3 marca `CANCELADO` y deja `TICKET CANCELADO` con el mismo número. Ninguna de las dos borra la fila.
+El historial de cuenta lo arma `oficina/consulta_historial`. Admin y F6 tienen cada uno un hilo que pregunta ahí. Si un hilo se cae, el otro perfil sigue. El desglose de un ticket es `oficina/ticket/motor.py`. `borrar_cargo` marca `BORRADO` y cancela el ticket de venta. Cancelar en F3 marca `CANCELADO` y deja `TICKET CANCELADO` con el mismo número. Ninguna de las dos borra la fila de cuenta.
 
 La tabla `clientes` no se lee al abrir el cobro. `Paso6Cobro._asegurar_lista_clientes` llama `cerebro.listar` la primera vez que se abre Fiado o Clientes.
 

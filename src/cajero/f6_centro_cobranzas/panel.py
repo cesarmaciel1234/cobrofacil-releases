@@ -358,7 +358,7 @@ class CentroCobranzasPanel(QWidget):
         self._mixto_detalle = partes
         self._cola_digital = [
             (clave, float(partes.get(clave) or 0))
-            for clave in ("Transferencia", "Tarjeta", "QR")
+            for clave in ("Tarjeta", "Transferencia", "QR")
             if float(partes.get(clave) or 0) > 0.009
         ]
         self._seguir_cola_digital()
@@ -445,6 +445,11 @@ class CentroCobranzasPanel(QWidget):
         for lienzo in (self.lienzo_efectivo, self.lienzo_qr, self.lienzo_tarjeta, self.lienzo_transferencia):
             try:
                 lienzo.cerrar()
+            except Exception:
+                pass
+        if hasattr(self, "lienzo_mixto"):
+            try:
+                self.lienzo_mixto.vaciar()
             except Exception:
                 pass
         self.cont_lienzos.hide()

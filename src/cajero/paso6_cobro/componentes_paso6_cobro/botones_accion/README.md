@@ -6,7 +6,7 @@ Agrupa la grilla de botones de acción de la botonera lateral derecha del proces
 ## Qué función cumple
 - **`PanelBotonesAccion` (`panel_botones_accion.py`)**: Utiliza `QStackedWidget` (`pila_f2`, `pila_point`, `pila_extra`) para alternar contextualmente los botones según el medio de pago seleccionado (Efectivo, Tarjeta, QR, Transferencia, Mixto, Crédito/Cobranza).
 - Mantiene preservada la cuadrícula dimensional sin colapsar el layout.
-- El botón F5 ("pagar cuenta") se retiró. Cobranza es el medio `MasCredito`. F5 de la venta es retiro de caja.
+- El botón F5 ("pagar cuenta") se retiró. La deuda se cobra en F6, no en el cobro. F5 de la venta es retiro de caja.
 
 ## Regla: ninguna tecla F se repite
 Cada tecla hace **una sola cosa** y aparece **una sola vez** en pantalla:

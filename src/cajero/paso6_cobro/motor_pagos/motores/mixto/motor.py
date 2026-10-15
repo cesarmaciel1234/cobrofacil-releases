@@ -13,7 +13,10 @@ class MotorMixto:
         if parte > 0.009:
             from src.clientes_fiado.cerebro.cerebro import cerebro
 
-            orden = cerebro.autorizar("Clientes", datos.get("cliente_id"), parte)
+            cid = datos.get("cliente_id")
+            if not cid:
+                return False, "Falta el cliente para el resto a cuenta."
+            orden = cerebro.autorizar("Clientes", cid, parte)
             if not orden.ok:
                 return False, orden.motivo or "La cuenta no autorizó ese resto."
             datos["excepcion"] = getattr(orden, "excepcion", "") or ""

@@ -10,7 +10,7 @@ def vivo(valores):
 
 
 def pasos_vivos(valores):
-    """Lo que hay que cobrar en vivo, en orden. El efectivo y el cliente no tienen paso."""
+    """Lo más rápido primero: Point, después transferencia, después QR. Efectivo y cliente no tienen paso vivo."""
     pasos = []
     tarjeta = redondear_dinero((valores or {}).get("tarjeta") or 0)
     transferencia = redondear_dinero((valores or {}).get("mercadopago") or 0)

@@ -28,7 +28,15 @@ class CobroController:
 
             p1 = redondear_dinero(p1)
             p2 = redondear_dinero(p2)
-            if redondear_dinero(p1 + p2) + 0.001 < redondear_dinero(total_final):
+            total = redondear_dinero(total_final)
+            if redondear_dinero(p1 + p2) + 0.001 < total:
+                return None, None
+            extra = redondear_dinero(p1 + p2) - total
+            if (
+                metodo == "Mixto"
+                and extra > 0.01
+                and redondear_dinero((valores_mixtos or {}).get("efectivo") or 0) <= 0.009
+            ):
                 return None, None
 
             return p1, p2

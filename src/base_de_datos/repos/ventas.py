@@ -148,16 +148,124 @@ def calcular_devolucion(venta, caja_accion: int) -> dict:
     }
 
 
+def _cargo_de_ticket(cursor, id_venta):
+    """CARGO del ticket: por venta_id o por el texto Ticket #N si el id no quedó grabado."""
+    cursor.execute(
+        "SELECT id, cliente_id, monto, descripcion, venta_id FROM cuenta_corriente "
+        "WHERE tipo = 'CARGO' AND venta_id IN (?, ?) "
+        "ORDER BY id DESC LIMIT 1",
+        (id_venta, str(id_venta)),
+    )
+    cargo = cursor.fetchone()
+    if cargo:
+        return cargo
+    n = str(int(id_venta))
+    cursor.execute(
+        "SELECT id, cliente_id, monto, descripcion, venta_id FROM cuenta_corriente "
+        "WHERE tipo = 'CARGO' AND ("
+        "descripcion LIKE ? OR descripcion LIKE ? OR descripcion LIKE ? OR descripcion LIKE ?"
+        ") ORDER BY id DESC LIMIT 1",
+        (f"%Ticket #{n}", f"%Ticket #{n} %", f"%Ticket #{n} (%", f"%ticket #{n}"),
+    )
+    return cursor.fetchone()
+
+
+def _devolver_stock_ticket(cursor, id_venta):
+    cursor.execute("SELECT id_producto, cantidad FROM detalles_ventas WHERE id_venta = ?", (id_venta,))
+    detalles = cursor.fetchall() or []
+    for det in detalles:
+        prod_id = _celda(det, "id_producto", 0)
+        cant = _celda(det, "cantidad", 1)
+        if prod_id and str(prod_id).strip() not in ("000", ""):
+            cursor.execute("UPDATE productos SET stock = stock + ? WHERE id = ?", (cant, prod_id))
+
+
+def _firmar_cancelacion(cursor, id_venta, username, venta):
+    from datetime import datetime
+
+    ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    caja_accion = 1
+    perfil = "desconocido"
+    try:
+        from src.config import config
+        caja_accion = int(config.get("caja_id", 1) or 1)
+        perfil = getattr(config, "current_role", None) or "desconocido"
+    except Exception:
+        pass
+    caja_origen = venta["caja_id"] if venta is not None and hasattr(venta, "keys") and "caja_id" in venta.keys() else 1
+    usuario_venta = venta["usuario"] if venta is not None and hasattr(venta, "keys") and "usuario" in venta.keys() else ""
+    monto = 0.0
+    try:
+        monto = float(venta["total"] or 0) if venta is not None and hasattr(venta, "keys") and "total" in venta.keys() else 0.0
+    except (TypeError, ValueError, KeyError):
+        monto = 0.0
+    try:
+        cursor.execute(
+            """UPDATE ventas SET estado = 'CANCELADA',
+               cancelado_por = ?, fecha_cancel = ?, perfil_cancel = ?, caja_cancel = ?
+               WHERE id = ?""",
+            (username or "—", ahora, str(perfil), caja_accion, id_venta),
+        )
+    except Exception:
+        cursor.execute("UPDATE ventas SET estado = 'CANCELADA' WHERE id = ?", (id_venta,))
+    try:
+        cursor.execute(
+            """INSERT INTO auditoria_cancelaciones
+               (id_venta, fecha, usuario, perfil, caja_origen, caja_accion, monto, usuario_venta)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (id_venta, ahora, username or "—", str(perfil), caja_origen, caja_accion, monto, usuario_venta),
+        )
+    except Exception as e:
+        logger.warning(f"Auditoría de cancelación no grabada (ticket {id_venta}): {e}")
+    plan = calcular_devolucion(venta, caja_accion)
+    if plan["retiro"] > 0:
+        cursor.execute(
+            "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) "
+            "VALUES (?, 'RETIRO', ?, ?, ?, ?)",
+            (
+                ahora, plan["retiro"], username or "—",
+                f"{OBS_DEVOLUCION}{id_venta} (cancelación, {plan['metodo'] or 'venta'})",
+                caja_accion,
+            ),
+        )
+    if plan["ingreso_origen"] > 0:
+        cursor.execute(
+            "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) "
+            "VALUES (?, 'INGRESO', ?, ?, ?, ?)",
+            (
+                ahora, plan["ingreso_origen"], username or "—",
+                f"Ticket #{id_venta} cancelado en caja {caja_accion}: el efectivo sigue en esta caja",
+                plan["caja_origen"],
+            ),
+        )
+
+
+def marcar_ticket_cancelado(cursor, id_venta, username, anular_cargo=True, devolver_stock=True):
+    """Misma transacción: stock, cargo de fiado y firma CANCELADA. Idempotente."""
+    cursor.execute(
+        "SELECT estado, caja_id, usuario, total, metodo_pago, pago_efectivo, cambio FROM ventas WHERE id = ?",
+        (id_venta,),
+    )
+    venta = cursor.fetchone()
+    if not venta:
+        return False
+    estado = str(_celda(venta, "estado", 0) or "").upper()
+    ya = estado in ("CANCELADA", "CANCELADO", "ANULADA", "ANULADO")
+    if anular_cargo:
+        _anular_cargo(cursor, id_venta)
+    if ya:
+        return True
+    if devolver_stock:
+        _devolver_stock_ticket(cursor, id_venta)
+    _firmar_cancelacion(cursor, id_venta, username, venta)
+    return True
+
+
 def _anular_cargo(cursor, id_venta):
     """El ticket sigue. En cuenta corriente queda CARGO · CANCELADO y una ANULACION. Resta la deuda una vez."""
     from src.clientes_fiado.oficina.cuenta.motor import MARCA_CANCELADO, cargo_inactivo
 
-    cursor.execute(
-        "SELECT id, cliente_id, monto, descripcion FROM cuenta_corriente "
-        "WHERE venta_id = ? AND tipo = 'CARGO' ORDER BY id DESC LIMIT 1",
-        (id_venta,),
-    )
-    cargo = cursor.fetchone()
+    cargo = _cargo_de_ticket(cursor, id_venta)
     if not cargo:
         return
     cid = _celda(cargo, "cliente_id", 1)
@@ -168,8 +276,9 @@ def _anular_cargo(cursor, id_venta):
     except (TypeError, ValueError):
         monto = 0.0
     cursor.execute(
-        "SELECT id FROM cuenta_corriente WHERE venta_id = ? AND tipo = 'ANULACION' LIMIT 1",
-        (id_venta,),
+        "SELECT id FROM cuenta_corriente WHERE venta_id IN (?, ?) "
+        "AND tipo = 'ANULACION' LIMIT 1",
+        (id_venta, str(id_venta)),
     )
     ya_anulado = bool(cursor.fetchone())
     if cargo_id and not cargo_inactivo(desc):
@@ -491,84 +600,9 @@ class VentasRepoMixin:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-
-            cursor.execute(
-                "SELECT estado, caja_id, usuario, total, metodo_pago, pago_efectivo, cambio FROM ventas WHERE id = ?",
-                (id_venta,),
-            )
-            venta = cursor.fetchone()
-            if not venta:
+            if not marcar_ticket_cancelado(cursor, id_venta, username, anular_cargo=True, devolver_stock=True):
                 logger.error(f"Venta {id_venta} no encontrada para cancelar.")
                 return False
-
-            estado = venta['estado']
-            if estado == 'CANCELADA':
-                logger.warning(f"Venta {id_venta} ya está cancelada.")
-                return True
-
-            from datetime import datetime
-            ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            caja_accion = 1
-            perfil = "desconocido"
-            try:
-                from src.config import config
-                caja_accion = int(config.get("caja_id", 1) or 1)
-                perfil = getattr(config, "current_role", None) or "desconocido"
-            except Exception:
-                pass
-            caja_origen = venta["caja_id"] if "caja_id" in venta.keys() else 1
-            usuario_venta = venta["usuario"] if "usuario" in venta.keys() else ""
-            monto = float(venta["total"] or 0) if "total" in venta.keys() else 0.0
-
-            cursor.execute("SELECT id_producto, cantidad FROM detalles_ventas WHERE id_venta = ?", (id_venta,))
-            detalles = cursor.fetchall()
-            for det in detalles:
-                prod_id = det['id_producto']
-                if prod_id and str(prod_id).strip() not in ('000', ''):
-                    cursor.execute("UPDATE productos SET stock = stock + ? WHERE id = ?", (det['cantidad'], prod_id))
-
-            _anular_cargo(cursor, id_venta)
-
-            try:
-                cursor.execute(
-                    """UPDATE ventas SET estado = 'CANCELADA',
-                       cancelado_por = ?, fecha_cancel = ?, perfil_cancel = ?, caja_cancel = ?
-                       WHERE id = ?""",
-                    (username or "—", ahora, str(perfil), caja_accion, id_venta),
-                )
-            except Exception:
-                cursor.execute("UPDATE ventas SET estado = 'CANCELADA' WHERE id = ?", (id_venta,))
-            try:
-                cursor.execute(
-                    """INSERT INTO auditoria_cancelaciones
-                       (id_venta, fecha, usuario, perfil, caja_origen, caja_accion, monto, usuario_venta)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (id_venta, ahora, username or "—", str(perfil), caja_origen, caja_accion, monto, usuario_venta),
-                )
-            except Exception as e:
-                logger.warning(f"Auditoría de cancelación no grabada (ticket {id_venta}): {e}")
-
-            plan = calcular_devolucion(venta, caja_accion)
-            if plan["retiro"] > 0:
-                cursor.execute(
-                    "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) "
-                    "VALUES (?, 'RETIRO', ?, ?, ?, ?)",
-                    (
-                        ahora, plan["retiro"], username or "—",
-                        f"{OBS_DEVOLUCION}{id_venta} (cancelación, {plan['metodo'] or 'venta'})",
-                        caja_accion,
-                    ),
-                )
-            if plan["ingreso_origen"] > 0:
-                cursor.execute(
-                    "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) "
-                    "VALUES (?, 'INGRESO', ?, ?, ?, ?)",
-                    (
-                        ahora, plan["ingreso_origen"], username or "—",
-                        f"Ticket #{id_venta} cancelado en caja {caja_accion}: el efectivo sigue en esta caja",
-                        plan["caja_origen"],
-                    ),
-                )
 
             conn.commit()
             return True

@@ -15,6 +15,9 @@ class PanelMixtoCobro(QFrame):
         self._total = 0.0
         self._ultimo = None
         self._silencio = False
+        self._cerrado = False
+        self._hechos = set()
+        self._marcas = {}
         self._valores = {
             "efectivo": 0.0, "tarjeta": 0.0, "mercadopago": 0.0, "qr": 0.0, "cliente": 0.0,
         }
@@ -44,12 +47,12 @@ class PanelMixtoCobro(QFrame):
         self.txt_mercadopago = self._campo("Transferencia ($)", "#0EA5E9")
         self.txt_qr = self._campo("QR ($)", "#7C3AED")
         self.txt_cliente = self._campo("Cliente ($)", "#1D4ED8")
-        for fila, (rotulo, caja) in enumerate((
-            ("Efectivo ($)", self.txt_efectivo),
-            ("Tarjeta ($)", self.txt_tarjeta),
-            ("Transferencia ($)", self.txt_mercadopago),
-            ("QR ($)", self.txt_qr),
-            ("Cliente ($)", self.txt_cliente),
+        for fila, (clave, rotulo, caja) in enumerate((
+            ("efectivo", "Efectivo ($)", self.txt_efectivo),
+            ("tarjeta", "Tarjeta ($)", self.txt_tarjeta),
+            ("mercadopago", "Transferencia ($)", self.txt_mercadopago),
+            ("qr", "QR ($)", self.txt_qr),
+            ("cliente", "Cliente ($)", self.txt_cliente),
         )):
             lbl = QLabel(rotulo)
             lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
@@ -57,8 +60,16 @@ class PanelMixtoCobro(QFrame):
                 f"color: {caja.property('tono')}; font-size: 16px; font-weight: 800; "
                 "background: transparent; border: none;"
             )
+            marca = QLabel("")
+            marca.setFixedWidth(28)
+            marca.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            marca.setStyleSheet(
+                "color: #047857; font-size: 26px; font-weight: 900; background: transparent; border: none;"
+            )
+            self._marcas[clave] = marca
             grid.addWidget(lbl, fila, 0)
             grid.addWidget(caja, fila, 1)
+            grid.addWidget(marca, fila, 2)
         lay.addLayout(grid)
 
         self.estado = QLabel("Falta cubrir")
@@ -91,7 +102,31 @@ class PanelMixtoCobro(QFrame):
             return activo
         return self.txt_efectivo
 
+    def vaciar(self):
+        """Sin importes de la venta anterior. Volver o F12 no reutiliza el mixto."""
+        self._silencio = True
+        try:
+            self._cerrado = False
+            self._hechos.clear()
+            self._ultimo = None
+            for clave, caja in self._claves():
+                caja.setReadOnly(False)
+                caja.blockSignals(True)
+                caja.clear()
+                caja.blockSignals(False)
+                marca = self._marcas.get(clave)
+                if marca is not None:
+                    marca.setText("")
+            self._valores = {clave: 0.0 for clave, _caja in self._claves()}
+            self.estado.setText("Falta cubrir")
+            self.estado.setStyleSheet(
+                "color: #E11D48; font-size: 20px; font-weight: 800; background: transparent; border: none;"
+            )
+        finally:
+            self._silencio = False
+
     def mostrar(self, total):
+        self.vaciar()
         self._total = float(total or 0)
         self._recalcular()
         self.show()
@@ -108,9 +143,43 @@ class PanelMixtoCobro(QFrame):
     def valores(self):
         return dict(self._valores)
 
+    def cerrar_reparto(self):
+        """Enter ya mandó a cobrar: no se tocan los importes."""
+        self._cerrado = True
+        for _clave, caja in self._claves():
+            caja.setReadOnly(True)
+
+    def abrir_reparto(self):
+        self._cerrado = False
+        for clave, caja in self._claves():
+            caja.setReadOnly(clave in self._hechos)
+
+    def marcar_hecho(self, clave):
+        if clave not in self._marcas:
+            return
+        self._hechos.add(clave)
+        self._marcas[clave].setText("✓")
+        caja = dict(self._claves()).get(clave)
+        if caja is not None:
+            caja.setReadOnly(True)
+
+    def limpiar_hechos(self):
+        self._hechos.clear()
+        for clave, marca in self._marcas.items():
+            marca.setText("")
+            caja = dict(self._claves()).get(clave)
+            if caja is not None and not self._cerrado:
+                caja.setReadOnly(False)
+
     def cubre(self):
         suma = redondear_dinero(sum(self._valores.values()))
-        return suma + 0.001 >= redondear_dinero(self._total)
+        total = redondear_dinero(self._total)
+        if suma + 0.001 < total:
+            return False
+        extra = redondear_dinero(suma - total)
+        if extra > 0.01 and redondear_dinero(self._valores.get("efectivo") or 0) <= 0.009:
+            return False
+        return True
 
     def _numero(self, texto):
         limpio = (texto or "").strip().replace("$", "").replace(",", ".")
@@ -145,7 +214,9 @@ class PanelMixtoCobro(QFrame):
 
     def _completar_falta(self, campo):
         """Si hay un solo medio cargado y este casillero está vacío, pone lo que falta."""
-        if campo is None or self._numero(campo.text()) > 0.009:
+        if campo is None or campo.isReadOnly() or self._cerrado:
+            return
+        if self._numero(campo.text()) > 0.009:
             return
         clave_este = None
         for clave, caja in self._claves():
@@ -171,7 +242,12 @@ class PanelMixtoCobro(QFrame):
             return
         self._valores = {clave: self._numero(campo.text()) for clave, campo in self._claves()}
         activos = [clave for clave, valor in self._valores.items() if valor > 0.009]
-        if len(activos) > 2 and self._ultimo is not None and self._numero(self._ultimo.text()) > 0.009:
+        if (
+            not self._cerrado
+            and len(activos) > 2
+            and self._ultimo is not None
+            and self._numero(self._ultimo.text()) > 0.009
+        ):
             self._silencio = True
             self._ultimo.blockSignals(True)
             self._ultimo.clear()
@@ -186,10 +262,16 @@ class PanelMixtoCobro(QFrame):
                 "color: #E11D48; font-size: 20px; font-weight: 800; background: transparent; border: none;"
             )
         elif diferencia > 0.01:
-            self.estado.setText(f"Vuelto efectivo: ${diferencia:,.2f}")
-            self.estado.setStyleSheet(
-                "color: #047857; font-size: 20px; font-weight: 800; background: transparent; border: none;"
-            )
+            if redondear_dinero(self._valores.get("efectivo") or 0) > 0.009:
+                self.estado.setText(f"Vuelto efectivo: ${diferencia:,.2f}")
+                self.estado.setStyleSheet(
+                    "color: #047857; font-size: 20px; font-weight: 800; background: transparent; border: none;"
+                )
+            else:
+                self.estado.setText(f"Sobran ${diferencia:,.2f} en medios digitales")
+                self.estado.setStyleSheet(
+                    "color: #E11D48; font-size: 20px; font-weight: 800; background: transparent; border: none;"
+                )
         else:
             self.estado.setText("Pago exacto")
             self.estado.setStyleSheet(

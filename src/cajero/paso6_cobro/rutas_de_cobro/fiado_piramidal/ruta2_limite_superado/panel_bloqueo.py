@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QFrame, QPushButton
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QFrame
 from PyQt6.QtCore import Qt, pyqtSignal
 from src.clientes_fiado.interfaz.cobro.pin_admin import quien_autoriza
 
@@ -63,15 +63,13 @@ class PanelLimiteSuperado(QFrame):
         )
         lay.addWidget(self.btn_confirmar)
 
-        self.btn_ir_cobranza = QPushButton("COBRANZA — ABONAR Y CONTINUAR")
-        self.btn_ir_cobranza.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_ir_cobranza.setStyleSheet(
-            "QPushButton { color: #7F1D1D; background: #FEE2E2; font-size: 16px; font-weight: 800; "
-            "border: none; border-radius: 10px; padding: 14px; }"
-            "QPushButton:hover { background: #FFFFFF; }"
+        self.lbl_f6 = QLabel("Para cobrar la deuda usá F6 en la terminal.\nAcá solo se carga la venta (PIN de supervisor).")
+        self.lbl_f6.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_f6.setWordWrap(True)
+        self.lbl_f6.setStyleSheet(
+            "color: #FEE2E2; font-size: 15px; font-weight: 700; background: transparent;"
         )
-        self.btn_ir_cobranza.clicked.connect(lambda: self.solicita_cobranza.emit(self._datos or {}))
-        lay.addWidget(self.btn_ir_cobranza)
+        lay.addWidget(self.lbl_f6)
 
         lay.addSpacing(15)
 

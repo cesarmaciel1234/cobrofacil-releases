@@ -89,7 +89,6 @@ class OrquestadorFiadoPiramidal(QFrame):
         from .ruta2_limite_superado.panel_bloqueo import PanelLimiteSuperado
         self.via_bloqueo = PanelLimiteSuperado(self)
         self.via_bloqueo.pin_validado.connect(self._emitir_aprobado_normal)
-        self.via_bloqueo.solicita_cobranza.connect(self._abrir_cobranza)
 
         from .modulo_cobranza.panel_cobranza import PanelCobranza
         self.via_cobranza = PanelCobranza(self)
@@ -121,6 +120,8 @@ class OrquestadorFiadoPiramidal(QFrame):
 
     def mostrar(self, monto, modo="Fiado"):
         self.show()
+        if (modo or "") == "MasCredito":
+            modo = "Clientes"
         self._modo = modo or "Fiado"
         self._monto_carrito = float(monto or 0)
         self._datos_cliente = {}
@@ -184,10 +185,7 @@ class OrquestadorFiadoPiramidal(QFrame):
             "compra": self._monto_carrito,
         }
         self._datos_cliente = datos
-        if self._modo == "MasCredito":
-            self._abrir_cobranza(datos)
-        else:
-            self._decidir_via_credito(datos)
+        self._decidir_via_credito(datos)
 
     def _decidir_via_credito(self, datos):
         limite = float(datos.get("limite", 0) or 0)
@@ -219,7 +217,7 @@ class OrquestadorFiadoPiramidal(QFrame):
                         ">>> CUENTA CORRIENTE <<<",
                         f"CLIENTE: {self._datos_cliente.get('nombre') or ''}",
                         f"SALDO PREVIO:   ${saldo_previo:,.2f}",
-                        f"ABONO COBRANZA: ${monto_abono:,.2f}",
+                        f"ESTA COMPRA:    ${self._monto_carrito:,.2f}",
                         f"SALDO RESTANTE: ${saldo_final:,.2f}",
                         "--------------------------------",
                         "FIRMA: _________________________",
@@ -229,19 +227,9 @@ class OrquestadorFiadoPiramidal(QFrame):
         )
 
     def _finalizar_desde_cobranza(self):
-        cliente_id = int(self._datos_cliente.get("id", 0) or 0)
-        monto_abono = float(getattr(self.via_cobranza, "_monto_a_cobrar", 0.0) or 0.0)
-        try:
-            from src.clientes_fiado.cerebro.cerebro import cerebro
-            from src.cajero.cajero_activo import CajeroActivo
-
-            cerebro.conceder_excepcion(cliente_id, self._monto_carrito, CajeroActivo.nombre)
-            cli = cerebro.obtener(cliente_id)
-            if cli:
-                self._datos_cliente["deuda"] = float(_fila_a_dict(cli).get("deuda_actual", 0.0) or 0.0)
-        except Exception:
-            pass
-        self._emitir_aprobado_normal(cliente_id, monto_abono)
+        """La cobranza no cierra una venta. F6 asienta el abono."""
+        self.stack.setCurrentWidget(self.via_buscador)
+        self.via_buscador.focus_caja()
 
     def _refrescar_cliente(self):
         cid = self._datos_cliente.get("id")
@@ -259,30 +247,19 @@ class OrquestadorFiadoPiramidal(QFrame):
         self._datos_cliente["compra"] = self._monto_carrito
 
     def _volver_de_cobranza(self):
-        if self._modo == "MasCredito" or not self._datos_cliente.get("id"):
-            self.stack.setCurrentWidget(self.via_buscador)
-            self.via_buscador.focus_caja()
-            return
-        self._refrescar_cliente()
-        self._decidir_via_credito(self._datos_cliente)
+        self.stack.setCurrentWidget(self.via_buscador)
+        self.via_buscador.focus_caja()
 
     def _abrir_cobranza(self, datos):
-        self._datos_cliente = datos or self._datos_cliente
-        self.via_cobranza.poblar(self._datos_cliente)
-        self.stack.setCurrentWidget(self.via_cobranza)
+        """No se cobra deuda en el cobro de una venta."""
+        return
 
     def _cliente_recien_creado(self, dict_datos):
         self._datos_cliente = _fila_a_dict(dict_datos)
         self._datos_cliente["compra"] = self._monto_carrito
-        if self._modo == "MasCredito":
-            self._abrir_cobranza(self._datos_cliente)
-        else:
-            self._decidir_via_credito(self._datos_cliente)
+        self._decidir_via_credito(self._datos_cliente)
 
     def procesar_cobranza(self):
-        if self.stack.currentWidget() in (self.via_aprobado, self.via_bloqueo) and self._datos_cliente.get("id"):
-            self._abrir_cobranza(self._datos_cliente)
-            return True
         return False
 
     def procesar_f9(self):

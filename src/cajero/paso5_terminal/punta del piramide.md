@@ -42,6 +42,8 @@ F7 es `_leer_bascula`. El puerto se lee fuera de la pantalla. Si no lee, deja `0
 
 El cobro (Paso 6) se pre-instancia en segundo plano de manera silenciosa (`_precalentar_cobro`) tras pintar la pantalla de venta y luego de finalizar cada cobro. Esto logra que al presionar F12 la ventana de métodos de pago se abra instantáneamente, sin tiempos de carga (zero-lag), rellenándose los datos netos justo antes de mostrarla.
 
+F12 arma el carrito (subtotales + `redondear_dinero`) y se lo pasa a `preparar_para_venta`. El paso 5 no cobra. Si el cobro acepta, se copia `resultado_venta` y recién ahí `_devolver_cobro` deja el diálogo en cero para el próximo F12. El ticket, el cliente, el descuento y la cartelería se vacían (`_limpiar_para_nuevo_ticket`). Si Esc cancela, el carrito sigue. El foco vuelve al escáner.
+
 El candado, el retiro, el ingreso, el historial y el cierre no desenfocan la venta. La pantalla queda plana.
 
 El teclado en pantalla no se abre al escribir ni cuando el escáner toma el foco. Se abre si la pantalla es táctil y el cuadro se tocó (`MouseFocusReason`). `teclado_virtual_modo` en `nunca` lo apaga. El botón TECLADO lo abre a mano.

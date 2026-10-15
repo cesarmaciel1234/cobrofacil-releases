@@ -6,6 +6,12 @@ def salir(ventana):
             pago.clear()
         except Exception:
             pass
+    otro = getattr(ventana, "txt_otro", None)
+    if otro is not None:
+        try:
+            otro.clear()
+        except Exception:
+            pass
     vuelto = getattr(ventana, "resumen_vuelto", None)
     if vuelto is not None:
         vuelto.hide()

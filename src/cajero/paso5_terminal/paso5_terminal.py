@@ -2215,28 +2215,23 @@ class Paso5Terminal(QWidget):
             dlg.recargar_total_final()
 
             ok = qt_exec(dlg)
+            res = getattr(dlg, "resultado_venta", None) if ok else None
             self._devolver_cobro(dlg)
         finally:
             self._cobro_abierto = False
         self._refrescar_notificaciones()
 
         if ok:
-            # Capturar info de la venta exitosa antes de limpiar
-            res = getattr(dlg, 'resultado_venta', None)
-
-            self.tabla.setRowCount(0)
-            self.en_venta = False
-            self.actualizar_totales()
+            self._limpiar_para_nuevo_ticket()
             self.flash_feedback(success=True)
 
             if res:
-                self.lbl_side_total.setText(fmt_moneda_sin_centavos(res['total']))
-                self.lbl_side_pagos.setText(fmt_moneda_sin_centavos(res['pago_con']))
-                self.lbl_side_cambio.setText(fmt_moneda_sin_centavos(res['cambio']))
+                self.lbl_side_total.setText(fmt_moneda_sin_centavos(res["total"]))
+                self.lbl_side_pagos.setText(fmt_moneda_sin_centavos(res["pago_con"]))
+                self.lbl_side_cambio.setText(fmt_moneda_sin_centavos(res["cambio"]))
                 self.panel_totales.actualizar_estilo_cambio(True)
 
-            # Al cobrar exitosamente, si hay un ticket en espera, lo cargamos automáticamente
-            if getattr(self, 'tickets_espera', None):
+            if getattr(self, "tickets_espera", None):
                 self._swap_ticket_espera()
         else:
             self.flash_feedback(success=False)

@@ -18,14 +18,30 @@ El PIN de cobranza está apagado. El PIN de supervisor solo aparece si el cupo n
 
 El PIN para fiado y cuenta corriente se pedirá después. No lo enciendas en cobranza ni en el abono verde.
 
+## Tendido por venta (no reutilizar)
+
+La caja se reusa (`preparar_para_venta`). Cada venta y cada vuelta a los medios vacían el tendido: mixto, efectivo, cliente, QR y los ids de Mercado Pago. Si el total coincide con el ticket anterior, Enter no cubre con esos importes. No se deja el cliente del ticket previo en el combo.
+
+## Esc: un paso atrás y el campo vacío
+
+Esc (y «Cambiar») vuelve a la grilla de medios. **El medio que se deja queda en cero.** Si el cajero vuelve a Mixto, Efectivo o Clientes, escribe de nuevo. No se reusa el importe, el cliente ni la palomita. Es un error humano grave: el total igual al ticket anterior y Enter cobraban el tendido viejo.
+
+Esc con el cursor en el casillero (mixto o efectivo) también sale: no se queda el texto. En la grilla, Esc sale al carrito.
+
+## Mixto (no cobrar de más)
+
+El Point de mixto cobra solo la parte de tarjeta, y solo después de cubrir el total. Enter (o F11 cubierto) manda el Point. Verde: palomita y, si hay efectivo, cajón. Después transferencia, QR o cliente. No se reescribe el reparto ni se manda el Point otra vez. Un excedente digital no es vuelto. Confirmar el cliente del resto no reclasifica la venta a Fiado. Un abono no cierra el carrito. F9 no saltea el cliente de ese resto.
+
 ## Dos motores (no unificar)
 
 Hay dos piezas y no son el mismo motor duplicado:
 
-1. **Motor real de la venta:** `motor_pagos/MotorPrincipalCobros`. Asienta el ticket.
-2. **Intermediario de cobranza:** `MotorCobranzaMedios` en el módulo de cobranza. Cobra el abono, da el ok, y el orquestador manda `pago_completado` al motor real.
+1. **Motor real de la venta:** `motor_pagos/MotorPrincipalCobros`. Asienta el ticket. Crédito solo carga la venta a la cuenta.
+2. **Intermediario de cobranza:** `MotorCobranzaMedios` en **F6**. Cobra el abono. No se abre desde el paso 6.
 
-No fusionar cobranza con el motor de paso 6. El intermediario no cierra la venta.
+No fusionar cobranza con el cobro de una venta. Si el cupo no alcanza, PIN de supervisor o Esc. La deuda se cobra en F6.
+
+Mapa: paso 5 llena el carrito. Paso 6 cobra la venta (mixto puede incluir cliente). F6 / Admin Abonar cobran deuda con el mismo diálogo; mixto de F6 no pone resto a crédito.
 
 ## Token de Mercado Pago en Admin
 

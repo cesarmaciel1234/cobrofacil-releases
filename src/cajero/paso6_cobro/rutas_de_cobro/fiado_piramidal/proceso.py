@@ -17,9 +17,7 @@ def salir(ventana):
 
 def entrar(ventana, modo="Clientes"):
     ventana.stack.setCurrentIndex(1)
-    if modo == "MasCredito":
-        ventana._activar_mas_credito_express()
-    elif modo == "Fiado":
+    if modo == "Fiado":
         ventana._activar_fiado_express()
     else:
         ventana._activar_cliente_express()

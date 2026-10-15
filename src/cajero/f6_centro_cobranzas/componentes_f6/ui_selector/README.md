@@ -2,7 +2,7 @@
 
 Qué hace: botones de medio y los lienzos (`LienzoEfectivo`, `LienzoQr`, `LienzoTarjeta`, `LienzoTransferencia`, `LienzoMixto`).
 
-QR, tarjeta y transferencia cierran solos cuando Mercado Pago aprueba el importe. F9 es emergencia, no el camino normal. Mixto reparte y después corre esos lienzos en cola: cada uno espera su plata y recién entonces asienta.
+QR, tarjeta y transferencia cierran solos cuando Mercado Pago aprueba el importe. F9 es emergencia, no el camino normal. Mixto: dos medios; cola Tarjeta → Transferencia → QR; Esc vacía. Recién entonces asienta.
 
 Qué función: `PanelSelectorCobranza` en `panel_selector.py`
 

@@ -16,5 +16,6 @@ auditoria/
 - Buscar: `consulta.filtro(texto, metodo)`. El texto busca en producto, código, pago, cajero, estado, depto y categoría; si es número (o `#número`) también busca el ticket. El combo «Pago» filtra por método exacto (`METODOS`); Efectivo incluye pago vacío. La misma condición va al listado y a «Vs periodo anterior».
 - Fechas: `periodo/sql.where_fecha`. No copies DATE() ni LIKE.
 - Comparar: `financiero.rango_igual_anterior`.
+- Totales y Facturado: solo tickets vivos. Las líneas `CANCELADA` se listan (rojo) y van al KPI Cancelados. No se suman al monto del reporte de ventas.
 - Esclava: `db_manager` = maestra.
 - Letras de góndola en la grilla (`src/utils/letra.py`). Calendarios: peso 400 en `../letra.py`. Compat: `../vista_auditoria.py` reexporta `VistaAuditoria`.

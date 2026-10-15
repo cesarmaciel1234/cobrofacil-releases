@@ -542,6 +542,18 @@ class MotorCuenta:
                 cursor, "BORRADO", cliente_id, monto, marcado,
                 extra={"cargo_id": movimiento_id, "venta_id": venta_id},
             )
+            if venta_id:
+                try:
+                    from src.base_de_datos.repos.ventas import marcar_ticket_cancelado
+                    from src.config import config
+                    quien = ((getattr(config, "current_user", None) or {}).get("username") or "admin")
+                except Exception:
+                    marcar_ticket_cancelado = None
+                    quien = "admin"
+                if marcar_ticket_cancelado:
+                    marcar_ticket_cancelado(
+                        cursor, int(venta_id), quien, anular_cargo=False, devolver_stock=True,
+                    )
             return True, nuevo_saldo, nombre
 
         return _confirmar(trabajo, (False, 0.0, "No se pudo marcar el cargo."))

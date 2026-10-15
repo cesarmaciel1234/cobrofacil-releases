@@ -478,8 +478,8 @@ class DialogoHistorialCliente(QDialog):
         aviso.setWindowTitle("Marcar como BORRADO")
         aviso.setText(
             f"¿Marcar este {que} como BORRADO?\n\n"
-            "El cargo y el número de ticket siguen en el historial, claramente tachados. "
-            "No se borra el registro. Se resta el monto de la deuda."
+            "Se resta el monto de la deuda. Si hay ticket de venta, queda CANCELADA "
+            "(vuelve el stock y lo ve auditoría). El renglón sigue tachado en el historial."
         )
         aviso.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         aviso.setDefaultButton(QMessageBox.StandardButton.No)
@@ -498,7 +498,7 @@ class DialogoHistorialCliente(QDialog):
             parent.cargar_clientes()
         if dato.get("venta_id"):
             self.panel_ticket.mensaje(
-                f"Ticket #{dato.get('venta_id')} marcado BORRADO. Sigue visible. "
+                f"Ticket #{dato.get('venta_id')} BORRADO en la cuenta y CANCELADO en ventas. "
                 f"Nueva deuda: ${nuevo_saldo:,.2f}"
             )
         else:

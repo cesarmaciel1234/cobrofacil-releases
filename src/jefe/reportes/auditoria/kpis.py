@@ -15,7 +15,15 @@ def pie(tot: dict) -> dict:
     t1, v1 = tot["top1"]
     t2, v2 = tot["top2"]
     return {
-        "regs": f"Tickets: {tot['tickets']}  ·  Líneas: {tot['lineas']}",
+        "regs": (
+            f"Tickets: {tot['tickets']}  ·  Líneas: {tot['lineas']}"
+            + (f"  ·  Cancelados: {tot['tickets_cancelados']}" if tot.get("tickets_cancelados") else "")
+        ),
+        "cancelado": (
+            f"Cancelado: {fmt_plata(tot.get('cancelado') or 0)}"
+            if tot.get("tickets_cancelados") or tot.get("cancelado")
+            else ""
+        ),
         "unidades": f"Unidades: {tot['unidades']:,.0f} un",
         "kilos": f"Peso: {tot['kilos']:,.3f} kg",
         "depto1": f"{str(t1)[:16]}: {fmt_plata(v1)}",

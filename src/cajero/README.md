@@ -83,7 +83,17 @@ Esta sección es la nota de la caja para sacar una versión. No hace falta otro 
 
 El bip del escáner es un `threading.Thread` daemon en el alta del producto, si `AUDIO_ENABLED`. Hay otro bip igual en `paso6_cobro/widgets/cliente_express.py` y en `fiado_express.py`. No comparten estado de la venta.
 
-F12 abre el cobro. `_precalentar_cobro` deja una instancia oculta de `Paso6Cobro` lista. Al cobrar se reusa con `preparar_para_venta` y al cerrar se vuelve a dejar en escucha. El import de `Paso6Cobro` sigue adentro del método.
+F12 abre el cobro. `_precalentar_cobro` deja una instancia oculta de `Paso6Cobro` lista. Al cobrar se reusa con `preparar_para_venta` y al cerrar se vuelve a dejar en escucha. El import de `Paso6Cobro` sigue adentro del método. Esc en el cobro (un paso atrás) vacía el medio: volver a Mixto o Efectivo no trae el importe ni el cliente de antes.
+
+El paso 5 llena el carrito. El paso 6 cobra. Al volver: si pagó, se guarda el resumen y se limpia ticket/cliente/cartelería; el diálogo queda en cero para el próximo F12. Si canceló, el carrito no se toca.
+
+### Pase a producción — venta y cobro
+
+Listo para tienda. No hace falta otro informe.
+
+En cancha: F12 con un renglón; Esc en medios (el carrito sigue); Mixto efectivo+tarjeta (Point, palomita, cajón); Mixto y volver a Mixto (casilleros en cero); crédito sin cupo (PIN o Esc, no F6); F12 de nuevo (diálogo vacío, ticket nuevo). MariaDB o cajón ausentes en desarrollo son modo offline: no bloquean.
+
+Etapa, no frenan el pase: F9 sin PIN; token MP en la estación; Esc no anula un Point ya verde. Detalle en `paso6_cobro/decisiones.md` y Blindaje de `paso6_cobro/punta del piramide.md`.
 
 ### El paso 5 es dueño de la venta
 
@@ -103,7 +113,7 @@ Esas ventanas, y F11, tapan la venta con el gris `#334155` (`src/utils/fondo_gri
 
 ### Cobro
 
-Crédito (clave `Clientes`) y Cobranza (clave `MasCredito`) se piden en `OrquestadorFiadoPiramidal` (`paso6_cobro/rutas_de_cobro/fiado_piramidal/`). No abren la ventana oscura. Cancelar vuelve a los medios. El F5 del cobro se retiró. El PIN de cobranza está apagado; el PIN de supervisor solo aparece si el cupo no alcanza.
+Crédito (clave `Clientes`) carga la venta a la cuenta. La deuda se cobra solo en **F6**. No se abre cobranza dentro del paso 6. Si el cupo no alcanza: PIN de supervisor o Esc. El F5 del cobro se retiró.
 
 La clave interna de crédito es Clientes (no `crédito`: esa clave de REGISTRO es la tarjeta de crédito). La caja toma DNI o nombre. Un match: Enter. Varios: flechas o mouse y Enter. Un nombre nuevo crea con límite 50.000.
 

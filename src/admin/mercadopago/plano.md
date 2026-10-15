@@ -8,7 +8,7 @@ La rama arranca en esta carpeta. La base es `src/admin` y no lleva plano.
 
 Arriba: volver, el título, el interruptor «Cajero silencioso» / «Con sonido», Actualizar y el estado. No hay campo de token, ni «Guardar e Iniciar», ni «Simular», ni importar un CSV a mano.
 
-El cuerpo: bruto/neto vs tickets vs firmados vs sin firmar/F9 vs MP sin ticket vs Cliente. Período Hoy / Semana / Mes / Año / Período. Las dos casillas viejas (cargas / omitidos) son **Firmados** y **Pendientes**. Las dos prendidas: lo que importa para AFIP. Solo Firmados: venta o cobranza con id MP. Solo Pendientes: SIN TICKET, SIN FIRMAR, F9. Cargas propias y omitidos no entran.
+El cuerpo: cuatro tarjetas por línea. Arriba bruto, neto, tickets, firmados. Abajo sin firmar, MP sin ticket, cliente y un hueco Reservado. Montos en formato AR, enteros, sin recortar. Período Hoy / Semana / Mes / Año / Período. Las dos casillas viejas (cargas / omitidos) son **Firmados** y **Pendientes**. Las dos prendidas: lo que importa para AFIP. Solo Firmados: venta o cobranza con id MP. Solo Pendientes: SIN TICKET, SIN FIRMAR, F9. Cargas propias y omitidos no entran.
 
 ## Fondo
 

@@ -34,8 +34,17 @@ def salir_a_metodos(ventana):
         ventana._mixto_espera_transferencia = None
         ventana._mixto_esperando_qr = False
         ventana._mixto_espera_cuenta = False
+        ventana._mixto_vivo_hecho = None
+        ventana.valores_mixtos = None
         ventana._ticket_al_pagar = None
         ventana._point_en_curso = False
+        ventana._es_autonomo = False
+        ventana._tarjeta_ya_cerrado = False
+        ventana._qr_ya_cerrado = False
+        ventana._mp_pagos = []
+        ventana._mp_pago_usado = None
+        ventana._mp_oferta_id = None
+        _soltar_cliente(ventana)
 
         marcar_tarjeta(ventana, "Efectivo")
         if getattr(ventana, "stack", None) is not None:
@@ -60,6 +69,18 @@ def _parar_relojes(ventana):
             toast.cerrar()
         except Exception:
             pass
+
+
+def _soltar_cliente(ventana):
+    cmb = getattr(ventana, "cmb_cliente", None)
+    if cmb is None:
+        return
+    try:
+        cmb.blockSignals(True)
+        cmb.setCurrentIndex(-1)
+        cmb.blockSignals(False)
+    except Exception:
+        pass
 
 
 def _soltar_point(ventana):

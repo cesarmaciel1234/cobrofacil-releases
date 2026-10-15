@@ -124,6 +124,7 @@ class VistaAuditoria(QWidget):
         )
         pl = QHBoxLayout(pie_f)
         self.lbl_foot_regs = etiqueta("Tickets: 0")
+        self.lbl_foot_cancel = etiqueta("")
         self.lbl_foot_unidades = etiqueta("Unidades: 0")
         self.lbl_foot_kilos = etiqueta("Peso: 0 kg")
         self.lbl_foot_depto1 = etiqueta("—")
@@ -131,7 +132,7 @@ class VistaAuditoria(QWidget):
         self.lbl_foot_depto3 = etiqueta("—")
         self.lbl_foot_monto = etiqueta("Facturado: —", 16)
         for w in (
-            self.lbl_foot_regs, self.lbl_foot_unidades, self.lbl_foot_kilos,
+            self.lbl_foot_regs, self.lbl_foot_cancel, self.lbl_foot_unidades, self.lbl_foot_kilos,
             self.lbl_foot_depto1, self.lbl_foot_depto2, self.lbl_foot_depto3, self.lbl_foot_monto,
         ):
             pl.addWidget(w)
@@ -167,31 +168,37 @@ class VistaAuditoria(QWidget):
         tot = totales(self.audit_all_rows)
         textos = pie(tot)
         self.lbl_foot_regs.setText(textos["regs"])
+        self.lbl_foot_cancel.setText(textos.get("cancelado") or "")
+        self.lbl_foot_cancel.setVisible(bool(textos.get("cancelado")))
         self.lbl_foot_unidades.setText(textos["unidades"])
         self.lbl_foot_kilos.setText(textos["kilos"])
         self.lbl_foot_depto1.setText(textos["depto1"])
         self.lbl_foot_depto2.setText(textos["depto2"])
         self.lbl_foot_depto3.setText(textos["otros"])
         self.lbl_foot_monto.setText(textos["monto"])
-        self._pintar_kpis(tot["monto"])
+        self._pintar_kpis(tot)
         self.audit_offset = 0
         self.table_audit.setRowCount(0)
         self._load_more_audit_rows()
 
-    def _pintar_kpis(self, monto):
+    def _pintar_kpis(self, tot):
         while self.audit_kpi_layout.count():
             it = self.audit_kpi_layout.takeAt(0)
             if it.widget():
                 it.widget().deleteLater()
+        monto = tot.get("monto") or 0
         _, diff = comparativa(
             self.current_start_str, self.current_end_str,
             self.txt_audit_prod.text(), self._metodo_elegido(),
         )
         comp, tono = tarjeta_comparativa(diff)
-        for titulo, valor, bg in (
+        kpis = [
             ("Facturado", fmt_plata(monto), "#ECFDF5"),
             (f"Vs periodo anterior · {getattr(self, 'current_period', 'Hoy')}", comp, "#FEF2F2" if tono == "red" else "#ECFDF5"),
-        ):
+        ]
+        if tot.get("tickets_cancelados") or tot.get("cancelado"):
+            kpis.append(("Cancelados", fmt_plata(tot.get("cancelado") or 0), "#FEF2F2"))
+        for titulo, valor, bg in kpis:
             f = QFrame()
             f.setStyleSheet(f"background: {bg}; border: 1px solid {_FIN['card_border']}; border-radius: 12px;")
             l = QVBoxLayout(f)
@@ -217,11 +224,15 @@ class VistaAuditoria(QWidget):
                 fmt_plata(r["precio_unitario"]), fmt_plata(r["subtotal"]),
                 str(r["metodo_pago"]), str(r["estado"]),
             ]
-            bg = QColor("#FFFFFF" if row % 2 == 0 else "#F1F5F9")
+            cancelada = str(r.get("estado") or "").upper() in (
+                "CANCELADA", "ANULADA", "CANCELADO", "ANULADO",
+            )
+            bg = QColor("#FEE2E2") if cancelada else QColor("#FFFFFF" if row % 2 == 0 else "#F1F5F9")
+            fg = QColor("#991B1B") if cancelada else QColor("#0F172A")
             for c, txt in enumerate(vals):
                 it = QTableWidgetItem(txt)
                 it.setBackground(bg)
-                it.setForeground(QColor("#0F172A"))
+                it.setForeground(fg)
                 if c == 0:
                     vestir_id(it)
                 elif c == 4:

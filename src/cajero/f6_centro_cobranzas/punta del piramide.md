@@ -1,6 +1,6 @@
 # Punta — F6 centro de cobranzas
 
-Paso 5, tecla F6. Cobra fiado y cuenta corriente. No vende. No es F2. No es crédito del paso 6.
+Paso 5, tecla F6. Cobra fiado y cuenta corriente. No vende. No es F2. No es crédito del paso 6. El cobro de una venta nunca abre esta hoja.
 
 ```
 f6_centro_cobranzas/
@@ -29,7 +29,7 @@ No pinta alta de cliente. Las flechas no saltan a F2.
 1. `consulta.buscar_cuentas` — tabla `clientes`. No crea filas.
 2. Hilo `consulta_historial/hilo.py` pregunta a `src/clientes_fiado/oficina/consulta_historial`. Si se cae, PAGAR sigue.
 3. QR / tarjeta / transferencia: el lienzo espera el importe y, si llega, llama `finalizar` solo. **F9** asocia (otro monto) o cierra a mano. **Enter no asocia**: espera el exacto.
-4. Mixto reparte y encadena esos lienzos. Recién después `MotorCobranzaMedios.finalizar` → `asentar` una vez (`COB-{id}`).
-5. Admin no vuelve a asentar.
+4. Mixto: solo dos medios. Point / tarjeta primero, después transferencia, después QR. Esc vacía el lienzo. Recién después `MotorCobranzaMedios.finalizar` → `asentar` una vez (`COB-{id}`). No es el mixto del paso 6 (ahí puede ir un resto a cliente).
+5. Admin Abonar abre esta misma hoja (`perfil=Admin`). No vuelve a asentar.
 
-Qué no romper: paso 6, F2, F5.
+Qué no romper: paso 6, F2, F5. No unir F6 con el cobro de la venta.

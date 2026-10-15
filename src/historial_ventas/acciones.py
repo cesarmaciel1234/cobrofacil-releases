@@ -31,6 +31,7 @@ def detalle(id_venta: int):
 
 
 def cancelar(id_venta: int, username: str) -> bool:
+    from src.historial_ventas.caja import controller
     return controller().cancelar_venta(int(id_venta), username)
 
 

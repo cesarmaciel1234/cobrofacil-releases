@@ -163,6 +163,7 @@ class PanelQrCobro(QFrame):
     def ocultar(self):
         self._generacion += 1
         self._modo = "oculto"
+        self._pago = {}
         self._reloj.stop()
         self._soltar_orden()
         self.hide()

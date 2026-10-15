@@ -135,11 +135,11 @@ class MainWindow(QMainWindow):
             engine = init_network_engine(role)
             if engine:
                 engine.message_received.connect(self._on_udp_message_received)
-                print(f"[DEBUG] NetworkEngine inicializado con rol: {role}")
+                logger.debug("NetworkEngine inicializado con rol: %s", role)
             else:
-                print(f"[DEBUG] ERROR: NetworkEngine no se pudo inicializar")
+                logger.debug("NetworkEngine no se pudo inicializar")
         except Exception as e:
-            print(f"[DEBUG] Error inicializando Network Engine: {e}")
+            logger.debug("Error inicializando Network Engine: %s", e)
 
     def _on_security_breach(self):
         self._punto_cajon()
@@ -485,34 +485,8 @@ class MainWindow(QMainWindow):
                 _QSS_CACHE[theme_file] = ""
 
     def _pregwarm_screens_for_role(self, role: str):
-        """Instancia mÃ³dulos frecuentes en idle para que la 1Âª navegaciÃ³n no congele."""
-        # El exe congela el hub si instancia inventario/cierre/MP en el hilo de UI.
-        if getattr(sys, "frozen", False):
-            return
-        if role == "admin":
-            return
-        # En esclava / offline el prewarm martilla MariaDB y congela Admin
-        try:
-            from src.base_de_datos.database import db_manager
-
-            if not getattr(db_manager, "is_master", True) or getattr(
-                db_manager, "_forced_local_offline", False
-            ):
-                return
-        except Exception:
-            pass
-        if role == "jefe":
-            warm = (9, 20)
-        else:
-            return
-        for idx in warm:
-            if idx >= len(self.screens) or self.screens[idx] is not None:
-                continue
-            try:
-                self._build_lazy_screen(idx)
-                QApplication.processEvents()
-            except Exception as e:
-                logger.warning(f"Prewarm pantalla {idx} fallÃ³: {e}")
+        """No precarga mÃ³dulos: en el exe congelaba admin y jefe."""
+        return
 
     @property
     def pantalla_ventas(self):
@@ -797,8 +771,8 @@ class MainWindow(QMainWindow):
           - Los slots libres (6, 12, 15, 16) redirigen al home del rol.
         """
         from src.config import config
-        # El dashboard (0) no lee la tienda: no bloquear el primer paint.
-        if index != 0:
+        # Hub admin (0) y jefe (19): no bloquear el primer paint con la maestra.
+        if index not in (0, 19):
             try:
                 from src.base_de_datos.database import db_manager
                 db_manager.asegurar_lectura_tienda()
@@ -910,7 +884,6 @@ class MainWindow(QMainWindow):
             if self.screens[19] is None:
                 self._build_lazy_screen(19)
             self.switch_tab(19)
-            QTimer.singleShot(2500, lambda: self._pregwarm_screens_for_role("jefe"))
         elif role == "contabilidad":
             if self.screens[9] is None:
                 self._build_lazy_screen(9)

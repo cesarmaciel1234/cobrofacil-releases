@@ -103,6 +103,24 @@ def test_mixto_cliente_completa_el_resto_y_cuenta_como_medio():
     assert otro.valores()["cliente"] == 0.0
     assert vivo({"tarjeta": 50, "mercadopago": 0, "qr": 0, "cliente": 10}) == (50.0, 0.0, 0.0)
     assert pasos_vivos({"tarjeta": 50, "mercadopago": 0, "qr": 0, "cliente": 10}) == [("tarjeta", 50.0)]
+    assert pasos_vivos({"tarjeta": 40, "mercadopago": 60, "qr": 0}) == [
+        ("tarjeta", 40.0),
+        ("transferencia", 60.0),
+    ]
+    otro.marcar_hecho("tarjeta")
+    assert otro.txt_tarjeta.isReadOnly()
+    otro.vaciar()
+    assert otro.valores() == {
+        "efectivo": 0.0, "tarjeta": 0.0, "mercadopago": 0.0, "qr": 0.0, "cliente": 0.0,
+    }
+    assert otro.txt_tarjeta.text() == ""
+    assert not otro.txt_tarjeta.isReadOnly()
+    otro.txt_efectivo.setText("50")
+    otro.txt_tarjeta.setText("50")
+    otro.mostrar(100)
+    assert otro.valores()["efectivo"] == 0.0
+    assert otro.valores()["tarjeta"] == 0.0
+    assert not otro.cubre()
 
     p1, p2 = CobroController.validar_monto_suficiente(
         "Mixto", 100, 0, valores_mixtos={"efectivo": 40, "cliente": 60, "tarjeta": 0, "mercadopago": 0, "qr": 0}
@@ -111,6 +129,9 @@ def test_mixto_cliente_completa_el_resto_y_cuenta_como_medio():
     assert p2 == 60
     assert CobroController.validar_monto_suficiente(
         "Mixto", 100, 0, valores_mixtos={"efectivo": 10, "cliente": 0, "tarjeta": 0, "mercadopago": 0, "qr": 0}
+    ) == (None, None)
+    assert CobroController.validar_monto_suficiente(
+        "Mixto", 100, 0, valores_mixtos={"efectivo": 0, "cliente": 0, "tarjeta": 80, "mercadopago": 40, "qr": 0}
     ) == (None, None)
 
 
@@ -763,6 +784,33 @@ def test_anular_baja_la_deuda_una_sola_vez():
     otra = _Cur([{"id": 9, "cliente_id": 3, "monto": 100, "descripcion": "Venta"}, {"id": 1}])
     _anular_cargo(otra, 12)
     assert not any(q.startswith("UPDATE clientes") for q, _p in otra.sql)
+
+
+def test_anular_encuentra_cargo_por_texto_si_falta_venta_id():
+    from src.base_de_datos.repos.ventas import _anular_cargo
+
+    cur = _Cur([
+        None,
+        {"id": 4, "cliente_id": 3, "monto": 50, "descripcion": "Venta a crédito Ticket #12"},
+        None,
+        {"deuda_actual": 50},
+    ])
+    _anular_cargo(cur, 12)
+    updates = [p for q, p in cur.sql if q.startswith("UPDATE clientes")]
+    assert updates == [(0.0, 3)]
+
+
+def test_auditoria_totales_no_suman_cancelados():
+    from src.jefe.reportes.auditoria.consulta import totales
+
+    tot = totales([
+        {"id_venta": 1, "subtotal": 100, "cantidad": 2, "unidad": "UN", "depto": "FIAMBRE", "estado": "COMPLETADA"},
+        {"id_venta": 2, "subtotal": 40, "cantidad": 1, "unidad": "UN", "depto": "FIAMBRE", "estado": "CANCELADA"},
+    ])
+    assert tot["monto"] == 100
+    assert tot["cancelado"] == 40
+    assert tot["tickets"] == 1
+    assert tot["tickets_cancelados"] == 1
 
 
 def test_persistir_avisa_credito_insuficiente(monkeypatch):

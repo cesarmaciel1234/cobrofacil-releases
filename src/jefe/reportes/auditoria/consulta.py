@@ -89,13 +89,26 @@ def listar_lineas(start_str: str, end_str: str, texto: str = "", metodo: str = "
     return out
 
 
+_CANCEL = {"CANCELADA", "ANULADA", "CANCELADO", "ANULADO"}
+
+
+def _viva(estado) -> bool:
+    return str(estado or "").upper().strip() not in _CANCEL
+
+
 def totales(filas: list[dict]) -> dict:
     monto = 0.0
+    cancelado = 0.0
     un = 0.0
     kg = 0.0
     deptos: dict[str, float] = {}
     tickets = set()
+    tickets_cancel = set()
     for r in filas:
+        if not _viva(r.get("estado")):
+            cancelado += r["subtotal"]
+            tickets_cancel.add(r["id_venta"])
+            continue
         monto += r["subtotal"]
         if r["unidad"] == "KG":
             kg += r["cantidad"]
@@ -112,10 +125,12 @@ def totales(filas: list[dict]) -> dict:
     otros = sum(v for _, v in ranking[2:])
     return {
         "monto": monto,
+        "cancelado": cancelado,
         "unidades": un,
         "kilos": kg,
         "lineas": len(filas),
         "tickets": len(tickets),
+        "tickets_cancelados": len(tickets_cancel),
         "top1": top1,
         "top2": top2,
         "otros": otros,

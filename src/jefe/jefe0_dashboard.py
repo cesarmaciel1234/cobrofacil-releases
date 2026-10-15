@@ -61,19 +61,12 @@ class Jefe0Dashboard(QWidget):
         self._clock = QTimer(self)
         self._clock.timeout.connect(self._tick)
         self._clock.start(60000)
-        self._tick()
+        self._tick(solo_reloj=True)
 
-        # Iniciar Cerebro del Jefe en Segundo Plano
         self.worker_analitica = WorkerAnaliticaJefe()
         self.worker_analitica.datos_listos.connect(self._on_analitica_lista)
-        self.worker_analitica.start()
-
-        try:
-            from src.jefe.nodo_portable import espejo
-
-            espejo.arrancar()
-        except Exception:
-            pass
+        QTimer.singleShot(800, self.worker_analitica.start)
+        QTimer.singleShot(1500, self._arrancar_espejo)
 
     def _on_analitica_lista(self, datos):
         valor = float(datos.get("inventario_valor_costo", 0.0) or 0)
@@ -96,8 +89,15 @@ class Jefe0Dashboard(QWidget):
         self._pintar_cobros_dia()
 
     def _rango_vitrina(self):
-        """(desde, hasta) elegido en la vitrina. None, None = hoy."""
-        return getattr(self, "_vitrina_desde", None), getattr(self, "_vitrina_hasta", None)
+        """(desde, hasta) de la vitrina. Al arrancar es el mes; Hoy es un clic."""
+        desde = getattr(self, "_vitrina_desde", None)
+        hasta = getattr(self, "_vitrina_hasta", None)
+        if desde and hasta:
+            return desde, hasta
+        from src.jefe.reportes.periodo.fechas import rango_mes
+
+        mes = rango_mes()
+        return mes[0], mes[1]
 
     def _pintar_cobros_dia(self):
         try:
@@ -265,9 +265,10 @@ class Jefe0Dashboard(QWidget):
 
         self.panel_pub = PanelPublicidad()
         self.panel_pub.periodo_cambiado.connect(self._on_periodo_vitrina)
-        _hoy = datetime.datetime.now()
-        self._vitrina_desde = _hoy.strftime("%Y-%m-01")
-        self._vitrina_hasta = _hoy.strftime("%Y-%m-%d")
+        from src.jefe.reportes.periodo.fechas import rango_mes
+
+        mes = rango_mes()
+        self._vitrina_desde, self._vitrina_hasta = mes[0], mes[1]
         self.btn_export_ganancias = self.panel_pub.btn_export
         self.btn_export_ganancias.clicked.connect(self._exportar_ganancias)
         page_lay.addWidget(self.panel_pub, 1)
@@ -364,7 +365,15 @@ class Jefe0Dashboard(QWidget):
         except Exception:
             pass
 
-    def _tick(self):
+    def _arrancar_espejo(self):
+        try:
+            from src.jefe.nodo_portable import espejo
+
+            espejo.arrancar()
+        except Exception:
+            pass
+
+    def _tick(self, solo_reloj=False):
         now = datetime.datetime.now()
         self.lbl_clock.setText(now.strftime("%d %b %Y  %H:%M"))
         h = now.hour
@@ -374,6 +383,8 @@ class Jefe0Dashboard(QWidget):
         except Exception:
             nombre = "Jefe"
         self.panel_pub.set_saludo(f"{greet}, {nombre}")
+        if solo_reloj:
+            return
         _desde, hasta = self._rango_vitrina()
         if hasta is None or hasta >= now.strftime("%Y-%m-%d"):
             self._pintar_cuentas()
@@ -417,7 +428,8 @@ class Jefe0Dashboard(QWidget):
         """)
 
     def cargar_datos(self):
-        self._tick()
+        self._tick(solo_reloj=True)
+        QTimer.singleShot(400, lambda: self._tick(False))
 
     def _refresh_nodo_button(self):
         try:

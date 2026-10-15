@@ -38,9 +38,9 @@ def _rol_sin_chromium():
     args = sys.argv
     for i, arg in enumerate(args):
         if arg in ("--role", "--profile") and i + 1 < len(args):
-            return args[i + 1].strip().lower() == "cajero"
+            return args[i + 1].strip().lower() in ("cajero", "jefe")
         if arg.startswith("--role=") or arg.startswith("--profile="):
-            return arg.split("=", 1)[1].strip().lower() == "cajero"
+            return arg.split("=", 1)[1].strip().lower() in ("cajero", "jefe")
     return False
 
 if not _rol_sin_chromium():

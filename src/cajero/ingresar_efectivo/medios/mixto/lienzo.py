@@ -93,17 +93,21 @@ class LienzoMixto(QWidget):
         self._monto_total = 0.0
         self._auto_calculando = False
 
-    def arrancar(self, monto):
-        self._monto_total = float(monto or 0)
-        self.lbl_total.setText(f"${self._monto_total:,.2f}")
-        
+    def vaciar(self):
         self._auto_calculando = True
-        self.txt_efectivo.setText(f"{self._monto_total:.2f}".replace('.', ','))
+        self.txt_efectivo.setText("0,00")
         self.txt_tarjeta.setText("0,00")
         self.txt_transferencia.setText("0,00")
         self.txt_qr.setText("0,00")
         self._auto_calculando = False
-        
+
+    def arrancar(self, monto):
+        self._monto_total = float(monto or 0)
+        self.lbl_total.setText(f"${self._monto_total:,.2f}")
+        self.vaciar()
+        self._auto_calculando = True
+        self.txt_efectivo.setText(f"{self._monto_total:.2f}".replace('.', ','))
+        self._auto_calculando = False
         self._validar_cobertura()
         self.txt_efectivo.setFocus()
         self.txt_efectivo.selectAll()
@@ -133,7 +137,8 @@ class LienzoMixto(QWidget):
         except Exception:
             sig = self.txt_qr
             
-        if resto > 0.009 and self._parse_val(sig.text()) <= 0.009:
+        n_activos = sum(1 for v in (e, t, tr, q) if v > 0.009)
+        if resto > 0.009 and self._parse_val(sig.text()) <= 0.009 and n_activos < 2:
             self._auto_calculando = True
             sig.setText(f"{resto:.2f}".replace('.', ','))
             self._auto_calculando = False
@@ -155,6 +160,23 @@ class LienzoMixto(QWidget):
         
         suma = e + t + tr + q
         resto = self._monto_total - suma
+        n_activos = sum(1 for v in (e, t, tr, q) if v > 0.009)
+        if n_activos > 2:
+            self.btn_confirmar.setText("El mixto admite solo dos medios.")
+            self.btn_confirmar.setStyleSheet(
+                "QPushButton:disabled { background: #FEE2E2; color: #DC2626; font-size: 16px; font-weight: 800; "
+                "border: 1px solid #FCA5A5; border-radius: 10px; }"
+            )
+            self.btn_confirmar.setEnabled(False)
+            return
+        if resto < -0.01 and e <= 0.009:
+            self.btn_confirmar.setText(f"Sobran ${abs(resto):,.2f} en medios digitales")
+            self.btn_confirmar.setStyleSheet(
+                "QPushButton:disabled { background: #FEE2E2; color: #DC2626; font-size: 16px; font-weight: 800; "
+                "border: 1px solid #FCA5A5; border-radius: 10px; }"
+            )
+            self.btn_confirmar.setEnabled(False)
+            return
         
         if abs(resto) < 0.01:
             self.btn_confirmar.setText("[ ENTER ] Confirmar Cobro")
@@ -176,6 +198,8 @@ class LienzoMixto(QWidget):
             self.btn_confirmar.setEnabled(False)
 
     def _confirmar(self):
+        if not self.btn_confirmar.isEnabled():
+            return
         e = self._parse_val(self.txt_efectivo.text())
         t = self._parse_val(self.txt_tarjeta.text())
         tr = self._parse_val(self.txt_transferencia.text())
@@ -193,4 +217,5 @@ class LienzoMixto(QWidget):
             if self.btn_confirmar.isEnabled():
                 self._confirmar()
         elif k == Qt.Key.Key_Escape:
+            self.vaciar()
             self.volver.emit()

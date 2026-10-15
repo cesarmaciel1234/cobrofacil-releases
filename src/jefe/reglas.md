@@ -30,6 +30,8 @@ La contabilidad pide colores a `contabilidad/shared_globals.py`, `PAL`. Esa pale
 Un solo dueño: `reportes/financiero/consulta.py` (`payload_reporte_global`).  
 La TV y las esclavas **leen**. No recalculan.
 
+Al abrir el perfil jefe no se carga Chromium ni se precargan contabilidad/reportes. La vitrina pinta el reloj primero; los números van un instante después, en hilo.
+
 ## Red
 
 Cualquier perfil en PC esclava lee la maestra. Ver `src/base_de_datos/reglas.md`.

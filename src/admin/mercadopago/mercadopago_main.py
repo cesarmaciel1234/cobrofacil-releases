@@ -1,10 +1,13 @@
 from src.utils.qt_compat import qt_exec
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QDateEdit, QCheckBox,
 )
 from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
+
+from src.jefe.reportes.financiero.dinero import fmt_plata
+from src.utils.letra import QSS_KPI, QSS_ROTULO, QSS_TITULO
 
 from src.admin.mercadopago.historial.archivo import leer, omitir
 from src.admin.mercadopago.historial.sincronizar import bajar_mes
@@ -91,7 +94,7 @@ class Admin10MP(QWidget):
 
         hl.addSpacing(20)
         lbl_title = QLabel("Auditoría de cobros digitales")
-        lbl_title.setStyleSheet("font-size: 22px; font-weight: bold;")
+        lbl_title.setStyleSheet(f"{QSS_TITULO} color: #FFFFFF; background: transparent;")
         hl.addWidget(lbl_title)
         hl.addStretch()
         self.btn_aviso = QPushButton("")
@@ -132,77 +135,102 @@ class Admin10MP(QWidget):
         body = QVBoxLayout()
         body.setContentsMargins(20, 20, 20, 20)
 
-        # KPI Dashboard Cards
-        kpi_lay = QHBoxLayout()
-        kpi_lay.setSpacing(15)
+        kpi_lay = QGridLayout()
+        kpi_lay.setSpacing(10)
+        kpi_lay.setContentsMargins(0, 0, 0, 0)
+        for col in range(4):
+            kpi_lay.setColumnStretch(col, 1)
 
         def create_kpi_card(title, value, color_hex):
             card = QFrame()
-            card.setStyleSheet(f"""
-                QFrame {{
-                    background: white;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 12px;
-                    padding: 15px;
-                }}
-            """)
-
+            card.setMinimumHeight(88)
+            card.setStyleSheet(
+                "QFrame { background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 12px; }"
+            )
             cl = QVBoxLayout(card)
-            cl.setSpacing(5)
+            cl.setContentsMargins(16, 12, 16, 12)
+            cl.setSpacing(4)
 
             lbl_title = QLabel(title)
-            lbl_title.setStyleSheet("font-size: 11px; font-weight: 900;  letter-spacing: 1px;")
+            lbl_title.setStyleSheet(
+                f"{QSS_ROTULO} color: #0F172A; background: transparent; border: none;"
+            )
 
             lbl_value = QLabel(value)
-            lbl_value.setStyleSheet(f"font-size: 24px; font-weight: 900; color: {color_hex}; font-family: 'Segoe UI Black';")
+            lbl_value.setWordWrap(True)
+            lbl_value.setStyleSheet(
+                f"{QSS_KPI} font-size: 20px; color: {color_hex}; "
+                "background: transparent; border: none;"
+            )
+
+            lbl_nota = QLabel("")
+            lbl_nota.setWordWrap(True)
+            lbl_nota.setStyleSheet(
+                "font-size: 12px; font-weight: 600; color: #1E293B; "
+                "background: transparent; border: none;"
+            )
+            lbl_nota.hide()
 
             cl.addWidget(lbl_title)
-            fila = QHBoxLayout()
-            fila.setContentsMargins(0, 0, 0, 0)
-            fila.setSpacing(12)
-            fila.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-            fila.addWidget(lbl_value, 1)
-            sep = QFrame()
-            sep.setFixedWidth(1)
-            sep.setFixedHeight(28)
-            sep.setStyleSheet("background: #E2E8F0; border: none;")
-            sep.hide()
-            fila.addWidget(sep, 0, Qt.AlignmentFlag.AlignVCenter)
-            lbl_ratio = QLabel("")
-            lbl_ratio.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            lbl_ratio.setStyleSheet(
-                "font-size: 22px; font-weight: 900; color: #B45309; font-family: 'Segoe UI Black';"
-            )
-            lbl_ratio.hide()
-            fila.addWidget(lbl_ratio, 0, Qt.AlignmentFlag.AlignVCenter)
-            card._sep = sep
-            cl.addLayout(fila)
-            lbl_nota = QLabel("")
-            lbl_nota.setStyleSheet("font-size: 11px; color: #64748B; font-weight: 600; background: transparent;")
-            lbl_nota.hide()
+            cl.addWidget(lbl_value)
             cl.addWidget(lbl_nota)
-            card._ratio = lbl_ratio
+            cl.addStretch()
             card._nota = lbl_nota
             return card, lbl_value
 
-        self.card_total_mes, self.lbl_kpi_total_mes = create_kpi_card("BRUTO MP", "$0.00", "#ea580c")
-        self.card_neto_mes, self.lbl_kpi_neto_mes = create_kpi_card("NETO MP", "$0.00", "#10b981")
-        self.card_total, self.lbl_kpi_total = create_kpi_card("TICKETS DIGITALES", "$0.00", "#0284c7")
-        self.card_count, self.lbl_kpi_count = create_kpi_card("FIRMADOS EN TICKET", "$0.00", "#059669")
-        self.card_avg, self.lbl_kpi_avg = create_kpi_card("SIN FIRMAR / F9", "$0.00", "#d97706")
-        self.card_suelto, self.lbl_kpi_suelto = create_kpi_card("MP SIN TICKET", "$0.00", "#dc2626")
-        self.card_suelto._ratio.setStyleSheet(
-            "font-size: 22px; font-weight: 900; color: #DC2626; font-family: 'Segoe UI Black';"
-        )
-        self.card_cliente, self.lbl_kpi_cliente = create_kpi_card("CLIENTE", "$0.00", "#0369A1")
+        def hueco():
+            f = QFrame()
+            f.setMinimumHeight(88)
+            f.setStyleSheet(
+                "QFrame { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px; }"
+            )
+            lay = QVBoxLayout(f)
+            lay.setContentsMargins(16, 12, 16, 12)
+            lay.setSpacing(4)
+            t = QLabel("RESERVADO")
+            t.setStyleSheet(
+                f"{QSS_ROTULO} color: #1E293B; background: transparent; border: none;"
+            )
+            v = QLabel("—")
+            v.setStyleSheet(
+                f"{QSS_KPI} font-size: 20px; color: #CBD5E1; "
+                "background: transparent; border: none;"
+            )
+            d = QLabel("Espacio para una tarjeta")
+            d.setStyleSheet(
+                "font-size: 12px; font-weight: 600; color: #1E293B; "
+                "background: transparent; border: none;"
+            )
+            lay.addWidget(t)
+            lay.addWidget(v)
+            lay.addWidget(d)
+            lay.addStretch()
+            return f
 
-        kpi_lay.addWidget(self.card_total_mes)
-        kpi_lay.addWidget(self.card_neto_mes)
-        kpi_lay.addWidget(self.card_total)
-        kpi_lay.addWidget(self.card_count)
-        kpi_lay.addWidget(self.card_avg)
-        kpi_lay.addWidget(self.card_suelto)
-        kpi_lay.addWidget(self.card_cliente)
+        self.card_total_mes, self.lbl_kpi_total_mes = create_kpi_card("BRUTO MP", "$0,00", "#C2410C")
+        self.card_neto_mes, self.lbl_kpi_neto_mes = create_kpi_card("NETO MP", "$0,00", "#047857")
+        self.card_total, self.lbl_kpi_total = create_kpi_card("TICKETS DIGITALES", "$0,00", "#1D4ED8")
+        self.card_count, self.lbl_kpi_count = create_kpi_card("FIRMADOS EN TICKET", "$0,00", "#047857")
+        self.card_avg, self.lbl_kpi_avg = create_kpi_card("SIN FIRMAR / F9", "$0,00", "#B45309")
+        self.card_suelto, self.lbl_kpi_suelto = create_kpi_card("MP SIN TICKET", "$0,00", "#B91C1C")
+        self.card_cliente, self.lbl_kpi_cliente = create_kpi_card("CLIENTE", "$0,00", "#075985")
+
+        fila1 = (
+            self.card_total_mes,
+            self.card_neto_mes,
+            self.card_total,
+            self.card_count,
+        )
+        fila2 = (
+            self.card_avg,
+            self.card_suelto,
+            self.card_cliente,
+            hueco(),
+        )
+        for col, card in enumerate(fila1):
+            kpi_lay.addWidget(card, 0, col)
+        for col, card in enumerate(fila2):
+            kpi_lay.addWidget(card, 1, col)
 
         body.addLayout(kpi_lay)
         body.addSpacing(15)
@@ -590,29 +618,25 @@ class Admin10MP(QWidget):
                 "sin_firmar": 0.0, "cliente": 0.0, "n_sin_firmar": 0, "n_tickets": 0,
                 "sin_ticket": 0.0, "n_sin_ticket": 0,
             }
-        self.lbl_kpi_total_mes.setText(f"${t['bruto']:,.2f}")
-        self.lbl_kpi_neto_mes.setText(f"${t['neto']:,.2f}")
-        self.lbl_kpi_total.setText(f"${t['tickets']:,.2f}")
-        self.lbl_kpi_count.setText(f"${t['firmados']:,.2f}")
-        self.lbl_kpi_avg.setText(f"${t['sin_firmar']:,.2f}")
-        self.lbl_kpi_cliente.setText(f"${t.get('cliente', 0):,.2f}")
+        self.lbl_kpi_total_mes.setText(fmt_plata(t["bruto"]))
+        self.lbl_kpi_neto_mes.setText(fmt_plata(t["neto"]))
+        self.lbl_kpi_total.setText(fmt_plata(t["tickets"]))
+        self.lbl_kpi_count.setText(fmt_plata(t["firmados"]))
+        self.lbl_kpi_avg.setText(fmt_plata(t["sin_firmar"]))
+        self.lbl_kpi_cliente.setText(fmt_plata(t.get("cliente", 0)))
         sin_n = int(t.get("n_sin_firmar") or 0)
         tot_n = int(t.get("n_tickets") or 0)
-        self.card_avg._ratio.setText(f"{sin_n} / {tot_n}")
-        self.card_avg._ratio.show()
-        self.card_avg._sep.show()
         if tot_n:
-            self.card_avg._nota.setText(f"{sin_n} tickets no firmados de {tot_n}")
+            self.card_avg._nota.setText(f"{sin_n} / {tot_n}  ·  tickets no firmados")
             self.card_avg._nota.show()
         else:
             self.card_avg._nota.hide()
-        self.lbl_kpi_suelto.setText(f"${float(t.get('sin_ticket') or 0):,.2f}")
+        self.lbl_kpi_suelto.setText(fmt_plata(t.get("sin_ticket") or 0))
         n_suelto = int(t.get("n_sin_ticket") or 0)
-        self.card_suelto._ratio.setText(str(n_suelto))
-        self.card_suelto._ratio.show()
-        self.card_suelto._sep.show()
         if n_suelto:
-            self.card_suelto._nota.setText(f"{n_suelto} cobro{'s' if n_suelto != 1 else ''} MP sin ticket")
+            self.card_suelto._nota.setText(
+                f"{n_suelto} cobro{'s' if n_suelto != 1 else ''} sin ticket para facturar"
+            )
             self.card_suelto._nota.show()
         else:
             self.card_suelto._nota.hide()

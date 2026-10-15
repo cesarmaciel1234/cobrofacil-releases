@@ -13,11 +13,9 @@ admin/clientes/
 
 ## Frente
 
-**Abonar** abre F6 con `perfil=Admin`, la misma hoja que el cajero: monto, medio, billetes si es efectivo. El cobro se asienta una sola vez. Sin deuda deja saldo a favor. Sin PIN. El aviso es el mensajero `COBRO EXITOSO`, no un cartel extra.
+**Abonar** abre F6 con `perfil=Admin`, la misma hoja que el cajero: monto, medio, mixto (dos medios, Point primero), billetes si es efectivo. El cobro se asienta una sola vez. Sin deuda deja saldo a favor. Sin PIN. El aviso es el mensajero `COBRO EXITOSO`, no un cartel extra. No es el mixto del paso 6.
 
-**Límite** cupo. **Editar** ficha. **Recalcular** simula precios de hoy y un % de financiación (no escribe).
-
-La ficha abre `componentes/dialogo_historial_cliente.py`. El ticket se ve abajo. Eliminar marca `BORRADO`. Un ticket cancelado en F3 se ve `CARGO · CANCELADO` y `TICKET CANCELADO`. Planilla y auditoría: ticket de venta, `COB-`, id de pago o `F9 MANUAL`.
+La ficha abre `componentes/dialogo_historial_cliente.py`. El ticket se ve abajo. **Eliminar** marca `BORRADO` y, si hay venta, la deja `CANCELADA` (stock y auditoría). Un ticket cancelado en F3 se ve `CARGO · CANCELADO` y `TICKET CANCELADO`. Planilla y auditoría: ticket de venta, `COB-`, id de pago o `F9 MANUAL`.
 
 ## Fondo
 

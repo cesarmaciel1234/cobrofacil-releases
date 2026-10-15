@@ -113,13 +113,17 @@ class PanelPublicidad(QWidget):
             "color: #DC2626; background: transparent; border: none; "
             "font-weight: 600; letter-spacing: 0px;"
         )
-        self.lbl_redondeo = self._chip("Redondeo · Mes", "—")
-        self.lbl_descuento = self._chip("Descuento · Mes", "—")
         extras.addWidget(self.lbl_sin_firmar, 1)
         extras.addWidget(self.lbl_sin_ticket, 1)
-        extras.addWidget(self.lbl_redondeo, 1)
-        extras.addWidget(self.lbl_descuento, 1)
         root.addLayout(extras)
+
+        ajustes = QHBoxLayout()
+        ajustes.setSpacing(10)
+        self.lbl_redondeo = self._chip("Redondeo · Mes", "—")
+        self.lbl_descuento = self._chip("Descuento · Mes", "—")
+        ajustes.addWidget(self.lbl_redondeo, 1)
+        ajustes.addWidget(self.lbl_descuento, 1)
+        root.addLayout(ajustes)
 
         caja = QHBoxLayout()
         caja.setSpacing(10)
