@@ -1,6 +1,7 @@
 ﻿/* Ranking TV1: se ve el producto, no un renglón. Sin precio. */
 
-import { escapeHtml, htmlDealStage, nombreVitrina } from "../../shared/plata_y_texto.js";
+import { escapeHtml, nombreVitrina } from "../../shared/plata_y_texto.js";
+import { htmlDealStage } from "../../shared/foto_tarjeta/index.js";
 
 function numDia(item, claves) {
     for (const k of claves) {

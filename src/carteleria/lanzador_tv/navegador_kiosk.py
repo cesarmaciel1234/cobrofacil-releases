@@ -5,6 +5,7 @@ import logging
 import os
 import platform
 import shutil
+import subprocess
 import time
 
 from PyQt6.QtCore import QObject, QTimer
@@ -16,6 +17,64 @@ VK_F5 = 0x74
 VK_F10 = 0x79
 VK_F11 = 0x7A
 _TV_EXE = frozenset({"chrome.exe", "msedge.exe", "brave.exe", "chromium.exe"})
+_MARCA_PERFIL = "tpv-carteleria-kiosk"
+GRACIA_NAV_S = 15.0
+
+
+def perfil_kiosk_ocupado(profile: str) -> bool:
+    """True si Chrome/Edge ya tiene el perfil de la TV (el Popen a veces se muere y deja la ventana)."""
+    if not profile:
+        return False
+    for nombre in ("lockfile", "SingletonLock"):
+        path = os.path.join(profile, nombre)
+        if not os.path.exists(path):
+            continue
+        if platform.system() != "Windows":
+            return True
+        GENERIC_READ = 0x80000000
+        OPEN_EXISTING = 3
+        FILE_ATTRIBUTE_NORMAL = 0x80
+        kernel32 = ctypes.windll.kernel32
+        kernel32.CreateFileW.restype = ctypes.c_void_p
+        handle = kernel32.CreateFileW(
+            path, GENERIC_READ, 0, None, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, None
+        )
+        invalid = ctypes.c_void_p(-1).value
+        if handle in (None, 0, invalid):
+            return True
+        kernel32.CloseHandle(ctypes.c_void_p(handle))
+        return False
+    return False
+
+
+def cerrar_kiosk_perfil(profile: str) -> None:
+    """Cierra Chrome/Edge que usen el perfil de la TV. No toca el Chrome normal del cajero."""
+    if platform.system() != "Windows":
+        return
+    marca = _MARCA_PERFIL
+    if profile:
+        marca = os.path.basename(os.path.abspath(profile)) or marca
+    marca = "".join(ch if ch.isalnum() or ch in "-_" else "" for ch in marca)
+    if not marca:
+        return
+    flag = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    script = (
+        "$m='" + marca + "';"
+        "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |"
+        "Where-Object { $_.CommandLine -and $_.CommandLine.Contains($m) "
+        "-and $_.Name -match 'chrome|msedge|brave|chromium' } |"
+        "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+    )
+    try:
+        subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+            capture_output=True,
+            check=False,
+            creationflags=flag,
+            timeout=6,
+        )
+    except Exception as exc:
+        logger.warning("Cerrar kiosk TV: %s", exc)
 
 
 def buscar_navegador():

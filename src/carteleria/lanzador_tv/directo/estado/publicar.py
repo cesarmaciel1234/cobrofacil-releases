@@ -74,8 +74,21 @@ class EstadoMixin:
         if "precios" not in st:
             out = dict(st)
             out["precios"] = list(self.rows_precios or [])
-            return out
-        return st
+        else:
+            out = st
+        try:
+            from src.carteleria.lanzador_tv.cerebro_lanzador_tv import _leer_config_carteleria
+
+            vivo = _leer_config_carteleria()
+            cfg = dict(out.get("config") or {})
+            tema = vivo.get("carteleria_theme")
+            if tema and cfg.get("carteleria_theme") != tema:
+                out = dict(out)
+                cfg["carteleria_theme"] = tema
+                out["config"] = cfg
+        except Exception:
+            pass
+        return out
 
     def _generar_datos_clima(self):
         try:

@@ -6,10 +6,10 @@ import {
     escapeHtml,
     esPorKg,
     formatMoney,
-    htmlDealStage,
     leerPrecios,
     nombreVitrina,
 } from "../shared/plata_y_texto.js";
+import { htmlDealStage } from "../shared/foto_tarjeta/index.js";
 import { htmlFilaOfertaTv } from "../shared/precio_tv.js";
 import { iniciarCintaInfinita } from "../shared/cinta_infinita.js";
 import { intercalateAds } from "../shared/publicidad_tv.js";

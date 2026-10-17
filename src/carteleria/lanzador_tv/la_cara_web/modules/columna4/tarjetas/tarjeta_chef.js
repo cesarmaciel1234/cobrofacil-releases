@@ -3,9 +3,6 @@
 import { 
     escapeHtml, 
     formatMoney, 
-    htmlDealStage,
-    FOTO_SISTEMA,
-    urlsFotoProducto,
     nombreVitrina, 
     descuentoPct, 
     textoValidezOferta, 
@@ -13,6 +10,7 @@ import {
     precioVigente, 
     unidadProducto 
 } from "../../shared/plata_y_texto.js";
+import { htmlDealStage, FOTO_SISTEMA, urlsFotoProducto } from "../../shared/foto_tarjeta/index.js";
 
 /* ── Motor de carrusel tipo desfile elegante ─────────────────────────── */
 

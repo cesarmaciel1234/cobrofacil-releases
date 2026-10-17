@@ -75,10 +75,7 @@ class MotoresMixin:
         try:
             if self._cuello.navegador_vivo():
                 return
-            logger.warning(
-                "El navegador de la TV se cerró; lo abro de nuevo en %s",
-                self._cuello.url_tv(),
-            )
+            logger.info("TV: el kiosk no está; abro una sola ventana en %s", self._cuello.url_tv())
             self._cuello.asegurar_navegador()
         except Exception as e:
             logger.warning("Watchdog TV: %s", e)

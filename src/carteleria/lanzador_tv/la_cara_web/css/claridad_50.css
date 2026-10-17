@@ -26,11 +26,9 @@ body .price-ad__stage .deal-stage__img,
 body .xsell-item .deal-stage__img,
 body .oferta-card .deal-stage__img,
 body .oferta-card.is-center-focus .deal-stage__img,
-body .asian-rank-card.is-photo .rank-stage .deal-stage__img,
 body .flash-clima-icon,
 body[data-theme="premium"] .deal-stage__img,
-body[data-theme="premium"] .hero-section .deal-stage__img,
-body[data-theme="premium"] .rank-stage .deal-stage__img {
+body[data-theme="premium"] .hero-section .deal-stage__img {
     mix-blend-mode: normal !important;
     image-rendering: -webkit-optimize-contrast;
     filter: contrast(1.2) saturate(1.08) brightness(1.03) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.4)) !important;
@@ -89,11 +87,64 @@ body .deal-stage__letter {
          1px  1px 0 rgba(0, 0, 0, 0.9) !important;
 }
 
-body .flash-strip,
 body .flash-strip span,
-body .clock-digits,
-body .status-text {
-    font-weight: 800;
+body .flash-strip .clock .clock-hm,
+body .flash-strip .clock .clock-sec,
+body .flash-strip .flash-clima-temp,
+body .flash-strip .status-text,
+body .flash-dot {
     text-shadow: none !important;
-    letter-spacing: 0.04em;
+}
+
+/* PNG: la letra tapa el hueco hasta que la foto pintó. */
+body .deal-stage__img:not(.is-ready) {
+    opacity: 0 !important;
+}
+body .deal-stage:has(.deal-stage__img:not(.is-ready)) .deal-stage__letter.has-img {
+    display: block !important;
+}
+body .asian-rank-card .rank-stage:has(.deal-stage__img:not(.is-ready)) .deal-stage__letter {
+    opacity: 0.48 !important;
+}
+
+/* Ranking #1–#4: PNG nítido, flota 3D. CSS only, sin mix-blend ni blur. */
+body .tv-panel .asian-rank-card.is-photo .rank-stage.deal-stage,
+body .asian-rank-card.is-photo .rank-stage {
+    inset: 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+}
+body .tv-panel .asian-rank-card.is-photo .rank-stage .deal-stage__img,
+body .asian-rank-card.is-photo .rank-stage .deal-stage__img,
+body[data-theme="premium"] .asian-rank-card.is-photo .rank-stage .deal-stage__img {
+    top: 6% !important;
+    left: 3% !important;
+    width: 58% !important;
+    height: 86% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    object-position: center 62% !important;
+    mix-blend-mode: normal !important;
+    image-rendering: -webkit-optimize-contrast;
+    transform-origin: 50% 78%;
+    transform: translateY(-6%) scale(1.12) !important;
+    filter:
+        contrast(1.16)
+        saturate(1.08)
+        brightness(1.04)
+        drop-shadow(0 1px 0 rgba(0, 0, 0, 0.4))
+        drop-shadow(0 8px 6px rgba(0, 0, 0, 0.38))
+        drop-shadow(0 22px 16px rgba(0, 0, 0, 0.28)) !important;
+}
+body .asian-rank-card.is-photo.top-1 .rank-stage .deal-stage__img {
+    transform: translateY(-8%) scale(1.18) !important;
+}
+body .asian-rank-card.is-photo .rank-stage .deal-stage__img.is-chica {
+    transform: translateY(-8%) scale(1.34) !important;
+}
+body .asian-rank-card.is-photo.top-1 .rank-stage .deal-stage__img.is-chica {
+    transform: translateY(-10%) scale(1.4) !important;
 }

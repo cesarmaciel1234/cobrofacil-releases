@@ -153,18 +153,16 @@
 }
 .asian-rank-card.is-photo .rank-stage .deal-stage__img {
     position: absolute !important;
-    top: 12% !important;
-    left: 6% !important;
+    top: 6% !important;
+    left: 3% !important;
     right: auto !important;
     bottom: auto !important;
-    width: 88% !important;
-    height: 68% !important;
+    width: 58% !important;
+    height: 86% !important;
     max-width: none !important;
     max-height: none !important;
-    transform: none !important;
     object-fit: contain !important;
-    object-position: center center !important;
-    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45)) brightness(1.12) contrast(1.08);
+    object-position: center 62% !important;
 }
 .rank-roof {
     position: absolute;
@@ -905,7 +903,7 @@
     height: 84%;
     object-fit: contain;
 }
-.price-ad .price-ad__stage .deal-stage__letter.has-img {
+.price-ad .price-ad__stage:has(.deal-stage__img.is-ready) .deal-stage__letter.has-img {
     display: none;
 }
 
@@ -1131,7 +1129,7 @@
 }
 .xsell-item .deal-stage__name,
 .xsell-item .deal-stage__bolt,
-.xsell-item .deal-stage__letter.has-img {
+.xsell-item:has(.deal-stage__img.is-ready) .deal-stage__letter.has-img {
     display: none;
 }
 .xsell-item .deal-stage__letter {

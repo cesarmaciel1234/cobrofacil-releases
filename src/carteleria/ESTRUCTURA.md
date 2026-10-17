@@ -10,7 +10,8 @@ src/carteleria/
 ├── theme.py                             # Sistema de gestión de temas visuales. Permite alternar entre estilos predefinidos (Apple, Temu, Black Friday) para mantener una interfaz adaptativa.
 ├── el_cuello.py                         # Punto de entrada moderno y capa de compatibilidad para enlazar componentes sin dependencias circulares.
 ├── carteleria.py                        # Clase principal (legacy). Contiene la lógica inicial de la cartelería, mantenida por compatibilidad.
-├── admin15_carteleria.py                # Panel de administración de la cartelería. Permite a los usuarios configurar qué se muestra, tiempos de rotación y reglas generales.
+├── admin15_carteleria.py                # Puente. La pantalla está en configuracion/.
+├── configuracion/                       # Admin → Configuración. UI en panel.py, MariaDB en motor/.
 ├── escala_tv.py                         # Utilidad para el escalado dinámico de imágenes y elementos UI para asegurar que se vean correctamente en diferentes resoluciones de TV.
 ├── utils_condiciones.py                 # Funciones auxiliares para evaluar condiciones (ej. horas felices, días de descuento, etc.).
 ├── assets_paths.py                      # Gestor centralizado de rutas absolutas para los recursos estáticos (imágenes, fuentes, etc.).

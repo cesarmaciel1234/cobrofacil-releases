@@ -1,7 +1,8 @@
 ﻿/* Columna 1: ranking. Las tarjetas se quedan; solo cambia el producto. */
 
 import { htmlTarjetaRanking, pruebaSocial } from "./tarjetas/tarjeta_ranking.js";
-import { nombreVitrina, urlsFotoProducto } from "../shared/plata_y_texto.js";
+import { nombreVitrina } from "../shared/plata_y_texto.js";
+import { revelarFoto, urlsFotoProducto } from "../shared/foto_tarjeta/index.js";
 
 const ROTACION_MS = 8000;
 
@@ -46,16 +47,22 @@ function ponerFoto(stage, item) {
     const next = urls[0] || "";
     const fallbacks = urls.slice(1).join("|");
     if (img) {
-        if (img.getAttribute("src") === next) return;
+        if (img.getAttribute("src") === next) {
+            revelarFoto(img);
+            return;
+        }
+        img.classList.remove("is-ready");
         const preload = new Image();
         preload.onload = () => {
             if (stage.querySelector(".deal-stage__img") !== img) return;
             img.src = next;
             img.dataset.fallbacks = fallbacks;
+            revelarFoto(img);
         };
         preload.onerror = () => {
             const resto = urls.slice(1);
             img.src = resto[0] || urls[urls.length - 1] || img.src;
+            revelarFoto(img);
         };
         if (next) preload.src = next;
         return;
@@ -64,7 +71,10 @@ function ponerFoto(stage, item) {
     const nuevo = document.createElement("img");
     nuevo.className = "deal-stage__img";
     nuevo.alt = "";
+    nuevo.decoding = "async";
+    nuevo.fetchPriority = "high";
     nuevo.dataset.fallbacks = fallbacks;
+    nuevo.addEventListener("load", () => revelarFoto(nuevo), { once: true });
     nuevo.src = next;
     stage.prepend(nuevo);
     if (letra) letra.classList.add("has-img");

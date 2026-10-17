@@ -1,7 +1,7 @@
 {
-  "app_version": "v50.5",
+  "app_version": "v50.6",
   "channel": "stable",
-  "build_date": "2026-10-16 23:45:00",
+  "build_date": "2026-10-17 11:55:00",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {

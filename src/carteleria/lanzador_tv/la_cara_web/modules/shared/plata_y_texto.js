@@ -170,61 +170,6 @@ export function slugNombre(nombre) {
         .slice(0, 60);
 }
 
-const ALIAS_PNG = {
-    suprema: "suprema.png",
-    pechuga: "pechuga.png",
-    bife_chorizo: "bife_de_chorizo.png",
-    milanesa: "milanesa_de_pollo.png",
-    milanesa_de_pollo: "milanesa_de_pollo.png",
-    milanesa_pollo: "milanesa_de_pollo.png",
-    picada: "picada_comun.png",
-    picada_comun: "picada_comun.png",
-    pata_muslo: "pata_y_muslo.png",
-    pata_y_muslo: "pata_y_muslo.png",
-};
-
-export function urlIcono(item) {
-    return urlsFotoProducto(item)[0] || "";
-}
-
-export const FOTO_SISTEMA = "assets/logo_sistema.svg";
-
-export function urlsFotoProducto(item) {
-    const out = [];
-    const push = (u) => {
-        const v = String(u || "").trim();
-        if (v && !out.includes(v)) out.push(v);
-    };
-    const asUrl = (raw) => {
-        const v = String(raw || "").trim();
-        if (!v) return "";
-        if (/^https?:\/\//i.test(v) || v.startsWith("data:") || v.startsWith("assets/")) return v;
-        if (v.startsWith("/iconos/")) return v.replace(/\\/g, "/");
-        const base = v.replace(/\\/g, "/").split("/").pop() || "";
-        if (/\.(png|jpe?g|webp|svg)$/i.test(base)) return `/iconos/${base}`;
-        return "";
-    };
-    push(asUrl(item?.icono_url));
-    push(asUrl(item?.icono));
-    return out;
-}
-
-export function htmlDealStage(item, { off = "", extraClass = "", titulo = "", bolt = true } = {}) {
-    const urls = urlsFotoProducto(item);
-    const url = urls[0] || FOTO_SISTEMA;
-    const fallbacks = urls.slice(1);
-    const letra = letraVitrina(item?.nombre);
-    const onerr = `const q=(this.dataset.fallbacks||'').split('|').filter(Boolean);if(q.length){this.src=q.shift();this.dataset.fallbacks=q.join('|');}else if(this.src.indexOf('logo_sistema')<0){this.src='${FOTO_SISTEMA}';}else{this.style.opacity='.85';}`;
-    return `
-        <div class="deal-stage${extraClass ? ` ${extraClass}` : ""}" data-tone="${escapeHtml(tonoDepto(item))}">
-            ${url ? `<img class="deal-stage__img" src="${escapeHtml(url)}" alt="" decoding="async" ${fallbacks.length ? `data-fallbacks="${escapeHtml(fallbacks.join("|"))}"` : ""} onerror="${onerr}">` : ""}
-            <span class="deal-stage__letter${url ? " has-img" : ""}">${escapeHtml(letra)}</span>
-            ${titulo ? `<span class="deal-stage__name">${escapeHtml(titulo)}</span>` : ""}
-            ${off ? `<span class="deal-stage__off">${escapeHtml(off)}</span>` : ""}
-        </div>
-    `;
-}
-
 export function escapeHtml(text) {
     return String(text ?? "")
         .replace(/&/g, "&amp;")

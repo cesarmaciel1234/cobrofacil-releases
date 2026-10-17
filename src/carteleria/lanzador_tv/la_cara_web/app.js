@@ -8,6 +8,7 @@ import { renderColumna2 } from "./modules/columna2/columna2.js";
 import { iniciarRotacionColumna3 } from "./modules/columna3/columna3.js";
 import { iniciarRotacionColumna4 } from "./modules/columna4/columna4.js";
 import { renderMensajeZocalo } from "./modules/mensaje_zocalo/mensaje_zocalo.js";
+import { precargarFotosEstado, revelarFotosEn } from "./modules/shared/foto_tarjeta/index.js";
 
 const TV_UI = "268";
 const API_URL = "/api/state";
@@ -57,7 +58,7 @@ function aplicarPerfil(_perfil) {
 function loadTheme(themeName) {
     if (!themeName) return;
     const alias = { auto: "premium", negro_temu: "premium" };
-    const nombre = esChromium() ? "premium" : (alias[themeName] || themeName);
+    const nombre = alias[themeName] || themeName;
     document.body.setAttribute("data-theme", nombre);
     const themeColorsLink = document.getElementById("theme-colors");
     const themeStylesLink = document.getElementById("theme-styles");
@@ -83,10 +84,6 @@ function loadTheme(themeName) {
     themeStylesLink.href = stylePaths[nombre] + bust;
     themeStylesLink.dataset.loaded = nombre;
     themeStylesLink.dataset.ui = TV_UI;
-    const precioTv = document.getElementById("precio-tv");
-    if (precioTv) precioTv.href = `css/precio_tv.css${bust}`;
-    const precioCarrusel = document.getElementById("precio-tv-carrusel");
-    if (precioCarrusel) precioCarrusel.href = `css/precio_tv/carrusel.css${bust}`;
     state.currentTheme = nombre;
 }
 
@@ -121,18 +118,6 @@ function programarPoll() {
 function quitarCarga() {
     state.isLoading = false;
     if (els.loading) els.loading.classList.add("hidden");
-}
-
-function precargarFotos() {
-    const vistos = new Set();
-    document.querySelectorAll("img.deal-stage__img").forEach((img, i) => {
-        const src = img.getAttribute("src") || "";
-        if (!src || vistos.has(src) || i > 20) return;
-        vistos.add(src);
-        const pre = new Image();
-        pre.decoding = "async";
-        pre.src = src;
-    });
 }
 
 async function fetchState() {
@@ -196,6 +181,7 @@ async function fetchState() {
         const safe = (fn) => {
             try { fn(); } catch (err) { console.error("[Cartelería]", err); }
         };
+        precargarFotosEstado(data);
         safe(() => renderFranjaOferta(state.hero, state.productos, els));
         safe(() => iniciarRotacionColumna1(state, els.content1));
         safe(() => renderColumna2(state.productos, els.content2));
@@ -207,7 +193,7 @@ async function fetchState() {
         safe(() => updateVFX());
 
         if (hayDatosEnPantalla()) quitarCarga();
-        precargarFotos();
+        revelarFotosEn(document);
         programarPoll();
     } catch (error) {
         console.error("[Cartelería] Error al obtener datos:", error);

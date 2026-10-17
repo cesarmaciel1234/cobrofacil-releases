@@ -1,6 +1,7 @@
 /* Relámpago TV3: foto + bloque único de precio/condición. */
 
-import { descuentoPct, escapeHtml, htmlDealStage, leerPrecios, nombreVitrina } from "../../shared/plata_y_texto.js";
+import { descuentoPct, escapeHtml, leerPrecios, nombreVitrina } from "../../shared/plata_y_texto.js";
+import { htmlDealStage } from "../../shared/foto_tarjeta/index.js";
 import { htmlFilaOfertaTv } from "../../shared/precio_tv.js";
 
 export function htmlTarjetaRelampago(item) {

@@ -21,6 +21,9 @@ class TestCarteleriaEstructura(unittest.TestCase):
         for rel in (
             "carteleria.py",
             "admin15_carteleria.py",
+            "configuracion/panel.py",
+            "configuracion/motor/hilo.py",
+            "configuracion/motor/guardar.py",
             "theme.py",
             "dashboard/dashboard_main.py",
             "lanzador_tv/cerebro_lanzador_tv.py",

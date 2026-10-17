@@ -1,14 +1,17 @@
-# Cartelería (Digital Signage)
+# Cartelería
 
+Rama: `src/carteleria`. Plano: `plano.md`.
 
-### Optimizaciones de Carga (Skeleton Loader)
-- En lanzador_tv/la_cara_web/index.html se agregaron contenedores Skeleton (marcadores visuales en CSS) a cada panel principal. 
-- Evita el efecto de "pantalla blanca" en ejecutables congelados. Al recibir datos por JS, .innerHTML sobrescribe los skeletons limpiamente.
+Qué hace: Admin → Cartelería. Dashboard, PNG de vitrina, lanzar la TV kiosk.
 
-### Mapeo de Teclas TV (pp.js & TeclasTv)
-- PNG/precio nuevo: la TV pisa **solo datos** (sello `aviso_tv`, sin F5). No se cierra Chrome.
-- Al abrir cartelería, si la TV estaba prendida se relanza sola en `http://127.0.0.1:8765/` (misma maestra). F11 la apaga. Esc en el panel no.
-- **F5**: Forzar location.reload() (Refresh visual total).
-- **F9**: Conmutador local de Vistas/Grilla (cicla el layout CSS data-wall de 4h a 1h, 2h, 3h mostrando dinámicamente de 1 a 4 paneles centrales y ocultando el resto, manteniendo zócalo y carrusel intactos).
-- **F10**: Interruptor de Mover Monitor (API /api/control?action=monitor en JS, o Selector en Kiosk Python).
-- **F11 / Esc**: Detener servidor TV y regresar al Dashboard de Cartelería.
+Qué función: dashboard en `dashboard/`. Configuración en `configuracion/` (`Admin15Carteleria`). `admin15_carteleria.py` solo reexporta. La TV vive en `lanzador_tv/`.
+
+Cómo funciona: Configuración abre con disco local. MariaDB va en hilo (`configuracion/motor/`). La cara en `lanzador_tv/la_cara_web/` pide `/api/state` sola.
+
+Teclas de la TV (Chrome kiosk):
+- **F5**: vuelve a pedir `/api/state`. No recarga Chrome.
+- **F9**: cicla `data-wall` (4h → 3h → 2h → ofertas).
+- **F10**: cambia de monitor (cierra esa ventana y abre una).
+- **F11**: apaga la TV. Esc en el panel de Admin no.
+
+Qué no debe cambiar: `src/cajero`, `qt_dpi`, puerto 8765, una sola Chrome.

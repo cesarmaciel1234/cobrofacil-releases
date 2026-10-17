@@ -98,7 +98,7 @@
     transform: scale(1.25) translateY(-4%);
 }
 
-.deal-stage:has(.deal-stage__img) .deal-stage__letter.has-img {
+.deal-stage:has(.deal-stage__img.is-ready) .deal-stage__letter.has-img {
     display: none;
 }
 

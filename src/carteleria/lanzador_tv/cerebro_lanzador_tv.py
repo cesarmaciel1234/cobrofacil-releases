@@ -18,16 +18,20 @@ import subprocess
 import platform
 import logging
 import tempfile
+import time
 import sys
 import shutil
 from urllib.parse import parse_qs, unquote, urlparse
 
 from src.utils.paths import get_base_path, get_resource_path
 from src.carteleria.lanzador_tv.navegador_kiosk import (
+    GRACIA_NAV_S,
     TeclasTv,
     buscar_navegador,
+    cerrar_kiosk_perfil,
     flags_pantalla_completa,
     indice_monitor_tv,
+    perfil_kiosk_ocupado,
     rect_monitor_nativo,
 )
 
@@ -113,7 +117,14 @@ def _leer_config_carteleria() -> dict:
         )
         rows = db_manager.execute_query("SELECT config_json FROM carteleria_config WHERE id = 1")
         if rows:
-            raw = rows[0][0] if isinstance(rows[0], tuple) else rows[0].get("config_json")
+            fila = rows[0]
+            if isinstance(fila, dict):
+                raw = fila.get("config_json")
+            else:
+                try:
+                    raw = fila["config_json"]
+                except (KeyError, IndexError, TypeError):
+                    raw = fila[0]
             cfg = json.loads(raw or "{}")
             for key in out:
                 if key in cfg and cfg[key] not in (None, ""):
@@ -124,10 +135,36 @@ def _leer_config_carteleria() -> dict:
                     out[key] = cfg.get("phone") or ""
     except Exception:
         pass
-    out["carteleria_theme"] = "premium"
     _cfg_tv_cache = out
     _cfg_tv_ts = ahora
     return dict(out)
+
+
+def invalidar_cache_config_tv():
+    global _cfg_tv_cache, _cfg_tv_ts
+    _cfg_tv_cache = None
+    _cfg_tv_ts = 0.0
+
+
+def aplicar_config_tv_memoria(datos: dict | None):
+    """El admin acaba de guardar: la TV lee esto sin esperar MariaDB."""
+    global _cfg_tv_cache, _cfg_tv_ts
+    import time
+
+    base = {
+        "business_name": "Cartelería",
+        "phone": "",
+        "mensaje_zocalo": "",
+        "carteleria_theme": "premium",
+        "carteleria_perf": "auto",
+    }
+    if _cfg_tv_cache:
+        base.update(_cfg_tv_cache)
+    for key in base:
+        if datos and key in datos and datos[key] not in (None,):
+            base[key] = datos[key]
+    _cfg_tv_cache = base
+    _cfg_tv_ts = time.monotonic()
 
 
 def _app_version_tv() -> str:
@@ -458,6 +495,7 @@ class ServidorCuello:
         self._kiosk_profile = _perfil_kiosk_estable()
         self._teclas = None
         self.last_error = ""
+        self._nav_launch_mono = 0.0
 
     def iniciar(self, screen_index=None):
         try:
@@ -519,7 +557,7 @@ class ServidorCuello:
     def reubicar(self, screen_index):
         self.screen_index = screen_index
         if self.httpd:
-            self._lanzar_navegador()
+            self._lanzar_navegador(forzar=True)
 
     def detener(self):
         try:
@@ -590,24 +628,27 @@ class ServidorCuello:
         self.detener()
 
     def _cerrar_navegador(self):
-        if not self.browser_process:
-            return
         try:
-            if platform.system() == "Windows":
-                subprocess.run(
-                    ["taskkill", "/F", "/T", "/PID", str(self.browser_process.pid)],
-                    capture_output=True,
-                    check=False,
-                )
-            else:
-                self.browser_process.terminate()
-                try:
-                    self.browser_process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    self.browser_process.kill()
+            if self.browser_process:
+                if platform.system() == "Windows":
+                    subprocess.run(
+                        ["taskkill", "/F", "/T", "/PID", str(self.browser_process.pid)],
+                        capture_output=True,
+                        check=False,
+                    )
+                else:
+                    self.browser_process.terminate()
+                    try:
+                        self.browser_process.wait(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        self.browser_process.kill()
         except Exception as exc:
             logger.warning("Error cerrando navegador: %s", exc)
         self.browser_process = None
+        try:
+            cerrar_kiosk_perfil(self._kiosk_profile)
+        except Exception as exc:
+            logger.warning("Cerrar perfil kiosk: %s", exc)
 
     def _geometria_tv(self):
         nativo = rect_monitor_nativo(self.screen_index)
@@ -639,50 +680,62 @@ class ServidorCuello:
             url, self._kiosk_profile, x, y, w, h, extra=flags_chrome_perfil(perfil_activo())
         )
 
-    def navegador_vivo(self) -> bool:
+    def navegador_vivo(self, con_gracia=True) -> bool:
         proc = self.browser_process
-        return bool(proc) and proc.poll() is None
+        if proc and proc.poll() is None:
+            return True
+        if perfil_kiosk_ocupado(self._kiosk_profile):
+            return True
+        if con_gracia and self._nav_launch_mono:
+            if (time.monotonic() - self._nav_launch_mono) < GRACIA_NAV_S:
+                return True
+        return False
 
     def asegurar_navegador(self):
         if self.navegador_vivo():
             return
-        self.browser_process = None
         self._lanzar_navegador()
 
     def url_tv(self) -> str:
         return f"http://{self.host}:{self.port}/"
 
-    def _lanzar_navegador(self):
+    def _lanzar_navegador(self, forzar=False):
         try:
-            if self.navegador_vivo():
+            if not forzar and self.navegador_vivo():
                 return
-            self._cerrar_navegador()
+            ahora = time.monotonic()
+            if not forzar and self._nav_launch_mono and (ahora - self._nav_launch_mono) < GRACIA_NAV_S:
+                return
+            if forzar:
+                self._cerrar_navegador()
+            self._nav_launch_mono = time.monotonic()
             self._kiosk_profile = _perfil_kiosk_estable()
-            import glob
-            for old_prof in glob.glob(os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk-*")):
-                if old_prof != self._kiosk_profile:
-                    shutil.rmtree(old_prof, ignore_errors=True)
             url = f"http://{self.host}:{self.port}/?v={_ui_stamp_tv()}"
             sistema = platform.system()
             flags = self._flags_kiosk(url)
             navegador = buscar_navegador()
+            popen_kw = {}
+            if sistema == "Windows":
+                popen_kw["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
 
             if sistema == "Windows":
-                if navegador:
-                    self.browser_process = subprocess.Popen([navegador] + flags)
-                else:
-                    logger.warning("No hay Chrome ni Edge; abro el navegador por defecto")
-                    os.startfile(url)
+                if not navegador:
+                    self.last_error = "No hay Chrome ni Edge para la TV."
+                    logger.warning(self.last_error)
+                    return
+                self.browser_process = subprocess.Popen([navegador] + flags, **popen_kw)
             elif sistema == "Darwin":
                 self.browser_process = subprocess.Popen(
                     ["open", "-a", navegador or "Google Chrome", "--args"] + flags
                 )
             else:
-                if navegador:
-                    self.browser_process = subprocess.Popen([navegador] + flags)
-                else:
-                    subprocess.Popen(["xdg-open", url])
+                if not navegador:
+                    self.last_error = "No hay Chrome/Chromium para la TV."
+                    logger.warning(self.last_error)
+                    return
+                self.browser_process = subprocess.Popen([navegador] + flags)
 
             logger.info("TV en %s con %s", url, navegador or "navegador por defecto")
         except Exception as exc:
             logger.error("Error lanzando navegador: %s", exc)
+            self.last_error = str(exc)
