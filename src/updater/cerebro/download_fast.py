@@ -28,10 +28,16 @@ def _verify_ssl() -> bool:
 def _session():
     import requests
 
+    from src.updater.cerebro.github_auth import github_headers
+
     s = requests.Session()
-    s.headers.update({"User-Agent": USER_AGENT})
-    # Keep-Alive reutiliza TCP (mucho más rápido en LATAM → GitHub)
-    s.headers.update({"Connection": "keep-alive", "Accept-Encoding": "identity"})
+    s.headers.update(
+        github_headers({
+            "User-Agent": USER_AGENT,
+            "Connection": "keep-alive",
+            "Accept-Encoding": "identity",
+        })
+    )
     return s
 
 

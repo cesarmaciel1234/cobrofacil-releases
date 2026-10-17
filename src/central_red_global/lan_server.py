@@ -97,7 +97,9 @@ class LANRequestHandler(BaseHTTPRequestHandler):
         presented = ""
         if auth_header.startswith("Bearer "):
             presented = auth_header[7:].strip()
-        if presented and presented == expected_token:
+        if not presented:
+            presented = (self.headers.get("X-LAN-Token") or "").strip()
+        if presented and expected_token and presented == expected_token:
             return True
         self._send_response(401, {"status": "error", "message": "Acceso denegado. Token LAN inválido."})
         return False

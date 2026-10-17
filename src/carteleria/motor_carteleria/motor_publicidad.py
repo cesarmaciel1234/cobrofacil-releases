@@ -105,7 +105,7 @@ class MotorPublicidad:
 
     def _enviar_a_maestra(self):
         try:
-            from src.central_red_global.sync_tienda.rol import es_esclava, host_maestra, url_maestra
+            from src.central_red_global.sync_tienda.rol import cabeceras_lan, es_esclava, host_maestra, url_maestra
 
             if not es_esclava():
                 return
@@ -117,7 +117,7 @@ class MotorPublicidad:
                 url_maestra("/api/carteleria/publicidad", host),
                 data=body,
                 method="POST",
-                headers={"Content-Type": "application/json", "User-Agent": "CobroFacil-Esclava"},
+                headers=cabeceras_lan({"Content-Type": "application/json"}),
             )
             urllib.request.urlopen(req, timeout=6).read()
         except Exception as exc:

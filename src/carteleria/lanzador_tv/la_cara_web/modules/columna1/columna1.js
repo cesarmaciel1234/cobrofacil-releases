@@ -125,12 +125,14 @@ function pintar(recrear) {
 export function iniciarRotacionColumna1(state, root) {
     rootRef = root;
     const paneles = panelesRotacion(state);
-    const firma = JSON.stringify(paneles.map((p) => [p.id, (p.items || []).map((i) => i.nombre)]));
-    const misma = firma === JSON.stringify(panelesCache.map((p) => [p.id, (p.items || []).map((i) => i.nombre)]));
+    const firmaNombres = (lista) => JSON.stringify(lista.map((p) => [p.id, (p.items || []).map((i) => i.nombre)]));
+    const mismaEstructura = firmaNombres(paneles) === firmaNombres(panelesCache);
     const habia = root.querySelectorAll(".asian-rank-card").length;
     panelesCache = paneles;
-    if (!misma || !habia) {
+    if (!mismaEstructura || !habia) {
         pintar(!habia);
+    } else {
+        pintar(false);
     }
     const n = panelesCache.length;
     if (n <= 1) {

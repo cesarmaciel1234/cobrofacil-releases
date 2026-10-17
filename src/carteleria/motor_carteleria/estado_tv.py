@@ -180,7 +180,7 @@ def _ordenar_ranking(ranking, orden):
 def _ranking_hoy_pisa_ayer(modo, limite, orden, ranking_remoto=None):
     """Hoy manda. Si aún no hay ventas, se muestra ayer para que la tabla no quede vacía."""
     cupo = max(limite * 4, 20)
-    if ranking_remoto:
+    if ranking_remoto is not None:
         clave_modo = "frecuencia" if modo == "frecuencia" else "volumen"
         hoy = list(ranking_remoto.get(f"hoy_{clave_modo}") or [])
         ayer = list(ranking_remoto.get(f"ayer_{clave_modo}") or [])
@@ -360,11 +360,12 @@ def armar_rotacion_destacados(productos, ranking_remoto=None):
     return paneles
 
 
-def armar_combos(productos):
+def armar_combos(productos, ranking_remoto=None):
     """Combos cargados en el TPV. Si no hay, muestra ofertas reales (2x / precio oferta)."""
-    combos = _combos_del_motor(productos)
-    if combos:
-        return combos
+    if ranking_remoto is None:
+        combos = _combos_del_motor(productos)
+        if combos:
+            return combos
     return _ofertas_como_combo(productos)
 
 
@@ -392,22 +393,18 @@ def _ofertas_flash(productos, limite=4):
     return cards
 
 
-def armar_columna3(productos):
+def armar_columna3(productos, ranking_remoto=None):
     """TV3: venta cruzada del motor intercalada con ofertas relámpago."""
-    try:
-        from src.carteleria.motor_carteleria.venta_cruzada import VentaCruzadaInteligente
-        cruzadas = VentaCruzadaInteligente.armar_slides(productos, limite=4)
-    except Exception as exc:
-        logger.debug("Venta cruzada no disponible: %s", exc)
-        cruzadas = []
-    if not cruzadas:
+    cruzadas = []
+    if ranking_remoto is None:
         try:
             from src.carteleria.motor_carteleria.venta_cruzada import VentaCruzadaInteligente
-            relleno = VentaCruzadaInteligente.usar_relleno_catalogo()
-        except Exception:
-            relleno = True
-        if relleno:
-            cruzadas = _cruzadas_desde_catalogo(productos, limite=4)
+            cruzadas = VentaCruzadaInteligente.armar_slides(productos, limite=4)
+        except Exception as exc:
+            logger.debug("Venta cruzada no disponible: %s", exc)
+            cruzadas = []
+    if not cruzadas:
+        cruzadas = _cruzadas_desde_catalogo(productos, limite=4)
     ofertas = _ofertas_flash(productos, limite=4)
     slides = []
     n = max(len(cruzadas), len(ofertas), 1)
@@ -557,15 +554,19 @@ def _ofertas_como_combo(productos):
     return cards
 
 
-def armar_ia(productos, clima_icon="sol", clima_text=""):
+def armar_ia(productos, clima_icon="sol", clima_text="", ranking_remoto=None):
     """IA Chef: top de ventas de hoy + recomendación del motor local."""
     cards = []
     vistos = set()
     catalogo = _catalogo_por_nombre(productos)
 
     try:
-        from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import MotorVentas
-        for item in MotorVentas.get_top_ventas(limit=4, periodo="hoy") or []:
+        if ranking_remoto is None:
+            from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import MotorVentas
+            top_hoy = MotorVentas.get_top_ventas(limit=4, periodo="hoy") or []
+        else:
+            top_hoy = []
+        for item in top_hoy:
             nombre = str(item.get("nombre") or "").strip()
             prod = _buscar_en_catalogo(catalogo, nombre)
             if not prod:
@@ -583,28 +584,29 @@ def armar_ia(productos, clima_icon="sol", clima_text=""):
     except Exception as exc:
         logger.debug("MotorVentas no disponible: %s", exc)
 
-    try:
-        from src.cerebro_global.carteleria_cerebro.motor_ia_local import MotorIALocal
-        muestra = [(p.get("nombre"), p.get("precio"), p.get("precio_oferta")) for p in productos[:30]]
-        mensaje, estrella, precio, poferta = MotorIALocal.generar_recomendacion_lobo(
-            (clima_icon or "sol", clima_text or ""),
-            muestra,
-        )
-        clave = _norm_nombre(estrella)
-        if clave and clave not in vistos and estrella:
-            prod = _buscar_en_catalogo(catalogo, estrella)
-            cards.insert(0, {
-                "nombre": prod["nombre"] if prod else str(estrella),
-                "precio": precio_vigente(prod) if prod else num(poferta) or num(precio),
-                "precio_lista": num(prod.get("precio")) if prod else num(precio),
-                "razon": str(mensaje or "Recomendado ahora"),
-                "icono": (prod or {}).get("icono") or "",
-                "icono_url": (prod or {}).get("icono_url") or "",
-                "departamento": (prod or {}).get("departamento") or "",
-            })
-            vistos.add(clave)
-    except Exception as exc:
-        logger.debug("MotorIALocal no disponible: %s", exc)
+    if ranking_remoto is None:
+        try:
+            from src.cerebro_global.carteleria_cerebro.motor_ia_local import MotorIALocal
+            muestra = [(p.get("nombre"), p.get("precio"), p.get("precio_oferta")) for p in productos[:30]]
+            mensaje, estrella, precio, poferta = MotorIALocal.generar_recomendacion_lobo(
+                (clima_icon or "sol", clima_text or ""),
+                muestra,
+            )
+            clave = _norm_nombre(estrella)
+            if clave and clave not in vistos and estrella:
+                prod = _buscar_en_catalogo(catalogo, estrella)
+                cards.insert(0, {
+                    "nombre": prod["nombre"] if prod else str(estrella),
+                    "precio": precio_vigente(prod) if prod else num(poferta) or num(precio),
+                    "precio_lista": num(prod.get("precio")) if prod else num(precio),
+                    "razon": str(mensaje or "Recomendado ahora"),
+                    "icono": (prod or {}).get("icono") or "",
+                    "icono_url": (prod or {}).get("icono_url") or "",
+                    "departamento": (prod or {}).get("departamento") or "",
+                })
+                vistos.add(clave)
+        except Exception as exc:
+            logger.debug("MotorIALocal no disponible: %s", exc)
 
     if not cards:
         orden = sorted(
@@ -639,12 +641,19 @@ def armar_hero(destacados, productos):
 
 def armar_paneles(productos, clima_icon="sol", clima_text="", ranking_remoto=None):
     from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
-    from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
-    if ranking_remoto:
+    if ranking_remoto is not None:
         productos = enriquecer_iconos(productos)
     else:
-        productos = enriquecer_iconos(_enriquecer_con_ventas(productos))
-    motor_publicidad.marcar_lista(productos)
+        try:
+            productos = enriquecer_iconos(_enriquecer_con_ventas(productos))
+        except Exception:
+            productos = enriquecer_iconos(productos)
+    if ranking_remoto is None:
+        try:
+            from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
+            motor_publicidad.marcar_lista(productos)
+        except Exception:
+            pass
     rotacion = armar_rotacion_destacados(productos, ranking_remoto=ranking_remoto)
     destacados = rotacion[0]["items"] if rotacion else armar_destacados(productos, ranking_remoto=ranking_remoto)
     hero = armar_hero(destacados, productos)
@@ -652,8 +661,8 @@ def armar_paneles(productos, clima_icon="sol", clima_text="", ranking_remoto=Non
         "hero": hero,
         "destacados": destacados[:4],
         "rotacion": rotacion,
-        "combos": armar_combos(productos),
-        "columna3": armar_columna3(productos),
-        "ia": armar_ia(productos, clima_icon, clima_text),
+        "combos": armar_combos(productos, ranking_remoto=ranking_remoto),
+        "columna3": armar_columna3(productos, ranking_remoto=ranking_remoto),
+        "ia": armar_ia(productos, clima_icon, clima_text, ranking_remoto=ranking_remoto),
         "precios": productos,
     }

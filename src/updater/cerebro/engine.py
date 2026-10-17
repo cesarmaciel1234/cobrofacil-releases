@@ -435,12 +435,14 @@ def _urlopen(req, timeout: float = 20):
 
 
 def _http_get_json(url: str, timeout: int = 20) -> dict:
+    from src.updater.cerebro.github_auth import github_headers
+
     req = urllib.request.Request(
         url,
-        headers={
+        headers=github_headers({
             "User-Agent": "CobroFacil-SilentUpdater/2026",
             "Accept": "application/vnd.github+json, application/json",
-        },
+        }),
     )
     with _urlopen(req, timeout=timeout) as resp:
         # version.json en GitHub a veces llega con BOM UTF-8; json.loads lo rechaza.

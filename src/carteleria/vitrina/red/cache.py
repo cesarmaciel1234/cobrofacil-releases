@@ -13,11 +13,21 @@ def cache_path() -> str:
 
 
 def guardar_cache(data: dict) -> None:
+    if not isinstance(data, dict) or not (data.get("precios") or []):
+        return
+    path = cache_path()
+    tmp = path + ".tmp"
     try:
-        with open(cache_path(), "w", encoding="utf-8") as handle:
+        with open(tmp, "w", encoding="utf-8") as handle:
             json.dump(data, handle, ensure_ascii=False, default=json_default)
+        os.replace(tmp, path)
     except Exception as exc:
         logger.warning("No se pudo guardar la caché de cartelería: %s", exc)
+        try:
+            if os.path.isfile(tmp):
+                os.remove(tmp)
+        except OSError:
+            pass
 
 
 def leer_cache() -> dict | None:
@@ -25,18 +35,14 @@ def leer_cache() -> dict | None:
         with open(cache_path(), "r", encoding="utf-8") as handle:
             data = json.load(handle)
         if not isinstance(data, dict):
-            logger.warning("Caché existe pero no es un dict válido")
             return None
-        # Validar estructura mínima
-        if "precios" not in data or not isinstance(data.get("precios"), list):
-            logger.warning("Caché no tiene estructura válida (falta 'precios' o no es lista)")
+        precios = data.get("precios")
+        if not isinstance(precios, list) or not precios:
             return None
-        precios = data.get("precios", [])
-        if not precios:
-            logger.warning("Caché tiene estructura válida pero está vacío (0 productos)")
-            return None
-        logger.info(f"Caché leído con {len(precios)} productos válidos")
+        logger.info("Caché leído con %s productos", len(precios))
         return data
+    except FileNotFoundError:
+        return None
     except Exception as exc:
         logger.warning("Error leyendo caché: %s", exc)
         return None

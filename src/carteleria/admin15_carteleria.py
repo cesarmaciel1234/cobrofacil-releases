@@ -212,9 +212,9 @@ class CarteleriaConfigPanel(QWidget):
         c_layout.addWidget(lbl_perf)
 
         self.cmb_perf = QComboBox()
-        self.cmb_perf.addItem("⚡ Automático (mide RAM y núcleos)", "auto")
-        self.cmb_perf.addItem("💻 PC de bajo recurso (fluida, sin blur)", "eco")
-        self.cmb_perf.addItem("🚀 Alta gama (blur, brillos y GPU)", "max")
+        self.cmb_perf.addItem("⚡ Chromium: look premium (PC baja o alta gama)", "auto")
+        self.cmb_perf.addItem("💻 Chromium: look premium", "eco")
+        self.cmb_perf.addItem("🚀 Chromium: look premium", "max")
         self.cmb_perf.setStyleSheet("""
             QComboBox {
                 padding: 12px 16px;

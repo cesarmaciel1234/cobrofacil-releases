@@ -6,7 +6,18 @@ import os
 from urllib.parse import unquote
 
 from src.logger import logger
+import re
+
 from src.central_red_global.sync_tienda.png.nombres import extraer_png_multipart, sanitizar_nombre_png
+
+
+def _nombre_vivo_tv(filename: str) -> str:
+    stem, ext = os.path.splitext(os.path.basename(filename or ""))
+    stem = re.sub(r"^oferta_+(?:de_+)?", "", stem, flags=re.I)
+    stem = re.sub(r"_\d+$", "", stem).strip("_")
+    if not stem:
+        return ""
+    return stem + (ext or ".png")
 
 
 def listar_pngs() -> dict:
@@ -63,5 +74,17 @@ def guardar_png_recibido(content_type: str, body: bytes, fallback_name: str = ""
     dest = os.path.join(dest_dir, filename)
     with open(dest, "wb") as fh:
         fh.write(payload)
+    vivo = _nombre_vivo_tv(filename)
+    if vivo and vivo != filename:
+        with open(os.path.join(dest_dir, vivo), "wb") as fh:
+            fh.write(payload)
+    try:
+        from src.carteleria.creador_png.panel_vitrina.archivo import invalidar_cache_icono
+
+        invalidar_cache_icono(filename)
+        if vivo:
+            invalidar_cache_icono(vivo)
+    except Exception:
+        pass
     logger.info("PNG cartelería recibido de esclava: %s (%s bytes)", filename, len(payload))
     return {"success": True, "filename": filename}, 200

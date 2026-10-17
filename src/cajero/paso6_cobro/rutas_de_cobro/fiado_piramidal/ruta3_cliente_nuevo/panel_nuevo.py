@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal
 
@@ -44,18 +44,27 @@ class PanelClienteNuevo(QWidget):
         if not nombre:
             return
             
-        from src.clientes_fiado.cerebro.cerebro import crear_cliente
+        from src.clientes_fiado.cerebro.cerebro import crear_cliente, cerebro
         # Límite por defecto sugerido por el usuario: 50.000
         cliente_id, msg = crear_cliente(nombre, "", limite=50000.0)
         
         if cliente_id:
-            # We return the dictionary pretending to be the search engine so route 1 or 2 handles it
-            nuevo_datos = {
-                'id': cliente_id,
-                'nombre': nombre,
-                'limite': 50000.0,
-                'deuda': 0.0
-            }
+            cli = cerebro.obtener(cliente_id)
+            if cli:
+                c_dict = dict(cli) if hasattr(cli, "keys") else cli
+                nuevo_datos = {
+                    'id': cliente_id,
+                    'nombre': c_dict.get('nombre', nombre),
+                    'limite': float(c_dict.get('limite_credito', 50000.0) or 50000.0),
+                    'deuda': float(c_dict.get('deuda_actual', 0.0) or 0.0)
+                }
+            else:
+                nuevo_datos = {
+                    'id': cliente_id,
+                    'nombre': nombre,
+                    'limite': 50000.0,
+                    'deuda': 0.0
+                }
             self.cliente_creado.emit(nuevo_datos)
 
     def keyPressEvent(self, event):

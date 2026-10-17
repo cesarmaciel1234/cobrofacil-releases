@@ -113,6 +113,7 @@ src/carteleria/creador_png/uploads/
 src/carteleria/creador_png/converted/
 creador_png_tmp/
 carteleria_cache.json
+carteleria_datos.sello
 
 # ─── Extracciones / dumps temporales ────────────────────────────────────────
 extract_tmp/

@@ -14,6 +14,15 @@ def _ficha(fila):
     return {}
 
 
+import unicodedata
+
+
+def _plegar(texto):
+    base = unicodedata.normalize("NFD", str(texto or ""))
+    sin = "".join(letra for letra in base if unicodedata.category(letra) != "Mn")
+    return " ".join(sin.split()).casefold()
+
+
 def _dni_digitos(valor):
     return "".join(c for c in str(valor or "") if c.isdigit())
 
@@ -26,8 +35,8 @@ def _coincide_mostrador(ficha, texto):
     solo_num = q.replace(".", "").replace(" ", "").replace("-", "")
     if solo_num.isdigit():
         return dni.startswith(_dni_digitos(q))
-    tokens = q.casefold().split()
-    palabras = [p.casefold() for p in str(ficha.get("nombre") or "").replace("-", " ").split()]
+    tokens = _plegar(q).split()
+    palabras = _plegar(str(ficha.get("nombre") or "")).replace("-", " ").split()
     if not tokens or not palabras:
         return False
     if len(tokens) == 1:
@@ -63,8 +72,8 @@ class MotorBusquedaClientes(QObject):
     def set_monto_venta(self, monto):
         self._monto_venta = float(monto or 0.0)
 
-    def precargar(self):
-        if self._indice is not None or self._cargando:
+    def precargar(self, forzar: bool = False):
+        if (self._indice is not None and not forzar) or self._cargando:
             return
         self._cargando = True
 
@@ -122,8 +131,10 @@ class MotorBusquedaClientes(QObject):
         with self._lock:
             indice = self._indice
         if indice is not None:
-            self.sugerencias_listas.emit(self._recortar(q, indice))
-            return
+            coincidencias = self._recortar(q, indice)
+            if coincidencias:
+                self.sugerencias_listas.emit(coincidencias)
+                return
         if self._cargando:
             return
         self._consultar_red(q)
@@ -162,6 +173,13 @@ class MotorBusquedaClientes(QObject):
     def _aplicar_consulta(self, pedido, filas):
         if pedido != self._ultimo_texto:
             return
+        if filas:
+            with self._lock:
+                if self._indice is not None:
+                    existentes_ids = {int(f.get("id") or 0) for f in self._indice}
+                    for f in filas:
+                        if int(f.get("id") or 0) not in existentes_ids:
+                            self._indice.append(f)
         self.sugerencias_listas.emit(self._recortar(pedido, filas))
 
     def buscar_estricto(self, texto):

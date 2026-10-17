@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+from PyQt6.QtWidgets import (
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy,
+)
 
 
 class HojaSuelta(QMainWindow):
     cerrado = pyqtSignal(int)
 
     def __init__(self, index: int, titulo: str, modulo: QWidget, parent=None):
-        super().__init__(parent)
+        super().__init__(parent, Qt.WindowType.Window)
         self._index = int(index)
         self._modulo = modulo
         self._aviso = False
@@ -40,7 +42,12 @@ class HojaSuelta(QMainWindow):
         traer.clicked.connect(self.close)
         b.addWidget(traer)
         lay.addWidget(barra)
+
+        modulo.setParent(None)
+        modulo.setVisible(True)
+        modulo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         lay.addWidget(modulo, 1)
+        modulo.show()
         self.setCentralWidget(cuerpo)
 
     def closeEvent(self, event):

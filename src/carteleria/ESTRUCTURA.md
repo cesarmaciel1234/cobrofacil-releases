@@ -43,8 +43,11 @@ src/carteleria/
 │
 ├── assets/                               # Recursos estáticos globales (fondos, iconos como clima y mascotas).
 ├── creador_png/                          # Creador PNG: panel Qt + UI HTML. Salida en Catalogos/png_productos/.
+│   ├── plano.md                          # Frente (vitrina) y fondo (Flask + LAN).
+│   ├── README.md
 │   ├── __init__.py                       # Exporta DialogoCreadorPNG, PanelPngProductos, quitar_fondo_negro.
-│   ├── panel_png_productos.py            # Lista de productos, asociar PNG, botón Creador PNG Pro.
+│   ├── panel_png_productos.py            # Atajo: reexporta PanelPngProductos.
+│   ├── panel_vitrina/                    # Lista, preview, guardar, galería grande, un PNG por producto.
 │   ├── ventana_html.py                   # QDialog con QWebEngineView (o abre el navegador).
 │   ├── servidor.py                       # Levanta Flask en 127.0.0.1 (5000 / 5055–5057) en un hilo.
 │   ├── app.py                            # Rutas Flask: /, /convert, /api/ping, archivos de salida.
@@ -80,9 +83,10 @@ src/carteleria/
 ## Creador PNG — flujo
 
 1. Cartelería o dashboard abre `PanelPngProductos`.
-2. **Creador PNG Pro** abre `DialogoCreadorPNG` → `servidor.asegurar_servidor()` → Flask (`app.py`).
+2. **Creador PNG Pro** abre `DialogoCreadorPNG` → `servidor.asegurar_servidor()` → Werkzeug en `127.0.0.1` (`app.py`). No usa `app.run` (en Windows sin consola ese banner pega WinError 233).
 3. El HTML llama `POST /convert`. Flask ejecuta `crear_efecto_3d_realista` en el mismo proceso.
-4. El PNG queda en `Catalogos/png_productos/`. El diálogo lee el título `CREADOR_PNG_DONE:` y asocia el archivo al producto.
+4. El PNG pisa el archivo de ese producto (`asado.png`, no `asado_2`). El anterior va a `_anteriores/`. El diálogo lee `CREADOR_PNG_DONE:`.
+5. Guardar asocia el archivo al producto. Si esta PC es esclava de otra, copia con token LAN. Si falla, el PNG queda acá y el cartel no muestra HTTP 401.
 
 No hay carpeta `creator png` (nombre viejo). `version.json` todavía lista rutas de esa carpeta.
 

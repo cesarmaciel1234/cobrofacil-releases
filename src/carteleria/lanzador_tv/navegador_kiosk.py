@@ -87,8 +87,6 @@ def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
         "--autoplay-policy=no-user-gesture-required",
         "--high-dpi-support=1",
         "--disable-pinch",
-        "--disable-http-cache",
-        "--disk-cache-size=1",
         "--start-fullscreen",
         f"--window-position={x},{y}",
         f"--window-size={w},{h}",
@@ -200,7 +198,9 @@ class TeclasTv(QObject):
             
         if not (f5 or f10 or f11 or esc):
             return
-            
+        if (f5 or f11 or esc) and not _foco_es_navegador_tv():
+            return
+
         if f10:
             self._last = ahora
             self._ignore_f11_until = ahora + 1.0 # Ignore F11 for 1 second
@@ -220,8 +220,6 @@ class TeclasTv(QObject):
                     self.on_f5()
                 except Exception as exc:
                     logger.warning("Tecla TV F5: %s", exc)
-            return
-        if not _foco_es_navegador_tv():
             return
         self._last = ahora
         try:

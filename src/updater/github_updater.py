@@ -137,9 +137,11 @@ def _verificar_modulos_dev(dry_run=False, callback_progreso=None):
 
     ctx = ssl.create_default_context()
     try:
+        from src.updater.cerebro.github_auth import github_headers
+
         req = urllib.request.Request(
             f"{RAW_BASE_URL}/version.json",
-            headers={"User-Agent": "CobroFacil-Updater"},
+            headers=github_headers({"User-Agent": "CobroFacil-Updater"}),
         )
         with urllib.request.urlopen(req, timeout=15, context=ctx) as r:
             manifest_remoto = json.loads(r.read().decode("utf-8-sig"))
@@ -192,7 +194,7 @@ def _verificar_modulos_dev(dry_run=False, callback_progreso=None):
         try:
             req_file = urllib.request.Request(
                 f"{RAW_BASE_URL}/{rel_path.replace(os.sep, '/')}",
-                headers={"User-Agent": "CobroFacil-Updater"},
+                headers=github_headers({"User-Agent": "CobroFacil-Updater"}),
             )
             with urllib.request.urlopen(req_file, timeout=20, context=ctx) as r:
                 contenido = r.read()

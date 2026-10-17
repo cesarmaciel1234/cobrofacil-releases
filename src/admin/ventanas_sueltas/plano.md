@@ -11,11 +11,11 @@ admin/ventanas_sueltas/
 
 ## Frente
 
-En el hub: clic abre el módulo en esta ventana. **Ctrl+clic** o **clic derecho** lo manda a otro monitor. Cerrar la hoja o «Traer al hub» lo devuelve. El lanzador, si Admin ya corre, **trae esa instancia**; no abre otro proceso.
+En el hub: clic abre el módulo en esta ventana. El **+** de la tile (también Ctrl+clic o clic derecho) lo manda a otro monitor. Cerrar la hoja o «Traer al hub» lo devuelve. El lanzador, si Admin ya corre, **trae esa instancia**; no abre otro proceso.
 
 ## Fondo
 
-`MainWindow._desanclar_modulo` saca el widget del `QStackedWidget` y lo pone en `HojaSuelta` (mismo PID, mismo candado `perfil_admin.lock`). No hay `QProcess`. Cajero (1) y la TV (21) no se desanclan.
+`MainWindow._desanclar_modulo` saca el widget del `QStackedWidget` (queda oculto) y `HojaSuelta` lo vuelve a mostrar. Mismo PID, mismo candado `perfil_admin.lock`. No hay `QProcess`. Cajero (1) y la TV (21) no se desanclan.
 
 ## Qué no cambiar
 

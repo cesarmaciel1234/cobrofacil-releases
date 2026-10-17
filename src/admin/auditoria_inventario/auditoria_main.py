@@ -434,6 +434,9 @@ class AuditoriaMain(QWidget):
         if w and hasattr(w, "switch_tab"):
             w.switch_tab(0)
             return
+        if w is not None and w is not self:
+            w.close()
+            return
         from PyQt6.QtWidgets import QApplication
         for widget in QApplication.instance().topLevelWidgets():
             if hasattr(widget, "switch_tab"):

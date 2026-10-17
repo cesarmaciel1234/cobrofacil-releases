@@ -2,7 +2,7 @@
 
 La carpeta contiene el monitor de pagos del panel admin.
 
-- `mercadopago_main.py`: ventana `Admin10MP`; carga pagos guardados, calcula tarjetas y filtros, muestra el vínculo a ticket, y arranca el escucha compartido mediante `EscuchaMP.asegurar()`.
+- `mercadopago_main.py`: ventana `Admin10MP`; carga pagos guardados, calcula tarjetas y filtros, muestra el vínculo a ticket, y arranca el escucha compartido mediante `EscuchaMP.asegurar()`. Las tarjetas KPI miden 44 px de alto (mitad).
 - `historial/`: baja pagos aprobados desde la API, guarda el historial CSV, y sincroniza historial y vínculos al nodo portable. Ver `historial/README.md`.
 - `componentes/`: hilo de escucha MP compartido con el cajero. Ver `componentes/README.md`.
 

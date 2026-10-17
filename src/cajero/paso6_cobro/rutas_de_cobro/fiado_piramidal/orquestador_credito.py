@@ -127,7 +127,7 @@ class OrquestadorFiadoPiramidal(QFrame):
         if hasattr(self.motor_busqueda, "set_monto_venta"):
             self.motor_busqueda.set_monto_venta(self._monto_carrito)
         if hasattr(self.motor_busqueda, "precargar"):
-            self.motor_busqueda.precargar()
+            self.motor_busqueda.precargar(forzar=True)
         self.via_buscador.aplicar_modo(self._modo)
         self.via_buscador.limpiar()
         self.stack.setCurrentWidget(self.via_buscador)
@@ -276,6 +276,8 @@ class OrquestadorFiadoPiramidal(QFrame):
     def _cliente_recien_creado(self, dict_datos):
         self._datos_cliente = _fila_a_dict(dict_datos)
         self._datos_cliente["compra"] = self._monto_carrito
+        if hasattr(self.motor_busqueda, "precargar"):
+            self.motor_busqueda.precargar(forzar=True)
         if getattr(self, "_modo", "") == "MasCredito":
             self._abrir_cobranza(self._datos_cliente)
         else:

@@ -16,11 +16,11 @@ class DbSyncWorker(QThread):
     def run(self):
         try:
             data, status = pulso_vitrina(abortar=self.isInterruptionRequested)
-            self._emit(data, status)
+            self._emit(data or {"precios": []}, status or "error")
         except RuntimeError:
             pass
         except Exception:
             try:
-                self._emit({}, "error")
+                self._emit({"precios": []}, "error")
             except RuntimeError:
                 pass

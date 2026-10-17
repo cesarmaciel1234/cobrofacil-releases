@@ -6,6 +6,8 @@
 - Evita el efecto de "pantalla blanca" en ejecutables congelados. Al recibir datos por JS, .innerHTML sobrescribe los skeletons limpiamente.
 
 ### Mapeo de Teclas TV (pp.js & TeclasTv)
+- PNG/precio nuevo: la TV pisa **solo datos** (sello `aviso_tv`, sin F5). No se cierra Chrome.
+- Al abrir cartelería, si la TV estaba prendida se relanza sola en `http://127.0.0.1:8765/` (misma maestra). F11 la apaga. Esc en el panel no.
 - **F5**: Forzar location.reload() (Refresh visual total).
 - **F9**: Conmutador local de Vistas/Grilla (cicla el layout CSS data-wall de 4h a 1h, 2h, 3h mostrando dinámicamente de 1 a 4 paneles centrales y ocultando el resto, manteniendo zócalo y carrusel intactos).
 - **F10**: Interruptor de Mover Monitor (API /api/control?action=monitor en JS, o Selector en Kiosk Python).

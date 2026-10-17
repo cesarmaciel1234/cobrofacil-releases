@@ -143,13 +143,13 @@ class Admin10MP(QWidget):
 
         def create_kpi_card(title, value, color_hex):
             card = QFrame()
-            card.setMinimumHeight(88)
+            card.setFixedHeight(44)
             card.setStyleSheet(
                 "QFrame { background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 12px; }"
             )
             cl = QVBoxLayout(card)
-            cl.setContentsMargins(16, 12, 16, 12)
-            cl.setSpacing(4)
+            cl.setContentsMargins(12, 4, 12, 4)
+            cl.setSpacing(0)
 
             lbl_title = QLabel(title)
             lbl_title.setStyleSheet(
@@ -157,16 +157,16 @@ class Admin10MP(QWidget):
             )
 
             lbl_value = QLabel(value)
-            lbl_value.setWordWrap(True)
+            lbl_value.setWordWrap(False)
             lbl_value.setStyleSheet(
-                f"{QSS_KPI} font-size: 20px; color: {color_hex}; "
+                f"{QSS_KPI} font-size: 16px; color: {color_hex}; "
                 "background: transparent; border: none;"
             )
 
             lbl_nota = QLabel("")
-            lbl_nota.setWordWrap(True)
+            lbl_nota.setWordWrap(False)
             lbl_nota.setStyleSheet(
-                "font-size: 12px; font-weight: 600; color: #1E293B; "
+                "font-size: 10px; font-weight: 600; color: #1E293B; "
                 "background: transparent; border: none;"
             )
             lbl_nota.hide()
@@ -174,37 +174,35 @@ class Admin10MP(QWidget):
             cl.addWidget(lbl_title)
             cl.addWidget(lbl_value)
             cl.addWidget(lbl_nota)
-            cl.addStretch()
             card._nota = lbl_nota
             return card, lbl_value
 
         def hueco():
             f = QFrame()
-            f.setMinimumHeight(88)
+            f.setFixedHeight(44)
             f.setStyleSheet(
                 "QFrame { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px; }"
             )
             lay = QVBoxLayout(f)
-            lay.setContentsMargins(16, 12, 16, 12)
-            lay.setSpacing(4)
+            lay.setContentsMargins(12, 4, 12, 4)
+            lay.setSpacing(0)
             t = QLabel("RESERVADO")
             t.setStyleSheet(
                 f"{QSS_ROTULO} color: #1E293B; background: transparent; border: none;"
             )
             v = QLabel("—")
             v.setStyleSheet(
-                f"{QSS_KPI} font-size: 20px; color: #CBD5E1; "
+                f"{QSS_KPI} font-size: 16px; color: #CBD5E1; "
                 "background: transparent; border: none;"
             )
             d = QLabel("Espacio para una tarjeta")
             d.setStyleSheet(
-                "font-size: 12px; font-weight: 600; color: #1E293B; "
+                "font-size: 10px; font-weight: 600; color: #1E293B; "
                 "background: transparent; border: none;"
             )
             lay.addWidget(t)
             lay.addWidget(v)
             lay.addWidget(d)
-            lay.addStretch()
             return f
 
         self.card_total_mes, self.lbl_kpi_total_mes = create_kpi_card("BRUTO MP", "$0,00", "#C2410C")

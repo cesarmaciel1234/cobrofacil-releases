@@ -27,6 +27,7 @@ class CarteleriaMainTV(QWidget):
         self._clima_icon = "sol"
         self._retry_count = 0
         self._max_retries = 10
+        self._sello_visto = ""
         self._apply_theme()
         self._build_ui()
         self._cargar_cache_inicial()
@@ -134,6 +135,9 @@ class CarteleriaMainTV(QWidget):
         self._sync_timer = QTimer(self)
         self._sync_timer.timeout.connect(self._sincronizar)
         self._sync_timer.start(15000)
+        self._sello_timer = QTimer(self)
+        self._sello_timer.timeout.connect(self._mirar_sello)
+        self._sello_timer.start(1000)
         self._clima_worker.start()
 
     def _cargar_cache_inicial(self):
@@ -152,6 +156,18 @@ class CarteleriaMainTV(QWidget):
     def _sincronizar(self):
         if not self._sync_worker.isRunning():
             self._sync_worker.start()
+
+    def _mirar_sello(self):
+        try:
+            from src.central_red_global.sync_tienda.aviso_tv import leer_sello
+
+            marca = leer_sello()
+        except Exception:
+            return
+        if not marca or marca == self._sello_visto:
+            return
+        self._sello_visto = marca
+        self._sincronizar()
 
     @staticmethod
     def _normalizar_producto(row):
@@ -436,6 +452,8 @@ class CarteleriaMainTV(QWidget):
         if self._cerebro:
             self._cerebro.detener()
         self._sync_timer.stop()
+        if getattr(self, "_sello_timer", None):
+            self._sello_timer.stop()
         if self._sync_worker.isRunning():
             self._sync_worker.requestInterruption()
             self._sync_worker.wait(1000)

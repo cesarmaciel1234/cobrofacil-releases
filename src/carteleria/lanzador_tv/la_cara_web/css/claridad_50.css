@@ -1,0 +1,99 @@
+/* TV 50": se veía ahumado (sombras grandes + mix-blend screen). Recorte sólido. */
+
+html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
+    font-kerning: normal;
+}
+
+body .tv-panel,
+body .hero-section,
+body .footer,
+body .premium-column,
+body .oferta-card,
+body .asian-rank-card,
+body .zocalo-pill,
+body .clock {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+body .deal-stage__img,
+body .hero-section .deal-stage__img,
+body .rank-stage .deal-stage__img,
+body .price-ad__stage .deal-stage__img,
+body .xsell-item .deal-stage__img,
+body .oferta-card .deal-stage__img,
+body .oferta-card.is-center-focus .deal-stage__img,
+body .asian-rank-card.is-photo .rank-stage .deal-stage__img,
+body .flash-clima-icon,
+body[data-theme="premium"] .deal-stage__img,
+body[data-theme="premium"] .hero-section .deal-stage__img,
+body[data-theme="premium"] .rank-stage .deal-stage__img {
+    mix-blend-mode: normal !important;
+    image-rendering: -webkit-optimize-contrast;
+    filter: contrast(1.2) saturate(1.08) brightness(1.03) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.4)) !important;
+}
+
+body .hero-section .oferta-card,
+body[data-theme="premium"] .hero-section .oferta-card,
+body[data-theme="blackfriday"] .hero-section .oferta-card {
+    filter: none !important;
+    box-shadow: 0 3px 0 #C2410C !important;
+}
+
+body .hero-section .oferta-card::after {
+    box-shadow: none !important;
+    height: 2px !important;
+}
+
+body .asian-rank-card.is-photo .rank-stage::after {
+    background: linear-gradient(180deg, transparent 62%, rgba(0, 0, 0, 0.28) 100%) !important;
+}
+
+body .tv-panel .tv-card__now,
+body .tv-panel .tv-card__now *,
+body .tv-panel .giant-price,
+body .tv-panel .giant-price *,
+body .tv-panel .xsell-item__price,
+body .tv-panel .xsell-item__price *,
+body .tv-panel .price-row__now,
+body .tv-panel .price-row__now *,
+body .tv-panel .asian-flash-current,
+body .tv-panel .asian-flash-current *,
+body .hero-section .tv-card__now,
+body .hero-section .tv-card__now * {
+    text-shadow:
+        -1px -1px 0 #000,
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000 !important;
+    font-weight: 800 !important;
+}
+
+body .rank-roof-name,
+body .price-row__name,
+body .tv-card__name,
+body .xsell-item__name,
+body .deal-stage__name,
+body .flash-offer__name,
+body .asian-flash-name,
+body .deal-stage__letter {
+    font-weight: 800 !important;
+    letter-spacing: 0.02em;
+    text-shadow:
+        -1px -1px 0 rgba(0, 0, 0, 0.9),
+         1px -1px 0 rgba(0, 0, 0, 0.9),
+        -1px  1px 0 rgba(0, 0, 0, 0.9),
+         1px  1px 0 rgba(0, 0, 0, 0.9) !important;
+}
+
+body .flash-strip,
+body .flash-strip span,
+body .clock-digits,
+body .status-text {
+    font-weight: 800;
+    text-shadow: none !important;
+    letter-spacing: 0.04em;
+}

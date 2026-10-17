@@ -123,13 +123,8 @@ def _nombre_archivo(save_as, output_dir):
     raw = raw.replace(" ", "_").strip("._") or "producto"
     if not raw.lower().endswith(".png"):
         raw += ".png"
-    if not os.path.exists(os.path.join(output_dir, raw)):
-        return raw
-    stem, ext = os.path.splitext(raw)
-    n = 1
-    while os.path.exists(os.path.join(output_dir, f"{stem}_{n}{ext}")):
-        n += 1
-    return f"{stem}_{n}{ext}"
+    # Un PNG por producto: se pisa el mismo nombre. El anterior va a _anteriores/.
+    return raw
 
 
 def get_conversion_params(form_data):
@@ -229,26 +224,7 @@ def _args_convert(params, input_filepath, output_filepath, size, rapido):
     return args
 
 
-def _convertir(params, input_filepath, output_filepath, size, rapido):
-    worker = _exe_worker()
-    if worker:
-        import subprocess
-        cmd = [worker] + _args_convert(params, input_filepath, output_filepath, size, rapido)
-        kwargs = {"capture_output": True, "text": True}
-        if sys.platform == "win32":
-            kwargs["creationflags"] = 0x08000000
-        env = os.environ.copy()
-        env.setdefault("U2NET_HOME", os.path.join(os.path.dirname(worker), "u2net"))
-        kwargs["env"] = env
-        kwargs["timeout"] = 240
-        try:
-            proc = subprocess.run(cmd, **kwargs)
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("La IA tardó demasiado recortando el fondo.")
-        if proc.returncode != 0:
-            raise RuntimeError((proc.stderr or proc.stdout or "worker error").strip())
-        return os.path.isfile(output_filepath)
-
+def _convertir_en_proceso(params, input_filepath, output_filepath, size, rapido):
     from src.carteleria.creador_png.convertir_imagen import crear_efecto_3d_realista
     return bool(crear_efecto_3d_realista(
         input_filepath,
@@ -270,6 +246,43 @@ def _convertir(params, input_filepath, output_filepath, size, rapido):
         enable_rim_light_effect=params["enable_rim_light_effect"],
         use_cached_cutout=rapido,
     ))
+
+
+def _es_tuberia_rota(exc) -> bool:
+    if isinstance(exc, BrokenPipeError):
+        return True
+    if isinstance(exc, OSError):
+        return getattr(exc, "winerror", None) == 233 or exc.errno in (32, 233)
+    return "233" in str(exc)
+
+
+def _convertir(params, input_filepath, output_filepath, size, rapido):
+    worker = _exe_worker()
+    if worker:
+        import subprocess
+        cmd = [worker] + _args_convert(params, input_filepath, output_filepath, size, rapido)
+        kwargs = {
+            "stdin": subprocess.DEVNULL,
+            "stdout": subprocess.DEVNULL,
+            "stderr": subprocess.DEVNULL,
+            "timeout": 240,
+        }
+        if sys.platform == "win32":
+            kwargs["creationflags"] = 0x08000000
+        env = os.environ.copy()
+        env.setdefault("U2NET_HOME", os.path.join(os.path.dirname(worker), "u2net"))
+        kwargs["env"] = env
+        try:
+            proc = subprocess.run(cmd, **kwargs)
+            if proc.returncode == 0 and os.path.isfile(output_filepath):
+                return True
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("La IA tardó demasiado recortando el fondo.")
+        except OSError as exc:
+            if not _es_tuberia_rota(exc):
+                raise
+        # Worker con tubería rota o código distinto de 0: misma IA en este proceso.
+    return _convertir_en_proceso(params, input_filepath, output_filepath, size, rapido)
 
 
 def _upload_seguro(nombre):
@@ -307,12 +320,21 @@ def convert_image():
 
     output_filename = _nombre_archivo(params.get("save_as"), output_dir)
     output_filepath = os.path.join(output_dir, output_filename)
+    tmp_filepath = output_filepath + ".part"
     size = int(params["output_size"] or 1024)
     rapido = request.form.get("fast") in ("1", "true", "on")
 
     try:
         with _convert_lock:
-            ok = _convertir(params, input_filepath, output_filepath, size, rapido)
+            ok = _convertir(params, input_filepath, tmp_filepath, size, rapido)
+        if ok and os.path.isfile(tmp_filepath):
+            try:
+                from src.carteleria.creador_png.panel_vitrina.archivo import publicar_nuevo
+
+                publicar_nuevo(tmp_filepath, output_filepath)
+            except Exception:
+                if os.path.isfile(tmp_filepath):
+                    os.replace(tmp_filepath, output_filepath)
         if ok and os.path.exists(output_filepath):
             return jsonify({
                 "success": True,
@@ -322,8 +344,18 @@ def convert_image():
                 "filename": output_filename,
                 "upload_id": upload_id,
             })
+        try:
+            if os.path.isfile(tmp_filepath):
+                os.remove(tmp_filepath)
+        except OSError:
+            pass
         return jsonify({"error": "Conversion failed: Output file not found."}), 500
     except Exception as e:
+        try:
+            if os.path.isfile(tmp_filepath):
+                os.remove(tmp_filepath)
+        except OSError:
+            pass
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 

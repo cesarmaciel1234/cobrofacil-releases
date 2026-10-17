@@ -38,15 +38,12 @@ function esEco() {
 }
 
 export function updateVFX() {
-    if (esEco()) {
-        checkSmartMarquee();
-        return;
-    }
+    if (esEco()) return;
     if (observer) {
         // Desconectar observables viejos (previene memory leaks al recargar datos)
         observer.disconnect();
         // Observar las nuevas tarjetas
-        document.querySelectorAll('.oferta-card').forEach(card => observer.observe(card));
+        document.querySelectorAll(".hero-section .oferta-card").forEach((card) => observer.observe(card));
     }
     
     animateOdometers();
@@ -54,7 +51,7 @@ export function updateVFX() {
 }
 
 function animateOdometers() {
-    const odometers = document.querySelectorAll('.odometer-val:not(.counted)');
+    const odometers = [...document.querySelectorAll('.odometer-val:not(.counted)')].slice(0, 8);
     odometers.forEach(el => {
         el.classList.add('counted');
         const finalVal = parseFloat(el.getAttribute('data-val')) || 0;
@@ -77,7 +74,7 @@ function animateOdometers() {
 }
 
 function checkSmartMarquee() {
-    const names = document.querySelectorAll('.tv-card__name, .asian-rank-name, .price-row__name, .oferta-nombre, .xsell-item__name');
+    const names = document.querySelectorAll('.hero-section .oferta-nombre, .tv-card__name');
     names.forEach(el => {
         if (el.scrollWidth > el.clientWidth + 5) {
             if (!el.classList.contains('smart-marquee')) {

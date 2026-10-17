@@ -212,6 +212,19 @@ class PanelBuscadorClientes(QWidget):
 
         if not self._clientes_actuales:
             if texto:
+                try:
+                    from src.clientes_fiado.cerebro.cerebro import cerebro
+                    solo_num = texto.replace(".", "").replace(" ", "").replace("-", "")
+                    existente = None
+                    if solo_num.isdigit() and len(solo_num) >= 7:
+                        existente = cerebro.buscar_por_dni(solo_num)
+                    if not existente:
+                        existente = cerebro.buscar_por_nombre(texto)
+                    if existente:
+                        self._emitir_cliente(dict(existente))
+                        return True
+                except Exception:
+                    pass
                 self.creacion_solicitada.emit(texto)
                 return True
             return False

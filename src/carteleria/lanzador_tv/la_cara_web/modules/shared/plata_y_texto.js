@@ -217,7 +217,7 @@ export function htmlDealStage(item, { off = "", extraClass = "", titulo = "", bo
     const onerr = `const q=(this.dataset.fallbacks||'').split('|').filter(Boolean);if(q.length){this.src=q.shift();this.dataset.fallbacks=q.join('|');}else if(this.src.indexOf('logo_sistema')<0){this.src='${FOTO_SISTEMA}';}else{this.style.opacity='.85';}`;
     return `
         <div class="deal-stage${extraClass ? ` ${extraClass}` : ""}" data-tone="${escapeHtml(tonoDepto(item))}">
-            ${url ? `<img class="deal-stage__img" src="${escapeHtml(url)}" alt="" ${fallbacks.length ? `data-fallbacks="${escapeHtml(fallbacks.join("|"))}"` : ""} onerror="${onerr}">` : ""}
+            ${url ? `<img class="deal-stage__img" src="${escapeHtml(url)}" alt="" decoding="async" ${fallbacks.length ? `data-fallbacks="${escapeHtml(fallbacks.join("|"))}"` : ""} onerror="${onerr}">` : ""}
             <span class="deal-stage__letter${url ? " has-img" : ""}">${escapeHtml(letra)}</span>
             ${titulo ? `<span class="deal-stage__name">${escapeHtml(titulo)}</span>` : ""}
             ${off ? `<span class="deal-stage__off">${escapeHtml(off)}</span>` : ""}

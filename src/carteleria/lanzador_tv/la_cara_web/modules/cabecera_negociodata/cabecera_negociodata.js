@@ -26,11 +26,19 @@ export function renderCabeceraNegocio(config, els) {
         }
     }
 
-    const offline = config?.data_status === "offline";
+    const st = config?.data_status;
     if (els.statusText) {
-        els.statusText.textContent = offline ? "Caché local" : "En línea";
         const dot = els.statusText.parentElement?.querySelector(".status-dot");
-        if (dot) dot.style.background = offline ? "#FCD34D" : "var(--success-color)";
+        if (st === "offline") {
+            els.statusText.textContent = "Caché local";
+            if (dot) dot.style.background = "#FCD34D";
+        } else if (st === "error") {
+            els.statusText.textContent = "Sin red";
+            if (dot) dot.style.background = "#EF4444";
+        } else {
+            els.statusText.textContent = "En línea";
+            if (dot) dot.style.background = "var(--success-color)";
+        }
     }
 }
 

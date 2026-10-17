@@ -94,6 +94,9 @@ def guardar_producto_en_db(datos_producto, es_nuevo=True, producto_id=None):
                 empujar_producto_a_maestra(params if not actual_id else {**params, "id": actual_id})
                 if params.get("icono"):
                     enviar_png_a_maestra(params.get("icono"))
+                from src.central_red_global.sync_tienda.aviso_tv import avisar_datos_nuevos
+
+                avisar_datos_nuevos()
             except Exception:
                 pass
             try:

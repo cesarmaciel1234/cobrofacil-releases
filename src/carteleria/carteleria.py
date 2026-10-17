@@ -55,19 +55,25 @@ class CarteleriaApp(QStackedWidget):
         from src.carteleria.lanzador_tv.lanzador_directo import get_lanzador_directo
         lanzador = get_lanzador_directo()
         if lanzador.lanzar():
-            logger.info("TV lanzada en kiosk (F11 para salir).")
+            logger.info("TV en kiosk (F11 para salir). Si ya estaba, se reusa el mismo http://127.0.0.1:8765/")
         else:
             logger.error("No se pudo lanzar la cartelería TV.")
 
-    def volver_dashboard(self):
+    def _auto_lanzar_tv(self):
         try:
-            from src.carteleria.lanzador_tv.lanzador_directo import get_lanzador_directo
-            get_lanzador_directo().detener()
-        except Exception:
-            pass
+            from src.config import config
+
+            if config.get("carteleria_tv_encendida") is False:
+                return
+            self.lanzar_tv()
+        except Exception as exc:
+            logger.warning("No se pudo reabrir la TV sola: %s", exc)
+
+    def volver_dashboard(self):
+        # Esc vuelve al panel. La TV del otro monitor no se apaga.
         if self.tv_main:
             try:
-                self.tv_main.detener_carteleria()
+                self.setCurrentWidget(self.dashboard)
             except Exception:
                 pass
         self.setCurrentWidget(self.dashboard)
@@ -251,6 +257,12 @@ def lanzar_app(app=None):
     window.showMaximized()
     # Guardamos referencia para que no sea destruida por el recolector de basura
     app._carteleria_window = window
+    try:
+        from PyQt6.QtCore import QTimer
+
+        QTimer.singleShot(600, window._auto_lanzar_tv)
+    except Exception:
+        pass
 
     # Siempre poseer el event loop en este perfil (--role carteleria).
     # Antes: si _is_running quedaba True tras exit(888), se devolvía la ventana

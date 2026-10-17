@@ -1,19 +1,16 @@
-"""Perfil de la TV: eco (PC floja) o max (alta gama). El look premium no cambia."""
+"""TV Chromium: look premium estable (GPU sin zero-copy, sin golpear MariaDB)."""
 
 import ctypes
 import logging
-import os
 import platform
 
 logger = logging.getLogger("PerfilPcTv")
 
-# Cache del perfil para no recalcular
 _perfil_cache = None
 
 
 def _ram_gb():
     if platform.system() != "Windows":
-        logger.debug("No es Windows, usando default 8GB RAM")
         return 8.0
     try:
         class MEMORYSTATUSEX(ctypes.Structure):
@@ -32,74 +29,39 @@ def _ram_gb():
         st = MEMORYSTATUSEX()
         st.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
         if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(st)):
-            logger.warning("No se pudo obtener RAM, usando default 8GB")
             return 8.0
-        ram_gb = st.ullTotalPhys / (1024 ** 3)
-        logger.debug(f"RAM detectada: {ram_gb:.1f} GB")
-        return ram_gb
-    except Exception as e:
-        logger.warning(f"Error detectando RAM: {e}, usando default 8GB")
+        return st.ullTotalPhys / (1024 ** 3)
+    except Exception:
         return 8.0
 
 
 def detectar_perfil():
-    ram = _ram_gb()
-    cpu = os.cpu_count() or 2
-    if ram < 6.5 or cpu < 4:
-        perfil = "eco"
-        logger.info("Perfil eco: RAM baja (%.1f GB < 6.5) o CPU baja (%s < 4 núcleos)", ram, cpu)
-    elif ram >= 12 and cpu >= 6:
-        perfil = "max"
-        logger.info("Perfil max: RAM alta (%.1f GB >= 12) y CPU alta (%s >= 6 núcleos)", ram, cpu)
-    else:
-        perfil = "eco" if ram < 8 else "max"
-        logger.info("Perfil %s: RAM media (%.1f GB, %s núcleos)", perfil, ram, cpu)
-    return perfil
+    return "max"
 
 
 def perfil_activo():
     global _perfil_cache
     if _perfil_cache is not None:
         return _perfil_cache
-
-    try:
-        from src.config import config
-
-        elegido = str(config.get("carteleria_perf") or "auto").strip().lower()
-    except Exception as e:
-        logger.warning(f"Error leyendo config de perfil: {e}, usando auto")
-        elegido = "auto"
-    if elegido in ("eco", "bajo", "low"):
-        logger.info("Perfil configurado manualmente: eco")
-        _perfil_cache = "eco"
-        return "eco"
-    if elegido in ("max", "alto", "high"):
-        logger.info("Perfil configurado manualmente: max")
-        _perfil_cache = "max"
-        return "max"
-    if elegido != "auto":
-        logger.warning(f"Perfil desconocido '{elegido}', usando auto-detección")
-    perfil = detectar_perfil()
-    _perfil_cache = perfil
-    return perfil
+    _perfil_cache = "max"
+    logger.info("TV Chromium: premium estable")
+    return _perfil_cache
 
 
 def limpiar_cache_perfil():
-    """Limpia el cache del perfil cuando cambia la configuración."""
     global _perfil_cache
     _perfil_cache = None
-    logger.debug("Cache de perfil limpiado")
 
 
-def flags_chrome_perfil(perfil):
-    if perfil == "eco":
-        return [
-            "--disable-smooth-scrolling",
-            "--num-raster-threads=2",
-            "--disable-background-networking",
-        ]
+def flags_chrome_perfil(perfil=None):
+    """Look premium + kiosk estable: GPU raster, sRGB, sin zero-copy (Intel se trababa)."""
     return [
+        "--disable-lcd-text",
+        "--force-color-profile=srgb",
         "--enable-gpu-rasterization",
-        "--enable-zero-copy",
         "--ignore-gpu-blocklist",
+        "--num-raster-threads=2",
+        "--disable-background-networking",
+        "--disable-sync",
+        "--disable-features=Translate,MediaRouter,OptimizationHints,BackForwardCache",
     ]

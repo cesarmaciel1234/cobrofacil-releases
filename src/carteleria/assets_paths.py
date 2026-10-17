@@ -215,8 +215,11 @@ def ruta_archivo_icono(filename: str) -> str:
     if cache is None:
         cache = {}
         ruta_archivo_icono._cache = cache
+    cached = cache.get(name)
+    if cached and os.path.isfile(cached):
+        return cached
     if name in cache:
-        return cache[name]
+        cache.pop(name, None)
     hit = _buscar_en_carpetas(name)
     if hit:
         cache[name] = hit
@@ -255,5 +258,4 @@ def ruta_archivo_icono(filename: str) -> str:
             if hit:
                 cache[name] = hit
                 return hit
-    cache[name] = ""
     return ""

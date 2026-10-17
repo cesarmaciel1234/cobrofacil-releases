@@ -11,7 +11,7 @@ admin/dashboard/
 
 ## Frente
 
-Tras el login de admin se ve el hub: saludo, fecha y tiles (inventario, ofertas, cierre, MP, clientes, etc.). No hay telón de partículas. Cada tile abre su módulo la primera vez que se toca. Ctrl+clic o clic derecho manda el módulo a otro monitor **en el mismo proceso** (`ventanas_sueltas/`, tope 3). El lanzador, si Admin ya corre, enfoca esa ventana: no abre otro `.exe`.
+Tras el login de admin se ve el hub: saludo, fecha y tiles (inventario, ofertas, cierre, MP, clientes, etc.). Cada tile mide **190×160**. El **+** (también Ctrl+clic o clic derecho) manda el módulo a otra ventana **en el mismo proceso** (`ventanas_sueltas/`, tope 3). Clic normal abre en este monitor. No hay telón de partículas. El lanzador, si Admin ya corre, enfoca esa ventana: no abre otro `.exe`.
 
 ## Fondo
 

@@ -9,9 +9,10 @@ import { iniciarRotacionColumna3 } from "./modules/columna3/columna3.js";
 import { iniciarRotacionColumna4 } from "./modules/columna4/columna4.js";
 import { renderMensajeZocalo } from "./modules/mensaje_zocalo/mensaje_zocalo.js";
 
-const TV_UI = "259";
+const TV_UI = "268";
 const API_URL = "/api/state";
-const REFRESH_INTERVAL = 15000;
+const REFRESH_RAPIDO = 600;
+const REFRESH_NORMAL = 4000;
 
 const state = {
     config: null,
@@ -43,21 +44,20 @@ const els = {
     climaTemp: document.getElementById("climaTemp"),
 };
 
-function perfilNavegador() {
-    const ram = navigator.deviceMemory || 4;
-    const cpu = navigator.hardwareConcurrency || 4;
-    return ram < 6 || cpu < 4 ? "eco" : "max";
+function esChromium() {
+    const ua = navigator.userAgent || "";
+    return /Chrome|Chromium|Edg|Brave/i.test(ua);
 }
 
-function aplicarPerfil(perfil) {
-    const modo = perfil === "eco" || perfil === "max" ? perfil : perfilNavegador();
+function aplicarPerfil(_perfil) {
+    const modo = esChromium() ? "max" : "eco";
     document.body.setAttribute("data-perf", modo);
 }
 
 function loadTheme(themeName) {
     if (!themeName) return;
     const alias = { auto: "premium", negro_temu: "premium" };
-    const nombre = alias[themeName] || themeName;
+    const nombre = esChromium() ? "premium" : (alias[themeName] || themeName);
     document.body.setAttribute("data-theme", nombre);
     const themeColorsLink = document.getElementById("theme-colors");
     const themeStylesLink = document.getElementById("theme-styles");
@@ -90,30 +90,86 @@ function loadTheme(themeName) {
     state.currentTheme = nombre;
 }
 
+let pollId = 0;
+let intervaloActual = 0;
+const tInicio = Date.now();
+
+function hayDatosEnPantalla() {
+    return (state.productos && state.productos.length > 0)
+        || (state.rotacion && state.rotacion.length > 0)
+        || (state.destacados && state.destacados.length > 0);
+}
+
+function caraLista() {
+    return (state.productos && state.productos.length > 0)
+        && (state.rotacion && state.rotacion.length > 0);
+}
+
+function esEco() {
+    return document.body.getAttribute("data-perf") === "eco";
+}
+
+function programarPoll() {
+    const listo = caraLista() || Date.now() - tInicio > 15000;
+    const ms = listo ? REFRESH_NORMAL : REFRESH_RAPIDO;
+    if (ms === intervaloActual && pollId) return;
+    if (pollId) clearInterval(pollId);
+    intervaloActual = ms;
+    pollId = setInterval(fetchState, ms);
+}
+
+function quitarCarga() {
+    state.isLoading = false;
+    if (els.loading) els.loading.classList.add("hidden");
+}
+
+function precargarFotos() {
+    const vistos = new Set();
+    document.querySelectorAll("img.deal-stage__img").forEach((img, i) => {
+        const src = img.getAttribute("src") || "";
+        if (!src || vistos.has(src) || i > 20) return;
+        vistos.add(src);
+        const pre = new Image();
+        pre.decoding = "async";
+        pre.src = src;
+    });
+}
+
 async function fetchState() {
     try {
         const response = await fetch(API_URL, { cache: "no-store" });
         if (!response.ok) throw new Error(response.statusText);
         const data = await response.json();
         aplicarPerfil(data.config?.carteleria_perf);
-        let temaDefinitivo = data.config?.carteleria_theme || "premium";
-        if (temaDefinitivo === "auto") temaDefinitivo = "premium";
-        loadTheme(temaDefinitivo);
-        const newDataHash = JSON.stringify({
-            config: data.config,
-            precios: data.precios,
-            destacados: data.destacados,
-            rotacion: data.rotacion,
-            combos: data.combos,
-            columna3: data.columna3,
-            ia: data.ia,
-            hero: data.hero,
-            climaData: data.climaData,
-        });
-        if (state.lastDataHash === newDataHash) return;
+        loadTheme(data.config?.carteleria_theme || "premium");
+        const p = data.precios || [];
+        const newDataHash = [
+            data.datos_gen,
+            (data.config || {}).data_status,
+            p.length,
+            p.map((x) => `${x.nombre}:${x.precio}:${x.precio_oferta || 0}`).join("|"),
+            (data.rotacion || []).length,
+            (data.destacados || [])[0]?.nombre,
+            (data.hero || {}).nombre,
+        ].join("§");
+        if (state.lastDataHash === newDataHash) {
+            if (state.isLoading && hayDatosEnPantalla()) quitarCarga();
+            programarPoll();
+            return;
+        }
+        const nuevos = data.precios || [];
+        if (!nuevos.length && state.productos.length) {
+            if (data.config) {
+                state.config = data.config;
+                try { renderCabeceraNegocio(state.config, els); } catch (err) { console.error("[Cartelería]", err); }
+            }
+            if (state.isLoading) quitarCarga();
+            programarPoll();
+            return;
+        }
         state.lastDataHash = newDataHash;
         state.config = data.config;
-        state.productos = data.precios || [];
+        state.productos = nuevos;
         state.destacados = data.destacados || [];
         state.rotacion = data.rotacion || [];
         state.combos = data.combos || [];
@@ -150,13 +206,13 @@ async function fetchState() {
         safe(() => actualizarClimaHeader(state.climaData));
         safe(() => updateVFX());
 
-        if (state.isLoading) {
-            state.isLoading = false;
-            els.loading.classList.add("hidden");
-        }
+        if (hayDatosEnPantalla()) quitarCarga();
+        precargarFotos();
+        programarPoll();
     } catch (error) {
         console.error("[Cartelería] Error al obtener datos:", error);
         marcarCabeceraDesconectada(els);
+        programarPoll();
     }
 }
 
@@ -214,9 +270,7 @@ function setupTvKeys() {
         if (event.key === "F5") {
             event.preventDefault();
             event.stopPropagation();
-            const u = new URL(location.href);
-            u.searchParams.set("r", String(Date.now()));
-            location.replace(u.pathname + "?" + u.searchParams.toString());
+            fetchState();
             return;
         }
         if (event.key === "F9") {
@@ -263,7 +317,8 @@ function init() {
     setupTvKeys();
     initCenterFocus();
     fetchState();
-    setInterval(fetchState, REFRESH_INTERVAL);
+    programarPoll();
+    setTimeout(() => { if (state.isLoading) quitarCarga(); }, 12000);
 }
 
 document.addEventListener("DOMContentLoaded", init);

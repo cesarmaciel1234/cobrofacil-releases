@@ -51,6 +51,10 @@ def manejar_post(handler, path: str) -> bool:
             ctype = handler.headers.get("Content-Type", "")
             fallback = (handler.headers.get("X-Filename") or "producto.png").strip()
             data, status = guardar_png_recibido(ctype, body, fallback)
+            if status == 200:
+                from src.central_red_global.sync_tienda.aviso_tv import pisar_sello
+
+                pisar_sello()
             handler._send_response(status, data)
         except Exception as e:
             logger.error("upload PNG cartelería: %s", e)
@@ -61,9 +65,21 @@ def manejar_post(handler, path: str) -> bool:
             length = int(handler.headers.get("Content-Length", 0) or 0)
             raw = handler.rfile.read(length).decode("utf-8") if length else "{}"
             data, status = upsert_producto(json.loads(raw or "{}"))
+            if status == 200:
+                from src.central_red_global.sync_tienda.aviso_tv import pisar_sello
+
+                pisar_sello()
             handler._send_response(status, data)
         except Exception as e:
             handler._send_response(500, {"error": str(e)})
+        return True
+    if path == "/api/carteleria/datos_nuevos":
+        length = int(handler.headers.get("Content-Length", 0) or 0)
+        if length:
+            handler.rfile.read(length)
+        from src.central_red_global.sync_tienda.aviso_tv import pisar_sello
+
+        handler._send_response(200, {"ok": True, "sello": pisar_sello()})
         return True
     if path == "/api/carteleria/publicidad":
         try:

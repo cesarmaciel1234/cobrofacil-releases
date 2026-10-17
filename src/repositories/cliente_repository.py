@@ -128,7 +128,7 @@ class ClienteRepository:
             return None
         rows = ClienteRepository._get_db().execute_query(
             "SELECT id, nombre, limite_credito, deuda_actual, dni, tipo_cliente "
-            "FROM clientes WHERE nombre = ?",
+            "FROM clientes WHERE LOWER(nombre) = LOWER(?)",
             (nombre,),
         )
         return rows[0] if rows else None

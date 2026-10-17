@@ -73,6 +73,7 @@ let lastColumna2Html = "";
 
 export function renderColumna2(productos, root) {
     if (!root) return;
+    if (productos && productos.length > 96) productos = productos.slice(0, 96);
     if (!productos || productos.length === 0) {
         root.innerHTML = '<p class="column-empty">Sin precios para mostrar.</p>';
         lastColumna2Html = "";

@@ -64,12 +64,14 @@ def _urlopen(req, timeout: float = 30):
 
 
 def _fetch_json(url: str, timeout: int = 30) -> dict | list | None:
+    from src.updater.cerebro.github_auth import github_headers
+
     req = urllib.request.Request(
         url,
-        headers={
+        headers=github_headers({
             "User-Agent": USER_AGENT,
             "Accept": "application/vnd.github+json",
-        },
+        }),
     )
     with _urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8-sig"))

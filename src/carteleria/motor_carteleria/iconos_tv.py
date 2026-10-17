@@ -137,28 +137,47 @@ def _png_por_nombre(nombre):
     if not slug:
         return ""
     if slug in _png_nombre_cache:
-        return _png_nombre_cache[slug]
+        previo = _png_nombre_cache[slug]
+        if previo:
+            return previo
+        del _png_nombre_cache[slug]
     indice = _indice_pngs()
-    alias = ALIAS_POR_NOMBRE.get(slug) or ALIAS_POR_NOMBRE.get(re.sub(r"_\d+$", "", slug))
-    mejor = ""
-    mejor_pts = 0
-    for clave, fname in indice["exactos"].items():
-        pts = _score_png(slug, clave)
-        if pts > mejor_pts:
-            mejor_pts = pts
-            mejor = fname
-    if alias and ruta_archivo_icono(alias):
-        if mejor_pts < 100:
-            mejor = alias
-            mejor_pts = max(mejor_pts, 80)
-    if mejor_pts >= 48 and mejor and ruta_archivo_icono(mejor):
+    exactos = indice.get("exactos") or {}
+    cortos = indice.get("corto") or {}
+    corto = re.sub(r"_\d+$", "", slug)
+
+    def _ok(fname):
+        return bool(fname) and bool(ruta_archivo_icono(fname))
+
+    hit = exactos.get(slug)
+    if _ok(hit):
+        _png_nombre_cache[slug] = hit
+        return hit
+    hit = cortos.get(corto)
+    if _ok(hit):
+        _png_nombre_cache[slug] = hit
+        return hit
+    alias = ALIAS_POR_NOMBRE.get(slug) or ALIAS_POR_NOMBRE.get(corto)
+    if alias and _ok(alias):
+        _png_nombre_cache[slug] = alias
+        return alias
+    primer = next((t for t in slug.split("_") if t and t not in STOP_SLUG), "")
+    mejor, mejor_pts = "", 0
+    if len(primer) >= 4:
+        for clave, fname in exactos.items():
+            if primer not in clave:
+                continue
+            pts = _score_png(slug, clave)
+            if pts > mejor_pts:
+                mejor_pts = pts
+                mejor = fname
+    if mejor_pts >= 48 and _ok(mejor):
         _png_nombre_cache[slug] = mejor
         return mejor
     directo = f"{slug}.png"
-    if ruta_archivo_icono(directo):
+    if _ok(directo):
         _png_nombre_cache[slug] = directo
         return directo
-    _png_nombre_cache[slug] = ""
     return ""
 
 
@@ -202,14 +221,8 @@ def icono_filename(item, mapa_db=None):
         return ""
     from src.carteleria.assets_paths import ruta_archivo_icono
     propio = _safe_filename(item.get("icono"))
-    if propio and ruta_archivo_icono(propio):
+    if propio:
         return propio
-    try:
-        from src.central_red_global.sync_tienda.rol import es_esclava
-        if es_esclava():
-            return propio or ""
-    except Exception:
-        pass
     por_nombre = _png_por_nombre(item.get("nombre"))
     if por_nombre:
         return por_nombre
@@ -236,12 +249,7 @@ def png_vitrina_path(item):
         hit = ruta_archivo_icono(propio)
         if hit:
             return hit
-    try:
-        from src.central_red_global.sync_tienda.rol import es_esclava
-        if es_esclava():
-            return ""
-    except Exception:
-        pass
+        return ""
     fname = _png_por_nombre((item or {}).get("nombre"))
     if fname:
         return ruta_archivo_icono(fname) or ""
@@ -272,16 +280,4 @@ def enriquecer_iconos(productos):
         item["icono_url"] = icono_url(item, mapa)
         if not str(item.get("icono") or "").strip() and name not in (PNG_SISTEMA,) and name not in ICONO_POR_DEPTO.values():
             item["icono"] = name
-    global _asocio_auto_ts
-    ahora = time.monotonic()
-    if ahora - _asocio_auto_ts > 45:
-        _asocio_auto_ts = ahora
-        try:
-            from src.central_red_global.sync_tienda.rol import es_esclava
-            if es_esclava():
-                return productos
-            from src.motor_inventario.base.productos_db import asociar_png_por_nombre
-            asociar_png_por_nombre()
-        except Exception as exc:
-            logger.debug("Auto-enlace PNG: %s", exc)
     return productos

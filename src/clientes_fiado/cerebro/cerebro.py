@@ -184,5 +184,73 @@ class CerebroClientesFiado:
 
         return entregar(orden, datos)
 
+    def crear_cliente(self, nombre, dni="", limite=50000.0):
+        return crear_cliente(nombre, dni, limite)
+
 
 cerebro = CerebroClientesFiado()
+
+
+def crear_cliente(nombre: str, dni: str = "", limite: float = 50000.0) -> tuple:
+    """Crea o identifica un cliente para fiado / cuenta corriente con huella de auditoría.
+    Retorna (cliente_id, mensaje)."""
+    nombre_limpio = str(nombre or "").strip()
+    dni_limpio = str(dni or "").strip()
+    try:
+        limite_val = float(limite if limite is not None else 50000.0)
+    except (TypeError, ValueError):
+        limite_val = 50000.0
+
+    if not nombre_limpio:
+        return None, "El nombre del cliente no puede estar vacío"
+
+    from src.repositories.cliente_repository import ClienteRepository
+    from src.clientes_fiado.oficina.huella.eventos import alta
+
+    # 1. Si ya existe por DNI o por nombre, lo identificamos directamente
+    existente = None
+    if dni_limpio:
+        existente = ClienteRepository.buscar_por_dni(dni_limpio)
+    if not existente:
+        existente = ClienteRepository.buscar_por_nombre(nombre_limpio)
+    if existente:
+        cid = existente.get("id") if hasattr(existente, "get") else existente[0]
+        nom = existente.get("nombre") if hasattr(existente, "get") else nombre_limpio
+        return cid, f"Cliente existente: {nom}"
+
+    # 2. Dar de alta el cliente con huella de auditoría
+    campos = {
+        "nombre": nombre_limpio,
+        "telefono": None,
+        "limite_credito": limite_val,
+        "deuda_actual": 0.0,
+        "dni": dni_limpio or None,
+        "tipo_cliente": "regular" if dni_limpio else "cliente_express",
+    }
+    ok = alta(campos, via="cuenta_corriente")
+    if not ok:
+        return None, "No se pudo registrar el nuevo cliente en la base de datos"
+
+    # 3. Recuperar el cliente recién creado para obtener su ID
+    creado = None
+    if dni_limpio:
+        creado = ClienteRepository.buscar_por_dni(dni_limpio)
+    if not creado:
+        creado = ClienteRepository.buscar_por_nombre(nombre_limpio)
+    if not creado:
+        try:
+            from src.base_de_datos.database import db_manager
+            filas = db_manager.execute_query(
+                "SELECT id, nombre, limite_credito, deuda_actual FROM clientes WHERE nombre = ? ORDER BY id DESC LIMIT 1",
+                (nombre_limpio,),
+            )
+            if filas:
+                creado = filas[0]
+        except Exception:
+            pass
+
+    if not creado:
+        return None, "Cliente creado pero no se pudo obtener su registro"
+
+    cid = creado.get("id") if hasattr(creado, "get") else (creado[0] if creado else None)
+    return cid, f"Cliente creado: {nombre_limpio}"

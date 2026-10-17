@@ -1,4 +1,4 @@
-"""Pulso de la TV: MariaDB para productos/PNG; HTTP solo ranking si hay maestra."""
+"""Pulso de la TV: MariaDB, HTTP maestra o caché. Nunca tira excepción al kiosk."""
 
 from __future__ import annotations
 
@@ -13,53 +13,85 @@ from src.carteleria.vitrina.aplicar import fusionar_http
 
 logger = logging.getLogger("Carteleria_Autonoma")
 
+_ultimo_png_mono = 0.0
+VACIO = ({"precios": []}, "error")
+
 
 def _bajar_pngs():
+    global _ultimo_png_mono
+    import time
+
+    ahora = time.monotonic()
+    if _ultimo_png_mono and (ahora - _ultimo_png_mono) < 600:
+        return
     try:
         from src.central_red_global.sync_tienda import bajar_pngs_de_maestra
 
         bajar_pngs_de_maestra()
+        _ultimo_png_mono = ahora
     except Exception:
         pass
 
 
+def _desde_cache(motivo: str):
+    cached = leer_cache()
+    if cached:
+        logger.info("Caché offline (%s ítems) — %s", len(cached.get("precios") or []), motivo)
+        return cached, "offline"
+    logger.error("Sin caché ni DB — %s", motivo)
+    return VACIO
+
+
+def _con_precios(data) -> bool:
+    return bool(isinstance(data, dict) and (data.get("precios") or []))
+
+
 def pulso_vitrina(abortar=None) -> tuple[dict, str]:
-    """Devuelve (data, status). data['precios'] trae icono como el panel PNG."""
+    try:
+        return _pulso(abortar)
+    except Exception as e:
+        logger.warning("Pulso TV: %s", e, exc_info=True)
+        return _desde_cache("excepción del pulso")
+
+
+def _pulso(abortar=None) -> tuple[dict, str]:
     from src.base_de_datos.database import db_manager
 
     ctx = contexto_sync(db_manager, config)
     http_data = None
-    if ctx["is_slave"] and ctx["master_ip"]:
-        logger.info(f"Tienda esclava, intentando HTTP maestra {ctx['master_ip']}")
-        http_data = leer_http_maestra(ctx["master_ip"], abortar=abortar)
+    if ctx.get("is_slave") and ctx.get("master_ip"):
+        logger.info("Esclava, HTTP maestra %s", ctx["master_ip"])
+        try:
+            http_data = leer_http_maestra(ctx["master_ip"], abortar=abortar)
+        except Exception:
+            http_data = None
 
-    if http_data and not ctx["db_viva"]:
-        from src.central_red_global.sync_tienda.ranking.desde_payload import asegurar_ranking
+    if http_data and not ctx.get("db_viva"):
+        try:
+            from src.central_red_global.sync_tienda.ranking.desde_payload import asegurar_ranking
 
-        logger.info("DB local no conectada, usando HTTP maestra")
-        data = asegurar_ranking(http_data, ctx["master_ip"])
-        data = fusionar_http(data, http_data, ctx["master_ip"])
-        guardar_cache(data)
-        _bajar_pngs()
-        return data, "online"
+            data = asegurar_ranking(http_data, ctx["master_ip"])
+            data = fusionar_http(data, http_data, ctx["master_ip"])
+        except Exception:
+            data = http_data
+        if _con_precios(data):
+            guardar_cache(data)
+            _bajar_pngs()
+            return data, "online"
+        return _desde_cache("HTTP maestra sin precios")
 
     try:
-        logger.info("Leyendo catálogo desde DB local")
         data = leer_catalogo_db(db_manager)
-        data = fusionar_http(data, http_data, ctx["master_ip"])
-        precios_count = len(data.get("precios") or [])
-        logger.info("Cartelería sync MariaDB/local (%s ítems)", precios_count)
-        if precios_count == 0:
-            logger.warning("DB local retornó 0 productos - revisar tabla productos")
+        data = fusionar_http(data, http_data, ctx.get("master_ip"))
+        if not _con_precios(data):
+            return _desde_cache("DB sin productos")
         guardar_cache(data)
-        if ctx["is_slave"]:
+        if ctx.get("is_slave"):
             _bajar_pngs()
         return data, "online"
     except Exception as e_req:
-        logger.warning("Error DB directa (%s), intentando caché offline...", e_req, exc_info=True)
-        cached = leer_cache()
-        if cached:
-            logger.info("Usando caché offline (%s ítems)", len(cached.get("precios") or []))
-            return cached, "offline"
-        logger.error("No hay caché disponible ni DB - cartelería sin datos")
-        return {}, "error"
+        logger.warning("DB directa: %s", e_req, exc_info=True)
+        if _con_precios(http_data):
+            guardar_cache(http_data)
+            return http_data, "online"
+        return _desde_cache("error DB")

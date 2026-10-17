@@ -83,8 +83,19 @@ def _inyectar_stamp_ui(data: bytes, ext: str) -> bytes:
     return data
 
 
+_cfg_tv_cache = None
+_cfg_tv_ts = 0.0
+
+
 def _leer_config_carteleria() -> dict:
-    """Admin15 guarda en DB; config.json es respaldo. La TV debe usar la DB."""
+    """Admin15 guarda en DB; no golpear MariaDB en cada /api/state."""
+    global _cfg_tv_cache, _cfg_tv_ts
+    import time
+
+    ahora = time.monotonic()
+    if _cfg_tv_cache is not None and (ahora - _cfg_tv_ts) < 20:
+        return dict(_cfg_tv_cache)
+
     from src.config import config
 
     out = {
@@ -113,11 +124,10 @@ def _leer_config_carteleria() -> dict:
                     out[key] = cfg.get("phone") or ""
     except Exception:
         pass
-    tema = str(out.get("carteleria_theme") or "premium")
-    if tema in ("auto", "negro_temu"):
-        tema = "premium"
-    out["carteleria_theme"] = tema
-    return out
+    out["carteleria_theme"] = "premium"
+    _cfg_tv_cache = out
+    _cfg_tv_ts = ahora
+    return dict(out)
 
 
 def _app_version_tv() -> str:
@@ -145,9 +155,9 @@ def _borrar_cache_chrome(root: str) -> None:
 
 
 def _perfil_kiosk_estable() -> str:
-    """Un perfil por versión de app + stamp de la cara web (CSS/HTML)."""
+    """Siempre la misma carpeta: al abrir de nuevo Chrome ya tiene la TV cacheada."""
     ver = f"{_app_version_tv().replace(' ', '')}-{_ui_stamp_tv()}"
-    root = os.path.join(tempfile.gettempdir(), f"tpv-carteleria-kiosk-{ver}")
+    root = os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk")
     os.makedirs(root, exist_ok=True)
     marca = os.path.join(root, "ui_version.txt")
     previa = ""
@@ -292,9 +302,15 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(404)
 
     def end_headers(self):
-        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-        self.send_header("Pragma", "no-cache")
-        self.send_header("Expires", "0")
+        path = (getattr(self, "path", "") or "").split("?", 1)[0]
+        if path.startswith("/api/"):
+            self.send_header("Cache-Control", "no-store")
+        elif path.startswith("/iconos/") or path.endswith(
+            (".png", ".jpg", ".jpeg", ".webp", ".svg", ".woff2")
+        ):
+            self.send_header("Cache-Control", "public, max-age=86400")
+        else:
+            self.send_header("Cache-Control", "no-store")
         super().end_headers()
 
     def _serve_icono(self):
@@ -337,7 +353,7 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
                 state = self._get_state()
             except Exception as exc:
                 logger.warning("Error armando /api/state: %s", exc)
-                state = {"config": {}, "precios": []}
+                state = {"config": {"data_status": "error"}, "precios": []}
             self._write_json(state)
             return
 
@@ -388,7 +404,10 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
 
     def _get_state(self):
         if self.main_window and hasattr(self.main_window, "get_web_state"):
-            return self.main_window.get_web_state()
+            st = self.main_window.get_web_state()
+            if isinstance(st, dict):
+                return st
+            return {"config": {"data_status": "error"}, "precios": []}
         try:
             from src.config import config
             from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
@@ -407,7 +426,7 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             }
         except Exception as exc:
             logger.warning("No se pudo construir el estado de cartelería: %s", exc)
-            return {"config": {}, "precios": []}
+            return {"config": {"data_status": "error"}, "precios": []}
 
     def _get_precios(self):
         precios = []
@@ -427,7 +446,7 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 class ServidorCuello:
     """Servidor HTTP + navegador kiosk para cartelería TV."""
 
-    def __init__(self, main_window=None, host="127.0.0.1", port=0):
+    def __init__(self, main_window=None, host="127.0.0.1", port=8765):
         self.main_window = main_window
         self.host = host
         self.port = port
@@ -462,19 +481,32 @@ class ServidorCuello:
                 logger.warning("Cara web TV no encontrada")
                 return False
 
+            if self.httpd:
+                self.asegurar_navegador()
+                self._iniciar_teclas()
+                return True
+            handler = lambda *args, **kwargs: CarteleriaWebHandler(
+                *args,
+                web_root=self.web_root,
+                main_window=self.main_window,
+                zip_store=self.zip_store,
+                **kwargs
+            )
+            base = int(self.port or 8765)
+            ultimo = None
+            for port in range(base, base + 6):
+                try:
+                    self.httpd = ThreadedHTTPServer((self.host, port), handler)
+                    break
+                except OSError as exc:
+                    ultimo = exc
+                    self.httpd = None
             if not self.httpd:
-                handler = lambda *args, **kwargs: CarteleriaWebHandler(
-                    *args,
-                    web_root=self.web_root,
-                    main_window=self.main_window,
-                    zip_store=self.zip_store,
-                    **kwargs
-                )
-                self.httpd = ThreadedHTTPServer((self.host, self.port), handler)
-                self.port = self.httpd.server_address[1]
-                self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
-                self.thread.start()
-                logger.info("Servidor HTTP iniciado en http://%s:%s", self.host, self.port)
+                raise ultimo or OSError("Puerto de la TV ocupado")
+            self.port = self.httpd.server_address[1]
+            self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
+            self.thread.start()
+            logger.info("Servidor HTTP iniciado en http://%s:%s", self.host, self.port)
 
             self._lanzar_navegador()
             self._iniciar_teclas()
@@ -534,8 +566,7 @@ class ServidorCuello:
         self._teclas = None
 
     def _tecla_f5(self):
-        logger.info("F5: recargo la cara web de la TV")
-        self._lanzar_navegador()
+        logger.info("F5: no recargo Chrome; la cara pide /api/state sola")
 
     def _tecla_f10(self):
         mw = self.main_window
@@ -608,8 +639,23 @@ class ServidorCuello:
             url, self._kiosk_profile, x, y, w, h, extra=flags_chrome_perfil(perfil_activo())
         )
 
+    def navegador_vivo(self) -> bool:
+        proc = self.browser_process
+        return bool(proc) and proc.poll() is None
+
+    def asegurar_navegador(self):
+        if self.navegador_vivo():
+            return
+        self.browser_process = None
+        self._lanzar_navegador()
+
+    def url_tv(self) -> str:
+        return f"http://{self.host}:{self.port}/"
+
     def _lanzar_navegador(self):
         try:
+            if self.navegador_vivo():
+                return
             self._cerrar_navegador()
             self._kiosk_profile = _perfil_kiosk_estable()
             import glob

@@ -5,6 +5,22 @@ import sys
 import math
 import argparse
 
+
+def _log(msg):
+    """No romper si stdout es una tubería muerta (WinError 233, exe / Cursor)."""
+    try:
+        print(msg)
+    except OSError:
+        pass
+
+
+def _es_tuberia_rota(exc) -> bool:
+    if isinstance(exc, BrokenPipeError):
+        return True
+    if isinstance(exc, OSError):
+        return getattr(exc, "winerror", None) == 233 or exc.errno in (32, 233)
+    return "233" in str(exc)
+
 # Constantes globales para remover_fondo (se pueden sobrescribir)
 BLACK_THRESHOLD = 40
 WHITE_THRESHOLD = 240
@@ -84,6 +100,8 @@ def _preparar_rembg():
     home = _u2net_home()
     os.makedirs(home, exist_ok=True)
     os.environ.setdefault("U2NET_HOME", home)
+    os.environ.setdefault("ORT_LOG_SEVERITY_LEVEL", "3")
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
 
 
 def _limitar_lado(img, max_lado=_MAX_LADO_TRABAJO):
@@ -103,7 +121,10 @@ def _sesion_rembg():
         ultimo = None
         for modelo in ("u2net", "u2netp"):
             try:
-                _REMBG_SESSION = new_session(modelo)
+                try:
+                    _REMBG_SESSION = new_session(modelo, providers=["CPUExecutionProvider"])
+                except TypeError:
+                    _REMBG_SESSION = new_session(modelo)
                 break
             except Exception as exc:
                 ultimo = exc
@@ -137,7 +158,15 @@ def remover_fondo(img, black_threshold=BLACK_THRESHOLD, white_threshold=WHITE_TH
             img = img.convert("RGBA")
         buf = io.BytesIO()
         img.save(buf, format="PNG")
-        crudo = remove(buf.getvalue(), session=_sesion_rembg())
+        try:
+            crudo = remove(buf.getvalue(), session=_sesion_rembg())
+        except Exception as exc:
+            if _es_tuberia_rota(exc):
+                raise RuntimeError(
+                    "La IA no pudo recortar: tubería de Windows cerrada. "
+                    "Probá de nuevo; si sigue, desmarcá Recorte con IA."
+                ) from exc
+            raise
         if isinstance(crudo, Image.Image):
             result = crudo.convert("RGBA")
         else:
@@ -427,20 +456,20 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
     Convierte imagen a PNG con fondo transparente y efectos 3D personalizables.
     """
     try:
-        print(f"INFO: Iniciando procesamiento de imagen: {input_path}")
+        _log(f"INFO: Iniciando procesamiento de imagen: {input_path}")
         cutout_path = input_path + '.cutout.png'
         if use_cached_cutout and __import__('os').path.exists(cutout_path):
             img = Image.open(cutout_path).convert('RGBA')
-            import time; time.sleep(0.02); print('INFO: Usando mascara de IA en cache.')
+            import time; time.sleep(0.02); _log('INFO: Usando mascara de IA en cache.')
         else:
             img = Image.open(input_path)
             if rotation:
                 img = img.rotate(-rotation, expand=True)
-            import time; time.sleep(0.02); print('INFO: Imagen abierta. Tamaño original:', img.size)
+            import time; time.sleep(0.02); _log(f'INFO: Imagen abierta. Tamaño original: {img.size}')
             img = remover_fondo(img, black_threshold=black_threshold, white_threshold=white_threshold, use_ai=use_ai)
             if use_ai and _tiene_transparencia(img):
                 img.save(cutout_path)
-        import time; time.sleep(0.02); print('INFO: Fondo removido/cargado.')
+        import time; time.sleep(0.02); _log('INFO: Fondo removido/cargado.')
 
         # Redimensionar a tamaño objetivo con alta calidad (si se especifica)
         if target_size:
@@ -471,7 +500,7 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
 
             img = canvas
 
-        import time; time.sleep(0.02); print("INFO: Aplicando color y nitidez...")
+        import time; time.sleep(0.02); _log("INFO: Aplicando color y nitidez...")
         has_alpha = img.mode == 'RGBA'
         alpha_channel = None
         if has_alpha:
@@ -491,11 +520,11 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
             img = img.convert('RGBA')
 
         if wet_shine_intensity > 0:
-            import time; time.sleep(0.02); print("INFO: Aplicando brillo húmedo...")
+            import time; time.sleep(0.02); _log("INFO: Aplicando brillo húmedo...")
             img = add_wet_shine(img, intensity=wet_shine_intensity)
 
         if water_droplets_density > 0:
-            import time; time.sleep(0.02); print("INFO: Agregando rocío / sudor de agua...")
+            import time; time.sleep(0.02); _log("INFO: Agregando rocío / sudor de agua...")
             img = add_water_droplets(img, density=water_droplets_density)
 
         # Crear imagen base para efectos 3D
@@ -528,12 +557,15 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
 
         # Guardar resultado
         result.save(output_path, 'PNG', dpi=(dpi, dpi))
-        print(f"INFO: Imagen procesada guardada en: {output_path}")
+        _log(f"INFO: Imagen procesada guardada en: {output_path}")
         return True
     except Exception as e:
-        print(f"ERROR: Error procesando imagen: {e}")
-        import traceback
-        traceback.print_exc()
+        _log(f"ERROR: Error procesando imagen: {e}")
+        try:
+            import traceback
+            traceback.print_exc()
+        except OSError:
+            pass
         if use_ai:
             raise
         return False
@@ -584,10 +616,10 @@ def main():
     )
 
     if success:
-        print("SUCCESS: Imagen procesada exitosamente.")
+        _log("SUCCESS: Imagen procesada exitosamente.")
         sys.exit(0)
     else:
-        print("ERROR: Falló el procesamiento de la imagen.")
+        _log("ERROR: Falló el procesamiento de la imagen.")
         sys.exit(1)
 
 if __name__ == '__main__':

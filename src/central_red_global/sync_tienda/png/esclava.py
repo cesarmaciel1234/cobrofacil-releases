@@ -5,18 +5,39 @@ from __future__ import annotations
 import json
 import logging
 import os
-import urllib.request
+import urllib.error
 
-from src.central_red_global.sync_tienda.rol import es_esclava, host_maestra, url_maestra
+from src.central_red_global.sync_tienda.rol import (
+    es_esclava,
+    es_esta_pc,
+    host_maestra,
+    pedir_a_maestra,
+    url_maestra,
+)
 
 logger = logging.getLogger("PunPro")
+
+
+def _aviso_red(host: str, exc: Exception) -> str:
+    if isinstance(exc, urllib.error.HTTPError) and exc.code == 401:
+        return (
+            "El PNG quedó en esta PC. No se copió a la maestra (clave de red). "
+            "La TV de acá ya lo puede mostrar."
+        )
+    return (
+        f"El PNG quedó en esta PC. No se copió a la maestra ({host}). "
+        "La TV de acá ya lo puede mostrar."
+    )
 
 
 def enviar_png_a_maestra(filename: str) -> tuple[bool, str]:
     if not es_esclava():
         return True, ""
     host = host_maestra()
-    if not host:
+    if not host or es_esta_pc(host):
+        return True, ""
+    from src.config import config
+    if not str(config.token_api_lan() or "").strip():
         return True, ""
     from src.carteleria.assets_paths import ruta_archivo_icono
 
@@ -35,32 +56,34 @@ def enviar_png_a_maestra(filename: str) -> tuple[bool, str]:
         f'Content-Disposition: form-data; name="file"; filename="{name}"\r\n'
         "Content-Type: image/png\r\n\r\n"
     ).encode("utf-8") + raw + f"\r\n--{boundary}--\r\n".encode("utf-8")
-    req = urllib.request.Request(
-        url_maestra("/api/carteleria/upload_png", host),
-        data=body,
-        method="POST",
-        headers={
-            "Content-Type": f"multipart/form-data; boundary={boundary}",
-            "User-Agent": "CobroFacil-Esclava",
-        },
-    )
     try:
-        with urllib.request.urlopen(req, timeout=12) as resp:
+        with pedir_a_maestra(
+            url_maestra("/api/carteleria/upload_png", host),
+            data=body,
+            method="POST",
+            extra={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            timeout=12,
+        ) as resp:
             if resp.status == 200:
                 logger.info("PNG enviado a maestra: %s", name)
-                return True, f"PNG copiado a la maestra ({host})."
-            return False, f"HTTP {resp.status} al enviar PNG"
+                try:
+                    from src.central_red_global.sync_tienda.aviso_tv import avisar_datos_nuevos
+
+                    avisar_datos_nuevos()
+                except Exception:
+                    pass
+                return True, "También quedó en la maestra."
+            return False, (
+                f"El PNG quedó en esta PC. No se copió a la maestra ({host}). "
+                "La TV de acá ya lo puede mostrar."
+            )
     except Exception as exc:
         logger.warning("No se pudo enviar PNG %s a %s: %s", name, host, exc)
-        return False, str(exc)
+        return False, _aviso_red(host, exc)
 
 
 def _listar_png_maestra(host: str) -> list[dict]:
-    req = urllib.request.Request(
-        url_maestra("/api/carteleria/png_list", host),
-        headers={"User-Agent": "CobroFacil-Esclava"},
-    )
-    with urllib.request.urlopen(req, timeout=8) as resp:
+    with pedir_a_maestra(url_maestra("/api/carteleria/png_list", host), timeout=8) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     return list(data.get("files") or [])
 
@@ -69,8 +92,7 @@ def _bajar_bytes(urls: list[str]) -> bytes:
     last = b""
     for url in urls:
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "CobroFacil-Esclava"})
-            with urllib.request.urlopen(req, timeout=20) as resp:
+            with pedir_a_maestra(url, timeout=20) as resp:
                 payload = resp.read()
             if payload and not payload.lstrip().startswith(b"{") and not payload.lstrip().startswith(b"<"):
                 return payload
@@ -104,7 +126,7 @@ def bajar_pngs_de_maestra(solo_nombres: list[str] | None = None) -> int:
     if not es_esclava():
         return 0
     host = host_maestra()
-    if not host:
+    if not host or es_esta_pc(host):
         return 0
     from src.carteleria.assets_paths import png_productos_dir
 

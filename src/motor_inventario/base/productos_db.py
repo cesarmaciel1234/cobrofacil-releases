@@ -92,13 +92,12 @@ def guardar_icono_producto(producto_id, icono):
             "UPDATE productos SET icono = ? WHERE id = ?",
             (icono or None, producto_id),
         )
-        if icono:
-            try:
-                from src.central_red_global.sync_tienda import enviar_png_a_maestra
+        try:
+            from src.central_red_global.sync_tienda.aviso_tv import avisar_datos_nuevos
 
-                enviar_png_a_maestra(icono)
-            except Exception:
-                pass
+            avisar_datos_nuevos()
+        except Exception:
+            pass
         return True, "PNG guardado."
     except Exception as e:
         logger.error("Error guardando PNG del producto %s: %s", producto_id, e)

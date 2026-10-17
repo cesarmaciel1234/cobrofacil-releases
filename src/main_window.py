@@ -771,6 +771,8 @@ class MainWindow(QMainWindow):
         if pos < 0:
             pos = index
         self.stacked_widget.removeWidget(w)
+        w.setParent(None)
+        w.setVisible(True)
         ph = marcador(index, lambda i=index: self._traer_modulo(i))
         self.stacked_widget.insertWidget(pos, ph)
         hoja = HojaSuelta(index, titulo(index), w, parent=self)
