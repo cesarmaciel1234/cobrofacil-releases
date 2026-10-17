@@ -639,8 +639,18 @@ def armar_hero(destacados, productos):
     return None
 
 
+def _ranking_sirve(ranking_remoto):
+    """Un dict vacío no es ranking: la maestra tiene que leer ventas locales."""
+    if not isinstance(ranking_remoto, dict) or not ranking_remoto:
+        return None
+    if not any(ranking_remoto.values()):
+        return None
+    return ranking_remoto
+
+
 def armar_paneles(productos, clima_icon="sol", clima_text="", ranking_remoto=None):
     from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
+    ranking_remoto = _ranking_sirve(ranking_remoto)
     if ranking_remoto is not None:
         productos = enriquecer_iconos(productos)
     else:

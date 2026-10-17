@@ -112,6 +112,12 @@ class MotoresMixin:
 
                 if es_esclava():
                     data = asegurar_ranking(data, host_maestra())
+                else:
+                    from src.central_red_global.sync_tienda.ranking.desde_payload import (
+                        completar_ranking_local,
+                    )
+
+                    data = completar_ranking_local(data)
             except Exception:
                 pass
             self.sos_data = data.get("sos") or []

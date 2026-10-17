@@ -31,6 +31,14 @@ def fusionar_http(data_db: dict, http_data: dict | None, master_ip: str) -> dict
             data = asegurar_ranking(data, master_ip)
         except Exception:
             pass
+    try:
+        from src.central_red_global.sync_tienda.rol import es_esclava
+        from src.central_red_global.sync_tienda.ranking.desde_payload import completar_ranking_local
+
+        if not es_esclava():
+            data = completar_ranking_local(data)
+    except Exception:
+        pass
     pub = None
     if master_ip:
         try:

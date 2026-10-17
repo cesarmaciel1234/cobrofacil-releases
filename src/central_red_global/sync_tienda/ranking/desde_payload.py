@@ -120,3 +120,19 @@ def asegurar_ranking(data: dict, host: str = "") -> dict:
         ranking = ranking_desde_top10(data.get("top10"))
     data["ranking"] = ranking or {}
     return data
+
+
+def completar_ranking_local(data: dict) -> dict:
+    """La maestra no pide HTTP: el ranking sale de sus propias ventas."""
+    data = data or {}
+    if ranking_tiene_datos(data.get("ranking")):
+        return data
+    try:
+        from src.central_red_global.sync_tienda.ranking.motor import ranking_carteleria
+
+        local = ranking_carteleria()
+    except Exception:
+        local = {}
+    if ranking_tiene_datos(local):
+        data["ranking"] = local
+    return data
