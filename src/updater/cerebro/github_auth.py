@@ -11,6 +11,17 @@ def github_token() -> str:
         if val:
             return val
     try:
+        from src.utils.paths import get_base_path
+
+        path = os.path.join(get_base_path(), "github_update_token.txt")
+        if os.path.isfile(path):
+            with open(path, encoding="utf-8") as fh:
+                val = fh.read().strip()
+            if val and not val.startswith("#"):
+                return val
+    except Exception:
+        pass
+    try:
         from src.config import config
 
         val = str(config.get("github_update_token") or config.get("github_token") or "").strip()

@@ -120,4 +120,5 @@ extract_tmp/
 
 # Config and Dumps
 config.json
+github_update_token.txt
 *.sql
