@@ -95,6 +95,20 @@ class TestCarteleriaEstructura(unittest.TestCase):
         self.assertEqual(precio_vigente(vacio), 19900)
         self.assertEqual(precio_vigente(asado), 18900)
 
+    def test_panel_4k_no_toca_full_hd(self):
+        from src.carteleria.lanzador_tv.navegador_kiosk import es_panel_4k
+
+        self.assertTrue(es_panel_4k(3840, 2160))
+        self.assertFalse(es_panel_4k(1920, 1080))
+        self.assertFalse(es_panel_4k(2560, 1440))
+
+    def test_cualquier_pulgada_usa_pixeles(self):
+        from src.carteleria.lanzador_tv.navegador_kiosk import usar_pixeles_panel
+
+        for medida in ((1366, 768), (1920, 1080), (2560, 1440), (3840, 2160), (5120, 2880), (7680, 4320)):
+            self.assertTrue(usar_pixeles_panel(*medida))
+        self.assertFalse(usar_pixeles_panel(0, 0))
+
 
 if __name__ == "__main__":
     unittest.main()

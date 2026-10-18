@@ -21,5 +21,7 @@ Si no hay MariaDB, se ve **Caché local** (último `carteleria_cache.json`). Si 
 9. `la_cara_web/app.js` pide cada 600 ms hasta tener precios+rotación, después 4 s. Un JSON sin precios no borra lo pintado.
 10. `motor_carteleria/iconos_tv.py` pone `icono_url`. La cara precarga PNG en `la_cara_web/modules/shared/foto_tarjeta/` y no deja el recuadro vacío hasta `.is-ready`.
 11. Columna 3 («¿Llevás…?»): `motor_carteleria/columna3/armar.py` llama `venta_cruzada/motor.py` (`VentaCruzadaInteligente.armar_slides`). Cuenta líneas del mismo ticket en `detalles_ventas`. El rubro solo rellena si no hay ventas. La cara está en `la_cara_web/modules/columna3/` y pinta el JSON; no rearma los pares.
+12. Medida del panel: `rect_chrome_tv` lee los píxeles físicos y no los recorta. Una TV nueva en 4K abre a 3840×2160; si el panel es 5K u 8K, abre a ese tamaño. Chrome lleva `--force-device-scale-factor=1`. El diseño sigue en 1920×1080; `app.js` lo encaja con `zoom` (en 4K el zoom queda en 2 y las letras se rasterizan a 4K).
+13. Motor Chromium (`perfil_pc.flags_chrome_perfil`): ANGLE D3D11, raster en GPU, raster fuera del hilo de la página, canvas 2D acelerado, color sRGB, letras en gris. Fotos con `image-rendering: high-quality`. Siguen 2 hilos de raster, sin zero-copy y sin Vulkan.
 
 Qué no romper: `src/cajero`, `qt_dpi`, puerto 8765, singleton `_lanzador_directo` (la esclava lo patea en `al_conectar.py`). El zócalo se desliza; no rediseñar el naranja por nitidez de letras.

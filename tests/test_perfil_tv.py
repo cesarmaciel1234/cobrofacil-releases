@@ -43,6 +43,12 @@ class TestPerfilTv(unittest.TestCase):
 
         flags = flags_chrome_perfil("eco")
         self.assertIn("--enable-gpu-rasterization", flags)
+        self.assertIn("--use-angle=d3d11", flags)
+        self.assertIn("--enable-oop-rasterization", flags)
+        self.assertIn("--enable-accelerated-2d-canvas", flags)
+        self.assertIn("--num-raster-threads=2", flags)
+        self.assertNotIn("--enable-zero-copy", flags)
+        self.assertFalse(any("Vulkan" in f for f in flags))
         self.assertNotIn("--disable-http-cache", flags)
 
 

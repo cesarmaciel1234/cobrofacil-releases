@@ -1,4 +1,4 @@
-"""TV Chromium: look premium estable (GPU sin zero-copy, sin golpear MariaDB)."""
+"""TV Chromium: el motor pinta en GPU (D3D11). Sin zero-copy y sin Vulkan."""
 
 import ctypes
 import logging
@@ -54,14 +54,31 @@ def limpiar_cache_perfil():
 
 
 def flags_chrome_perfil(perfil=None):
-    """Look premium + kiosk estable: GPU raster, sRGB, sin zero-copy (Intel se trababa)."""
+    """Motor Chromium al máximo estable.
+
+    Prendido (lo que el motor ya trae):
+    - ANGLE D3D11: el compositor de Windows.
+    - Raster en GPU y raster fuera del hilo de la página.
+    - Canvas 2D acelerado.
+    - Color sRGB, para que el televisor no corra los precios.
+    - Letras en gris: con zoom los subpíxeles no coinciden y se ven colores.
+
+    Apagado a propósito:
+    - zero-copy (en Intel se congelaba la ventana).
+    - Vulkan y más de 2 hilos de raster.
+    - Traductor, sync y red de fondo: no aportan a la cara.
+    """
+    del perfil
     return [
-        "--disable-lcd-text",
-        "--force-color-profile=srgb",
+        "--use-angle=d3d11",
         "--enable-gpu-rasterization",
+        "--enable-oop-rasterization",
+        "--enable-accelerated-2d-canvas",
         "--ignore-gpu-blocklist",
         "--num-raster-threads=2",
+        "--disable-lcd-text",
+        "--force-color-profile=srgb",
         "--disable-background-networking",
         "--disable-sync",
-        "--disable-features=Translate,MediaRouter,OptimizationHints,BackForwardCache",
+        "--disable-features=Translate,MediaRouter,OptimizationHints,BackForwardCache,InfiniteSessionRestore",
     ]

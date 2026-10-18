@@ -1404,12 +1404,12 @@
     align-content: stretch;
 }
 
-/* PNG de producto: el kiosk no debe suavizar de más al achicar */
+/* PNG: el escalador de Chromium (high-quality), no el filtro pixelado. */
 .tv-card img,
 .deal-stage__img,
 .asian-flash-product-image img,
 .chef-lobo-img {
-    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality;
 }
 
 

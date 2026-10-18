@@ -247,8 +247,12 @@ function ajustarZoomTv() {
     stage.style.width = `${W}px`;
     stage.style.height = `${H}px`;
     stage.style.transformOrigin = "0 0";
-    stage.style.transform = `scale(${s})`;
-    stage.style.margin = `${(ih - H * s) / 2}px 0 0 ${(iw - W * s) / 2}px`;
+    const ox = (iw - W * s) / 2;
+    const oy = (ih - H * s) / 2;
+    // zoom de Chromium: vuelve a rasterizar letras y CSS al tamaño del panel.
+    stage.style.zoom = String(s);
+    stage.style.transform = "none";
+    stage.style.margin = `${oy}px 0 0 ${ox}px`;
 }
 
 function setupTvKeys() {

@@ -11,4 +11,4 @@ Cómo funciona: en Windows el `chrome.exe` que se lanza a veces termina y deja e
 
 Qué devuelve cuando falla: `last_error` (sin Chrome/Edge). No abre el navegador por defecto.
 
-Qué no debe cambiar: un solo `--user-data-dir` (`tpv-carteleria-kiosk`). No matar `chrome.exe` de toda la PC.
+Qué no debe cambiar: un solo `--user-data-dir` (`tpv-carteleria-kiosk`). No matar `chrome.exe` de toda la PC. Los flags de calidad viven en `perfil_pc.flags_chrome_perfil` (un solo `--disable-features`). No zero-copy, no Vulkan, no más de 2 hilos de raster. `rect_chrome_tv` abre al tamaño físico del panel con `--force-device-scale-factor=1`.

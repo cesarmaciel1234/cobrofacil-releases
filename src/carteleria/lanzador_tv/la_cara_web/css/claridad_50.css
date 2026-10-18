@@ -30,7 +30,7 @@ body .flash-clima-icon,
 body[data-theme="premium"] .deal-stage__img,
 body[data-theme="premium"] .hero-section .deal-stage__img {
     mix-blend-mode: normal !important;
-    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality;
     filter: contrast(1.2) saturate(1.08) brightness(1.03) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.4)) !important;
 }
 
@@ -128,7 +128,7 @@ body[data-theme="premium"] .asian-rank-card.is-photo .rank-stage .deal-stage__im
     object-fit: contain !important;
     object-position: center 62% !important;
     mix-blend-mode: normal !important;
-    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality;
     transform-origin: 50% 78%;
     transform: translateY(-6%) scale(1.12) !important;
     filter:

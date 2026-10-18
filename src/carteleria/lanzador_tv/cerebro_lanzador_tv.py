@@ -32,6 +32,7 @@ from src.carteleria.lanzador_tv.navegador_kiosk import (
     flags_pantalla_completa,
     indice_monitor_tv,
     perfil_kiosk_ocupado,
+    rect_chrome_tv,
     rect_monitor_nativo,
 )
 
@@ -507,6 +508,7 @@ class ServidorCuello:
         self._teclas = None
         self.last_error = ""
         self._nav_launch_mono = 0.0
+        self._pixel_real = False
 
     def iniciar(self, screen_index=None):
         try:
@@ -662,6 +664,12 @@ class ServidorCuello:
             logger.warning("Cerrar perfil kiosk: %s", exc)
 
     def _geometria_tv(self):
+        nativo = rect_chrome_tv(self.screen_index)
+        if nativo:
+            x, y, w, h, pixel_real = nativo
+            self._pixel_real = bool(pixel_real)
+            return x, y, w, h
+        self._pixel_real = False
         nativo = rect_monitor_nativo(self.screen_index)
         if nativo:
             return nativo
@@ -687,8 +695,11 @@ class ServidorCuello:
         from src.carteleria.lanzador_tv.perfil_pc import flags_chrome_perfil, perfil_activo
 
         x, y, w, h = self._geometria_tv()
+        extra = list(flags_chrome_perfil(perfil_activo()))
+        if self._pixel_real:
+            extra.append("--force-device-scale-factor=1")
         return flags_pantalla_completa(
-            url, self._kiosk_profile, x, y, w, h, extra=flags_chrome_perfil(perfil_activo())
+            url, self._kiosk_profile, x, y, w, h, extra=extra
         )
 
     def navegador_vivo(self, con_gracia=True) -> bool:

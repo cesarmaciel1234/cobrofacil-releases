@@ -131,6 +131,22 @@ def indice_monitor_tv():
         return 1
 
 
+def es_panel_4k(ancho, alto):
+    """3840×2160 y vecinos. Un Full HD no entra."""
+    try:
+        return int(ancho) >= 3200 or int(alto) >= 2000
+    except (TypeError, ValueError):
+        return False
+
+
+def usar_pixeles_panel(ancho, alto):
+    """Cualquier TV con tamaño físico leíble: 32, 43, 50, 55 y el resto."""
+    try:
+        return int(ancho) >= 640 and int(alto) >= 480
+    except (TypeError, ValueError):
+        return False
+
+
 def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
     """Fullscreen a 1 px = 1 px del monitor (sin zoom de Windows)."""
     os.makedirs(profile, exist_ok=True)
@@ -138,7 +154,6 @@ def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
         f"--user-data-dir={profile}",
         "--no-first-run",
         "--no-default-browser-check",
-        "--disable-features=Translate,InfiniteSessionRestore",
         "--disable-session-crashed-bubble",
         "--disable-infobars",
         "--disable-restore-session-state",
@@ -156,10 +171,75 @@ def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
     return flags
 
 
-def rect_monitor_nativo(indice=None):
-    """Píxeles reales del monitor (no los lógicos de Qt / 125% de Windows)."""
-    if platform.system() != "Windows":
+def _pels_monitor(hmon):
+    """Ancho y alto físicos del panel (3840 en una 4K aunque Windows esté al 150%)."""
+    try:
+        class RECT(ctypes.Structure):
+            _fields_ = [
+                ("left", ctypes.c_long),
+                ("top", ctypes.c_long),
+                ("right", ctypes.c_long),
+                ("bottom", ctypes.c_long),
+            ]
+
+        class MONITORINFOEXW(ctypes.Structure):
+            _fields_ = [
+                ("cbSize", ctypes.c_ulong),
+                ("rcMonitor", RECT),
+                ("rcWork", RECT),
+                ("dwFlags", ctypes.c_ulong),
+                ("szDevice", ctypes.c_wchar * 32),
+            ]
+
+        class DEVMODEW(ctypes.Structure):
+            _fields_ = [
+                ("dmDeviceName", ctypes.c_wchar * 32),
+                ("dmSpecVersion", ctypes.c_ushort),
+                ("dmDriverVersion", ctypes.c_ushort),
+                ("dmSize", ctypes.c_ushort),
+                ("dmDriverExtra", ctypes.c_ushort),
+                ("dmFields", ctypes.c_ulong),
+                ("dmPositionX", ctypes.c_long),
+                ("dmPositionY", ctypes.c_long),
+                ("dmDisplayOrientation", ctypes.c_ulong),
+                ("dmDisplayFixedOutput", ctypes.c_ulong),
+                ("dmColor", ctypes.c_short),
+                ("dmDuplex", ctypes.c_short),
+                ("dmYResolution", ctypes.c_short),
+                ("dmTTOption", ctypes.c_short),
+                ("dmCollate", ctypes.c_short),
+                ("dmFormName", ctypes.c_wchar * 32),
+                ("dmLogPixels", ctypes.c_ushort),
+                ("dmBitsPerPel", ctypes.c_ulong),
+                ("dmPelsWidth", ctypes.c_ulong),
+                ("dmPelsHeight", ctypes.c_ulong),
+                ("dmDisplayFlags", ctypes.c_ulong),
+                ("dmDisplayFrequency", ctypes.c_ulong),
+            ]
+
+        info = MONITORINFOEXW()
+        info.cbSize = ctypes.sizeof(MONITORINFOEXW)
+        if not ctypes.windll.user32.GetMonitorInfoW(hmon, ctypes.byref(info)):
+            return None
+        mode = DEVMODEW()
+        mode.dmSize = ctypes.sizeof(DEVMODEW)
+        ENUM_CURRENT_SETTINGS = -1
+        if not ctypes.windll.user32.EnumDisplaySettingsW(
+            info.szDevice, ENUM_CURRENT_SETTINGS, ctypes.byref(mode)
+        ):
+            return None
+        ancho = int(mode.dmPelsWidth)
+        alto = int(mode.dmPelsHeight)
+        if ancho < 640 or alto < 480:
+            return None
+        return int(mode.dmPositionX), int(mode.dmPositionY), ancho, alto
+    except Exception:
         return None
+
+
+def _listar_monitores():
+    if platform.system() != "Windows":
+        return []
     try:
         class RECT(ctypes.Structure):
             _fields_ = [
@@ -173,22 +253,47 @@ def rect_monitor_nativo(indice=None):
 
         def _cb(hmon, hdc, lprect, lparam):
             r = ctypes.cast(lprect, ctypes.POINTER(RECT)).contents
-            monitors.append((r.left, r.top, r.right - r.left, r.bottom - r.top))
+            logico = (r.left, r.top, r.right - r.left, r.bottom - r.top)
+            monitors.append({"logico": logico, "fisico": _pels_monitor(hmon)})
             return 1
 
         MONITORENUMPROC = ctypes.WINFUNCTYPE(
             ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.POINTER(RECT), ctypes.c_void_p
         )
         ctypes.windll.user32.EnumDisplayMonitors(0, 0, MONITORENUMPROC(_cb), 0)
-        if not monitors:
-            return None
-        if indice is not None and 0 <= int(indice) < len(monitors):
-            return monitors[int(indice)]
-        if len(monitors) > 1:
-            return max(monitors[1:], key=lambda m: m[2] * m[3])
-        return monitors[0]
+        return monitors
     except Exception:
+        return []
+
+
+def _elegir_monitor(indice, monitors):
+    if not monitors:
         return None
+    if indice is not None and 0 <= int(indice) < len(monitors):
+        return monitors[int(indice)]
+    if len(monitors) > 1:
+        return max(monitors[1:], key=lambda m: m["logico"][2] * m["logico"][3])
+    return monitors[0]
+
+
+def rect_monitor_nativo(indice=None):
+    """Rectángulo que ya usa el kiosk (Full HD y el resto siguen igual)."""
+    elegido = _elegir_monitor(indice, _listar_monitores())
+    if not elegido:
+        return None
+    return elegido["logico"]
+
+
+def rect_chrome_tv(indice=None):
+    """(x, y, w, h, pixel_real). Sin techo: 4K, 5K y 8K usan todos los píxeles del panel."""
+    elegido = _elegir_monitor(indice, _listar_monitores())
+    if not elegido:
+        return None
+    fisico = elegido["fisico"]
+    if fisico and usar_pixeles_panel(fisico[2], fisico[3]):
+        return fisico[0], fisico[1], fisico[2], fisico[3], True
+    x, y, w, h = elegido["logico"]
+    return x, y, w, h, False
 
 
 def _foco_es_navegador_tv():
