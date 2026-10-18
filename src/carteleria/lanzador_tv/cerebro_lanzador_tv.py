@@ -91,7 +91,7 @@ _cfg_tv_cache = None
 _cfg_tv_ts = 0.0
 
 
-def _leer_config_carteleria() -> dict:
+def _leer_config_carteleria(solo_memoria: bool = False) -> dict:
     """Admin15 guarda en DB; no golpear MariaDB en cada /api/state."""
     global _cfg_tv_cache, _cfg_tv_ts
     import time
@@ -99,8 +99,19 @@ def _leer_config_carteleria() -> dict:
     ahora = time.monotonic()
     if _cfg_tv_cache is not None and (ahora - _cfg_tv_ts) < 20:
         return dict(_cfg_tv_cache)
+    if solo_memoria and _cfg_tv_cache is not None:
+        return dict(_cfg_tv_cache)
 
     from src.config import config
+
+    if solo_memoria:
+        return {
+            "business_name": config.get("business_name", "Cartelería"),
+            "phone": config.get("phone", ""),
+            "mensaje_zocalo": config.get("mensaje_zocalo", ""),
+            "carteleria_theme": config.get("carteleria_theme", "premium"),
+            "carteleria_perf": config.get("carteleria_perf", "auto"),
+        }
 
     out = {
         "business_name": config.get("business_name", "Cartelería"),

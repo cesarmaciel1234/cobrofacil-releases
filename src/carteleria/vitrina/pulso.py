@@ -46,6 +46,25 @@ def _con_precios(data) -> bool:
     return bool(isinstance(data, dict) and (data.get("precios") or []))
 
 
+def _cerrar_ranking(data, ctx):
+    """Ranking en el hilo del pulso, nunca en el hilo de la pantalla."""
+    if not isinstance(data, dict):
+        return data
+    try:
+        from src.central_red_global.sync_tienda.ranking.desde_payload import (
+            completar_ranking_local,
+            ranking_tiene_datos,
+        )
+
+        if ranking_tiene_datos(data.get("ranking")):
+            return data
+        if ctx.get("is_slave"):
+            return data
+        return completar_ranking_local(data)
+    except Exception:
+        return data
+
+
 def pulso_vitrina(abortar=None) -> tuple[dict, str]:
     try:
         return _pulso(abortar)
@@ -75,6 +94,7 @@ def _pulso(abortar=None) -> tuple[dict, str]:
         except Exception:
             data = http_data
         if _con_precios(data):
+            data = _cerrar_ranking(data, ctx)
             guardar_cache(data)
             _bajar_pngs()
             return data, "online"
@@ -85,6 +105,7 @@ def _pulso(abortar=None) -> tuple[dict, str]:
         data = fusionar_http(data, http_data, ctx.get("master_ip"))
         if not _con_precios(data):
             return _desde_cache("DB sin productos")
+        data = _cerrar_ranking(data, ctx)
         guardar_cache(data)
         if ctx.get("is_slave"):
             _bajar_pngs()

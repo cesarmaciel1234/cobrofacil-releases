@@ -48,6 +48,7 @@ class LanzadorDirectoTV(
         self._huella = ""
         self._vivo = False
         self._paneles_worker = None
+        self._paneles_pendiente = False
         self.last_error = ""
         self._retry_count = 0
         self._max_retries = 10

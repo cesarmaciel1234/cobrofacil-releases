@@ -69,15 +69,19 @@ class PanelesMixin:
             self._publicar_estado()
             return
         if self._paneles_worker and self._paneles_worker.isRunning():
+            self._paneles_pendiente = True
             self._publicar_estado()
             return
+        self._paneles_pendiente = False
         self._huella = huella
         copia = [dict(p) for p in self.rows_precios]
         if self._paneles_worker is not None:
+            viejo = self._paneles_worker
             try:
-                self._paneles_worker.listo.disconnect(self._on_paneles_listos)
+                viejo.listo.disconnect(self._on_paneles_listos)
             except Exception:
                 pass
+            viejo.finished.connect(viejo.deleteLater)
         self._paneles_worker = PanelesWorker(
             copia, self._clima_icon, self._clima, self._ranking_remoto, self
         )
@@ -89,12 +93,12 @@ class PanelesMixin:
         if not self._vivo:
             return
         paneles = (payload or {}).get("paneles") if isinstance(payload, dict) else payload
-        precios = (payload or {}).get("precios") if isinstance(payload, dict) else None
         if paneles:
             self._paneles = paneles
         else:
             logger.warning("Paneles vacíos — reintento en 2s, se conserva lo anterior")
             QTimer.singleShot(2000, lambda: self._refrescar_paneles(force=True))
-        if precios:
-            self.rows_precios = precios
         self._publicar_estado()
+        if self._paneles_pendiente and self._vivo:
+            self._paneles_pendiente = False
+            self._refrescar_paneles(force=True)

@@ -65,6 +65,31 @@ class TestRankingMaestra(unittest.TestCase):
                 nombres.append(item.get("nombre"))
         self.assertIn("Asado", nombres)
 
+    def test_columna3_usa_el_mismo_ticket(self):
+        from src.carteleria.motor_carteleria.estado_tv import armar_columna3
+
+        slide = {
+            "tipo": "cruzada",
+            "nombre": "Asado",
+            "pregunta": "¿LLEVÁS ASADO?",
+            "relacionados": ["VACIO"],
+            "fuente": "tickets",
+        }
+        with patch(
+            "src.carteleria.motor_carteleria.venta_cruzada.VentaCruzadaInteligente.armar_slides",
+            return_value=[slide],
+        ) as armar, patch(
+            "src.carteleria.motor_carteleria.venta_cruzada.VentaCruzadaInteligente.usar_relleno_catalogo",
+            return_value=False,
+        ):
+            out = armar_columna3(
+                [{"nombre": "Aceite de oliva", "precio": 3000, "departamento": "ALMACEN"}],
+                ranking_remoto={"hoy_volumen": [{"nombre": "Asado", "cantidad": 4, "recaudacion": 1}]},
+            )
+        self.assertTrue(armar.called)
+        self.assertEqual(out[0]["fuente"], "tickets")
+        self.assertEqual(out[0]["relacionados"], ["VACIO"])
+
 
 if __name__ == "__main__":
     unittest.main()

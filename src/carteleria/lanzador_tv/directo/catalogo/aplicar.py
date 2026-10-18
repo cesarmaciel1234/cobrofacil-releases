@@ -43,13 +43,8 @@ class CatalogoMixin:
         return h.hexdigest()
 
     def _aplicar_catalogo(self, productos):
-        try:
-            from src.carteleria.motor_carteleria import iconos_tv
-
-            iconos_tv._png_nombre_cache.clear()
-            iconos_tv._png_indice_cache = None
-        except Exception:
-            pass
+        # El índice de PNG se renueva solo (20 s). Borrarlo en cada pulso
+        # vuelve a recorrer la galería y retrasa las tarjetas.
         normalized = self._normalizar_productos(productos)
         if not normalized:
             if self.rows_precios:

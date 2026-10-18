@@ -106,20 +106,7 @@ class MotoresMixin:
                 return
             self._retry_count = 0
             self._sync_status = status or "online"
-            try:
-                from src.central_red_global.sync_tienda.ranking.desde_payload import asegurar_ranking
-                from src.central_red_global.sync_tienda.rol import es_esclava, host_maestra
-
-                if es_esclava():
-                    data = asegurar_ranking(data, host_maestra())
-                else:
-                    from src.central_red_global.sync_tienda.ranking.desde_payload import (
-                        completar_ranking_local,
-                    )
-
-                    data = completar_ranking_local(data)
-            except Exception:
-                pass
+            # El ranking ya viene del hilo (pulso_vitrina). Acá no hay HTTP ni MariaDB.
             self.sos_data = data.get("sos") or []
             self.top10_data = data.get("top10") or {}
             self._ranking_remoto = data.get("ranking") or {}

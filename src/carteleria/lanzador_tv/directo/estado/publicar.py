@@ -29,8 +29,7 @@ class EstadoMixin:
             from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
             from src.carteleria.lanzador_tv.cerebro_lanzador_tv import _leer_config_carteleria
 
-            self._marcar_publicidad(self.rows_precios)
-            cfg_tv = _leer_config_carteleria()
+            cfg_tv = _leer_config_carteleria(solo_memoria=True)
             perf = perfil_activo()
             business_name = cfg_tv["business_name"]
             try:
