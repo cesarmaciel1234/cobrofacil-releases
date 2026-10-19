@@ -73,10 +73,24 @@ class MotoresMixin:
         if not self._vivo or not self._cuello:
             return
         try:
-            if self._cuello.navegador_vivo():
+            if not self._cuello.navegador_vivo():
+                logger.info("TV: el kiosk no está; abro una sola ventana en %s", self._cuello.url_tv())
+                self._cuello.asegurar_navegador()
                 return
-            logger.info("TV: el kiosk no está; abro una sola ventana en %s", self._cuello.url_tv())
-            self._cuello.asegurar_navegador()
+            import time
+
+            ahora = time.monotonic()
+            lanzado = float(getattr(self._cuello, "_nav_launch_mono", 0) or 0)
+            if lanzado and (ahora - lanzado) < 20:
+                return
+            ultima = float(getattr(self, "_cara_viva_mono", 0) or 0)
+            if ultima and (ahora - ultima) < 25:
+                return
+            if not ultima and lanzado and (ahora - lanzado) < 25:
+                return
+            logger.warning("TV sin señal de la cara; reabro el kiosk")
+            self._cara_viva_mono = ahora
+            self._cuello._lanzar_navegador(forzar=True)
         except Exception as e:
             logger.warning("Watchdog TV: %s", e)
 
@@ -115,7 +129,10 @@ class MotoresMixin:
 
                 pub = data.get("publicidad")
                 if pub is not None:
+                    antes = motor_publicidad.as_dict()
                     motor_publicidad.aplicar_remoto(pub)
+                    if motor_publicidad.as_dict() != antes:
+                        motor_publicidad._avisar_tv()
             except Exception:
                 pass
             self._aplicar_catalogo(productos)

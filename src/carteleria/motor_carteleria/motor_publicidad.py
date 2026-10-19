@@ -2,8 +2,6 @@ import json
 import logging
 import os
 import time
-import urllib.request
-
 from src.utils.paths import get_base_path
 
 logger = logging.getLogger("PunPro")
@@ -24,6 +22,8 @@ class MotorPublicidad:
             cls._instance._ids = set()
             cls._instance._mtime = 0
             cls._instance._last_load = 0
+            cls._instance._rev = 0
+            cls._instance._escucha = False
             cls._instance.cargar_configuracion()
         return cls._instance
 
@@ -31,12 +31,34 @@ class MotorPublicidad:
         return {
             "promocionados": sorted(self._nombres),
             "ids": sorted(self._ids),
+            "rev": int(getattr(self, "_rev", 0) or 0),
         }
 
+    def _firma(self):
+        data = self.as_dict()
+        return (tuple(data["promocionados"]), tuple(data["ids"]))
+
+    def _siguiente_rev(self) -> int:
+        """Un número compartido en la base. La maestra y la esclava pisan la misma lista."""
+        actual = int(getattr(self, "_rev", 0) or 0)
+        previo = self._cargar_db()
+        if isinstance(previo, dict):
+            try:
+                actual = max(actual, int(previo.get("rev") or 0))
+            except (TypeError, ValueError):
+                pass
+        return actual + 1
+
     def aplicar_remoto(self, data):
-        """Lista que manda la maestra / el JSON de sync. Pisa la memoria local."""
+        """Reemplaza la lista entera. Una revisión vieja no pisa la última que se guardó."""
         if not isinstance(data, dict):
-            return
+            return False
+        try:
+            rev = int(data.get("rev") or 0)
+        except (TypeError, ValueError):
+            rev = 0
+        if self._rev and rev and rev < self._rev:
+            return False
         nombres = data.get("promocionados") or data.get("nombres") or []
         ids = data.get("ids") or []
         self._nombres = {_norm(x) for x in nombres if _norm(x)}
@@ -46,6 +68,8 @@ class MotorPublicidad:
                 self._ids.add(int(pid))
             except (TypeError, ValueError):
                 pass
+        if rev:
+            self._rev = rev
         try:
             os.makedirs(os.path.dirname(self.config_path) or ".", exist_ok=True)
             with open(self.config_path, "w", encoding="utf-8") as f:
@@ -55,6 +79,7 @@ class MotorPublicidad:
             self._mtime = 0
         self._guardar_db()
         self._last_load = time.monotonic()
+        return True
 
     def _traer_de_maestra(self):
         try:
@@ -82,7 +107,9 @@ class MotorPublicidad:
                 return None
             raw = rows[0]["config_json"] if isinstance(rows[0], dict) else rows[0][0]
             data = json.loads(raw or "{}")
-            if data.get("promocionados") or data.get("ids"):
+            if isinstance(data, dict) and (
+                "promocionados" in data or "ids" in data or "nombres" in data
+            ):
                 return data
         except Exception as exc:
             logger.debug("publicidad DB: %s", exc)
@@ -105,7 +132,12 @@ class MotorPublicidad:
 
     def _enviar_a_maestra(self):
         try:
-            from src.central_red_global.sync_tienda.rol import cabeceras_lan, es_esclava, host_maestra, url_maestra
+            from src.central_red_global.sync_tienda.rol import (
+                es_esclava,
+                host_maestra,
+                pedir_a_maestra,
+                url_maestra,
+            )
 
             if not es_esclava():
                 return
@@ -113,15 +145,15 @@ class MotorPublicidad:
             if not host:
                 return
             body = json.dumps(self.as_dict(), ensure_ascii=False).encode("utf-8")
-            req = urllib.request.Request(
+            pedir_a_maestra(
                 url_maestra("/api/carteleria/publicidad", host),
                 data=body,
                 method="POST",
-                headers=cabeceras_lan({"Content-Type": "application/json"}),
-            )
-            urllib.request.urlopen(req, timeout=6).read()
+                extra={"Content-Type": "application/json"},
+                timeout=6,
+            ).read()
         except Exception as exc:
-            logger.debug("publicidad POST maestra: %s", exc)
+            logger.warning("publicidad POST maestra: %s", exc)
 
     def cargar_configuracion(self, forzar=False):
         """JSON local + tabla compartida en MariaDB."""
@@ -131,6 +163,7 @@ class MotorPublicidad:
                 mtime = os.path.getmtime(self.config_path)
         except OSError:
             mtime = 0
+        self.asegurar_escucha()
         ahora = time.monotonic()
         if (
             not forzar
@@ -155,8 +188,12 @@ class MotorPublicidad:
                     data = json.load(f)
             except Exception:
                 data = {}
-        if remoto and (remoto.get("promocionados") or remoto.get("ids")):
+        if remoto is not None:
             data = remoto
+        try:
+            self._rev = int(data.get("rev") or 0)
+        except (TypeError, ValueError):
+            self._rev = 0
         for item in data.get("promocionados") or []:
             clave = _norm(item)
             if clave:
@@ -171,17 +208,55 @@ class MotorPublicidad:
         data = {
             "promocionados": [str(item).strip() for item in lista_nombres if str(item).strip()],
             "ids": [int(pid) for pid in (lista_ids or []) if pid is not None],
+            "rev": self._siguiente_rev(),
         }
-        try:
-            os.makedirs(os.path.dirname(self.config_path) or ".", exist_ok=True)
-            with open(self.config_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-        except OSError as exc:
-            logger.warning("No se pudo guardar publicidad_config.json: %s", exc)
         self.aplicar_remoto(data)
-        self._guardar_db()
         self._enviar_a_maestra()
-        self.cargar_configuracion(forzar=True)
+        self._avisar_pares()
+        self._avisar_tv()
+
+    def _avisar_pares(self):
+        """La otra PC (maestra o esclava) reemplaza su lista al recibir este UDP."""
+        self.asegurar_escucha()
+        try:
+            from src.central_red_global.network_engine import get_network_engine
+
+            eng = get_network_engine()
+            if eng is None:
+                return
+            eng.broadcast("PUBLICIDAD", self.as_dict())
+        except Exception as exc:
+            logger.debug("publicidad aviso pares: %s", exc)
+
+    def asegurar_escucha(self):
+        if getattr(self, "_escucha", False):
+            return
+        try:
+            from src.central_red_global.network_engine import get_network_engine
+
+            eng = get_network_engine()
+            if eng is None:
+                return
+            eng.message_received.connect(self._al_mensaje_red)
+            self._escucha = True
+        except Exception as exc:
+            logger.debug("publicidad escucha: %s", exc)
+
+    def _al_mensaje_red(self, _origen, tipo, datos):
+        if str(tipo or "") != "PUBLICIDAD" or not isinstance(datos, dict):
+            return
+        antes = self._firma()
+        if self.aplicar_remoto(datos) and self._firma() != antes:
+            self._avisar_tv()
+
+    def _avisar_tv(self):
+        """La cara mira el sello. Sin esto, un cambio de avisos no redibuja la TV."""
+        try:
+            from src.central_red_global.sync_tienda.aviso_tv import pisar_sello
+
+            pisar_sello()
+        except Exception as exc:
+            logger.debug("publicidad aviso TV: %s", exc)
 
     def is_promocionado(self, nombre_producto, producto_id=None):
         if producto_id is not None:
@@ -193,12 +268,7 @@ class MotorPublicidad:
         clave = _norm(nombre_producto)
         if not clave:
             return False
-        if clave in self._nombres:
-            return True
-        for marcado in self._nombres:
-            if clave == marcado or clave.startswith(marcado + " "):
-                return True
-        return False
+        return clave in self._nombres
 
     def _traer_faltantes(self, productos):
         from src.base_de_datos.database import db_manager
@@ -244,8 +314,6 @@ class MotorPublicidad:
         except Exception as exc:
             logger.debug("publicidad extra: %s", exc)
         for item in lista:
-            if item.get("es_publicidad"):
-                continue
             item["es_publicidad"] = self.is_promocionado(item.get("nombre"), item.get("id"))
         return lista
 

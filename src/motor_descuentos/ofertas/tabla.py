@@ -20,11 +20,10 @@ def _fmt_plata(v):
     return f"${n:,.2f}"
 
 
-def _fmt_stock(v):
-    n = _n(v)
-    if abs(n - round(n)) < 0.001:
-        return f"{int(round(n)):,}"
-    return f"{n:,.2f}"
+def _fmt_stock(prod, v):
+    from src.motor_inventario.unidad_medida.logica.formatear import formatear_stock
+
+    return formatear_stock(prod, v)
 
 
 def _texto_reglas(r):
@@ -67,7 +66,7 @@ class TablaOfertas(QTableWidget):
         hh.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         hh.setMinimumSectionSize(64)
         # Nombre estira; Stock al final.
-        col_widths = [-1, 100, 100, 160, 80]
+        col_widths = [-1, 110, 110, 150, 150]
         for i, w in enumerate(col_widths):
             if w == -1:
                 hh.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
@@ -134,7 +133,7 @@ class TablaOfertas(QTableWidget):
                 (_fmt_plata(r.get("precio")), Qt.AlignmentFlag.AlignRight),
                 (_fmt_plata(precio_promo) if en_promo else "—", Qt.AlignmentFlag.AlignRight),
                 (_texto_reglas(r), Qt.AlignmentFlag.AlignLeft),
-                (_fmt_stock(stock), Qt.AlignmentFlag.AlignRight),
+                (_fmt_stock(r, stock), Qt.AlignmentFlag.AlignRight),
             ]
 
             for j, (v, align) in enumerate(vals):

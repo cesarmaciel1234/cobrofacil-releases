@@ -8,4 +8,4 @@ Cómo funciona: si la estructura es la misma, solo cambia nombre y PNG. `ponerFo
 
 Qué devuelve cuando falla: texto “Sin ventas todavía.”
 
-Qué no debe cambiar: no borrar el DOM en cada giro. Foto vía `foto_tarjeta/`.
+Qué no debe cambiar: no borrar el DOM en cada giro. Foto vía `foto_tarjeta/`. El texto de la tarjeta camufla la venta real (porcentaje, `%`, familias). La cifra verdadera queda en `cantidad` y `recaudacion`.

@@ -4,6 +4,16 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QDate, QTime
 
+from src.cajero.paso8_historial.ui.calendario import CalendarioTrabajo
+
+
+def _marcar_dias(dialogo):
+    from src.jefe.reportes.periodo.dialogo.dias_trabajados import fechas_trabajadas
+
+    cal = dialogo.date_filt.calendarWidget()
+    if hasattr(cal, "marcar"):
+        cal.marcar(fechas_trabajadas())
+
 
 def armar_filtros(dialogo, left_vbox, on_cargar):
     filter_grid = QGridLayout()
@@ -11,7 +21,13 @@ def armar_filtros(dialogo, left_vbox, on_cargar):
 
     filter_grid.addWidget(QLabel("Del día:"), 0, 0)
     dialogo.date_filt = QDateEdit(QDate.currentDate())
+    dialogo.date_filt.setDisplayFormat("dd/MM/yyyy")
     dialogo.date_filt.setCalendarPopup(True)
+    dialogo.date_filt.setCalendarWidget(CalendarioTrabajo())
+    cal = dialogo.date_filt.calendarWidget()
+    hoy = QDate.currentDate()
+    cal.setSelectedDate(hoy)
+    cal.setCurrentPage(hoy.year(), hoy.month())
     dialogo.date_filt.dateChanged.connect(on_cargar)
     filter_grid.addWidget(dialogo.date_filt, 0, 1)
 
@@ -23,6 +39,7 @@ def armar_filtros(dialogo, left_vbox, on_cargar):
     btn_refresh.setObjectName("BtnRefresh")
     btn_refresh.setFixedHeight(40)
     btn_refresh.clicked.connect(on_cargar)
+    btn_refresh.clicked.connect(lambda: _marcar_dias(dialogo))
     filter_grid.addWidget(btn_refresh, 0, 3)
 
     lbl_met = QLabel("Método:")
@@ -60,3 +77,4 @@ def armar_filtros(dialogo, left_vbox, on_cargar):
     filter_grid.addWidget(dialogo.total_card, 4, 0, 1, 3)
 
     left_vbox.addLayout(filter_grid)
+    _marcar_dias(dialogo)

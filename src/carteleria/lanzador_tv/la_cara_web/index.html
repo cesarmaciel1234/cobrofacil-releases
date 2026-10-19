@@ -148,7 +148,39 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=tv269"></script>
+    <script>
+        (function () {
+            function reloj() {
+                var clock = document.getElementById("clock");
+                if (!clock) return;
+                var now = new Date();
+                var hm = clock.querySelector(".clock-hm");
+                var sec = clock.querySelector(".clock-sec");
+                var hh = String(now.getHours()).padStart(2, "0");
+                var mm = String(now.getMinutes()).padStart(2, "0");
+                var ss = String(now.getSeconds()).padStart(2, "0");
+                if (hm) hm.textContent = hh + ":" + mm;
+                if (sec) sec.textContent = ss;
+            }
+            function viva() {
+                fetch("/api/viva", { cache: "no-store" }).catch(function () {});
+            }
+            reloj();
+            setInterval(reloj, 1000);
+            viva();
+            setInterval(viva, 4000);
+            var intentos = 0;
+            var vigia = setInterval(function () {
+                if (document.body && document.body.getAttribute("data-boot") === "1") {
+                    clearInterval(vigia);
+                    return;
+                }
+                intentos += 1;
+                if (intentos >= 4) location.reload();
+            }, 2000);
+        })();
+    </script>
+    <script type="module" src="app.js?v=tv272"></script>
 </body>
 </html>
 

@@ -23,7 +23,7 @@ Si el cupo restante es menor que el “desde” de la oferta (ej. vendieron 4 de
 | Archivo | Rol |
 |---------|-----|
 | `vista.py` | `TallerOfertas`: filtro, splitter lista + panel, Activar/Quitar |
-| `tabla.py` | `TablaOfertas`: Nombre, Precio, Oferta, Reglas, Stock |
+| `tabla.py` | `TablaOfertas`: Nombre, Precio, Oferta, Reglas, Stock. El stock usa `formatear_stock` (kilo o unidad) y la columna entra entera. |
 | `editor.py` | Precio lista + promo + relámpago + contador de cupo |
 | `motor.py` | `MotorOfertas`: aplica/limpia; `resolver_precio_venta`; `consumir_relampago` |
 
@@ -32,7 +32,7 @@ Si el cupo restante es menor que el “desde” de la oferta (ej. vendieron 4 de
 1. Hub abre `TallerOfertas`.
 2. Activar → `aplicar_oferta` (reinicia ventas del cupo si hay relámpago/límite).
 3. Caja cobra línea `⚡ [RELÁMPAGO]` → `persistir_cobro` → `consumir_relampago_en_items`.
-4. Si cupo agotado → apaga flash + avisa red/TV.
+4. Si cupo agotado → apaga flash + `avisar_datos_nuevos` (sello local, UDP `DATOS`, y POST a la maestra si esta PC es esclava). Activar o quitar la oferta hace el mismo aviso. La otra tele no espera los 15 s del pulso.
 
 ## Si falla
 

@@ -17,7 +17,7 @@ No inventar avisos con “más vendidos”. Solo productos con `es_publicidad`.
 
 - **Carrusel de ofertas:** solo productos con precio rebajado (`esOferta` / `leerPrecios` en `plata_y_texto.js`). Si no hay ofertas: “Sin ofertas activas”.
 - **Grilla de precios:** todos los productos con precio; el aviso se inserta cada 2 filas.
-- **Publicidad:** lista marcada (JSON/`publicidad_tv` + `motor_publicidad.marcar_lista`). Se clona con `slot_ad: true` y se mete entre las tarjetas.
+- **Publicidad:** lista marcada (JSON/`publicidad_tv` + `motor_publicidad.marcar_lista`). Cada pulso recalcula `es_publicidad`: lo que se destildó sale, lo nuevo entra. La cara incluye esa marca en el hash de `/api/state`. Se clona con `slot_ad: true` y se mete entre las tarjetas.
 
 Un producto puede ser oferta **y** publicidad. En el carrusel entra como oferta; cada 2 tarjetas se **vuelve a inyectar** como aviso.
 

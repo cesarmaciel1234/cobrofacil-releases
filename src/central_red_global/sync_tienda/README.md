@@ -1,6 +1,6 @@
 # Sync tienda (esclava → maestra)
 
-Qué hace: copia productos, PNG y token de red hacia la PC maestra (`:8000`). El ranking de «lo más vendido» sale de `ranking/`: la esclava lo baja por HTTP; la maestra lo arma con sus ventas.
+Qué hace: copia productos, PNG y token de red hacia la PC maestra (`:8000`). La publicidad de la TV se reemplaza en las dos puntas al guardar (POST `:8000/api/carteleria/publicidad` y UDP `PUBLICIDAD`). El ranking de «lo más vendido» sale de `ranking/`: la esclava lo baja por HTTP; la maestra lo arma con sus ventas.
 
 Qué función: `enviar_png_a_maestra`, `empujar_producto_a_maestra`, `cabeceras_lan`, `pedir_a_maestra`.
 

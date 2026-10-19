@@ -5,6 +5,15 @@ try:
 except ImportError:
     from database import db_manager
 
+def _avisar_tv_combos():
+    try:
+        from src.central_red_global.sync_tienda.aviso_tv import avisar_datos_nuevos
+
+        avisar_datos_nuevos()
+    except Exception:
+        pass
+
+
 class MotorCombos:
     """Motor central para la gestión de combos."""
 
@@ -32,6 +41,7 @@ class MotorCombos:
         """Elimina un combo específico."""
         try:
             db_manager.execute_non_query("DELETE FROM combos WHERE id = ?", (id_c,))
+            _avisar_tv_combos()
             return True
         except Exception as e:
             self.logger.error(f"Error eliminando combo {id_c}: {e}")
@@ -54,6 +64,7 @@ class MotorCombos:
                 "INSERT INTO combos (nombre, precio_combo, productos_json) VALUES (?, ?, ?)",
                 (nombre, precio, p_json)
             )
+            _avisar_tv_combos()
             return True
         except Exception as e:
             self.logger.error(f"Error guardando combo: {e}")

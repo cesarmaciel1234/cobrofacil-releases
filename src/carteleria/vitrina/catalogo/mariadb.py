@@ -7,7 +7,7 @@ import logging
 import os
 
 from src.utils.paths import get_base_path
-from src.carteleria.vitrina.catalogo.sql import PRECIOS_SELECT, sql_sos, sql_top_fallback
+from src.carteleria.vitrina.catalogo.sql import PRECIOS_SELECT, sql_sos
 from src.carteleria.vitrina.catalogo.serializar import to_serializable
 
 logger = logging.getLogger("Carteleria_MariaDB")
@@ -62,7 +62,6 @@ def leer_catalogo_db(db_manager) -> dict:
     rand_func = "RAND()" if is_mariadb else "RANDOM()"
     oferta_sos = to_serializable(_q(db_manager, sql_sos(rand_func), rand_func))
     rows_precios = to_serializable(_q(db_manager, PRECIOS_SELECT, rand_func))
-    top_hoy = to_serializable(_q(db_manager, sql_top_fallback(rand_func), rand_func))
 
     # Validar que hay productos válidos
     if not rows_precios:
@@ -85,5 +84,5 @@ def leer_catalogo_db(db_manager) -> dict:
         },
         "sos": oferta_sos,
         "precios": rows_precios,
-        "top10": {"hoy": top_hoy, "semana": top_hoy, "mes": top_hoy},
+        "top10": {"hoy": [], "semana": [], "mes": []},
     }

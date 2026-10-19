@@ -46,12 +46,16 @@ function itemsTickets(state) {
 function enriquecer(item, productos) {
     const clave = nombreVitrina(item?.nombre).toLowerCase();
     const hit = (productos || []).find((p) => nombreVitrina(p.nombre).toLowerCase() === clave);
-    const base = { ...item, ...(hit || {}) };
+    const base = { ...(hit || {}), ...item };
     return {
         ...base,
         nombre: nombreVitrina(base.nombre),
         precio: Number(base.precio) || 0,
         precio_oferta: Number(base.precio_oferta) || 0,
+        cantidad: Number(item?.cantidad || 0),
+        recaudacion: Number(item?.recaudacion || 0),
+        tickets: Number(item?.tickets || 0),
+        periodo: item?.periodo || base.periodo || "",
         icono_url: base.icono_url || item?.icono_url || "",
         departamento: base.departamento || base.categoria || item?.departamento || "",
     };

@@ -36,4 +36,5 @@ def cancelar(id_venta: int, username: str) -> bool:
 
 
 def reimprimir(id_venta: int) -> None:
+    from src.historial_ventas.caja import controller
     controller().reimprimir_ticket(int(id_venta))

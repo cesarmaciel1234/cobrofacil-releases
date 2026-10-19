@@ -17,7 +17,7 @@ paso8_historial/
 
 El cajero oprime F3. Gris `#334155`. Hoja clara.
 
-Pinta: folio, artículos, hora, total, redondeo, cliente. El detalle: ítems, sello CANCELADO si el estado es `CANCELADA`, Cancelar venta, imprimir copia, notas.
+Pinta: folio, artículos, hora, total, redondeo, cliente. El calendario marca en verde los días con tickets. El detalle: ítems, sello CANCELADO si el estado es `CANCELADA`, Cancelar venta, imprimir copia, notas.
 
 No pinta: alta de cliente, cobro, F2/F5/F6.
 
@@ -25,7 +25,7 @@ Cancelar pide PIN de admin (el admin no). El ticket **queda** en la lista, tacha
 
 ## Fondo
 
-1. `HistorialController.get_ventas` lee `ventas` + `detalles_ventas`.
+1. `HistorialController.get_ventas` pide el día a `historial_ventas.listar` (misma lectura que el historial del jefe).
 2. Cancelar → `cancelar_venta` → `db_manager.cancelar_venta_transaccional` (`src/base_de_datos/repos/ventas.py`).
 3. Esa transacción: stock de vuelta, estado `CANCELADA`, auditoría, retiro de efectivo si corresponde.
 4. Fiado / Clientes: `_anular_cargo` marca el cargo `CANCELADO ·` y deja `Ticket cancelado #N (F3)` en `cuenta_corriente`. El historial del cliente lo lee `oficina/consulta_historial`.

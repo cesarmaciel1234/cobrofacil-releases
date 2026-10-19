@@ -32,7 +32,8 @@ class CatalogoMixin:
         for item in self.rows_precios or []:
             h.update(
                 f"{item.get('nombre')}|{item.get('precio')}|{item.get('precio_oferta')}|"
-                f"{item.get('precio_oferta_relampago')}|{item.get('icono')}|"
+                f"{item.get('precio_oferta_relampago')}|{item.get('cant_oferta')}|"
+                f"{item.get('tipo_unidad_oferta')}|{item.get('icono')}|"
                 f"{item.get('icono_url')}|{item.get('es_publicidad')}\n".encode("utf-8", "ignore")
             )
         for clave, filas in (self._ranking_remoto or {}).items():
@@ -82,6 +83,7 @@ def _una_fila(item):
             "categoria": item.get("categoria") or "",
             "stock": float(item.get("stock") or 0),
             "icono": item.get("icono") or "",
+            "icono_url": item.get("icono_url") or "",
             "es_publicidad": bool(item.get("es_publicidad")),
         }
     row = list(item) if isinstance(item, (list, tuple)) else []
@@ -108,5 +110,6 @@ def _una_fila(item):
         "es_pesable": row[10] if len(row) > 10 else 0,
         "departamento": (row[11] if len(row) > 11 else "") or (row[0] if row else ""),
         "icono": row[12] if len(row) > 12 else "",
+        "icono_url": "",
         "es_publicidad": False,
     }

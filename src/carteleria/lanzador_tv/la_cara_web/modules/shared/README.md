@@ -7,6 +7,7 @@ Qué función:
 - `foto_tarjeta/` — PNG de tarjeta
 - `precio_tv.js` — bloque de precio
 - `cinta_infinita.js` / `publicidad_tv.js` / `vfx.js`
+- `plantilla.js` — guarda la forma pintada y la vuelve a mostrar al abrir, antes del dato vivo
 
 Cómo funciona: las columnas importan; no hay estado global acá.
 

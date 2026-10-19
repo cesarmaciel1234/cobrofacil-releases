@@ -136,6 +136,15 @@ class MainWindow(QMainWindow):
             engine = init_network_engine(role)
             if engine:
                 engine.message_received.connect(self._on_udp_message_received)
+                try:
+                    from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
+
+                    motor_publicidad.asegurar_escucha()
+                    from src.central_red_global.sync_tienda.aviso_tv.avisar import asegurar_escucha_datos
+
+                    asegurar_escucha_datos()
+                except Exception:
+                    logger.debug("escucha publicidad", exc_info=True)
                 logger.debug("NetworkEngine inicializado con rol: %s", role)
             else:
                 logger.debug("NetworkEngine no se pudo inicializar")

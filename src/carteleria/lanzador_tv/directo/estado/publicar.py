@@ -10,16 +10,20 @@ MAX_PRECIOS_TV = 96
 
 def precios_para_tv(rows, perfil="max"):
     """La cara no traga 4000 filas: ofertas primero, tope para el ticker."""
+    avisos = []
     ofertas = []
     resto = []
     for p in rows or []:
+        if p.get("es_publicidad"):
+            avisos.append(p)
+            continue
         ofe = p.get("precio_oferta") or 0
         pre = p.get("precio") or 0
         if ofe > 0 and ofe < pre:
             ofertas.append(p)
         else:
             resto.append(p)
-    return (ofertas + resto)[:MAX_PRECIOS_TV]
+    return (avisos + ofertas + resto)[:MAX_PRECIOS_TV]
 
 
 class EstadoMixin:
@@ -78,7 +82,7 @@ class EstadoMixin:
         try:
             from src.carteleria.lanzador_tv.cerebro_lanzador_tv import _leer_config_carteleria
 
-            vivo = _leer_config_carteleria()
+            vivo = _leer_config_carteleria(solo_memoria=True)
             cfg = dict(out.get("config") or {})
             tema = vivo.get("carteleria_theme")
             if tema and cfg.get("carteleria_theme") != tema:

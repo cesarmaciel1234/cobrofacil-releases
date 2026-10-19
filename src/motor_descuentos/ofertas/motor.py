@@ -4,6 +4,17 @@ try:
 except ImportError:
     from database import db_manager
 
+
+def _avisar_tv_precios():
+    """La TV de esta PC y la de la otra leen el precio nuevo sin esperar el pulso de 15 s."""
+    try:
+        from src.central_red_global.sync_tienda.aviso_tv import avisar_datos_nuevos
+
+        avisar_datos_nuevos()
+    except Exception:
+        pass
+
+
 class MotorOfertas:
     """Motor central para la gestión de ofertas, promociones y folletos."""
 
@@ -130,6 +141,7 @@ class MotorOfertas:
                     (cant_oferta, precio_oferta, precio_relampago, precio_promedio, id_p),
                 )
             if ok:
+                _avisar_tv_precios()
                 try:
                     from src.central_red_global.sync_tienda import empujar_producto_a_maestra
 
@@ -170,6 +182,7 @@ class MotorOfertas:
                 (id_p,)
             )
             if ok:
+                _avisar_tv_precios()
                 try:
                     from src.central_red_global.sync_tienda import empujar_producto_a_maestra
                     empujar_producto_a_maestra({
@@ -195,6 +208,7 @@ class MotorOfertas:
                 tuple(ids)
             )
             if ok:
+                _avisar_tv_precios()
                 try:
                     from src.central_red_global.sync_tienda import empujar_producto_a_maestra
                     for pid in ids:
@@ -305,6 +319,7 @@ class MotorOfertas:
             invalidar_catalogo()
         except Exception:
             pass
+        _avisar_tv_precios()
         try:
             from src.central_red_global.network_engine import get_network_engine
             e = get_network_engine()

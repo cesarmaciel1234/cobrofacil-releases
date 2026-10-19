@@ -17,28 +17,24 @@ function fmtNumero(n, dec = 1) {
     return n.toFixed(dec).replace(".", ",");
 }
 
+/* Camuflaje de columna 1. El JSON trae la cifra real; el texto de la tarjeta no. */
+
 function humoKilos(item) {
     const kg = numDia(item, ["cantidad", "kilos", "volumen", "vendidos"]);
-    return `${fmtNumero(kg)} % vendidos hoy`;
-}
-
-function fmtSocial(n) {
-    if (n >= 1000000) return `${fmtNumero(n / 1000000)}M`;
-    if (n >= 1000) return `${fmtNumero(n / 1000)}K`;
-    return fmtNumero(n, 0);
+    return `${fmtNumero(kg)} %`;
 }
 
 function humoPremium(item) {
     const plata = numDia(item, ["recaudacion", "total", "venta"]);
-    const tag = fmtSocial(plata);
-    return tag === "1" ? "1K lo eligió" : `${tag} lo eligieron`;
+    if (plata <= 0) return "0.00%";
+    return `${(plata / 1000).toFixed(2)}%`;
 }
 
 function textoFamiliasHoy(item) {
     const n = Math.max(0, Math.round(numDia(item, ["tickets", "veces", "tickets_dia", "cantidad_tickets", "cantidad"])));
     if (n <= 0) return "Hoy se elige en caja";
-    if (n === 1) return "1 familia eligió hoy";
-    return `${n} familias eligieron hoy`;
+    if (n === 1) return "1 familia lo eligió";
+    return `${n}+ familias lo eligieron`;
 }
 
 export function pruebaSocial(item, opciones = {}) {

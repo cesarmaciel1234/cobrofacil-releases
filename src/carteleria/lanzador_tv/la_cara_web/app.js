@@ -89,7 +89,9 @@ function loadTheme(themeName) {
 
 let pollId = 0;
 let intervaloActual = 0;
-const tInicio = Date.now();
+let fetchEnCurso = false;
+let fallosRed = 0;
+let guardarFormaTv = null;
 
 function hayDatosEnPantalla() {
     return (state.productos && state.productos.length > 0)
@@ -97,17 +99,8 @@ function hayDatosEnPantalla() {
         || (state.destacados && state.destacados.length > 0);
 }
 
-function caraLista() {
-    return (state.productos && state.productos.length > 0)
-        && (state.rotacion && state.rotacion.length > 0);
-}
-
-function esEco() {
-    return document.body.getAttribute("data-perf") === "eco";
-}
-
 function programarPoll() {
-    const listo = caraLista() || Date.now() - tInicio > 15000;
+    const listo = state.productos && state.productos.length > 0;
     const ms = listo ? REFRESH_NORMAL : REFRESH_RAPIDO;
     if (ms === intervaloActual && pollId) return;
     if (pollId) clearInterval(pollId);
@@ -120,29 +113,104 @@ function quitarCarga() {
     if (els.loading) els.loading.classList.add("hidden");
 }
 
-async function fetchState() {
+function firmaItem(x) {
+    return `${x?.nombre || ""}:${x?.detalle || ""}:${x?.cantidad || 0}:${x?.precio || 0}:${x?.precio_oferta || 0}:${x?.icono || ""}`;
+}
+
+function hashCara(data) {
+    const p = data.precios || data.productos || [];
+    const rotacion = [];
+    for (const panel of data.rotacion || []) {
+        for (const item of (panel && panel.items) || []) rotacion.push(firmaItem(item));
+    }
+    return [
+        data.datos_gen,
+        (data.config || {}).data_status,
+        p.length,
+        p.map((x) => `${firmaItem(x)}:${x.precio_oferta_relampago || 0}:${x.cant_oferta || 0}:${x.tipo_unidad_oferta || ""}:${x.icono_url || ""}:${x.es_publicidad ? 1 : 0}`).join("|"),
+        rotacion.join("|"),
+        (data.destacados || []).map(firmaItem).join("|"),
+        (data.columna3 || []).map(firmaItem).join("|"),
+        (data.ia || []).map(firmaItem).join("|"),
+        firmaItem(data.hero),
+    ].join("§");
+}
+
+function pintarCara(data) {
+    const nuevos = data.precios || data.productos || [];
+    state.config = data.config;
+    state.productos = nuevos;
+    state.destacados = data.destacados || [];
+    state.rotacion = data.rotacion || [];
+    state.combos = data.combos || [];
+    state.columna3 = data.columna3 || [];
+    state.ia = data.ia || [];
+    state.hero = data.hero || null;
+    state.climaData = data.climaData || null;
+    if (state.productos.length > 0) {
+        state.productos.sort((a, b) => {
+            const scoreA = (a.precio_oferta ? 50 : 0) + (a.vendidos || a.ventas_dia || 0);
+            const scoreB = (b.precio_oferta ? 50 : 0) + (b.vendidos || b.ventas_dia || 0);
+            return scoreB - scoreA;
+        });
+    }
+    const safe = (fn) => {
+        try { fn(); } catch (err) { console.error("[Cartelería]", err); }
+    };
+    precargarFotosEstado(data);
+    safe(() => renderFranjaOferta(state.hero, state.productos, els));
+    safe(() => iniciarRotacionColumna1(state, els.content1));
+    safe(() => renderColumna2(state.productos, els.content2));
+    safe(() => iniciarRotacionColumna3(state, els.content3));
+    safe(() => iniciarRotacionColumna4(state, els.content4));
+    safe(() => renderMensajeZocalo(state.config, els.marquee));
+    safe(() => renderCabeceraNegocio(state.config, els));
+    safe(() => actualizarClimaHeader(state.climaData));
+    safe(() => updateVFX());
+    if (state.productos.length) document.body.dataset.cara = "lista";
+    if (hayDatosEnPantalla()) quitarCarga();
+    revelarFotosEn(document);
+    if (guardarFormaTv) guardarFormaTv(state);
+}
+
+async function precargarForma() {
     try {
-        const response = await fetch(API_URL, { cache: "no-store" });
+        const mod = await import("./modules/shared/plantilla.js");
+        guardarFormaTv = mod.guardarForma;
+        const forma = mod.leerForma();
+        if (!forma) return;
+        aplicarPerfil(forma.config?.carteleria_perf);
+        loadTheme(forma.config?.carteleria_theme || "premium");
+        pintarCara(forma);
+        state.lastDataHash = hashCara(forma);
+    } catch (err) {
+        console.error("[TV] plantilla:", err);
+    }
+}
+
+async function fetchState() {
+    if (fetchEnCurso) return;
+    fetchEnCurso = true;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    try {
+        const response = await fetch(API_URL, { cache: "no-store", signal: ctrl.signal });
         if (!response.ok) throw new Error(response.statusText);
         const data = await response.json();
+        fallosRed = 0;
         aplicarPerfil(data.config?.carteleria_perf);
         loadTheme(data.config?.carteleria_theme || "premium");
-        const p = data.precios || [];
-        const newDataHash = [
-            data.datos_gen,
-            (data.config || {}).data_status,
-            p.length,
-            p.map((x) => `${x.nombre}:${x.precio}:${x.precio_oferta || 0}`).join("|"),
-            (data.rotacion || []).length,
-            (data.destacados || [])[0]?.nombre,
-            (data.hero || {}).nombre,
-        ].join("§");
+        const nuevos = data.precios || [];
+        if (!nuevos.length && !(state.productos || []).length) {
+            programarPoll();
+            return;
+        }
+        const newDataHash = hashCara(data);
         if (state.lastDataHash === newDataHash) {
             if (state.isLoading && hayDatosEnPantalla()) quitarCarga();
             programarPoll();
             return;
         }
-        const nuevos = data.precios || [];
         if (!nuevos.length && state.productos.length) {
             if (data.config) {
                 state.config = data.config;
@@ -153,52 +221,20 @@ async function fetchState() {
             return;
         }
         state.lastDataHash = newDataHash;
-        state.config = data.config;
-        state.productos = nuevos;
-        state.destacados = data.destacados || [];
-        state.rotacion = data.rotacion || [];
-        state.combos = data.combos || [];
-        state.columna3 = data.columna3 || [];
-        state.ia = data.ia || [];
-        state.hero = data.hero || null;
-        state.climaData = data.climaData || null;
-
-        // --- APLICACIÓN DE ESTRUCTURA.md (Lógica Empresarial) ---
-        
-        // 1. Scoring de Productos (Estilo Amazon): Priorizar por ventas y ofertas
-        if (state.productos.length > 0) {
-            state.productos.sort((a, b) => {
-                const scoreA = (a.precio_oferta ? 50 : 0) + (a.vendidos || a.ventas_dia || 0);
-                const scoreB = (b.precio_oferta ? 50 : 0) + (b.vendidos || b.ventas_dia || 0);
-                return scoreB - scoreA;
-            });
-        }
-        
-        // 2-8. Las demás lógicas (Precios Dinámicos, Categorización, Discovery, Combos) 
-        // ya se aplican en la renderización de las columnas (shimmer-fx, rotación, etc).
-        // --------------------------------------------------------
-
-        const safe = (fn) => {
-            try { fn(); } catch (err) { console.error("[Cartelería]", err); }
-        };
-        precargarFotosEstado(data);
-        safe(() => renderFranjaOferta(state.hero, state.productos, els));
-        safe(() => iniciarRotacionColumna1(state, els.content1));
-        safe(() => renderColumna2(state.productos, els.content2));
-        safe(() => iniciarRotacionColumna3(state, els.content3));
-        safe(() => iniciarRotacionColumna4(state, els.content4));
-        safe(() => renderMensajeZocalo(state.config, els.marquee));
-        safe(() => renderCabeceraNegocio(state.config, els));
-        safe(() => actualizarClimaHeader(state.climaData));
-        safe(() => updateVFX());
-
-        if (hayDatosEnPantalla()) quitarCarga();
-        revelarFotosEn(document);
+        pintarCara(data);
         programarPoll();
     } catch (error) {
+        fallosRed += 1;
         console.error("[Cartelería] Error al obtener datos:", error);
         marcarCabeceraDesconectada(els);
+        if (fallosRed >= 4 && !(state.productos || []).length) {
+            location.reload();
+            return;
+        }
         programarPoll();
+    } finally {
+        clearTimeout(timer);
+        fetchEnCurso = false;
     }
 }
 
@@ -295,7 +331,8 @@ function setupTvKeys() {
     }, true);
 }
 
-function init() {
+async function init() {
+    document.body.dataset.boot = "1";
     aplicarPerfil();
     ajustarZoomTv();
     window.addEventListener("resize", ajustarZoomTv);
@@ -306,6 +343,10 @@ function init() {
     setInterval(() => actualizarReloj(els), 1000);
     setupTvKeys();
     initCenterFocus();
+    await Promise.race([
+        precargarForma(),
+        new Promise((resolve) => setTimeout(resolve, 800)),
+    ]);
     fetchState();
     programarPoll();
     setTimeout(() => { if (state.isLoading) quitarCarga(); }, 12000);

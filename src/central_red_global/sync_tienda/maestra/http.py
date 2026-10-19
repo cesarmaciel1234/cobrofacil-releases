@@ -88,8 +88,10 @@ def manejar_post(handler, path: str) -> bool:
             from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
 
             data = json.loads(raw or "{}")
-            motor_publicidad.aplicar_remoto(data.get("publicidad") if "publicidad" in data else data)
-            motor_publicidad._guardar_db()
+            payload = data.get("publicidad") if isinstance(data, dict) and "publicidad" in data else data
+            motor_publicidad.aplicar_remoto(payload)
+            motor_publicidad._avisar_pares()
+            motor_publicidad._avisar_tv()
             handler._send_response(200, {"success": True, "publicidad": motor_publicidad.as_dict()})
         except Exception as e:
             handler._send_response(500, {"error": str(e)})

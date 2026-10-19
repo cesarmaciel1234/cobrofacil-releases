@@ -15,7 +15,7 @@ El modulo centraliza las lecturas para evitar la duplicacion de codigo en las di
 
 - **listar.py**: Ejecuta el `SELECT` principal a la tabla `ventas` (con paginacion y filtros). Utiliza `_get_db(ver_todo)` para acceder a MariaDB o enrutar de forma silenciosa al espejo/punpro.db segun la disponibilidad de red y perfil.
 - **desglose.py**: Trae el detalle de los productos vendidos (`detalles_ventas`) asociados a un id de venta especifico, tambien usando `_get_db()`.
-- **acciones.py**: Contiene los metodos para reimprimir y obtener el detalle crudo de un ticket (`_get_db()`).
+- **acciones.py**: Detalle, cancelar y reimprimir. Reimprimir llama a `caja.controller().reimprimir_ticket` (el mismo puente que cancelar). Sin ese import, el botón del jefe muestra `name 'controller' is not defined`.
 
 ## Que no cambiar
 

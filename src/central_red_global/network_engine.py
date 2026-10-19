@@ -86,6 +86,10 @@ class NetworkEngine(QObject):
             # App/Qt ya destruyó el C++; hilo daemon en apagado.
             pass
 
+    def broadcast_message(self, tipo: str, datos: dict | None = None):
+        """Mismo envío que `broadcast`. Lo usan ofertas e inventario."""
+        self.broadcast(tipo, datos)
+
     def broadcast(self, tipo: str, datos: dict | None = None):
         if self._stop.is_set():
             return

@@ -59,6 +59,20 @@ def _stamp_ascii() -> bytes:
     return _ui_stamp_tv().encode("ascii", "ignore") or b"0"
 
 
+def _tipo_archivo(rel: str) -> str:
+    """Chrome no ejecuta un módulo .js si el tipo es octet-stream."""
+    ext = os.path.splitext(rel)[1].lower()
+    if ext == ".js":
+        return "text/javascript; charset=utf-8"
+    if ext == ".css":
+        return "text/css; charset=utf-8"
+    if ext == ".html":
+        return "text/html; charset=utf-8"
+    if ext == ".json":
+        return "application/json; charset=utf-8"
+    return mimetypes.guess_type(rel)[0] or "application/octet-stream"
+
+
 def _inyectar_stamp_ui(data: bytes, ext: str) -> bytes:
     """F5 no tira el cache de módulos ES ni de @import; se versionan al servir."""
     stamp = _stamp_ascii()
@@ -309,9 +323,8 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         ext = os.path.splitext(rel)[1].lower()
         if ext in (".html", ".css", ".js"):
             data = _inyectar_stamp_ui(data, ext)
-        ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
         self.send_response(200)
-        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Type", _tipo_archivo(rel))
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
@@ -336,9 +349,8 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             return False
         with open(full, "rb") as handle:
             data = _inyectar_stamp_ui(handle.read(), ext)
-        ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
         self.send_response(200)
-        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Type", _tipo_archivo(rel))
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
@@ -397,6 +409,13 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def handle_api(self):
+        if self.path.split("?", 1)[0] == "/api/viva":
+            cara = self.main_window
+            if cara is not None:
+                cara._cara_viva_mono = time.monotonic()
+            self._write_json({"ok": True})
+            return
+
         if self.path == "/api/state":
             try:
                 state = self._get_state()
@@ -461,7 +480,7 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             from src.config import config
             from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
 
-            cfg = _leer_config_carteleria()
+            cfg = _leer_config_carteleria(solo_memoria=True)
             return {
                 "config": {
                     "business_name": cfg["business_name"],

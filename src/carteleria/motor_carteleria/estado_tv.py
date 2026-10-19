@@ -64,12 +64,14 @@ def _catalogo_por_nombre(productos):
     return out
 
 
-def _buscar_en_catalogo(catalogo, nombre):
+def _buscar_en_catalogo(catalogo, nombre, exacto=False):
     clave = _norm_nombre(nombre)
     if not clave:
         return None
     if clave in catalogo:
         return catalogo[clave]
+    if exacto:
+        return None
     for key, prod in catalogo.items():
         if len(clave) >= 4 and (clave in key or key in clave):
             return prod
@@ -86,6 +88,7 @@ def _fmt_cantidad(valor):
 
 
 def _detalle_familias(cantidad, periodo="hoy"):
+    """Camuflaje: el número es la cantidad de tickets. En la TV se lee como familias."""
     n = max(0, int(round(num(cantidad))))
     if n <= 0:
         return ""
@@ -104,7 +107,7 @@ def _fmt_plata(valor):
 
 
 def _fmt_plata_como_pct(valor):
-    """90000 → 90.00% : dato real disfrazado para la TV."""
+    """Camuflaje: $56.000 recaudados se ven como 56.00%. La plata real queda en `recaudacion`."""
     n = num(valor)
     if n <= 0:
         return "0.00%"
@@ -195,22 +198,20 @@ def _ranking_hoy_pisa_ayer(modo, limite, orden, ranking_remoto=None):
             logger.debug("MotorVentas (%s) no disponible: %s", modo, exc)
             hoy, ayer, semana = [], [], []
 
-    if not hoy and not ayer:
-        # Aseguramos que se ordene correctamente (ej. 'plata' se ordena por 'recaudacion')
-        return _ordenar_ranking(semana, orden), "semana"
-
-    mezclado = []
-    vistos = set()
-    for origen, tanda in (("hoy", hoy), ("ayer", ayer)):
-        for item in _ordenar_ranking(tanda, orden):
-            clave = _norm_nombre(item.get("nombre"))
-            if not clave or clave in vistos:
-                continue
-            vistos.add(clave)
+    def _marcar(filas, origen):
+        out = []
+        for item in _ordenar_ranking(filas, orden):
             fila = dict(item)
             fila["_periodo"] = origen
-            mezclado.append(fila)
-    return mezclado, ("hoy" if hoy else "ayer")
+            out.append(fila)
+        return out
+
+    # Un solo período por panel. Ayer no se disfraza de hoy para llenar cupos.
+    if hoy:
+        return _marcar(hoy, "hoy"), "hoy"
+    if ayer:
+        return _marcar(ayer, "ayer"), "ayer"
+    return _marcar(semana, "semana"), "semana"
 
 
 def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite=5, orden="cantidad", ranking_remoto=None):
@@ -223,7 +224,7 @@ def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite
         nombre = str(item.get("nombre") or "").strip()
         if not nombre or _nombre_basura(nombre):
             continue
-        prod = _buscar_en_catalogo(catalogo, nombre)
+        prod = _buscar_en_catalogo(catalogo, nombre, exacto=True)
         if not prod:
             continue
         clave = _norm_nombre(prod.get("nombre"))
@@ -255,12 +256,12 @@ def armar_destacados(productos, ranking_remoto=None):
         limite=8, ranking_remoto=ranking_remoto,
     )
     for item in cards:
-        item["detalle"] = _detalle_familias(item.get("cantidad"), periodo)
+        item["detalle"] = _detalle_familias(item.get("cantidad"), item.get("periodo") or periodo)
     return cards
 
 
 def _anotar_venta_premium(items):
-    """Recaudación real mostrada como porcentaje publicitario."""
+    """La recaudación real va en `recaudacion`. En pantalla, plata / 1000 con signo %."""
     montos = [num(item.get("recaudacion")) for item in items]
     tope = max(montos) if montos else 0
     for item, valor in zip(items, montos):
@@ -271,7 +272,7 @@ def _anotar_venta_premium(items):
 
 
 def _anotar_mega_ventas(items):
-    """Muestra los kilos reales con signo % y una barra relativa al líder."""
+    """Los kilos o unidades reales van en `cantidad`. En pantalla, el mismo número con signo %."""
     kilos = [num(item.get("cantidad")) for item in items]
     tope = max(kilos) if kilos else 0
     for item, valor in zip(items, kilos):
@@ -312,7 +313,8 @@ def armar_rotacion_destacados(productos, ranking_remoto=None):
         limite=5, ranking_remoto=ranking_remoto,
     )
     for item in elegidos:
-        item["detalle"] = _detalle_familias(item.get("cantidad"), periodo_e)
+        item["tickets"] = num(item.get("cantidad"))
+        item["detalle"] = _detalle_familias(item.get("cantidad"), item.get("periodo") or periodo_e)
     if elegidos:
         paneles.append({
             "id": "elegidos",
@@ -503,7 +505,7 @@ def armar_ia(productos, clima_icon="sol", clima_text="", ranking_remoto=None):
             top_hoy = []
         for item in top_hoy:
             nombre = str(item.get("nombre") or "").strip()
-            prod = _buscar_en_catalogo(catalogo, nombre)
+            prod = _buscar_en_catalogo(catalogo, nombre, exacto=True)
             if not prod:
                 continue
             vistos.add(_norm_nombre(nombre))

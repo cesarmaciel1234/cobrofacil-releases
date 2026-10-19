@@ -14,15 +14,25 @@ def _nombre_fila(row) -> str:
     return ""
 
 
+def _num_clave(row, claves) -> float | None:
+    if not isinstance(row, dict):
+        return None
+    for key in claves:
+        if key not in row or row.get(key) in (None, ""):
+            continue
+        try:
+            return float(row.get(key) or 0)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
 def _cant_fila(row, fallback: float) -> float:
-    if isinstance(row, dict):
-        for key in ("cantidad", "total_cant", "cant"):
-            if row.get(key) not in (None, ""):
-                try:
-                    return float(row.get(key) or 0)
-                except (TypeError, ValueError):
-                    pass
-    elif isinstance(row, (list, tuple)) and len(row) > 1:
+    hallado = _num_clave(row, ("cantidad", "total_cant", "cant"))
+    if hallado is not None:
+        return hallado
+    # (nombre, cantidad, recaudacion). Una fila de producto trae el precio en [1]: no es una venta.
+    if isinstance(row, (list, tuple)) and len(row) == 3:
         try:
             return float(row[1] or 0)
         except (TypeError, ValueError):
@@ -31,14 +41,10 @@ def _cant_fila(row, fallback: float) -> float:
 
 
 def _rec_fila(row) -> float:
-    if isinstance(row, dict):
-        for key in ("recaudacion", "total_recaudacion"):
-            if row.get(key) not in (None, ""):
-                try:
-                    return float(row.get(key) or 0)
-                except (TypeError, ValueError):
-                    pass
-    elif isinstance(row, (list, tuple)) and len(row) > 2:
+    hallado = _num_clave(row, ("recaudacion", "total_recaudacion"))
+    if hallado is not None:
+        return hallado
+    if isinstance(row, (list, tuple)) and len(row) == 3:
         try:
             return float(row[2] or 0)
         except (TypeError, ValueError):
@@ -65,17 +71,18 @@ def ranking_desde_filas(rows) -> list[dict]:
 
 
 def ranking_desde_top10(top10: dict | None) -> dict:
+    """El top10 viejo no trae ayer ni separa tickets de kilos. No se copia un período en otro."""
     top10 = top10 or {}
     hoy = ranking_desde_filas(top10.get("hoy"))
-    semana = ranking_desde_filas(top10.get("semana")) or hoy
-    mes = ranking_desde_filas(top10.get("mes")) or semana
+    semana = ranking_desde_filas(top10.get("semana"))
+    mes = ranking_desde_filas(top10.get("mes"))
     return {
         "hoy_frecuencia": hoy,
         "hoy_volumen": hoy,
-        "ayer_frecuencia": semana,
-        "ayer_volumen": semana,
-        "semana_frecuencia": mes,
-        "semana_volumen": mes,
+        "ayer_frecuencia": [],
+        "ayer_volumen": [],
+        "semana_frecuencia": semana or mes,
+        "semana_volumen": semana or mes,
     }
 
 
