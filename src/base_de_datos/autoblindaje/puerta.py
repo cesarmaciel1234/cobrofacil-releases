@@ -10,8 +10,8 @@ class AutoBlindajeDB(Rutas, Quien, Grabar, Sanar):
     """Respaldo del negocio: tres carpetas, la maestra de ahora, y la cura si la base se rompe."""
 
     PERIODIC_INTERVAL_HOURS = 0.5
-    MAX_DAILY_STYLE = 30
-    MAX_PRE_RESTORE = 20
+    MAX_DAILY_STYLE = 10
+    MAX_PRE_RESTORE = 10
     TABLAS_INCREMENTAL_VENTA = (
         "ventas",
         "detalles_ventas",

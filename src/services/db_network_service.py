@@ -51,7 +51,7 @@ class NetworkDBService:
                 try:
                     from src.cerebro_global.backup_cerebro import cerebro_backup
                     cerebro_backup.start("mariadb", host)
-                    logger.info(f"Esclava: respaldo local cada 30 min desde {host}")
+                    logger.info(f"Esclava: respaldo local cada 1 min desde {host}")
                 except Exception as e_cb:
                     logger.warning(f"Esclava CerebroBackup: {e_cb}")
 

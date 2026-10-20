@@ -58,6 +58,7 @@ class Grabar:
         if exito:
             logger.info(f"✅ Respaldo diario rolling actualizado en {targets[-1]}")
             cls.replicar_espejo()
+            cls.limpiar_backups_antiguos()
         return exito
 
     @classmethod
@@ -114,6 +115,7 @@ class Grabar:
                     pass
         if ok:
             cls.replicar_espejo()
+            cls.limpiar_backups_antiguos()
             logger.info(f"✅ Media hora sellada: {filename}")
         return ok > 0
 

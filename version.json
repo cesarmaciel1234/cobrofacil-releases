@@ -1,7 +1,7 @@
 {
-  "app_version": "v50.10",
+  "app_version": "v50.11",
   "channel": "stable",
-  "build_date": "2026-10-19 16:30:00",
+  "build_date": "2026-10-20 00:03:40",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -4938,9 +4938,9 @@
     },
     "src/admin/configuracion/componentes/dialogo_restaurar.py": {
       "version": "1.0.0",
-      "checksum": "a5a451b716590968921d3326be1b807d",
+      "checksum": "386aadce77681b67be6ed150f1c4a3e5",
       "channel": "stable",
-      "size": 14577
+      "size": 17304
     },
     "src/admin/configuracion/componentes/dialogo_simbolo_moneda.py": {
       "version": "1.0.0",
@@ -5460,9 +5460,9 @@
     },
     "src/base_de_datos/plano.md": {
       "version": "1.0.0",
-      "checksum": "1194f3b84105d92586d8a008f7368525",
+      "checksum": "ff3247506362aba77506cf43be5b7a81",
       "channel": "stable",
-      "size": 4620
+      "size": 4765
     },
     "src/base_de_datos/reglas.md": {
       "version": "1.0.0",
@@ -5574,9 +5574,9 @@
     },
     "src/base_de_datos/restaurar/README.md": {
       "version": "1.0.0",
-      "checksum": "67be98f1396c7b4feeeb1a51794ef918",
+      "checksum": "ecc9a145c6eeccbe454d0d04de883f1b",
       "channel": "stable",
-      "size": 2769
+      "size": 2969
     },
     "src/base_de_datos/restaurar/__init__.py": {
       "version": "1.0.0",
@@ -9636,9 +9636,9 @@
     },
     "src/cerebro_global/backup_cerebro/plano.md": {
       "version": "1.0.0",
-      "checksum": "6365501e026e3af6de8cc64eeaf3e899",
+      "checksum": "65a14f49ededfaa17eb6d0602e37e514",
       "channel": "stable",
-      "size": 1367
+      "size": 1762
     },
     "src/cerebro_global/backup_cerebro/__init__.py": {
       "version": "1.0.0",
@@ -11028,9 +11028,9 @@
     },
     "src/jefe/nodo_portable/plano.md": {
       "version": "1.0.0",
-      "checksum": "d6225dfb6434763f2f188584ca73b039",
+      "checksum": "9baa6bbbfadff8d5716ef2ff050fc7e6",
       "channel": "stable",
-      "size": 4466
+      "size": 4818
     },
     "src/jefe/nodo_portable/__init__.py": {
       "version": "1.0.0",
@@ -11040,9 +11040,9 @@
     },
     "src/jefe/nodo_portable/espejo/copia.py": {
       "version": "1.0.0",
-      "checksum": "f50aae1a4a9d7b2852aa68588b7531e9",
+      "checksum": "17a3a8b184d78addf27ccaad59744486",
       "channel": "stable",
-      "size": 15209
+      "size": 17403
     },
     "src/jefe/nodo_portable/espejo/lector.py": {
       "version": "1.0.0",
@@ -11052,9 +11052,9 @@
     },
     "src/jefe/nodo_portable/espejo/README.md": {
       "version": "1.0.0",
-      "checksum": "ef6945d7f9f64028121fbac19ceb90b0",
+      "checksum": "2fc6bbd9662d3133c3e5140758b30df5",
       "channel": "stable",
-      "size": 5251
+      "size": 5788
     },
     "src/jefe/nodo_portable/espejo/__init__.py": {
       "version": "1.0.0",
@@ -12306,9 +12306,9 @@
     },
     "src/services/db_network_service.py": {
       "version": "1.0.0",
-      "checksum": "5771628340121c3c9b757c093049b601",
+      "checksum": "3645f086aa30afde6ff55f30fac68595",
       "channel": "stable",
-      "size": 5721
+      "size": 6763
     },
     "src/services/email_service.py": {
       "version": "1.0.0",
@@ -35097,6 +35097,48 @@
       "checksum": "162f30d2716438c75ea16b57e6f63088",
       "channel": "stable",
       "size": 2103
+    },
+    "src/base_de_datos/autoblindaje/README.md": {
+      "version": "1.0.0",
+      "checksum": "c3f4b132e3de2cb0a495d267c8fc4efd",
+      "channel": "stable",
+      "size": 2386
+    },
+    "src/base_de_datos/autoblindaje/grabar/diario.py": {
+      "version": "1.0.0",
+      "checksum": "741be90de12aae2e9d2b2ad982cdad0e",
+      "channel": "stable",
+      "size": 12906
+    },
+    "src/base_de_datos/autoblindaje/puerta.py": {
+      "version": "1.0.0",
+      "checksum": "a2e7ae230dca23ebaa422ee14911f39c",
+      "channel": "stable",
+      "size": 722
+    },
+    "src/base_de_datos/autoblindaje/rutas/README.md": {
+      "version": "1.0.0",
+      "checksum": "5bb252070a49c6624e396fdc81ddbfb1",
+      "channel": "stable",
+      "size": 1808
+    },
+    "src/base_de_datos/autoblindaje/rutas/carpetas.py": {
+      "version": "1.0.0",
+      "checksum": "1c75e1a6df78da419aa5375f54833c7a",
+      "channel": "stable",
+      "size": 9264
+    },
+    "src/cerebro_global/backup_cerebro/ritmo/README.md": {
+      "version": "1.0.0",
+      "checksum": "1ae34acdbd521da9a99c0fc4d30c2ce0",
+      "channel": "stable",
+      "size": 1559
+    },
+    "src/cerebro_global/backup_cerebro/ritmo/motor_backup.py": {
+      "version": "1.0.0",
+      "checksum": "a172030e2ca138490d0e31deb727292f",
+      "channel": "stable",
+      "size": 9557
     }
   },
   "last_silent_update": "2026-08-06T20:06:32.215365+00:00"

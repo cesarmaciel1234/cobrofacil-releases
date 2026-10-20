@@ -2,8 +2,8 @@
 
 Restaura la tienda desde un respaldo del admin o desde la copia del jefe (pendrive o la copia local de una PC). Es el mismo camino para las dos. Quien guarda no sabe de esto:
 
-- Respaldos (`autoblindaje_db.py`, `CerebroBackup`): la maestra guarda `.sql` / `.zip` cada 30 minutos, como siempre.
-- Jefe (`src/jefe/nodo_portable/espejo`): la PC copia toda la tienda a un SQLite cada 5 minutos; el pendrive es una copia de ese archivo.
+- Respaldos (`autoblindaje_db.py`, `CerebroBackup`): la maestra guarda el `.sql` completo cada minuto. El sello con hora queda cada 30 minutos.
+- Jefe (`src/jefe/nodo_portable/espejo`): la PC copia toda la tienda (ventas, clientes y el resto) a un SQLite cada minuto; el pendrive es una copia de ese archivo.
 
 Lo abre Configuración → Mantenimiento → Respaldo → «Importar / Restaurar Respaldo» (`src/admin/configuracion/componentes/dialogo_restaurar.py`).
 
@@ -16,7 +16,7 @@ restaurar/
 
 ## Orden
 
-1. `buscar(carpeta o archivo)` lista las copias, de la más nueva a la más vieja por la fecha de sus datos. La pantalla deja marcada la primera; se puede elegir otra.
+1. `buscar(carpeta o archivo)` lista las copias, de la más nueva a la más vieja por la fecha de sus datos. La pantalla deja marcada la primera (recomendada) y muestra el peso de cada una. Abajo dice cuál es la recomendada y cuál es la más pesada. Se puede elegir otra. Restaurar no borra las copias del disco.
 2. `destino_actual()` dice a qué tienda va: la MariaDB de la maestra (con su `@@hostname`) o el `punpro.db` si la tienda es SQLite sola. Una caja sin maestra no restaura.
 3. `revisar(fuente, destino)` devuelve bloqueos (no se puede) y avisos (otra maestra, copia parcial, fecha vieja, qué va a pasar).
 4. `restaurar(fuente, destino, progreso)`:

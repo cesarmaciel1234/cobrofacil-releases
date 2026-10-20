@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
@@ -21,6 +23,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.config import CLAVE_RED
+from src.utils.letra import vestir_nombre, vestir_numero
 
 CLAVE_JEFE = "209470"
 BTN = (
@@ -95,11 +98,29 @@ def resumen(res: dict) -> str:
     return texto
 
 
+def _peso(ruta: str) -> int:
+    try:
+        return os.path.getsize(ruta)
+    except OSError:
+        return 0
+
+
+def _fmt_peso(n: int) -> str:
+    if n >= 1024 * 1024:
+        return f"{n / (1024 * 1024):.1f} MB".replace(".", ",")
+    if n >= 1024:
+        return f"{n / 1024:.0f} KB"
+    if n > 0:
+        return f"{n} B"
+    return "—"
+
+
 class DialogoRestaurar(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Restaurar la tienda")
-        self.setMinimumSize(900, 600)
+        self.setMinimumSize(1180, 760)
+        self.resize(1280, 820)
         self.setStyleSheet("QDialog { background: white; font-family: 'Segoe UI'; } QLabel { border: none; }")
         self.destino = None
         self.fuentes = []
@@ -117,7 +138,8 @@ class DialogoRestaurar(QDialog):
         lay.addWidget(tit)
         desc = QLabel(
             "Sirve cualquier copia: los respaldos de Mantenimiento o el pendrive del jefe. "
-            "Elegí una carpeta y queda marcada la más nueva; si querés otra, tocála."
+            "Queda marcada la más nueva. Abajo se ven el peso, la recomendada y la más pesada. "
+            "Podés elegir otra. Restaurar no borra las copias."
         )
         desc.setWordWrap(True)
         desc.setStyleSheet("font-size: 13px; color: #475569;")
@@ -142,8 +164,8 @@ class DialogoRestaurar(QDialog):
         self.lbl_lugar.setWordWrap(True)
         lay.addWidget(self.lbl_lugar)
 
-        self.tabla = QTableWidget(0, 4)
-        self.tabla.setHorizontalHeaderLabels(["Datos al", "Qué es", "Tablas", "Archivo"])
+        self.tabla = QTableWidget(0, 5)
+        self.tabla.setHorizontalHeaderLabels(["Datos al", "Qué es", "Tablas", "Peso", "Archivo"])
         self.tabla.setStyleSheet(TABLA)
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -155,9 +177,18 @@ class DialogoRestaurar(QDialog):
         cab.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         cab.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         cab.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        cab.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        cab.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        cab.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
         self.tabla.itemSelectionChanged.connect(self._al_elegir)
         lay.addWidget(self.tabla, 1)
+
+        self.lbl_detalle = QLabel("")
+        self.lbl_detalle.setWordWrap(True)
+        self.lbl_detalle.setStyleSheet(
+            "font-size: 13px; color: #0F172A; background: #F8FAFC; "
+            "border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px;"
+        )
+        lay.addWidget(self.lbl_detalle)
 
         self.lbl_avisos = QLabel("")
         self.lbl_avisos.setWordWrap(True)
@@ -201,6 +232,7 @@ class DialogoRestaurar(QDialog):
         self.lbl_lugar.setText(f"Buscando en: {lugar}")
         self.tabla.setRowCount(0)
         self.btn_ok.setEnabled(False)
+        self.lbl_detalle.setText("")
         self.lbl_avisos.hide()
         hilo = _Busqueda(rutas, self)
         hilo.listo.connect(lambda d, f, e: self._mostrar(d, f, e, lugar))
@@ -215,18 +247,30 @@ class DialogoRestaurar(QDialog):
             tipo = f.etiqueta + (f" · {f.detalle}" if f.detalle else "")
             if f.tipo == "copia" and not f.completa:
                 tipo += " · parcial"
-            celdas = (f"{f.fecha:%d/%m/%Y %H:%M}", tipo, str(f.tablas or "—"), f.ruta)
+            celdas = (
+                f"{f.fecha:%d/%m/%Y %H:%M}",
+                tipo,
+                str(f.tablas or "—"),
+                _fmt_peso(_peso(f.ruta)),
+                f.ruta,
+            )
             for j, texto in enumerate(celdas):
                 item = QTableWidgetItem(texto)
                 item.setToolTip(f.ruta)
+                if j in (0, 2, 3):
+                    vestir_numero(item)
+                else:
+                    vestir_nombre(item)
                 self.tabla.setItem(i, j, item)
         if error:
             self._pintar_avisos([error], [])
         if not fuentes:
             self.lbl_estado.setText("No se encontraron copias de la tienda acá.")
+            self.lbl_detalle.setText("No hay copias para comparar. Las que ya están en el disco no se borran.")
             return
-        self.lbl_estado.setText(f"{len(fuentes)} copias. Marcada: la más nueva.")
+        self.lbl_estado.setText(f"{len(fuentes)} copias. Marcada: la recomendada, que es la más nueva.")
         self.tabla.selectRow(0)
+        self._linea_detalle()
 
     def _elegida(self):
         filas = self.tabla.selectionModel().selectedRows()
@@ -249,6 +293,35 @@ class DialogoRestaurar(QDialog):
         bloqueos, avisos = revisar(fuente, self.destino)
         self._pintar_avisos(bloqueos, avisos)
         self.btn_ok.setEnabled(not bloqueos)
+        self._linea_detalle()
+
+    def _linea_detalle(self):
+        if not self.fuentes:
+            return
+        recomendada = self.fuentes[0]
+        pesada = max(self.fuentes, key=lambda f: _peso(f.ruta))
+        marcada = self._elegida() or recomendada
+        misma = os.path.normcase(recomendada.ruta) == os.path.normcase(pesada.ruta)
+        peso_marcada = _fmt_peso(_peso(marcada.ruta))
+        texto = (
+            f"Marcada: {marcada.fecha:%d/%m/%Y %H:%M} · {marcada.etiqueta} · {peso_marcada}"
+            f" · {marcada.tablas or '—'} tablas. "
+            f"Recomendada para restaurar: {recomendada.fecha:%d/%m/%Y %H:%M}"
+            f" · {_fmt_peso(_peso(recomendada.ruta))} (la más nueva). "
+        )
+        if misma:
+            texto += "También es la más pesada. "
+        else:
+            texto += (
+                f"La más pesada: {pesada.fecha:%d/%m/%Y %H:%M} · {pesada.nombre}"
+                f" · {_fmt_peso(_peso(pesada.ruta))}. "
+            )
+        texto += (
+            "Podés elegir otra. Restaurar no las borra. "
+            "Quedan la de hoy y diez más viejas; la más antigua se va sola. "
+            "Si el disco es chico, borrá a mano y podés dejar la de ayer."
+        )
+        self.lbl_detalle.setText(texto)
 
     def _restaurar(self):
         fuente = self._elegida()

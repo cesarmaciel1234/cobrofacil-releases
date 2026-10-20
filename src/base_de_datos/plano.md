@@ -39,7 +39,7 @@ Cuando una caja esclava pierde red, entra en SQLite local. Los intentos de recon
 
 La rama es `src/base_de_datos/autoblindaje/` (README). La puerta `autoblindaje_db.py` solo importa `AutoBlindajeDB`.
 
-El reloj de 30 minutos es `src/cerebro_global/backup_cerebro/`. La copia SQLite que lee el jefe sin red es `src/jefe/nodo_portable/espejo/`. No se reemplazan.
+El reloj de un minuto es `src/cerebro_global/backup_cerebro/`. La copia SQLite que lee el jefe sin red es `src/jefe/nodo_portable/espejo/`, también cada minuto. No se reemplazan.
 
 - `quien/maestra.py` `host_vivo`: esta PC si es maestra; si no, la que contesta `PUNPRO_DISCOVER` en el UDP 37020. Sin IP guardada. Si nadie contesta, no se graba.
 - `grabar/diario.py` `_backup_mariadb`: el `.sql` tiene que pesar más de 500 bytes. El zip de la carpeta de datos solo si el host es esta PC y el volcado falló.

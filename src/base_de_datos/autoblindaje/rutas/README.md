@@ -23,7 +23,7 @@ Crea las carpetas. Si Documentos no se puede crear, la lista queda en dos. La 2 
 - `_backup_date_str(path)`: saca la fecha del nombre, o `None`.
 - `detectar_unidades_usb()`: letras de pendrive. Sin unidades, lista vacía.
 - `sincronizar_con_pendrives_usb()`: copia el diario de hoy a `{unidad}\CobroFacil_PRO_Backups`. Sin pendrive no hace nada.
-- `limpiar_backups_antiguos(max_dias=30)`: borra archivos más viejos que ese tope en las tres carpetas. No toca el espejo SQLite del jefe.
+- `limpiar_backups_antiguos(max_viejas=10)`: cámara. El `backup_diario` de hoy no se toca. De los días anteriores quedan diez (ayer, y nueve más). De las de media hora y de turno quedan las diez más nuevas. La más antigua se borra. Si el disco es chico, el jefe borra a mano y puede dejar la de ayer. No toca el espejo SQLite del jefe.
 
 ## Qué no debe cambiar
 

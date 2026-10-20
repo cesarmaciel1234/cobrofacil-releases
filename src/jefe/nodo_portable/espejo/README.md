@@ -1,6 +1,6 @@
 ﻿# espejo — copia de la tienda en esta PC
 
-Archivo SQLite en tres rutas de esta PC. La que lee el jefe es `%LOCALAPPDATA%\CobroFacil_PRO\espejo_tienda\espejo_tienda.db`. Las otras dos son respaldo: `backups\nodo` junto al programa y `Documentos\CobroFacil_Backups\nodo`. No es `punpro.db`. Tampoco es el `.sql` del día: ese lo graba `src/base_de_datos/autoblindaje/` cada 30 minutos, de la maestra que se anuncie en la red.
+Archivo SQLite en tres rutas de esta PC. La que lee el jefe es `%LOCALAPPDATA%\CobroFacil_PRO\espejo_tienda\espejo_tienda.db`. Las otras dos son respaldo: `backups\nodo` junto al programa y `Documentos\CobroFacil_Backups\nodo`. No es `punpro.db`. Tampoco es el `.sql` del día: ese lo graba `src/base_de_datos/autoblindaje/` cada minuto, de la maestra que se anuncie en la red.
 
 ## copia.py
 
@@ -14,9 +14,9 @@ Archivo SQLite en tres rutas de esta PC. La que lee el jefe es `%LOCALAPPDATA%\C
   - La copia anota de qué servidor viene (`servidor` en `espejo_meta`, sale de `SELECT @@hostname` de MariaDB). Si la PC se conecta a otra maestra (por ejemplo de la de prueba a la del negocio, aunque tenga la misma IP) o la copia no tiene servidor anotado, la copia vieja se guarda aparte y arranca una nueva. Así nunca se mezclan datos de dos maestras.
   - Si la maestra solo cambia de IP, el nombre es el mismo: la copia sigue y no se guarda aparte.
   - Si la tienda tiene menos ventas que la copia (se restauró un respaldo o se recrearon tablas), pasa lo mismo.
-  - La copia vieja queda como `espejo_tienda_hasta_AAAAMMDD_HHMMSS.db` en la misma carpeta; no se borra.
+  - La copia vieja queda como `espejo_tienda_hasta_AAAAMMDD_HHMMSS.db`. Se guardan diez. La más antigua se borra sola. El archivo vivo `espejo_tienda.db` no entra en ese cupo.
   - Toma las columnas que tenga la tienda.
-- `arrancar()`: hilo cada 5 minutos. Lo prende el panel del jefe, y `main.py` si la PC ya tiene copia. Al arrancar, y después de cada refresco bueno, vuelca el mismo archivo a las otras dos rutas.
+- `arrancar()`: hilo cada 1 minuto. Lo prende el panel del jefe, y `main.py` si la PC ya tiene copia. Al arrancar, y después de cada refresco bueno, vuelca el mismo archivo a las otras dos rutas. Cada vuelta trae toda la tienda: ventas, clientes y el resto.
 - `rutas_nodo()`: AppData, carpeta del programa y Documentos. Si falta la primera, el jefe lee la siguiente.
 - `volcar_a(destino)`: copia entera al pendrive (backup de SQLite, modo DELETE para que se lea en un USB).
 - `meta()`: `ultima_copia`, `ultimo_completo`, `origen`, `servidor`, `tablas`, `completa`, en la tabla `espejo_meta`.

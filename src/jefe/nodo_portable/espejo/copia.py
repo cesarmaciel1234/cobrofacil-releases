@@ -268,6 +268,35 @@ def _volcar_filas(conn: sqlite3.Connection, tabla: str, filas: list[dict] | None
     return len(filas)
 
 
+CUPO_VIEJAS = 10
+
+
+def podar_viejas(cupo: int = CUPO_VIEJAS) -> int:
+    """Deja las diez copias viejas más nuevas. La más antigua se va, como una cámara."""
+    borradas = 0
+    carpetas = {carpeta()}
+    for dest in rutas_nodo():
+        carpetas.add(os.path.dirname(dest))
+    for folder in carpetas:
+        if not os.path.isdir(folder):
+            continue
+        viejas = [
+            os.path.join(folder, nombre)
+            for nombre in os.listdir(folder)
+            if nombre.startswith("espejo_tienda_hasta_") and nombre.endswith(".db")
+        ]
+        viejas.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+        for path in viejas[max(1, int(cupo)):]:
+            try:
+                os.remove(path)
+                borradas += 1
+            except OSError:
+                pass
+    if borradas:
+        logger.info(f"Cámara del espejo: se fueron {borradas} copias viejas")
+    return borradas
+
+
 def _archivar(path: str) -> str:
     """La tienda volvió atrás o es otra maestra: se guarda la copia vieja entera y se arranca otra."""
     destino = os.path.join(carpeta(), f"espejo_tienda_hasta_{_dt.datetime.now():%Y%m%d_%H%M%S}.db")
@@ -277,6 +306,7 @@ def _archivar(path: str) -> str:
         except OSError:
             pass
     os.replace(path, destino)
+    podar_viejas()
     return destino
 
 
@@ -420,8 +450,8 @@ def estado() -> dict:
     return {**_estado, **meta()}
 
 
-def arrancar(pausa: int = 300) -> None:
-    """Hilo de fondo: refresca cada `pausa` segundos. Una sola vez por proceso."""
+def arrancar(pausa: int = 60) -> None:
+    """Hilo de fondo: refresca cada `pausa` segundos (un minuto). Una sola vez por proceso."""
     global _hilo
     if _hilo is not None and _hilo.is_alive():
         return
@@ -434,5 +464,6 @@ def arrancar(pausa: int = 300) -> None:
 
     _hilo = threading.Thread(target=_vuelta, name="espejo_tienda", daemon=True)
     _hilo.start()
+    podar_viejas()
     if existe():
         replicar_rutas()

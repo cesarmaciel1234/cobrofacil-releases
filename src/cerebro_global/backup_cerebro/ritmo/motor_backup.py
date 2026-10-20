@@ -1,8 +1,7 @@
 """Cerebro de Backup — motor 100% autónomo.
 
-Cada 30 minutos guarda la base entera.
-- El diario del día es todo, más lo del día: el .sql completo, refrescado.
-- La media hora es ese mismo todo, sellado con el último ticket adentro.
+Cada minuto guarda la base entera (ventas, clientes y el resto), con el último ticket.
+Cada 30 minutos sella esa misma copia como backup_periodico.
 """
 
 from __future__ import annotations
@@ -18,9 +17,9 @@ from src.utils.paths import get_base_path
 
 
 class CerebroBackup:
-    INTERVAL_SEC = 30 * 60          # media hora
-    INCREMENTAL_MAX_VENTAS = 30     # ≤30 ventas nuevas → solo tablas de venta
-    FULL_EVERY_N_TICKS = 4          # cada 2 h fuerza full aunque haya pocas ventas
+    INTERVAL_SEC = 60                 # un minuto: la copia queda al último minuto
+    INCREMENTAL_MAX_VENTAS = 30
+    SELLO_CADA = 30                   # cada 30 vueltas sella la media hora
 
     def __init__(self):
         self._thread: threading.Thread | None = None
@@ -93,6 +92,12 @@ class CerebroBackup:
                 daemon=True,
             )
             self._thread.start()
+            try:
+                from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+                AutoBlindajeDB.limpiar_backups_antiguos()
+            except Exception:
+                pass
             # Nube local: worker que drena cola de cobros → AppData (fuera del install)
             try:
                 from src.base_de_datos.diario_ventas_externo import start_motor_nube_local
@@ -101,8 +106,9 @@ class CerebroBackup:
             except Exception:
                 pass
             logger.info(
-                f"🧠 CerebroBackup AUTÓNOMO iniciado "
-                f"(cada {self.INTERVAL_SEC // 60} min, host={self._host})"
+                "🧠 CerebroBackup AUTÓNOMO iniciado "
+                "(base entera cada 1 minuto, sello cada 30, "
+                f"host={self._host})"
             )
             return True
 
@@ -224,7 +230,7 @@ class CerebroBackup:
             "El diario es todo más el día. La media hora es todo más el último ticket."
         )
         ok = self._diario_con_reintento()
-        if ok:
+        if ok and self._tick_count % self.SELLO_CADA == 0:
             try:
                 AutoBlindajeDB.sellar_media_hora(self._engine)
             except Exception:

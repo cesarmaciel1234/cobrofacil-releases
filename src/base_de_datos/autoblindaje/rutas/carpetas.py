@@ -6,7 +6,7 @@ import socket
 import subprocess
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from src.logger import logger
 from src.utils.paths import get_base_path
@@ -171,48 +171,54 @@ class Rutas:
         return [os.path.join(d, filename) for d in dirs], filename
 
     @classmethod
-    def limpiar_backups_antiguos(cls, max_dias: int = 30):
-        """Mantiene respaldos recientes; pre_restore con cupo aparte."""
-        cutoff = datetime.now() - timedelta(days=max_dias)
+    def limpiar_backups_antiguos(cls, max_viejas: int = 10):
+        """Como una cámara: queda el de hoy y unas diez más viejas. La más antigua se borra."""
+        hoy = cls._fecha_hoy()
+        cupo = max(1, int(max_viejas))
         for directory in cls.get_backup_directories():
+            if not os.path.isdir(directory):
+                continue
             try:
-                daily_style = []
-                pre_restore = []
+                diarios_viejos: list[tuple[str, str]] = []
+                medias: list[str] = []
+                pre_restore: list[str] = []
                 for path in glob.glob(os.path.join(directory, "*.*")):
                     name = os.path.basename(path).lower()
-                    if cls._is_quarantined(path):
+                    if name.endswith(".part") or cls._is_quarantined(path):
                         continue
                     if name.startswith("pre_restore_"):
                         pre_restore.append(path)
-                    elif (
-                        name.startswith("backup_diario_")
-                        or name.startswith("backup_turno_")
-                        or name.startswith("backup_periodico_")
-                    ):
-                        daily_style.append(path)
+                    elif name.startswith("backup_diario_") and "_ventas" not in name:
+                        fecha = cls._backup_date_str(path) or ""
+                        if fecha != hoy:
+                            diarios_viejos.append((fecha, path))
+                    elif name.startswith("backup_periodico_") or name.startswith("backup_turno_"):
+                        medias.append(path)
 
-                daily_style.sort(key=lambda p: os.path.getmtime(p), reverse=True)
-                for old_file in daily_style[max_dias:]:
-                    try:
-                        os.remove(old_file)
-                    except OSError:
-                        pass
+                fechas: list[str] = []
+                for fecha, _path in sorted(diarios_viejos, key=lambda t: t[0], reverse=True):
+                    if fecha and fecha not in fechas:
+                        fechas.append(fecha)
+                conservar = set(fechas[:cupo])
+                for fecha, path in diarios_viejos:
+                    if fecha not in conservar:
+                        cls._borrar_copia_vieja(path)
+
+                medias.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+                for path in medias[cupo:]:
+                    cls._borrar_copia_vieja(path)
 
                 pre_restore.sort(key=lambda p: os.path.getmtime(p), reverse=True)
-                for old_file in pre_restore[cls.MAX_PRE_RESTORE:]:
-                    try:
-                        os.remove(old_file)
-                    except OSError:
-                        pass
-
-                # Limpieza por antigüedad absoluta
-                for path in daily_style + pre_restore:
-                    try:
-                        if datetime.fromtimestamp(os.path.getmtime(path)) < cutoff:
-                            if path not in daily_style[:7] and path not in pre_restore[:5]:
-                                os.remove(path)
-                    except OSError:
-                        pass
+                for path in pre_restore[cls.MAX_PRE_RESTORE:]:
+                    cls._borrar_copia_vieja(path)
             except Exception:
                 pass
+
+    @staticmethod
+    def _borrar_copia_vieja(path: str) -> None:
+        try:
+            os.remove(path)
+            logger.info(f"Cámara de respaldos: se fue la más vieja ({os.path.basename(path)})")
+        except OSError:
+            pass
 
