@@ -221,6 +221,10 @@ def lugares_de_esta_pc() -> list[str]:
         from src.jefe.nodo_portable.espejo import copia
 
         lugares.append(copia.carpeta())
+        for extra in copia.rutas_nodo():
+            carpeta = os.path.dirname(extra)
+            if carpeta and carpeta not in lugares:
+                lugares.append(carpeta)
     except Exception:
         pass
     try:

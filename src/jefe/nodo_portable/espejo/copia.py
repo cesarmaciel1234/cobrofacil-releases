@@ -38,6 +38,18 @@ def ruta() -> str:
     return os.path.join(carpeta(), ARCHIVO)
 
 
+def rutas_nodo() -> list[str]:
+    """Tres sitios en esta PC. La primera es la que lee el jefe; las otras son respaldo."""
+    from src.utils.paths import get_base_path
+
+    user = os.environ.get("USERPROFILE") or os.path.expanduser("~")
+    return [
+        ruta(),
+        os.path.join(get_base_path(), "backups", "nodo", ARCHIVO),
+        os.path.join(user, "Documents", "CobroFacil_Backups", "nodo", ARCHIVO),
+    ]
+
+
 def existe(path: str | None = None) -> bool:
     p = path or ruta()
     return os.path.isfile(p) and os.path.getsize(p) > 0
@@ -351,6 +363,7 @@ def refrescar(completo: bool = False) -> dict:
             tienda.close()
         _anotar("ok", res.get("cuando", ""))
         _salud.update(hasta=time.monotonic() + 60, rota="")
+        replicar_rutas()
         return res
     except Exception as e:
         logger.warning(f"Espejo tienda: no se refrescó, la copia queda como estaba ({e})")
@@ -383,6 +396,26 @@ def volcar_a(destino: str) -> None:
     os.replace(tmp, destino)
 
 
+def replicar_rutas() -> int:
+    """La copia que ya está en AppData se vuelca a las otras rutas del nodo."""
+    if not existe():
+        return 0
+    origen = os.path.normcase(os.path.abspath(ruta()))
+    hechas = 0
+    for dest in rutas_nodo():
+        if os.path.normcase(os.path.abspath(dest)) == origen:
+            continue
+        try:
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            volcar_a(dest)
+            hechas += 1
+        except Exception as e:
+            logger.warning(f"Nodo: no se pudo copiar a {dest} ({e})")
+    if hechas:
+        logger.info(f"Nodo: copia en {hechas + 1} rutas de esta PC")
+    return hechas
+
+
 def estado() -> dict:
     return {**_estado, **meta()}
 
@@ -401,3 +434,5 @@ def arrancar(pausa: int = 300) -> None:
 
     _hilo = threading.Thread(target=_vuelta, name="espejo_tienda", daemon=True)
     _hilo.start()
+    if existe():
+        replicar_rutas()

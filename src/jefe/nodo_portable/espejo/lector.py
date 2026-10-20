@@ -55,8 +55,10 @@ def _ruta_lectura() -> str:
         esclava = bool(str(config.get("db_host", "") or "").strip())
     except Exception:
         esclava = False
-    if esclava and copia.existe():
-        return copia.ruta()
+    if esclava:
+        for candidata in copia.rutas_nodo():
+            if copia.existe(candidata):
+                return candidata
     try:
         from src.jefe.nodo_portable.motor_nodo import _negocio_db_path, estado_nodo, get_nodo_path
 
@@ -66,6 +68,14 @@ def _ruta_lectura() -> str:
     except Exception:
         pass
     return ""
+
+
+def _es_copia_local(path: str) -> bool:
+    try:
+        normas = {os.path.normcase(os.path.abspath(p)) for p in copia.rutas_nodo()}
+    except Exception:
+        return os.path.normcase(os.path.abspath(path)) == os.path.normcase(os.path.abspath(copia.ruta()))
+    return os.path.normcase(os.path.abspath(path)) in normas
 
 
 def en_copia() -> str:
@@ -100,6 +110,6 @@ def leyenda() -> str:
         cuando = datetime.strptime(cuando[:16], "%Y-%m-%d %H:%M").strftime("%d/%m %H:%M")
     except ValueError:
         cuando = ""
-    donde = "pendrive" if p != copia.ruta() else "copia de esta PC"
+    donde = "pendrive" if not _es_copia_local(p) else "copia de esta PC"
     motivo = "Maestra con tablas dañadas" if _hay_tienda() else "Sin red"
     return f"⚠️ {motivo} — datos de la tienda al {cuando} ({donde})" if cuando else f"⚠️ {motivo} — {donde}"

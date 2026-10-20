@@ -36,6 +36,25 @@ class NetworkDBService:
                 except Exception as e_cb:
                     logger.warning(f"Aviso CerebroBackup: {e_cb}")
 
+        elif (
+            getattr(db_manager, "db_engine_type", "") == "mariadb"
+            and not getattr(db_manager, "_forced_local_offline", False)
+        ):
+            eng = getattr(db_manager, "mariadb_engine", None)
+            host = str(getattr(eng, "host", "") or "").strip()
+            if host and host.lower() not in ("localhost", "127.0.0.1"):
+                try:
+                    from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+                    AutoBlindajeDB.verificar_y_respaldar_diario("mariadb", host)
+                except Exception as e:
+                    logger.warning(f"Esclava: no se pudo traer el respaldo ({e})")
+                try:
+                    from src.cerebro_global.backup_cerebro import cerebro_backup
+                    cerebro_backup.start("mariadb", host)
+                    logger.info(f"Esclava: respaldo local cada 30 min desde {host}")
+                except Exception as e_cb:
+                    logger.warning(f"Esclava CerebroBackup: {e_cb}")
+
         # 2. Esclava Offline: Auto-descubrimiento y Reintentos
         if getattr(db_manager, "_forced_local_offline", False):
             master_ok = False

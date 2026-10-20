@@ -12,7 +12,7 @@ Sin red, la vitrina muestra la franja ámbar «Sin red · datos de la tienda al 
 
 La maestra es dueña de todo.
 
-1. `espejo/` guarda en esta PC una copia de la tienda y la refresca sola cada 5 minutos mientras hay maestra (`espejo/README.md`). Si se pierde el pendrive o se borra su carpeta, la PC sigue teniendo todo.
+1. `espejo/` guarda en esta PC la copia de la tienda y la refresca sola cada 5 minutos mientras hay maestra (`espejo/README.md`). Queda en tres rutas: AppData, `backups\nodo` del programa y `Documentos\CobroFacil_Backups\nodo`. Si se pierde una, se lee la otra. La esclava baja el `.sql` de quien se anuncia como maestra en ese momento, sin IP fija, a sus tres carpetas de backup (`backups\db`, AppData y Documentos).
 2. El pendrive (`nodo_negocio.db`) es una copia de ese archivo. Sincronizar: une primero los archivos del monitor MP (`reportes/mercado_pago_sync.csv` y `reportes/mp_vinculos.json`) por ID de pago para llevar y traer pagos, marcas de omitido/restaurado y asociaciones a tickets. Luego refresca la copia si hay maestra, la tienda toma los eventos de clientes que traía el pendrive (`_chupar_antes`) y, si aplicó alguno, refresca otra vez antes de volcar (`espejo.volcar_a`). Así el saldo (`clientes.deuda_actual`) y los movimientos de `cuenta_corriente` de esos eventos ya quedan en el nodo en la misma vuelta. Después vuelve a poner los eventos hechos sin red que traía (`_devolver_eventos`). Si falla ese segundo refresco, no pisa el archivo anterior del nodo. Sin maestra lleva la última copia buena.
 3. Sin maestra, `espejo.fuente()` hace que vitrina, reportes financieros y auditoría lean la copia de esta PC; si no hay (otra PC en casa), la del pendrive.
 

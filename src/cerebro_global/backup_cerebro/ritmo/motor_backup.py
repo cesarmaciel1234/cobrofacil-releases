@@ -1,10 +1,8 @@
 """Cerebro de Backup — motor 100% autónomo.
 
-Corre en su propio hilo cada 30 minutos:
-- Si hubo pocas ventas → actualiza solo tablas de venta (incremental).
-- Si hubo mucho movimiento o toca el ciclo forzado → refresca el backup_diario_HOY completo.
-
-El flash de cierre de turno solo sella; este cerebro hace el trabajo todo el día.
+Cada 30 minutos guarda la base entera.
+- El diario del día es todo, más lo del día: el .sql completo, refrescado.
+- La media hora es ese mismo todo, sellado con el último ticket adentro.
 """
 
 from __future__ import annotations
@@ -54,12 +52,29 @@ class CerebroBackup:
 
     def _save_state(self, state: dict) -> None:
         path = self._state_path()
+        temporal = path + ".part"
         try:
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
+            with open(temporal, "w", encoding="utf-8") as f:
                 json.dump(state, f, indent=2, default=str)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temporal, path)
         except Exception as e:
             logger.warning(f"CerebroBackup: no se pudo guardar estado: {e}")
+            try:
+                if os.path.isfile(temporal):
+                    os.remove(temporal)
+            except OSError:
+                pass
+
+    def _anotar_fallo(self, motivo: str) -> None:
+        state = self._load_state()
+        state["last_ok"] = False
+        state["last_mode"] = "error"
+        state["last_error"] = str(motivo)[:300]
+        state["tick_count"] = self._tick_count
+        self._save_state(state)
 
     def start(self, engine_type: str = "mariadb", host: str = "127.0.0.1") -> bool:
         """Arranca el motor autónomo (idempotente)."""
@@ -109,6 +124,7 @@ class CerebroBackup:
             self._tick(force_full=False)
         except Exception as e:
             logger.error(f"CerebroBackup primer tick: {e}")
+            self._anotar_fallo(e)
 
         while not self._stop.is_set():
             if self._stop.wait(self.INTERVAL_SEC):
@@ -117,6 +133,7 @@ class CerebroBackup:
                 self._tick(force_full=False)
             except Exception as e:
                 logger.error(f"CerebroBackup tick: {e}")
+                self._anotar_fallo(e)
 
     def _contar_ventas_nuevas(self, since_iso: str | None) -> int:
         try:
@@ -155,6 +172,21 @@ class CerebroBackup:
             logger.warning(f"CerebroBackup conteo ventas: {e}")
             return 999  # ante duda → full
 
+    def _diario_con_reintento(self) -> bool:
+        """Tres intentos. Entre uno y otro olvida el host, por si la maestra cambió."""
+        from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+        for intento in range(3):
+            ok = AutoBlindajeDB.crear_backup_diario_si_corresponde(
+                self._engine, self._host, force=True, min_interval_hours=0
+            )
+            if ok:
+                return True
+            AutoBlindajeDB._host_cache = ("", 0.0)
+            if intento < 2 and self._stop.wait(8):
+                return False
+        return False
+
     def _tick(self, force_full: bool = False) -> str:
         from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
 
@@ -167,59 +199,48 @@ class CerebroBackup:
             pass
 
         self._tick_count += 1
+        self._host = AutoBlindajeDB.host_vivo(self._host)
         state = self._load_state()
+        if self._engine == "mariadb" and not self._host:
+            logger.warning("CerebroBackup: nadie anuncia la maestra. El .sql espera.")
+            state["last_mode"] = "sin_maestra"
+            state["last_ok"] = False
+            state["tick_count"] = self._tick_count
+            state["last_host"] = ""
+            self._save_state(state)
+            return "sin_maestra"
         last_mark = state.get("last_incremental_at") or state.get("last_full_at")
         # Ventas desde el último ciclo (o desde hoy 00:00 si no hay marca)
         since = last_mark
         nuevas = self._contar_ventas_nuevas(since)
 
-        force_cycle = force_full or (self._tick_count % self.FULL_EVERY_N_TICKS == 0)
-        use_incremental = (
-            not force_cycle
-            and nuevas <= self.INCREMENTAL_MAX_VENTAS
-            and nuevas >= 0
+        hoy_paths, _nombre = AutoBlindajeDB._targets_diario_hoy(self._engine)
+        falta_hoy = not any(
+            os.path.isfile(p) and os.path.getsize(p) > 500 for p in hoy_paths
         )
-
-        if use_incremental:
-            logger.info(
-                f"🧠 CerebroBackup incremental ({nuevas} ventas desde último sello) "
-                "— solo tablas de venta."
-            )
-            ok = AutoBlindajeDB.backup_incremental_tablas_venta(
-                self._engine, self._host
-            )
-            mode = "incremental"
-            if not ok:
-                logger.info("🧠 Incremental falló → full rolling del día.")
-                ok = AutoBlindajeDB.crear_backup_diario_si_corresponde(
-                    self._engine, self._host, force=True, min_interval_hours=0
-                )
-                mode = "full_fallback"
-        else:
-            logger.info(
-                f"🧠 CerebroBackup FULL rolling "
-                f"(nuevas={nuevas}, force={force_cycle})."
-            )
-            ok = AutoBlindajeDB.crear_backup_diario_si_corresponde(
-                self._engine, self._host, force=True, min_interval_hours=0
-            )
-            # Sello periódico con timestamp cada full
+        logger.info(
+            f"🧠 CerebroBackup: base entera "
+            f"(ventas nuevas={nuevas}, falta_hoy={falta_hoy}). "
+            "El diario es todo más el día. La media hora es todo más el último ticket."
+        )
+        ok = self._diario_con_reintento()
+        if ok:
             try:
-                AutoBlindajeDB.crear_backup_periodico_si_corresponde(
-                    self._engine, self._host, min_interval_hours=0
-                )
+                AutoBlindajeDB.sellar_media_hora(self._engine)
             except Exception:
                 pass
-            mode = "full"
+        mode = "full"
 
         now = datetime.now().isoformat(timespec="seconds")
         state["last_mode"] = mode
         state["last_ok"] = bool(ok)
         state["last_ventas_count"] = nuevas
         state["tick_count"] = self._tick_count
-        if mode.startswith("full"):
-            state["last_full_at"] = now
-        state["last_incremental_at"] = now
+        state["last_host"] = self._host
+        if ok:
+            if mode.startswith("full"):
+                state["last_full_at"] = now
+            state["last_incremental_at"] = now
         self._save_state(state)
         return mode
 

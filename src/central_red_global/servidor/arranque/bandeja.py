@@ -153,7 +153,7 @@ def run_store_server_app(app) -> int:
         if resp != QMessageBox.StandardButton.Yes:
             return
         try:
-            from src.cerebro_global.backup_cerebro.motor_backup import cerebro_backup as _cb
+            from src.cerebro_global.backup_cerebro.ritmo.motor_backup import cerebro_backup as _cb
 
             try:
                 _cb.tick_now(force_full=True)

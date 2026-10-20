@@ -37,6 +37,10 @@ Cuando una caja esclava pierde red, entra en SQLite local. Los intentos de recon
 
 ## Autoblindaje de Base de Datos
 
-src/base_de_datos/autoblindaje_db.py gestiona los backups automáticos y recuperaciones. 
-- Al exportar MariaDB (_backup_mariadb), valida si el .sql generado pesa más de 500 bytes (asumiendo que una base en blanco pesa alrededor de 1.5KB). Si pesa menos, recién ahí hace fallback a un respaldo físico .zip. No subir este umbral, de lo contrario forzará backups .zip en bases pequeñas, corrompiendo InnoDB al comprimirlo en caliente.
-- Al restaurar (_aplicar_archivo_restore), si el motor destino es SQLite, se rechazan archivos .zip o .sql de MariaDB para no sobreescribir y corromper el archivo .db.
+La rama es `src/base_de_datos/autoblindaje/` (README). La puerta `autoblindaje_db.py` solo importa `AutoBlindajeDB`.
+
+El reloj de 30 minutos es `src/cerebro_global/backup_cerebro/`. La copia SQLite que lee el jefe sin red es `src/jefe/nodo_portable/espejo/`. No se reemplazan.
+
+- `quien/maestra.py` `host_vivo`: esta PC si es maestra; si no, la que contesta `PUNPRO_DISCOVER` en el UDP 37020. Sin IP guardada. Si nadie contesta, no se graba.
+- `grabar/diario.py` `_backup_mariadb`: el `.sql` tiene que pesar más de 500 bytes. El zip de la carpeta de datos solo si el host es esta PC y el volcado falló.
+- `sanar/integridad.py` `_aplicar_archivo_restore`: un `.zip` o `.sql` de MariaDB no pisa el SQLite de una caja.

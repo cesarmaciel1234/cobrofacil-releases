@@ -1,4 +1,4 @@
-﻿import os
+import os
 import glob
 import zipfile
 from datetime import datetime
@@ -15,10 +15,7 @@ def comprimir_backups_del_dia(fecha_str=None):
     if not fecha_str:
         fecha_str = datetime.now().strftime('%Y-%m-%d')
         
-    local_dir, os_dir = AutoBlindajeDB.get_backup_directories()
-    
-    # Comprimimos tanto en la ruta local como en el espejo seguro de AppData
-    for target_dir in (local_dir, os_dir):
+    for target_dir in AutoBlindajeDB.get_backup_directories():
         if not os.path.exists(target_dir):
             continue
             
@@ -44,11 +41,17 @@ def comprimir_backups_del_dia(fecha_str=None):
                 for arc in archivos:
                     nombre_base = os.path.basename(arc)
                     zipf.write(arc, nombre_base)
-                    
-            # Si comprimió bien, borrar los sueltos (excepto el rolling daily más reciente si quisiéramos)
-            # Para evitar borrar el "rolling" que sigue en uso si no es exactamente medianoche,
-            # podríamos borrarlos todos si estamos seguros que es CIERRE_Z.
+            with zipfile.ZipFile(zip_path, "r") as chequeo:
+                ilegible = chequeo.testzip() is not None
+            if ilegible:
+                logger.error(f"Zip del día ilegible, no se borra nada: {zip_path}")
+                continue
+
+            # El diario rolling no se borra: es la copia que se restaura.
             for arc in archivos:
+                nombre = os.path.basename(arc).lower()
+                if nombre.startswith("backup_diario_") and "_ventas" not in nombre:
+                    continue
                 try:
                     os.remove(arc)
                 except Exception as e:

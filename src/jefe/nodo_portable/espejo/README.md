@@ -1,6 +1,6 @@
 ﻿# espejo — copia de la tienda en esta PC
 
-Archivo SQLite en `%LOCALAPPDATA%\CobroFacil_PRO\espejo_tienda\espejo_tienda.db`. No es `punpro.db`: esa es la base de vender sin red y no se mezcla con la historia de la tienda.
+Archivo SQLite en tres rutas de esta PC. La que lee el jefe es `%LOCALAPPDATA%\CobroFacil_PRO\espejo_tienda\espejo_tienda.db`. Las otras dos son respaldo: `backups\nodo` junto al programa y `Documentos\CobroFacil_Backups\nodo`. No es `punpro.db`. Tampoco es el `.sql` del día: ese lo graba `src/base_de_datos/autoblindaje/` cada 30 minutos, de la maestra que se anuncie en la red.
 
 ## copia.py
 
@@ -16,7 +16,8 @@ Archivo SQLite en `%LOCALAPPDATA%\CobroFacil_PRO\espejo_tienda\espejo_tienda.db`
   - Si la tienda tiene menos ventas que la copia (se restauró un respaldo o se recrearon tablas), pasa lo mismo.
   - La copia vieja queda como `espejo_tienda_hasta_AAAAMMDD_HHMMSS.db` en la misma carpeta; no se borra.
   - Toma las columnas que tenga la tienda.
-- `arrancar()`: hilo cada 5 minutos. Lo prende el panel del jefe, y `main.py` si la PC ya tiene copia.
+- `arrancar()`: hilo cada 5 minutos. Lo prende el panel del jefe, y `main.py` si la PC ya tiene copia. Al arrancar, y después de cada refresco bueno, vuelca el mismo archivo a las otras dos rutas.
+- `rutas_nodo()`: AppData, carpeta del programa y Documentos. Si falta la primera, el jefe lee la siguiente.
 - `volcar_a(destino)`: copia entera al pendrive (backup de SQLite, modo DELETE para que se lea en un USB).
 - `meta()`: `ultima_copia`, `ultimo_completo`, `origen`, `servidor`, `tablas`, `completa`, en la tabla `espejo_meta`.
 
