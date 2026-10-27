@@ -246,7 +246,10 @@ def launch_app(direct_role=None):
         from src.jefe.nodo_portable import espejo
 
         if espejo.existe():
-            espejo.arrancar()
+            from src.central_red_global.servidor.oficio.agente import agente_tiene_el_espejo
+
+            if not agente_tiene_el_espejo():
+                espejo.arrancar()
     except Exception:
         pass
 
@@ -484,7 +487,9 @@ if __name__ == "__main__":
     try:
         import ctypes
         if sys.platform == "win32":
-            myappid = "punpro.cobrofacil.pos.31"
+            # El 31 es un id viejo de Windows, no es la caja ni la versión.
+            # El aviso de la bandeja muestra este texto si no hay un acceso con nombre.
+            myappid = "CobroFacil.Espejo" if is_store_server else "punpro.cobrofacil.pos.31"
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     except Exception:
         pass
@@ -529,14 +534,7 @@ if __name__ == "__main__":
             app.aboutToQuit.connect(shutdown_network_engine)
             app._network_engine_shutdown_hook = True
 
-        try:
-            from src.ui_components.tema_estilos import aplicar_tema
-            from src.config import config
-            tema = "estilo_dia.qss" if config.get("theme", "light") == "light" else "estilo_noche.qss"
-            aplicar_tema(app, tema)
-        except Exception:
-            pass
-
+        # El tema claro del día pinta QWidget y las tablas de blanco. Esta ventana trae su hoja.
         code = run_store_server_app(app)
         app_exit_event.set()
         sys.exit(code if code is not None else 0)
@@ -619,40 +617,39 @@ if __name__ == "__main__":
         from src.config import config
         from src.central_red_global.master_presence import es_pc_maestra_local
 
-        if config.get("auto_start_store_server", True) and es_pc_maestra_local():
+        if config.get("auto_start_store_server", True):
             try:
                 from src.central_red_global.store_server import (
                     ensure_store_server_process,
                     set_windows_autostart,
                     is_windows_autostart_enabled,
                 )
-                print("[TIENDA] Asegurando Servidor de Tiendaâ€¦")
+                print("[TIENDA] Asegurando servidor en segundo plano...")
                 ok_srv = False
-                # Tras un update mysqld/exe pueden tardar: reintentar
                 for attempt in range(1, 4):
                     ok_srv = ensure_store_server_process(timeout_sec=35.0)
                     if ok_srv:
                         break
-                    print(f"[TIENDA] Intento {attempt}/3 fallÃ³ â€” reintentandoâ€¦")
+                    print(f"[TIENDA] Intento {attempt}/3 fallo — reintentando...")
                     time.sleep(2.0)
                 if ok_srv and config.get("auto_start_store_server", True) and not is_windows_autostart_enabled():
                     set_windows_autostart(True)
                 if not ok_srv:
-                    raise RuntimeError("spawn servidor fallÃ³ tras 3 intentos")
+                    raise RuntimeError("spawn servidor fallo tras 3 intentos")
             except Exception as e:
                 print(f"Aviso Servidor de Tienda: {e}")
-                # Fallback: presencia en este proceso si el spawn fallÃ³
-                try:
-                    from src.services.mariadb_controller import mariadb_controller
-                    mariadb_controller._ensure_firewall()
-                    from src.central_red_global.lan_server import init_lan_server
-                    init_lan_server()
-                    from src.central_red_global.master_presence import ensure_master_lan_presence
-                    ensure_master_lan_presence()
-                    from src.carteleria.creador_png.servidor import asegurar_servidor
-                    asegurar_servidor()
-                except Exception as e2:
-                    print(f"Fallback presencia local: {e2}")
+                if es_pc_maestra_local():
+                    try:
+                        from src.services.mariadb_controller import mariadb_controller
+                        mariadb_controller._ensure_firewall()
+                        from src.central_red_global.lan_server import init_lan_server
+                        init_lan_server()
+                        from src.central_red_global.master_presence import ensure_master_lan_presence
+                        ensure_master_lan_presence()
+                        from src.carteleria.creador_png.servidor import asegurar_servidor
+                        asegurar_servidor()
+                    except Exception as e2:
+                        print(f"Fallback presencia local: {e2}")
 
     while True:
         exit_code = launch_app(direct_role=target_role)
