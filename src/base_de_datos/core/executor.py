@@ -5,7 +5,35 @@ import sys
 from src.logger import logger
 from src.base_de_datos.core.mariadb_probe import error_indica_maestra_caida
 
+class _FilaCopia(dict):
+    """Fila de la copia: se lee por nombre y también por posición, como la de SQLite."""
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list(self.values())[key]
+        return super().__getitem__(key)
+
+
 class QueryExecutorMixin:
+    def _filas_copia(self, query: str, params: tuple = ()):
+        """Sin maestra, la lectura del negocio sale de la copia. None = usar la base local."""
+        if not getattr(self, "_forced_local_offline", False):
+            return None
+        if getattr(self, "is_master", True):
+            return None
+        try:
+            from src.jefe.nodo_portable.espejo import copia
+            from src.jefe.nodo_portable.espejo.lector import Lector
+        except Exception:
+            return None
+        if not copia.existe():
+            return None
+        lector = Lector(copia.ruta())
+        filas = lector.execute_query(query, params)
+        if lector.last_error:
+            return None
+        return [_FilaCopia(fila) for fila in filas]
+
     def _normalize_query(self, query: str) -> str:
         """Convierte SQL escrito en dialecto SQLite a dialecto MariaDB si corresponde."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
@@ -49,7 +77,15 @@ class QueryExecutorMixin:
             return False
         if not self._host_tienda():
             return False
+        if getattr(self, "_corte_ya_contado", False):
+            return False
         if not error_indica_maestra_caida(err):
+            return False
+        from src.base_de_datos.core.mariadb_probe import es_freno_local
+
+        if es_freno_local(err):
+            return False
+        if not self._corte_confirmado():
             return False
         try:
             logger.warning("[RED LAN] Maestra no responde. La esclava sigue en SQLite local.")
@@ -63,7 +99,12 @@ class QueryExecutorMixin:
         conn = None
         try:
             self.last_error = ""
-            if self._host_tienda():
+            if getattr(self, "_forced_local_offline", False) and self._host_tienda():
+                self.asegurar_lectura_tienda()
+            de_copia = self._filas_copia(query, params)
+            if de_copia:
+                return de_copia
+            if self._host_tienda() and not getattr(self, "_forced_local_offline", False):
                 self.asegurar_lectura_tienda()
             conn = self.get_connection()
             cursor = conn.cursor()
@@ -177,6 +218,10 @@ class QueryExecutorMixin:
         """Executes a query and returns the first column of the first row (e.g., COUNT)."""
         conn = None
         try:
+            de_copia = self._filas_copia(query, params)
+            if de_copia:
+                vals = list(de_copia[0].values())
+                return vals[0] if vals else None
             conn = self.get_connection()
             cursor = conn.cursor()
             cursor.execute(self._normalize_query(query), params)

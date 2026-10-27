@@ -15,6 +15,8 @@ class OfflineSync:
         self._ensure_queue_file()
 
         self._candado_archivo = None
+        self._nutriendo = False
+        self._nutri_lock = threading.Lock()
         if "--server" not in sys.argv:
             self.sync_worker = threading.Thread(target=self._sync_loop, daemon=True)
             self.sync_worker.start()
@@ -346,6 +348,30 @@ class OfflineSync:
         except Exception:
             pass
 
+    def nutrir_ya(self) -> None:
+        """Sube la cola y baja la tienda en un hilo. Una sola vuelta a la vez."""
+        with self._nutri_lock:
+            if self._nutriendo:
+                return
+            self._nutriendo = True
+
+        def _vuelta():
+            try:
+                from src.base_de_datos.database import db_manager
+
+                if getattr(db_manager, "is_master", True):
+                    return
+                if getattr(db_manager, "db_engine_type", "") != "mariadb":
+                    return
+                self.ejecutar_ciclo_nutricion_completo(db_manager)
+            except Exception as e:
+                logger.warning("Nutrición al conectar: %s", e)
+            finally:
+                with self._nutri_lock:
+                    self._nutriendo = False
+
+        threading.Thread(target=_vuelta, daemon=True, name="nutricion-maestra").start()
+
     def ejecutar_ciclo_nutricion_completo(self, db_manager) -> tuple[bool, str]:
         """
         Ciclo Maestro-Esclavo Empresarial:
@@ -615,7 +641,7 @@ class OfflineSync:
                         db_manager.reconectar_mariadb(host)
                         db_manager.is_master = False
                         logger.info(f"🟢 PC Maestra en {host} detectada en la red WiFi. Iniciando Nutrición...")
-                        self.ejecutar_ciclo_nutricion_completo(db_manager)
+                        self.nutrir_ya()
                     except Exception as ex_r:
                         logger.debug(f"Aviso al reconectar MariaDB en segundo plano: {ex_r}")
 

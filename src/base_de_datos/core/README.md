@@ -14,7 +14,7 @@ Si el puerto parecía abierto y el conector tira red caída (`error_indica_maest
 
 `reconectar_local()` arma el path local, deja `db_engine_type` en `sqlite`, borra `mariadb_engine`, crea tablas y migra. Si ya está adentro (`_reconectando_local`), sale sin repetir. Al terminar anota `_last_master_try` para no volver a golpear la maestra en el mismo instante.
 
-`_puerto_maestra_vivo(host)` usa `puerto_mariadb_abierto` con 0,6 s. Si responde, lo recuerda 8 s en `_maestra_viva_hasta` para no frenar cada lectura.
+`_puerto_maestra_vivo(host)` usa `puerto_mariadb_abierto` con 0,8 s. Si responde, lo recuerda 12 s. Un solo fallo no cambia a SQLite: hace falta el segundo seguido (`_corte_confirmado`). El circuit breaker es un freno de esta PC; si el puerto sigue abierto se limpia y se reintenta, no se abandona la maestra.
 
 `reconectar_mariadb(host)` solo pisa el motor si el ping funciona.
 
@@ -23,6 +23,8 @@ Si el puerto parecía abierto y el conector tira red caída (`error_indica_maest
 `QueryExecutorMixin.execute_query`, `execute_non_query`, `execute_many` y `execute_scalar`.
 
 Antes de leer, si hay maestra configurada, llama `asegurar_lectura_tienda()`. Si la consulta falla con marca de caída y esta PC es esclava, `_caer_a_sqlite_si_maestra_caida` pasa a SQLite y reintenta esa consulta una vez (`_reintento=True`). La segunda falla ya no cambia de motor: devuelve `[]`, `False` o `None`.
+
+Con la maestra caída (`_forced_local_offline`), `execute_query` y `execute_scalar` leen primero la copia de la tienda (`espejo`). Ahí siguen clientes, el catálogo de admin y las ventas digitales. Si esa consulta no trae filas, sigue la SQLite local: ahí está la venta que se acaba de hacer offline. La escritura no toca la copia. Al volver la maestra, la copia deja de usarse y la cola sube.
 
 ## mariadb_probe.py
 

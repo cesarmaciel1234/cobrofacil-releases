@@ -26,6 +26,12 @@ def error_indica_maestra_caida(err) -> bool:
     return any(marca in texto for marca in MARCAS_MAESTRA_CAIDA)
 
 
+def es_freno_local(err) -> bool:
+    """El circuit breaker corta en esta PC. No prueba que el puerto de la maestra cerró."""
+    texto = str(err).lower()
+    return "circuit breaker" in texto or "cooldown" in texto
+
+
 def puerto_mariadb_abierto(host: str, timeout: float = 2.0) -> bool:
     if not host:
         return False

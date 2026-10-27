@@ -6,7 +6,7 @@ from src.utils.qt_compat import qt_exec
 from src.logger import logger
 from src.base_de_datos.core.db_path import normalize_db_path
 from src.base_de_datos.core.red_rol import leer_rol_red_desde_config
-from src.base_de_datos.core.mariadb_probe import puerto_mariadb_abierto
+from src.base_de_datos.core.mariadb_probe import es_freno_local as _es_freno_local, puerto_mariadb_abierto
 
 class ConnectionMixin:
     """Professional management of SQLite database operations."""
@@ -253,6 +253,8 @@ class ConnectionMixin:
                     schedule_hidratar_faltantes()
                 except Exception:
                     pass
+                if not self.is_master:
+                    self._nutrir_en_fondo()
                 return
             # --- FIN INTEGRACION MARIADB ---
 
@@ -473,7 +475,7 @@ class ConnectionMixin:
         self._init_db()
 
     def _puerto_maestra_vivo(self, host: str) -> bool:
-        """True si 3306 de la maestra acepta conexion. Cachea si y no para no congelar la UI."""
+        """True si conviene seguir en la maestra. Un solo parpadeo no la da por caída."""
         import time
 
         ahora = time.monotonic()
@@ -481,13 +483,33 @@ class ConnectionMixin:
             return True
         if ahora < float(getattr(self, "_maestra_muerta_hasta", 0) or 0):
             return False
-        if puerto_mariadb_abierto(host, 0.4):
-            self._maestra_viva_hasta = ahora + 8.0
+        if puerto_mariadb_abierto(host, 0.8):
+            self._fallos_puerto = 0
+            self._maestra_viva_hasta = ahora + 12.0
             self._maestra_muerta_hasta = 0.0
             return True
+        fallos = int(getattr(self, "_fallos_puerto", 0) or 0) + 1
+        self._fallos_puerto = fallos
+        if fallos < 2:
+            self._maestra_viva_hasta = ahora + 2.0
+            return True
         self._maestra_viva_hasta = 0.0
-        self._maestra_muerta_hasta = ahora + 8.0
+        self._maestra_muerta_hasta = ahora + 6.0
         return False
+
+    def _corte_confirmado(self) -> bool:
+        """El segundo fallo seguido sí autoriza a dejar la maestra. El primero no."""
+        import time
+
+        fallos = int(getattr(self, "_fallos_puerto", 0) or 0) + 1
+        self._fallos_puerto = fallos
+        if fallos < 2:
+            return False
+        self._fallos_puerto = 0
+        ahora = time.monotonic()
+        self._maestra_viva_hasta = 0.0
+        self._maestra_muerta_hasta = ahora + 6.0
+        return True
 
     def _abrir_sqlite(self):
         conn = sqlite3.connect(self.db_path, timeout=30.0)
@@ -558,8 +580,29 @@ class ConnectionMixin:
         finally:
             self._reconectando_local = False
 
+    def _nutrir_en_fondo(self) -> None:
+        """La esclava acaba de ver la maestra: sube la cola y baja la tienda sin frenar la pantalla."""
+        if getattr(self, "is_master", True):
+            return
+
+        def _luego():
+            try:
+                from src.base_de_datos.offline_sync import offline_sync_manager
+
+                offline_sync_manager.nutrir_ya()
+            except Exception as e:
+                logger.debug("Nutrición al conectar: %s", e)
+
+        import threading
+
+        threading.Thread(target=_luego, daemon=True, name="nutricion-al-conectar").start()
+
     def reconectar_mariadb(self, host: str):
         """Conecta a MariaDB en `host`. Solo cambia el motor activo si el ping funciona."""
+        venia_offline = bool(
+            getattr(self, "_forced_local_offline", False)
+            or getattr(self, "db_engine_type", "") != "mariadb"
+        )
         try:
             from src.db_engines.mariadb_engine import MariaDBEngine
             from src.config import config
@@ -578,9 +621,13 @@ class ConnectionMixin:
             remoto = str(host or "").lower() not in ("localhost", "127.0.0.1", "")
             self.is_master = bool(config.get("is_master", not remoto)) and not remoto
             self.mariadb_engine = engine
+            self._fallos_puerto = 0
+            self._maestra_muerta_hasta = 0.0
 
             rol = "MAESTRA" if self.is_master else "ESCLAVA"
             logger.info(f"[RED LAN] Reconectado como {rol} a MariaDB en {host}")
+            if venia_offline and not self.is_master:
+                self._nutrir_en_fondo()
         except Exception as e:
             logger.error(f"[RED LAN] Error en reconectar_mariadb: {e}")
             raise
@@ -608,6 +655,7 @@ class ConnectionMixin:
                 self.asegurar_lectura_tienda()
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
             host = self._host_tienda() if not getattr(self, "is_master", True) else ""
+            self._corte_ya_contado = False
             if (
                 caer_si_maestra_caida
                 and host
@@ -624,22 +672,43 @@ class ConnectionMixin:
                         raise
                 return self._abrir_sqlite()
             try:
-                return self.mariadb_engine.get_connection()
+                conn = self.mariadb_engine.get_connection()
+                self._fallos_puerto = 0
+                return conn
             except Exception as e:
                 from src.base_de_datos.core.mariadb_probe import error_indica_maestra_caida
 
-                esclava = (not getattr(self, "is_master", True)) and bool(self._host_tienda())
+                esclava = (not getattr(self, "is_master", True)) and bool(host)
+                if esclava and _es_freno_local(e):
+                    try:
+                        self.mariadb_engine._last_fail_time = 0
+                    except Exception:
+                        pass
+                    if puerto_mariadb_abierto(host, 0.8):
+                        try:
+                            conn = self.mariadb_engine.get_connection()
+                            self._fallos_puerto = 0
+                            import time as _time
+                            self._maestra_viva_hasta = _time.monotonic() + 12.0
+                            self._maestra_muerta_hasta = 0.0
+                            return conn
+                        except Exception as e2:
+                            e = e2
                 if (
                     caer_si_maestra_caida
                     and esclava
                     and error_indica_maestra_caida(e)
+                    and not _es_freno_local(e)
                     and not getattr(self, "_reconectando_local", False)
+                    and self._corte_confirmado()
                 ):
                     logger.warning(
                         f"[RED LAN] Maestra no responde ({e}). La esclava sigue en SQLite local."
                     )
                     self.reconectar_local()
                     return self._abrir_sqlite()
+                if esclava and error_indica_maestra_caida(e) and not _es_freno_local(e):
+                    self._corte_ya_contado = True
                 logger.error(f"Error connecting to MariaDB database: {e}")
                 raise
 
