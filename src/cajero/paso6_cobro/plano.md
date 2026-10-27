@@ -22,6 +22,7 @@ src/cajero/paso6_cobro/
 │
 ├── fiado_en_cobro/ui/buscador_clientes/   <-- Buscador que usa el orquestador
 │
+├── tarjeta_en_cobro/envio/       <-- Point: mandar, mirar y soltar la orden
 └── motor_pagos/                  <-- Cierre de la venta (sin UI)
 ```
 

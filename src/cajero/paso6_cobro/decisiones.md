@@ -59,3 +59,23 @@ Tabla corta también en `src/cajero/README.md`.
 El token se carga en **Admin → Terminales TPV** y la caja lo lee de la config de la estación. La caja tiene que hablar con Mercado Pago en el local: sin ese dato en la estación no hay QR ni Point.
 
 Es una brecha a propósito, de etapa: más adelante el token lleva **código** (no queda solo el secreto en el archivo). No lo saques de Admin ahora. No lo pidas en cada cobro. `_tpv_qr_listo` y `_tpv_point_listo` siguen con `config._load_config()`.
+
+## Corregir en código: el Point no muestra el monto
+
+El 26/10/2026 el Point `NEWLAND_N950__N950NCBA01604854` no mostraba el importe. El payload de `enviar_monto` estaba bien. El token guardado en la caja era de otra cuenta que la sesión abierta en el equipo.
+
+Prueba con el mismo device y el mismo `POST /v1/orders`:
+
+- Token de Gabriel Maciel (usuario `140284216`): Mercado Pago responde 201 y la orden queda en `created`. El Point no la toma.
+- Token de Cristina Báez Rodríguez (usuario `680256868`), que es la sesión abierta en ese Point: la orden pasa a `at_terminal` y el monto aparece.
+
+La caja usa el token de Cristina, el mismo que publicó la maestra en `192.168.0.7`. `enviar_monto` ya no trata un 201 como «ya está en la terminal»: espera `at_terminal` y, si sigue en `created`, cancela y avisa `otra_cuenta`.
+
+Al corregir `src/cajero/paso6_cobro/tarjeta_en_cobro/envio.py`:
+
+1. `enviar_monto` no devuelve `ok` solo porque el POST dio 201. El cobro llegó al Point cuando `status` es `at_terminal`.
+2. Si la orden sigue en `created`, cancelarla con `POST /v1/orders/{id}/cancel` y devolver `motivo: "otra_cuenta"`.
+3. Antes de crear la orden, `GET /point/integration-api/devices` con ese token. Si `mp_device_id` no está, `sin_terminal`. Si `operating_mode` no es `PDV`, `standalone` y no enviar: en STANDALONE el equipo no recibe el monto.
+4. `point_service._avisar_motivo` y `PanelTarjetaCobro._pintar` tienen que decir, para `otra_cuenta`, que el Point está abierto con otro usuario de Mercado Pago que el token de la caja.
+5. No hardcodear un usuario. El token que manda el cobro es el de la cuenta logueada en el Point.
+6. `sync_tienda/mp_token/tienda.py` `traer()` pisa el token local con el de la maestra. Si la maestra tiene la otra cuenta, el monto deja de aparecer. La corrección no puede volver a guardar un token cuyo device no está en PDV.

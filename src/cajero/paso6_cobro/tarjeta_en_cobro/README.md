@@ -4,6 +4,10 @@ El medio Tarjeta deja el hueco de `PanelTarjetaCobro` (mismo contenedor que QR).
 
 `panel.py`, clase `PanelTarjetaCobro`. `mostrar(monto)` sigue pudiendo mandar el importe. Un fallo no cancela el cobro que ya quedó en la terminal.
 
-`envio.py`: `enviar_monto` manda el importe al Point solo como tarjeta (`credit_card`). La terminal pide apoyar la tarjeta y no ofrece QR: el código se ve en el sistema. El mínimo del Point es $15. `estado_intent` mira `GET /v1/orders/{id}` (1,8 s). El panel consulta cada 800 ms, arranca apenas sale “Apoye la tarjeta”, y no apila GETs. `cancelar_intent` sin `en_terminal` no baja un cobro que ya se está viendo en el Point. El botón Cancelar del cartel sí pasa `en_terminal=True`.
+El fondo del Point está en `envio/`: `mandar.enviar_monto`, `estado.detalle_orden` y `soltar.cancelar_intent`. El detalle de cada función está en `envio/README.md`. La terminal pide apoyar la tarjeta y no ofrece QR. El cartel consulta cada 1 s desde que el Point tomó el monto, y no apila GETs. El panel consulta cada 800 ms. Cancelar sin `en_terminal` no baja un cobro que ya se ve en el Point. El botón Cancelar del cartel sí pasa `en_terminal=True`.
 
 Si la terminal no toma el monto, el cartel avisa y Enter registra la venta igual.
+
+## Orden creada y el Point en blanco
+
+`at_terminal` es el envío logrado. `created` se cancela y vuelve como `motivo: "otra_cuenta"`: el Point está abierto con otra cuenta que el token. El detalle del caso está en `paso6_cobro/decisiones.md`.

@@ -19,3 +19,5 @@ El `mp_access_token` se carga en Admin → Terminales TPV y queda en la config d
 ## Qué no cambiar
 
 `PointService.procesar_pago_mercadopago_point` llama `config._load_config()` antes de leer `mp_access_token` y `mp_device_id`. `config.get` devuelve la memoria. No recarga el archivo. Esas llamadas se quedan, también en `Paso6Cobro._tpv_point_listo` y `_tpv_qr_listo`.
+
+Un 201 de `/v1/orders` con `status: created` no es monto en el Point. `enviar_monto` espera `at_terminal`. Si sigue en `created`, cancela y avisa `otra_cuenta`.

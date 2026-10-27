@@ -72,6 +72,8 @@ class PointService:
             self._avisar("El Point cobra desde $15.")
         elif motivo == "sin_terminal":
             self._avisar("Falta el token o la terminal Point en la configuración del TPV.")
+        elif motivo == "otra_cuenta":
+            self._avisar("El Point está abierto con otra cuenta. El monto no salió.")
         elif motivo == "cancelo":
             self._avisar("La terminal canceló el cobro. Enter registra la venta.")
         elif motivo:

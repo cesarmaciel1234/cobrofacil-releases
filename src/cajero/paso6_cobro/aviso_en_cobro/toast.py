@@ -193,8 +193,9 @@ class EsperaPoint(QFrame):
         self.boton.clicked.connect(self.soltar)
         lay.addWidget(self.boton)
         self._reloj = QTimer(self)
-        self._reloj.setInterval(2500)
+        self._reloj.setInterval(1000)
         self._reloj.timeout.connect(self._consultar)
+        self._en_vuelo = False
         self._llegada.connect(self._pintar)
         self._loop = None
         self._generacion = 0
@@ -293,15 +294,17 @@ class EsperaPoint(QFrame):
         threading.Thread(target=_hilo_enviar, daemon=True).start()
 
     def _consultar(self):
-        if self._abortado or not self._intent:
+        if self._abortado or not self._intent or self._en_vuelo:
             return
         token, intent, generacion = self._token, self._intent, self._generacion
+        self._en_vuelo = True
 
         def _trabajo():
             from src.cajero.paso6_cobro.tarjeta_en_cobro.envio import detalle_orden
             estado, pago = detalle_orden(token, intent)
             self._llegada.emit({
                 "generacion": generacion,
+                "vuelo": True,
                 "estado": estado,
                 "pago": pago,
             })
@@ -309,7 +312,11 @@ class EsperaPoint(QFrame):
         threading.Thread(target=_trabajo, daemon=True).start()
 
     def _pintar(self, dato):
-        if not dato or dato.get("generacion") != self._generacion or self._abortado:
+        if not dato:
+            return
+        if dato.get("vuelo"):
+            self._en_vuelo = False
+        if dato.get("generacion") != self._generacion or self._abortado:
             return
         tipo = dato.get("tipo")
         if tipo == "envio_listo":
@@ -325,6 +332,7 @@ class EsperaPoint(QFrame):
             self.texto.setText("Pida al cliente que pase la tarjeta.")
             self.ubicar()
             self._reloj.start()
+            self._consultar()
             return
         estado = dato.get("estado")
         if estado == "FINISHED":
