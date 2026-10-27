@@ -48,6 +48,14 @@ def test_la_semana_pasada_es_lunes_a_domingo():
     assert clave_anterior("week", "2026-10-21") == "2026-10-14"
 
 
+def test_semana_pasada_no_se_llama_en_curso():
+    from src.jefe.reportes.financiero.rotulos import nombres_comparacion
+
+    assert nombres_comparacion("Semana p.") == ("Semana pasada", "Semana previa")
+    assert nombres_comparacion("Semana Actual") == ("Semana en curso", "Semana pasada")
+    assert titulo_serie("Semana p.") == "Ventas por semana"
+
+
 def test_el_anio_se_reconoce_y_el_mes_dice_dia():
     assert es_anio("A\u00f1o actual")
     assert not es_anio("Mes Actual")

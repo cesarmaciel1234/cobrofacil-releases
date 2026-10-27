@@ -12,7 +12,7 @@ periodo/
 
 ## Arrancar
 
-- Nuevo chip: agregalo en `constantes.py` y en `resolver.py`.
+- Nuevo chip: agregalo en `constantes.py` y en `resolver.py`. `Semana p.` es la semana anterior entera, lunes a domingo.
 - “Hoy” es el calendario de hoy (`fechas.rango_hoy`). No uses la SQLite local para decidir.
 - SQL de fechas: solo `sql.py`. Inclusive inicio, exclusivo día siguiente. Sin `DATE()` ni `LIKE` de más (rompe MariaDB y tira a SQLite).
 - Verde en el almanaque: `dialogo/dias_trabajados.py`.

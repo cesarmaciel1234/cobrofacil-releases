@@ -44,6 +44,8 @@ def nombre_dia(fecha) -> str:
 
 def nombres_comparacion(periodo: str) -> tuple[str, str]:
     texto = periodo or ""
+    if texto in ("Semana p.", "Semana Pasada"):
+        return "Semana pasada", "Semana previa"
     if "Semana" in texto:
         return "Semana en curso", "Semana pasada"
     if texto == "Mes Anterior":

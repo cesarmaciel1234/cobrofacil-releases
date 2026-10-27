@@ -3,6 +3,7 @@
 PERIODOS_FILTRO = (
     "Hoy",
     "Semana Actual",
+    "Semana p.",
     "Mes Actual",
     "Mes Anterior",
     "Año actual",

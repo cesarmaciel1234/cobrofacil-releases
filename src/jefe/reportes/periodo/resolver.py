@@ -31,7 +31,7 @@ def resolver_rango_periodo(periodo, parent=None):
         return rango_hoy(hoy)
     if periodo == "Semana Actual":
         return rango_semana(hoy)
-    if periodo == "Semana Pasada":
+    if periodo in ("Semana Pasada", "Semana p."):
         return rango_semana_pasada(hoy)
     if periodo == "Mes Actual":
         return rango_mes(hoy)

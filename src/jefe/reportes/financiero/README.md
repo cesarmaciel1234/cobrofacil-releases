@@ -24,7 +24,7 @@ La torta no escribe nombres encima de las porciones. El nombre va en la lista, c
 
 `periodo_previo.rango_completo_anterior` trae el periodo anterior entero. En la semana, es de lunes a domingo aunque la semana en curso vaya por el martes. `clave_anterior` apoya cada día que todavía no llegó en el mismo día de la semana pasada: eso es la proyección.
 
-Con «Comparar» prendido, las tarjetas de arriba se parten en dos. El título sale de `nombres_comparacion` (Semana en curso / Semana pasada, Mes en curso / Mes pasado, Hoy / Ayer). La tabla de días cierra con una fila Total: la suma en curso y la suma pasada.
+Con «Comparar» prendido, las tarjetas de arriba se parten en dos. El título sale de `nombres_comparacion` (Semana en curso / Semana pasada, Mes en curso / Mes pasado, Hoy / Ayer). `Semana p.` compara la semana anterior con la previa. La tabla de días cierra con una fila Total: la suma en curso y la suma pasada.
 
 ## A la altura de una cadena local
 
