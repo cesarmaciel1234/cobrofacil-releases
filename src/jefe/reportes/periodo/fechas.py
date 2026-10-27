@@ -1,4 +1,4 @@
-"""Rangos fijos (sin diálogo). Lo usa el reporte global y la API."""
+"""Rangos fijos (sin diálogo). Lo usa el reporte global, la vitrina y la API."""
 
 from __future__ import annotations
 
@@ -22,6 +22,19 @@ def rango_semana(hoy=None):
         inicio.strftime("%Y-%m-%d 00:00:00"),
         hoy.strftime("%Y-%m-%d 23:59:59"),
         "Semana Actual",
+    )
+
+
+def rango_semana_pasada(hoy=None):
+    """Lunes a domingo de la semana anterior. No se corta en el día de hoy."""
+    hoy = hoy or datetime.date.today()
+    lunes_esta = hoy - datetime.timedelta(days=hoy.weekday())
+    lunes = lunes_esta - datetime.timedelta(days=7)
+    domingo = lunes + datetime.timedelta(days=6)
+    return (
+        lunes.strftime("%Y-%m-%d 00:00:00"),
+        domingo.strftime("%Y-%m-%d 23:59:59"),
+        "Semana Pasada",
     )
 
 

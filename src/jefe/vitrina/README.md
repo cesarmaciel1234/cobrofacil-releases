@@ -2,7 +2,7 @@
 
 `hilo.py` arma el paquete fuera de la ventana. `paquete(desde, hasta)` devuelve el diccionario que pinta el panel. Si una cuenta falla, esa queda en cero y las otras siguen. `HiloVitrina` emite `listo(generacion, paquete)`. La ventana no espera la consulta.
 
-`metricas.py` es cada número.
+`metricas.py` es cada número. Al abrir, el chip prendido es Hoy. Semana p. pide la semana anterior, de lunes a domingo.
 
 # metricas — KPIs de la vitrina
 

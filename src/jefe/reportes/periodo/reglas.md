@@ -3,7 +3,7 @@
 ```
 periodo/
   constantes.py   nombres de chips (Hoy, Mes, Periodo...)
-  fechas.py       rango_hoy / semana / mes
+  fechas.py       rango_hoy / semana / semana pasada / mes
   resolver.py     nombre del chip → (inicio, fin, etiqueta)
   sql.py          WHERE fecha >= ? AND fecha < día_siguiente
   barra/          botones

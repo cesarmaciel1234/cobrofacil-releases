@@ -11,6 +11,7 @@ from src.jefe.reportes.letra import etiqueta, fuente_limpia
 PERIODOS = (
     ("Hoy", "Hoy"),
     ("Semana", "Semana Actual"),
+    ("Semana p.", "Semana Pasada"),
     ("Mes", "Mes Actual"),
     ("Año", "Año actual"),
     ("Período", "Periodo..."),
@@ -38,8 +39,8 @@ class PanelPublicidad(QWidget):
         super().__init__(parent)
         self.setObjectName("PanelPublicidad")
         self.setFont(fuente_limpia(13))
-        self._es_hoy = False
-        self._periodo_btn = "Mes"
+        self._es_hoy = True
+        self._periodo_btn = "Hoy"
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -50,7 +51,7 @@ class PanelPublicidad(QWidget):
             "color: #0F172A; background: transparent; border: none; "
             "font-weight: 400; letter-spacing: 0px;"
         )
-        self.lbl_sub = etiqueta("Vitrina de tienda · Mes", 12)
+        self.lbl_sub = etiqueta("Vitrina de tienda", 12)
         self.lbl_sub.setStyleSheet(
             "color: #64748B; background: transparent; border: none; "
             "font-weight: 400; letter-spacing: 0px;"
@@ -66,7 +67,7 @@ class PanelPublicidad(QWidget):
             b.setCursor(Qt.CursorShape.PointingHandCursor)
             b.setFont(fuente_limpia(11))
             b.setFixedHeight(28)
-            b.setStyleSheet(_BTN_ACTIVO if texto == "Mes" else _BTN_IDLE)
+            b.setStyleSheet(_BTN_ACTIVO if texto == "Hoy" else _BTN_IDLE)
             b.clicked.connect(lambda _c=False, t=texto: self._elegir_periodo(t))
             fila_sub.addWidget(b)
             self._botones_periodo[texto] = b
@@ -83,7 +84,7 @@ class PanelPublicidad(QWidget):
 
         kpis = QHBoxLayout()
         kpis.setSpacing(10)
-        self.lbl_gan = self._chip("Ganancia · Mes", "—")
+        self.lbl_gan = self._chip("Ganancia parcial", "—")
         self.lbl_inv = self._chip("Inventario al costo", "—")
         kpis.addWidget(self.lbl_gan, 1)
         kpis.addWidget(self.lbl_inv, 1)
@@ -91,7 +92,7 @@ class PanelPublicidad(QWidget):
 
         cuentas = QHBoxLayout()
         cuentas.setSpacing(10)
-        self.lbl_pagos = self._chip("Pagos clientes · Mes", "—")
+        self.lbl_pagos = self._chip("Pagos clientes", "—")
         self.lbl_deuda = self._chip("Deuda clientes", "—")
         cuentas.addWidget(self.lbl_pagos, 1)
         cuentas.addWidget(self.lbl_deuda, 1)
@@ -99,16 +100,16 @@ class PanelPublicidad(QWidget):
 
         digitales = QHBoxLayout()
         digitales.setSpacing(10)
-        self.lbl_tickets_dig = self._chip("Tickets digitales · Mes", "—")
-        self.lbl_cliente = self._chip("Cliente · Mes", "—")
+        self.lbl_tickets_dig = self._chip("Tickets digitales", "—")
+        self.lbl_cliente = self._chip("Cliente", "—")
         digitales.addWidget(self.lbl_tickets_dig, 1)
         digitales.addWidget(self.lbl_cliente, 1)
         root.addLayout(digitales)
 
         extras = QHBoxLayout()
         extras.setSpacing(10)
-        self.lbl_sin_firmar = self._chip("Sin firmar / F9 · Mes", "—")
-        self.lbl_sin_ticket = self._chip("MP sin ticket · Mes", "—")
+        self.lbl_sin_firmar = self._chip("Sin firmar / F9", "—")
+        self.lbl_sin_ticket = self._chip("MP sin ticket", "—")
         self.lbl_sin_ticket._ratio.setStyleSheet(
             "color: #DC2626; background: transparent; border: none; "
             "font-weight: 600; letter-spacing: 0px;"
@@ -119,16 +120,16 @@ class PanelPublicidad(QWidget):
 
         ajustes = QHBoxLayout()
         ajustes.setSpacing(10)
-        self.lbl_redondeo = self._chip("Redondeo · Mes", "—")
-        self.lbl_descuento = self._chip("Descuento · Mes", "—")
+        self.lbl_redondeo = self._chip("Redondeo del día", "—")
+        self.lbl_descuento = self._chip("Descuento del día", "—")
         ajustes.addWidget(self.lbl_redondeo, 1)
         ajustes.addWidget(self.lbl_descuento, 1)
         root.addLayout(ajustes)
 
         caja = QHBoxLayout()
         caja.setSpacing(10)
-        self.lbl_tickets = self._chip("Tickets · Mes", "—")
-        self.lbl_cancel = self._chip("Cancelaciones · Mes", "—")
+        self.lbl_tickets = self._chip("Tickets del día", "—")
+        self.lbl_cancel = self._chip("Cancelaciones del día", "—")
         caja.addWidget(self.lbl_tickets, 1)
         caja.addWidget(self.lbl_cancel, 1)
         root.addLayout(caja)
@@ -167,7 +168,7 @@ class PanelPublicidad(QWidget):
             huecos.addWidget(self._hueco(), i // 2, i % 2)
         root.addLayout(huecos, 1)
 
-        QTimer.singleShot(0, lambda: self._elegir_periodo("Mes"))
+        QTimer.singleShot(0, lambda: self._elegir_periodo("Hoy"))
 
     def _hueco(self) -> QFrame:
         f = QFrame()

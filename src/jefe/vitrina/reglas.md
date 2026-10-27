@@ -13,7 +13,7 @@ vitrina/
 
 ## Período
 
-Al arrancar: **Mes** (cierre del mes, como en el home). **Hoy** es el día, un clic. Semana / Año / Período no arrancan. Emite `periodo_cambiado`. El reloj de 60 s solo tiene sentido si el rango llega a hoy. Si el rango todavía no se eligió, el dashboard usa el mes: no pinta el día con el chip de Mes.
+Al arrancar: **Hoy**, siempre. El chip queda prendido y el dashboard pide el día. Semana es de lunes a hoy. Semana p. es la semana anterior entera, lunes a domingo. Mes, Año y Período no arrancan. Emite `periodo_cambiado`. El reloj de 60 s solo tiene sentido si el rango llega a hoy.
 
 ## KPIs
 

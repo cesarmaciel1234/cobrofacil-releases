@@ -6,7 +6,12 @@ import datetime
 
 from src.utils.qt_compat import qt_exec
 from src.jefe.reportes.periodo.dialogo.calendarios import DialogoSeleccionPeriodo
-from src.jefe.reportes.periodo.fechas import rango_hoy, rango_mes, rango_semana
+from src.jefe.reportes.periodo.fechas import (
+    rango_hoy,
+    rango_mes,
+    rango_semana,
+    rango_semana_pasada,
+)
 
 
 def _fmt_dia(iso_fecha: str) -> str:
@@ -26,6 +31,8 @@ def resolver_rango_periodo(periodo, parent=None):
         return rango_hoy(hoy)
     if periodo == "Semana Actual":
         return rango_semana(hoy)
+    if periodo == "Semana Pasada":
+        return rango_semana_pasada(hoy)
     if periodo == "Mes Actual":
         return rango_mes(hoy)
     if periodo == "Mes Anterior":

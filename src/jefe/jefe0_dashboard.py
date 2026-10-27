@@ -72,15 +72,15 @@ class Jefe0Dashboard(QWidget):
         self._pedir_numeros()
 
     def _rango_vitrina(self):
-        """(desde, hasta) de la vitrina. Al arrancar es el mes; Hoy es un clic."""
+        """(desde, hasta) de la vitrina. Al arrancar es hoy."""
         desde = getattr(self, "_vitrina_desde", None)
         hasta = getattr(self, "_vitrina_hasta", None)
         if desde and hasta:
             return desde, hasta
-        from src.jefe.reportes.periodo.fechas import rango_mes
+        from src.jefe.reportes.periodo.fechas import rango_hoy
 
-        mes = rango_mes()
-        return mes[0], mes[1]
+        hoy = rango_hoy()
+        return hoy[0], hoy[1]
 
     def _pedir_numeros(self):
         """Pide el paquete de la vitrina. Si ya hay una vuelta, la siguiente espera."""
@@ -267,10 +267,10 @@ class Jefe0Dashboard(QWidget):
 
         self.panel_pub = PanelPublicidad()
         self.panel_pub.periodo_cambiado.connect(self._on_periodo_vitrina)
-        from src.jefe.reportes.periodo.fechas import rango_mes
+        from src.jefe.reportes.periodo.fechas import rango_hoy
 
-        mes = rango_mes()
-        self._vitrina_desde, self._vitrina_hasta = mes[0], mes[1]
+        hoy = rango_hoy()
+        self._vitrina_desde, self._vitrina_hasta = hoy[0], hoy[1]
         self.btn_export_ganancias = self.panel_pub.btn_export
         self.btn_export_ganancias.clicked.connect(self._exportar_ganancias)
         page_lay.addWidget(self.panel_pub, 1)
