@@ -4,7 +4,7 @@ Puerta: `reportes_main.py` (pantalla 20). Tres caras, un motor de fechas, un nú
 
 ```
 reportes/
-  reportes_main.py     abre las 3 pestañas + engancha maestra
+  reportes_main.py     abre la cara financiera; auditoría e historial al pedirlas
   letra.py             texto de una pasada (sin letras dobles)
   vista_financiero.py  pinta KPIs / gráficos
   auditoria/           líneas de venta (consulta / kpis / excel / vista)

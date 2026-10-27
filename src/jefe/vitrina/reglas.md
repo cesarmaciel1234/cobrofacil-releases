@@ -5,6 +5,7 @@ KPIs del período. No pinta ofertas ni plazas de cartelería.
 ```
 vitrina/
   metricas.py   KPIs por rango
+  hilo.py       paquete() y HiloVitrina: las cuentas van fuera de la ventana
   vista.py      saludo, chips, huecos reservados
 ```
 
@@ -34,3 +35,5 @@ Al arrancar: **Mes** (cierre del mes, como en el home). **Hoy** es el día, un c
 Abajo: cuatro huecos «Reservado» para tarjetas futuras. No se rellenan con ofertas.
 
 Esclava: `db_manager` = maestra. Sin red, espejo + libros locales de auditoría.
+
+El reloj y los chips se pintan al instante. `HiloVitrina` arma el paquete y la ventana solo vuelca los textos. Si el jefe cambia el período mientras una vuelta sigue, esa vuelta no pinta: corre la nueva. No consultar MariaDB en el hilo de la ventana.

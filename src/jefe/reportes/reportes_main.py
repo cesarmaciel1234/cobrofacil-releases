@@ -90,10 +90,10 @@ class ReportesMain(QWidget):
         self.stack_views = QStackedWidget()
         main_lay.addWidget(self.stack_views)
 
-        # Load Modules
+        # La cara financiera abre ya. Auditoría e historial se arman al pedirlas.
+        self.tab_auditoria = None
+        self.tab_historial = None
         self.setup_ventas_ui()
-        self.setup_audit_ui()
-        self.setup_historial_ui()
 
         # Connections
         self.btn_ventas.clicked.connect(self._show_ventas_tab)
@@ -103,15 +103,19 @@ class ReportesMain(QWidget):
         self._show_ventas_tab()
 
     def _show_ventas_tab(self):
-        self.stack_views.setCurrentIndex(0)
+        self.stack_views.setCurrentWidget(self.tab_ventas)
         self._update_tab_buttons()
 
     def _show_auditoria_tab(self):
-        self.stack_views.setCurrentIndex(1)
+        if self.tab_auditoria is None:
+            self.setup_audit_ui()
+        self.stack_views.setCurrentWidget(self.tab_auditoria)
         self._update_tab_buttons()
 
     def _show_historial_tab(self):
-        self.stack_views.setCurrentIndex(2)
+        if self.tab_historial is None:
+            self.setup_historial_ui()
+        self.stack_views.setCurrentWidget(self.tab_historial)
         self._update_tab_buttons()
 
     def _update_tab_buttons(self):
@@ -147,10 +151,10 @@ class ReportesMain(QWidget):
                 border-color: #BFDBFE;
             }}
         """
-        idx = self.stack_views.currentIndex()
-        self.btn_ventas.setStyleSheet(active_style if idx == 0 else inactive_style)
-        self.btn_auditoria.setStyleSheet(active_style if idx == 1 else inactive_style)
-        self.btn_historial.setStyleSheet(active_style if idx == 2 else inactive_style)
+        actual = self.stack_views.currentWidget()
+        self.btn_ventas.setStyleSheet(active_style if actual is self.tab_ventas else inactive_style)
+        self.btn_auditoria.setStyleSheet(active_style if actual is self.tab_auditoria else inactive_style)
+        self.btn_historial.setStyleSheet(active_style if actual is self.tab_historial else inactive_style)
 
     def setup_ventas_ui(self):
         from src.jefe.reportes.vista_financiero import VistaFinanciero

@@ -131,24 +131,37 @@ def cancelaciones(desde=None, hasta=None) -> dict:
     {'cant', 'monto', 'cuando', 'usuario'}: 'YYYY-MM-DD HH:MM' y usuario de la última.
     """
     vacio = {"cant": 0, "monto": 0.0, "cuando": "", "usuario": ""}
+    rango = _rango(desde, hasta)
     try:
         filas = _db().execute_query(
             """
-            SELECT total, COALESCE(fecha_cancel, fecha) AS cuando, cancelado_por
+            SELECT COUNT(*) AS cant, COALESCE(SUM(total), 0) AS monto
+            FROM ventas
+            WHERE estado = 'CANCELADA' AND COALESCE(fecha_cancel, fecha) >= ? AND COALESCE(fecha_cancel, fecha) < ?
+            """,
+            rango,
+        )
+        if not filas:
+            return vacio
+        cant = int(_val(filas[0], "cant", 0) or 0)
+        if not cant:
+            return vacio
+        ultima = _db().execute_query(
+            """
+            SELECT COALESCE(fecha_cancel, fecha) AS cuando, cancelado_por
             FROM ventas
             WHERE estado = 'CANCELADA' AND COALESCE(fecha_cancel, fecha) >= ? AND COALESCE(fecha_cancel, fecha) < ?
             ORDER BY cuando DESC
+            LIMIT 1
             """,
-            _rango(desde, hasta),
+            rango,
         ) or []
-        if not filas:
-            return vacio
-        ultima = filas[0]
+        fila = ultima[0] if ultima else None
         return {
-            "cant": len(filas),
-            "monto": sum(float(_val(f, "total", 0) or 0) for f in filas),
-            "cuando": str(_val(ultima, "cuando", 1) or "")[:16],
-            "usuario": str(_val(ultima, "cancelado_por", 2) or "").strip(),
+            "cant": cant,
+            "monto": float(_val(filas[0], "monto", 1) or 0),
+            "cuando": str(_val(fila, "cuando", 0) or "")[:16] if fila else "",
+            "usuario": str(_val(fila, "cancelado_por", 1) or "").strip() if fila else "",
         }
     except Exception:
         return vacio

@@ -25,7 +25,6 @@ except ImportError:
 # â”€â”€ Componentes importados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 from src.jefe.componentes_visuales.jefe_card import JefeCard
 from src.jefe.vitrina import PanelPublicidad
-from src.cerebro_global.cerebro_jefe.analitica_jefe import WorkerAnaliticaJefe
 from src.jefe.reportes.letra import fuente_limpia
 
 # â”€â”€ MÃ³dulos del Jefe â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -58,35 +57,19 @@ class Jefe0Dashboard(QWidget):
         self.setObjectName("JefeDashboard")
         self._build_ui()
         self._apply_theme()
+        self._gen = 0
+        self._pedido = None
+        self._hilo_vitrina = None
         self._clock = QTimer(self)
         self._clock.timeout.connect(self._tick)
         self._clock.start(60000)
         self._tick(solo_reloj=True)
-
-        self.worker_analitica = WorkerAnaliticaJefe()
-        self.worker_analitica.datos_listos.connect(self._on_analitica_lista)
-        QTimer.singleShot(800, self.worker_analitica.start)
         QTimer.singleShot(1500, self._arrancar_espejo)
-
-    def _on_analitica_lista(self, datos):
-        valor = float(datos.get("inventario_valor_costo", 0.0) or 0)
-        try:
-            from src.jefe.nodo_portable.espejo import en_copia
-            from src.jefe.vitrina.metricas import inventario_costo
-
-            if en_copia():
-                valor = inventario_costo()
-        except Exception:
-            pass
-        self.panel_pub.set_inventario(valor)
-        self._pintar_cuentas()
-        self._pintar_cobros_dia()
 
     def _on_periodo_vitrina(self, desde, hasta, _etiqueta):
         self._vitrina_desde = desde
         self._vitrina_hasta = hasta
-        self._pintar_cuentas()
-        self._pintar_cobros_dia()
+        self._pedir_numeros()
 
     def _rango_vitrina(self):
         """(desde, hasta) de la vitrina. Al arrancar es el mes; Hoy es un clic."""
@@ -99,25 +82,43 @@ class Jefe0Dashboard(QWidget):
         mes = rango_mes()
         return mes[0], mes[1]
 
-    def _pintar_cobros_dia(self):
-        try:
-            from src.jefe.nodo_portable.espejo import leyenda
+    def _pedir_numeros(self):
+        """Pide el paquete de la vitrina. Si ya hay una vuelta, la siguiente espera."""
+        desde, hasta = self._rango_vitrina()
+        self._gen += 1
+        self._pedido = (self._gen, desde, hasta)
+        hilo = self._hilo_vitrina
+        if hilo is not None and hilo.isRunning():
+            return
+        self._lanzar_vitrina()
 
-            self.panel_pub.set_origen(leyenda())
-        except Exception:
-            pass
-        try:
-            from src.jefe.vitrina import metricas
+    def _lanzar_vitrina(self):
+        from src.jefe.vitrina.hilo import HiloVitrina
 
-            desde, hasta = self._rango_vitrina()
-            self.panel_pub.set_ganancia(metricas.ganancia(desde, hasta))
-            aud = metricas.cobros_auditoria(desde, hasta)
-            redondeo_f3, desc_oferta = metricas.redondeo_y_descuento(desde, hasta)
+        gen, desde, hasta = self._pedido
+        self._hilo_vitrina = HiloVitrina(gen, desde, hasta, self)
+        self._hilo_vitrina.listo.connect(self._aplicar_numeros)
+        self._hilo_vitrina.start()
+
+    def _aplicar_numeros(self, gen, datos):
+        if gen == self._gen:
+            self._volcar_numeros(datos or {})
+        pedido = self._pedido
+        if pedido and pedido[0] != gen:
+            self._lanzar_vitrina()
+
+    def _volcar_numeros(self, datos):
+        try:
+            self.panel_pub.set_origen(datos.get("origen") or "")
+            self.panel_pub.set_inventario(float(datos.get("inventario") or 0))
+            self.panel_pub.set_ganancia(datos.get("ganancia"))
+            self.panel_pub.set_cuentas(float(datos.get("pagos") or 0), float(datos.get("deuda") or 0))
+            aud = datos.get("aud") or {}
             self.panel_pub.set_cobros_dia(
-                redondeo_f3,
-                desc_oferta,
-                aud["digitales_sin_firma"],
-                aud["digitales_total"],
+                float(datos.get("redondeo") or 0),
+                float(datos.get("descuento") or 0),
+                aud.get("digitales_sin_firma") or 0,
+                aud.get("digitales_total") or 0,
                 aud.get("cuenta_dni") or 0,
                 aud.get("mp_sin_ticket") or 0,
                 aud.get("tickets_digitales") or 0,
@@ -126,8 +127,9 @@ class Jefe0Dashboard(QWidget):
                 aud.get("firmados") or 0,
                 aud.get("sin_ticket_monto") or 0,
             )
-            self.panel_pub.set_tickets_dia(*metricas.tickets(desde, hasta))
-            self.panel_pub.set_cancelaciones_dia(metricas.cancelaciones(desde, hasta))
+            tickets = datos.get("tickets") or (0, 0.0)
+            self.panel_pub.set_tickets_dia(tickets[0], tickets[1])
+            self.panel_pub.set_cancelaciones_dia(datos.get("cancel") or {})
         except Exception:
             pass
 
@@ -350,26 +352,13 @@ class Jefe0Dashboard(QWidget):
         else:
             QMessageBox.critical(self, "Error al Exportar", msg)
 
-    def _pintar_cuentas(self):
-        try:
-            from src.clientes_fiado.cerebro.cerebro import cerebro
-            from src.jefe.nodo_portable.espejo import en_copia
-            from src.jefe.vitrina.metricas import deuda_clientes, pagos_clientes
-
-            desde, hasta = self._rango_vitrina()
-            if en_copia():
-                deuda = deuda_clientes()
-            else:
-                _pagos_hoy, deuda = cerebro.resumen_cuentas()
-            self.panel_pub.set_cuentas(pagos_clientes(desde, hasta), deuda)
-        except Exception:
-            pass
-
     def _arrancar_espejo(self):
         try:
+            from src.central_red_global.servidor.oficio.agente import agente_tiene_el_espejo
             from src.jefe.nodo_portable import espejo
 
-            espejo.arrancar()
+            if not agente_tiene_el_espejo():
+                espejo.arrancar()
         except Exception:
             pass
 
@@ -387,8 +376,7 @@ class Jefe0Dashboard(QWidget):
             return
         _desde, hasta = self._rango_vitrina()
         if hasta is None or hasta >= now.strftime("%Y-%m-%d"):
-            self._pintar_cuentas()
-            self._pintar_cobros_dia()
+            self._pedir_numeros()
 
     def _abrir_perfiles(self):
         try:

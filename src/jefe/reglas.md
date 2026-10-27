@@ -32,7 +32,7 @@ La contabilidad pide colores a `contabilidad/shared_globals.py`, `PAL`. Esa pale
 Un solo dueño: `reportes/financiero/consulta.py` (`payload_reporte_global`).  
 La TV y las esclavas **leen**. No recalculan.
 
-Al abrir el perfil jefe no se carga Chromium ni se precargan contabilidad/reportes. La vitrina pinta el reloj primero; los números van un instante después, en hilo.
+Al abrir el perfil jefe no se carga Chromium ni se precargan contabilidad/reportes. La vitrina pinta el reloj primero; los números van un instante después, en `vitrina/hilo.py`. El reloj de un minuto vuelve a pedir ese hilo. No consulta la tienda en la ventana.
 
 ## Red
 

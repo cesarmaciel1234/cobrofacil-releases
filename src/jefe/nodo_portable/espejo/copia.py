@@ -7,6 +7,7 @@ import decimal
 import os
 import socket
 import sqlite3
+import sys
 import threading
 import time
 
@@ -21,12 +22,18 @@ _hilo: threading.Thread | None = None
 _estado = {"cuando": "", "resultado": "", "detalle": ""}
 _salud = {"hasta": 0.0, "rota": ""}
 # Tablas que se leen enteras en cada vuelta, y su clave si no es `id`
-ENTERAS = ("productos", "clientes", "clientes_auditoria", "mp_pagos")
+ENTERAS = ("productos", "clientes", "clientes_auditoria", "mp_pagos", "gastos")
 CLAVE = {"clientes_auditoria": "evento", "mp_pagos": "payment_id"}
 # El resto de la tienda también se copia, para poder restaurarla desde acá. Estas no: son del momento.
 NO_COPIAR = ("terminales_activos",)
 # Una tabla del resto con más filas que esto se trae desde el último id; las chicas, enteras
 GRANDE = 5000
+# Un ticket más nuevo que esto, sin sus líneas, todavía se está cargando. Uno viejo no frena la copia.
+GRACIA_EDICION_SEG = 120
+_CERRADOS = {
+    "COMPLETADA", "CERRADA", "CANCELADA", "ANULADA",
+    "COMPLETADO", "CERRADO", "CANCELADO", "ANULADO",
+}
 
 
 def carpeta() -> str:
@@ -217,6 +224,111 @@ def _leer_tabla(tienda, tabla: str, local: sqlite3.Connection, completo: bool, i
         raise
 
 
+def _abrir_foto(tienda) -> None:
+    """Un instante de la tienda. Lo que se está editando no entra en esta vuelta."""
+    try:
+        with tienda.cursor() as cur:
+            cur.execute("START TRANSACTION WITH CONSISTENT SNAPSHOT")
+        return
+    except Exception:
+        pass
+    try:
+        tienda.begin()
+    except Exception:
+        pass
+
+
+def _cerrar_foto(tienda) -> None:
+    try:
+        tienda.rollback()
+    except Exception:
+        pass
+
+
+def _edad_seg(fila: dict) -> float | None:
+    fecha = fila.get("fecha")
+    if isinstance(fecha, _dt.datetime):
+        momento = fecha
+    else:
+        try:
+            momento = _dt.datetime.strptime(str(fecha or "")[:19], "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return None
+    return (_dt.datetime.now() - momento).total_seconds()
+
+
+def _lineas_de(detalles: list[dict], locales: sqlite3.Connection, id_venta: int) -> int:
+    n = 0
+    for fila in detalles:
+        try:
+            if int(fila.get("id_venta") or 0) == id_venta:
+                n += 1
+        except (TypeError, ValueError):
+            continue
+    if n:
+        return n
+    for tabla in ("detalles_ventas", "detalle_ventas"):
+        try:
+            fila = locales.execute(
+                f'SELECT COUNT(*) FROM "{tabla}" WHERE id_venta = ?',
+                (id_venta,),
+            ).fetchone()
+        except sqlite3.Error:
+            continue
+        if fila and int(fila[0] or 0):
+            return int(fila[0])
+    return 0
+
+
+def _en_edicion(fila: dict, lineas: int) -> bool:
+    """Cerrado y con líneas: se baja. Sin líneas y recién cargado: se deja para la vuelta que viene."""
+    estado = str(fila.get("estado") or "").upper()
+    edad = _edad_seg(fila)
+    reciente = edad is None or edad < GRACIA_EDICION_SEG
+    if not reciente:
+        return False
+    if estado not in _CERRADOS:
+        return True
+    if lineas > 0:
+        return False
+    try:
+        total = float(fila.get("total") or 0)
+    except (TypeError, ValueError):
+        total = 0
+    return abs(total) > 0.001
+
+
+def recortar_tickets(ventas: list[dict], detalles: list[dict], locales: sqlite3.Connection) -> tuple[list[dict], list[dict], int]:
+    """No baja el ticket en edición ni nada posterior: si no, el id siguiente tapa el hueco."""
+    corte = 0
+    for fila in ventas or []:
+        try:
+            vid = int(fila.get("id") or 0)
+        except (TypeError, ValueError):
+            continue
+        if vid and _en_edicion(fila, _lineas_de(detalles or [], locales, vid)) and (not corte or vid < corte):
+            corte = vid
+    if not corte:
+        return list(ventas or []), list(detalles or []), 0
+    ventas_ok = []
+    for fila in ventas or []:
+        try:
+            if int(fila.get("id") or 0) < corte:
+                ventas_ok.append(fila)
+        except (TypeError, ValueError):
+            ventas_ok.append(fila)
+    detalles_ok = []
+    for fila in detalles or []:
+        try:
+            padre = int(fila.get("id_venta") or 0)
+        except (TypeError, ValueError):
+            detalles_ok.append(fila)
+            continue
+        if padre < corte:
+            detalles_ok.append(fila)
+    return ventas_ok, detalles_ok, corte
+
+
 def _leer_tabla_tienda(tienda, tabla: str, local: sqlite3.Connection, completo: bool) -> list[dict]:
     """Tablas chicas enteras; las que crecen, desde el último id. Ventas: también los últimos días."""
     nombre = tabla
@@ -311,10 +423,18 @@ def _archivar(path: str) -> str:
 
 
 def _refrescar(tienda, completo: bool) -> dict:
-    from src.jefe.nodo_portable.motor_nodo import TABLAS_NEGOCIO, _ensure_negocio_schema
-
     os.makedirs(carpeta(), exist_ok=True)
     path = ruta()
+    _abrir_foto(tienda)
+    try:
+        return _refrescar_foto(tienda, completo, path)
+    finally:
+        _cerrar_foto(tienda)
+
+
+def _refrescar_foto(tienda, completo: bool, path: str) -> dict:
+    from src.jefe.nodo_portable.motor_nodo import TABLAS_NEGOCIO, _ensure_negocio_schema
+
     tope_tienda = int((_leer(tienda, "SELECT MAX(id) AS m FROM ventas")[0] or {}).get("m") or 0)
     servidor = str((_leer(tienda, "SELECT @@hostname AS h")[0] or {}).get("h") or "")
     if existe(path):
@@ -352,6 +472,15 @@ def _refrescar(tienda, completo: bool) -> dict:
         resto = _resto(tablas, TABLAS_NEGOCIO)
         lotes = {t: _leer_tabla(tienda, t, conn, completo) for t in TABLAS_NEGOCIO}
         lotes_resto = {t: _leer_tabla(tienda, t, conn, completo, tablas[t]) for t in resto}
+        _, _, corte = recortar_tickets(
+            lotes.get("ventas") or [],
+            lotes.get("detalles_ventas") or [],
+            conn,
+        )
+        if corte:
+            conn.rollback()
+            logger.info("espejo  ticket %s en edicion, la vuelta no se pasa", corte)
+            return {"estado": "en_edicion", "corte": corte}
         stats = {t: _volcar_filas(conn, t, filas) for t, filas in lotes.items()}
         stats.update({t: _volcar_filas(conn, t, filas, tablas[t]["clave"]) for t, filas in lotes_resto.items()})
         cuando = _ahora()
@@ -379,9 +508,59 @@ def _anotar(resultado: str, detalle: str = "") -> dict:
     return {"estado": resultado, "detalle": detalle}
 
 
+def _candado_proceso():
+    """Un solo proceso escribe la copia. El otro deja la vuelta para después."""
+    os.makedirs(carpeta(), exist_ok=True)
+    fh = open(os.path.join(carpeta(), "espejo.lock"), "a+b")
+    try:
+        if fh.seek(0, os.SEEK_END) < 1:
+            fh.write(b" ")
+            fh.flush()
+        fh.seek(0)
+        if sys.platform == "win32":
+            import msvcrt
+
+            msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        fh.close()
+        return None
+    return fh
+
+
+def _soltar_candado(fh) -> None:
+    try:
+        if sys.platform == "win32":
+            import msvcrt
+
+            fh.seek(0)
+            msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+    except OSError:
+        pass
+    try:
+        fh.close()
+    except OSError:
+        pass
+
+
 def refrescar(completo: bool = False) -> dict:
     """Tienda → copia local. Sin maestra no toca nada. Si la tienda da error, la copia queda como estaba."""
     if not _lock.acquire(blocking=False):
+        return {"estado": "ocupado"}
+    try:
+        candado = _candado_proceso()
+    except Exception:
+        _lock.release()
+        raise
+    if candado is None:
+        _lock.release()
         return {"estado": "ocupado"}
     try:
         tienda = _conectar_tienda()
@@ -391,6 +570,8 @@ def refrescar(completo: bool = False) -> dict:
             res = _refrescar(tienda, completo)
         finally:
             tienda.close()
+        if res.get("estado") == "en_edicion":
+            return _anotar("en_edicion", str(res.get("corte") or ""))
         _anotar("ok", res.get("cuando", ""))
         _salud.update(hasta=time.monotonic() + 60, rota="")
         replicar_rutas()
@@ -402,6 +583,7 @@ def refrescar(completo: bool = False) -> dict:
             _salud.update(hasta=time.monotonic() + 60, rota=motivo)
         return _anotar("error", str(e))
     finally:
+        _soltar_candado(candado)
         _lock.release()
 
 
@@ -457,13 +639,19 @@ def arrancar(pausa: int = 60) -> None:
         return
 
     def _vuelta():
+        try:
+            podar_viejas()
+            if existe():
+                replicar_rutas()
+        except Exception as e:
+            logger.warning("Hilo del espejo: no pudo podar ni volcar al arrancar (%s)", e)
         time.sleep(20)
         while True:
-            refrescar()
+            try:
+                refrescar()
+            except Exception as e:
+                logger.warning("Hilo del espejo: la vuelta falló y la copia queda (%s)", e)
             time.sleep(pausa)
 
     _hilo = threading.Thread(target=_vuelta, name="espejo_tienda", daemon=True)
     _hilo.start()
-    podar_viejas()
-    if existe():
-        replicar_rutas()
