@@ -22,6 +22,7 @@ def _fila(**kwargs):
     return {
         "fecha": kwargs.get("fecha") or "",
         "id": id_pago(kwargs.get("pago_id"), bool(kwargs.get("f9"))),
+        "cuenta": kwargs.get("cuenta") or "—",
         "nombre": kwargs.get("nombre") or "—",
         "monto": float(kwargs.get("monto") or 0),
         "monto_mp": float(kwargs.get("monto_mp") or 0),
@@ -77,7 +78,22 @@ def armar(desde, hasta):
         except Exception:
             ventas = []
         por_ticket = {str(v.get("ticket") or ""): v for v in ventas if v.get("ticket")}
+        tickets_faltantes = [
+            nro for nro in set(por_pago.values())
+            if nro and nro not in ("—", "-") and nro not in por_ticket
+        ]
+        if tickets_faltantes:
+            try:
+                from src.motor_auditoria_digital.consultas.tickets import estado_tickets
+                mas_tickets = estado_tickets(tickets_faltantes)
+                for tid, info in mas_tickets.items():
+                    if tid not in por_ticket:
+                        por_ticket[tid] = info
+            except Exception:
+                pass
         vistos = set()
+
+        from src.admin.mercadopago.historial.cuentas import nombre_cuenta_para_pago
 
         for p in lista_pagos:
             try:
@@ -89,6 +105,13 @@ def armar(desde, hasta):
                 if not en_rango(fecha, desde, hasta):
                     continue
                 pid = str(p.get("id") or "")
+                cuenta_p = ""
+                if pid and pid not in ("—", "-", "F9 MANUAL"):
+                    cuenta_p = nombre_cuenta_para_pago(
+                        str(p.get("collector_id") or ""),
+                        fecha,
+                        str(p.get("cuenta") or ""),
+                    )
                 nro = por_pago.get(pid, "")
                 estado = str(p.get("estado") or "").upper()
                 monto_mp = float(p.get("monto") or 0)
@@ -104,6 +127,7 @@ def armar(desde, hasta):
                     filas.append(_fila(
                         fecha=fecha,
                         pago_id=pid,
+                        cuenta=cuenta_p,
                         nombre=f"Cobranza {medio} · {quien}",
                         monto=float(cobro.get("monto") or monto_mp),
                         monto_mp=monto_mp,
@@ -116,17 +140,26 @@ def armar(desde, hasta):
                     ))
                 elif nro:
                     vistos.add(nro)
-                    if estado == "APPROVED":
+                    es_cancelada = (
+                        str(venta.get("estado") or "").upper() in ("CANCELADA", "ANULADA", "CANCELADO", "ANULADO")
+                        or bool(venta.get("cancelado"))
+                    )
+                    if es_cancelada:
+                        estado = "CANCELADO"
+                    elif estado == "APPROVED":
                         estado = "FIRMADO"
                     medio = _medio(venta.get("metodo") or p.get("nombre") or "QR")
+                    nombre = f"Venta {medio} · CANCELADA" if es_cancelada else f"Venta {medio}"
+                    monto_ticket = 0.0 if es_cancelada else float(venta.get("monto") or 0)
                     filas.append(_fila(
                         fecha=fecha,
                         pago_id=pid,
-                        nombre=f"Venta {medio}",
+                        cuenta=cuenta_p,
+                        nombre=nombre,
                         monto=float(venta.get("monto") or monto_mp),
                         monto_mp=monto_mp,
                         neto=neto,
-                        monto_ticket=float(venta.get("monto") or 0),
+                        monto_ticket=monto_ticket,
                         estado=estado,
                         ticket_venta=nro,
                         op_type=p.get("op_type") or "",
@@ -143,6 +176,7 @@ def armar(desde, hasta):
                     filas.append(_fila(
                         fecha=fecha,
                         pago_id=pid,
+                        cuenta=cuenta_p,
                         nombre=quien,
                         monto=monto_mp,
                         monto_mp=monto_mp,
@@ -173,13 +207,26 @@ def armar(desde, hasta):
                 medio = _medio(venta.get("metodo") or "QR")
                 manual = nro in f9
                 firmado = nro in firmados_db
-                estado = "F9 MANUAL" if manual else ("FIRMADO" if firmado else "SIN FIRMAR")
+                es_cancelada = (
+                    str(venta.get("estado") or "").upper() in ("CANCELADA", "ANULADA", "CANCELADO", "ANULADO")
+                    or bool(venta.get("cancelado"))
+                )
+                if es_cancelada:
+                    estado = "CANCELADO"
+                    nombre = f"Venta {medio} · CANCELADA"
+                    monto_ticket = 0.0
+                else:
+                    estado = "F9 MANUAL" if manual else ("FIRMADO" if firmado else "SIN FIRMAR")
+                    nombre = f"Venta {medio}" + (" · F9" if manual else "")
+                    monto_ticket = float(venta.get("monto") or 0)
+                fecha_v = venta.get("fecha") or ""
                 filas.append(_fila(
-                    fecha=venta.get("fecha") or "",
+                    fecha=fecha_v,
+                    cuenta="",
                     f9=manual,
-                    nombre=f"Venta {medio}" + (" · F9" if manual else ""),
+                    nombre=nombre,
                     monto=float(venta.get("monto") or 0),
-                    monto_ticket=float(venta.get("monto") or 0),
+                    monto_ticket=monto_ticket,
                     estado=estado,
                     ticket_venta=nro,
                     op_type="ticket",
@@ -203,8 +250,10 @@ def armar(desde, hasta):
                 if tipo != "digital":
                     continue
                 medio = _medio(dato.get("metodo") or "QR")
+                fecha_f9 = dato.get("cuando") or ""
                 filas.append(_fila(
-                    fecha=dato.get("cuando") or "",
+                    fecha=fecha_f9,
+                    cuenta="",
                     f9=True,
                     nombre=f"Venta {medio} · F9",
                     monto=float(dato.get("monto") or 0),
@@ -226,8 +275,11 @@ def armar(desde, hasta):
                 quien = cobro.get("nombre") or "Cliente"
                 pago = str(cobro.get("pago_id") or "").strip()
                 f9 = (not pago) or pago.upper() == "F9 MANUAL"
+                fecha_c = cobro.get("fecha") or ""
+                cuenta_c = nombre_cuenta_para_pago("", fecha_c) if pago and not f9 else ""
                 filas.append(_fila(
-                    fecha=cobro.get("fecha") or "",
+                    fecha=fecha_c,
+                    cuenta=cuenta_c,
                     pago_id=pago if not f9 else "",
                     f9=f9,
                     nombre=f"Cobranza {medio} · {quien}",

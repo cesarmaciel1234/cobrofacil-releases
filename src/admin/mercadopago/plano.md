@@ -8,11 +8,15 @@ La rama arranca en esta carpeta. La base es `src/admin` y no lleva plano.
 
 Arriba: volver, el título, el interruptor «Cajero silencioso» / «Con sonido», Actualizar y el estado. No hay campo de token, ni «Guardar e Iniciar», ni «Simular», ni importar un CSV a mano.
 
-El cuerpo: cuatro tarjetas por línea. Arriba bruto, neto, tickets, firmados. Abajo sin firmar, MP sin ticket, cliente y un hueco Reservado. Montos en formato AR, enteros, sin recortar. Período Hoy / Semana / Mes / Año / Período. Las dos casillas viejas (cargas / omitidos) son **Firmados** y **Pendientes**. Las dos prendidas: lo que importa para AFIP. Solo Firmados: venta o cobranza con id MP. Solo Pendientes: SIN TICKET, SIN FIRMAR, F9. Cargas propias y omitidos no entran.
+El cuerpo: cuatro tarjetas por línea. Arriba bruto, neto, tickets, firmados. Abajo sin firmar, MP sin ticket, cliente y cancelados. Montos en formato AR, enteros, sin recortar. Período Hoy / Semana / Mes / Año / Período. Abre en **Hoy**. Un clic sobre el período ya marcado lo suelta y muestra todas las fechas.
+
+**Filtros** (`filtros/panel.py`) abre la lista: Cruce (Todos, Cruzados, Ticket sin id, Id sin ticket) y, si hay más de un titular, Cuenta. La línea de abajo del botón suma el monto de cada token en el período, aunque la grilla esté filtrada. Cargas propias y omitidos no entran. Una fila sin id de pago no lleva nombre de cuenta.
 
 ## Fondo
 
 El token es `mp_access_token` de la configuración del TPV. Lo lee `EscuchaMP.token()` en `src/services/mp_escucha.py`. Esta pantalla no lo guarda.
+
+**Cuentas rotativas:** `historial/cuentas.py`. Al guardar otro token en Terminal TPV, `registrar_token_activo` cierra el período del collector anterior y abre uno nuevo. El nombre es el que devuelve Mercado Pago (`users/me`: nombre y apellido), no el apodo escrito. `nombre_cuenta_para_pago` pone ese nombre solo en la fila que tiene id de pago y cae en el período de esa cuenta. `listar_cuentas` alimenta el filtro Cuenta.
 
 **Token de tienda (nuevo):** la maestra, al guardar Terminal TPV, publica el token en MariaDB `configuracion` (`sync_tienda/mp_token`). La esclava lo trae sola al conectar y al abrir el monitor. No hay que pegar el token en cada notebook. Si aún dice SIN TOKEN, en la PC de caja (maestra) hay que Guardar una vez el Terminal TPV para publicarlo.
 

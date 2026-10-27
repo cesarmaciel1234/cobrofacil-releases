@@ -30,9 +30,9 @@ def _desde_db(desde, hasta, clases):
 
     filas = db.execute_query(
         f"""
-        SELECT id, fecha, total, metodo_pago
+        SELECT id, fecha, total, metodo_pago, estado
         FROM ventas
-        WHERE estado IN {_OK} AND fecha >= ? AND fecha < ?
+        WHERE fecha >= ? AND fecha < ?
         ORDER BY fecha DESC
         """,
         (f"{d0} 00:00:00", siguiente.strftime("%Y-%m-%d")),
@@ -53,14 +53,51 @@ def _desde_db(desde, hasta, clases):
             monto = float(_celda(fila, "total", 2) or 0)
         except (TypeError, ValueError):
             monto = 0.0
+        estado_raw = str(_celda(fila, "estado", 4) or "COMPLETADA").upper().strip()
+        cancelada = estado_raw in ("CANCELADA", "ANULADA", "CANCELADO", "ANULADO")
         salida.append({
             "ticket": ticket,
             "fecha": str(_celda(fila, "fecha", 1) or "")[:19],
             "monto": monto,
             "metodo": metodo,
             "clase": tipo,
+            "estado": estado_raw,
+            "cancelado": cancelada,
         })
     return salida
+
+
+def estado_tickets(ticket_ids):
+    """Consulta rápida del estado de un conjunto de tickets en la base de datos."""
+    ids = [str(t).strip() for t in (ticket_ids or []) if str(t).strip()]
+    if not ids:
+        return {}
+    try:
+        from src.jefe.nodo_portable.espejo import fuente
+        db = fuente()
+    except Exception:
+        from src.base_de_datos.database import db_manager
+        db = db_manager
+    resultado = {}
+    for inicio in range(0, len(ids), 300):
+        bloque = ids[inicio:inicio + 300]
+        placeholders = ", ".join("?" for _ in bloque)
+        filas = db.execute_query(
+            f"SELECT id, fecha, total, metodo_pago, estado FROM ventas WHERE id IN ({placeholders})",
+            tuple(bloque),
+        ) or []
+        for fila in filas:
+            tid = str(_celda(fila, "id", 0) or "").strip()
+            est = str(_celda(fila, "estado", 4) or "COMPLETADA").upper().strip()
+            resultado[tid] = {
+                "ticket": tid,
+                "fecha": str(_celda(fila, "fecha", 1) or "")[:19],
+                "monto": float(_celda(fila, "total", 2) or 0),
+                "metodo": str(_celda(fila, "metodo_pago", 3) or ""),
+                "estado": est,
+                "cancelado": est in ("CANCELADA", "ANULADA", "CANCELADO", "ANULADO"),
+            }
+    return resultado
 
 
 def volcar():
@@ -83,13 +120,14 @@ def listar(desde, hasta, clases=("digital",)):
         vivos = _desde_db(desde, hasta, clases)
     except Exception:
         vivos = None
-    if vivos:
+    if vivos is not None:
         try:
             from src.motor_auditoria_digital.libro_tickets.libro import fusionar
 
             fusionar(vivos)
         except Exception:
             pass
+        return list(vivos)
     try:
         from src.motor_auditoria_digital.libro_tickets.libro import listar as del_libro
 
@@ -98,4 +136,4 @@ def listar(desde, hasta, clases=("digital",)):
             return guardados
     except Exception:
         pass
-    return list(vivos or [])
+    return []

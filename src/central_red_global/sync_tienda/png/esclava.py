@@ -121,6 +121,29 @@ def _bajar_archivo(host: str, name: str, dest: str) -> bool:
     return True
 
 
+def _podar_fuera_de_maestra(dest_dir: str, nombres: set[str]) -> int:
+    """Borra PNG locales que la maestra no tiene. No toca _anteriores."""
+    if not nombres or not os.path.isdir(dest_dir):
+        return 0
+    borrados = 0
+    for name in os.listdir(dest_dir):
+        path = os.path.join(dest_dir, name)
+        if not os.path.isfile(path):
+            continue
+        if not name.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+            continue
+        if name.lower() in nombres:
+            continue
+        try:
+            os.remove(path)
+            borrados += 1
+        except OSError as exc:
+            logger.debug("PNG local no se pudo borrar %s: %s", name, exc)
+    if borrados:
+        logger.info("Esclava: borrados %s PNG que la maestra no tiene", borrados)
+    return borrados
+
+
 def bajar_pngs_de_maestra(solo_nombres: list[str] | None = None) -> int:
     """Pisa PNG locales con los de la maestra. Devuelve cuántos archivos bajó."""
     if not es_esclava():
@@ -132,8 +155,10 @@ def bajar_pngs_de_maestra(solo_nombres: list[str] | None = None) -> int:
 
     dest_dir = png_productos_dir()
     remotos = []
+    lista_completa = False
     try:
         remotos = _listar_png_maestra(host)
+        lista_completa = True
     except Exception as exc:
         logger.warning("No se pudo listar PNG de la maestra %s: %s", host, exc)
 
@@ -182,4 +207,11 @@ def bajar_pngs_de_maestra(solo_nombres: list[str] | None = None) -> int:
         except Exception:
             pass
         logger.info("Esclava: %s PNG pisados desde la maestra %s", bajados, host)
+    if lista_completa and remotos and not solo_nombres:
+        nombres = {
+            os.path.basename(str(item.get("name") or "")).lower()
+            for item in remotos
+            if item.get("name")
+        }
+        _podar_fuera_de_maestra(dest_dir, nombres)
     return bajados

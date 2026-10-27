@@ -78,7 +78,7 @@ class VistaProveedor(QWidget):
             lay.addWidget(nav)
 
         self._build_ui()
-        self.cargar_datos()
+        QTimer.singleShot(0, self.cargar_datos)
 
     def _build_ui(self):
         lay = self.lay_container

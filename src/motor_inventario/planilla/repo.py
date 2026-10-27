@@ -9,6 +9,7 @@ logger = logging.getLogger("planilla_reposicion")
 
 TABLA = "planilla_reposicion"
 BORRADOR = "planilla_reposicion_borrador"
+_lista = False
 
 
 def _es_maria() -> bool:
@@ -68,19 +69,18 @@ def _ancho_id() -> None:
 
 
 def asegurar():
+    global _lista
+    if _lista:
+        return
     for nombre in (TABLA, BORRADOR):
         if not db_manager.execute_non_query(_crear(nombre)):
             raise RuntimeError(f"No se pudo preparar {nombre}")
     _ancho_id()
+    _lista = True
 
 
-def _fila_sql(tabla: str, r: dict, ahora: str) -> None:
-    verbo = "REPLACE INTO" if _es_maria() else "INSERT OR REPLACE INTO"
-    ok = db_manager.execute_non_query(
-        f"{verbo} {tabla} ("
-        "producto_id, codigo, nombre, departamento, stock, stock_minimo, "
-        "stock_maximo, costo, motivo, cantidad_sugerida, actualizado"
-        ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+def _params(filas: list[dict], ahora: str) -> list[tuple]:
+    return [
         (
             r.get("id"),
             r.get("codigo") or "",
@@ -93,22 +93,30 @@ def _fila_sql(tabla: str, r: dict, ahora: str) -> None:
             r.get("motivo") or "",
             float(r.get("cantidad_sugerida") or 0),
             ahora,
-        ),
-    )
-    if not ok:
-        raise RuntimeError("No se pudo escribir la planilla")
+        )
+        for r in filas
+    ]
 
 
 def reemplazar(filas: list[dict]) -> None:
-    """Publica la lista solo cuando el borrador quedó completo. No toca productos."""
+    """Publica la lista en un lote. No toca productos."""
     asegurar()
     if not db_manager.execute_non_query(f"DELETE FROM {BORRADOR}"):
         raise RuntimeError("No se pudo vaciar el borrador")
     ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    for r in filas or []:
-        _fila_sql(BORRADOR, r, ahora)
-    for r in filas or []:
-        _fila_sql(TABLA, r, ahora)
+    params = _params(filas or [], ahora)
+    if params:
+        verbo = "REPLACE INTO" if _es_maria() else "INSERT OR REPLACE INTO"
+        columnas = (
+            "producto_id, codigo, nombre, departamento, stock, stock_minimo, "
+            "stock_maximo, costo, motivo, cantidad_sugerida, actualizado"
+        )
+        marcas = ", ".join("?" for _ in range(11))
+        sql = f"{verbo} {{tabla}} ({columnas}) VALUES ({marcas})"
+        if not db_manager.execute_many(sql.format(tabla=BORRADOR), params):
+            raise RuntimeError("No se pudo escribir el borrador")
+        if not db_manager.execute_many(sql.format(tabla=TABLA), params):
+            raise RuntimeError("No se pudo publicar la planilla")
     if filas:
         ids = tuple(r.get("id") for r in filas)
         marcas = ", ".join("?" for _ in ids)

@@ -6,9 +6,9 @@ Rama: `src/motor_auditoria_digital/`. Base: `src` (sin plano). No cobra. No cier
 
 Admin → **Auditoría de cobros digitales** (`admin/mercadopago/mercadopago_main.py`).
 
-Filtro: Hoy / Semana / **Mes** (por defecto, para AFIP) / Año / Período.
+Filtro de fechas: Hoy (al abrir) / Semana / Mes / Año / Período. El botón **Filtros** vive en `admin/mercadopago/filtros/`: cruzados, ticket sin id, id sin ticket y, si hubo más de un token, la cuenta.
 
-Tarjetas del rango: **Bruto MP** y **Neto MP** vs **Tickets digitales** vs **Firmados** vs **Sin firmar / F9** vs **Cliente** (cobranza F6 en QR/tarjeta/transferencia). Esa cobranza factura el mes en que **entró la plata**, aunque la venta a fiado sea de otro mes. Para AFIP: tickets digitales + cliente.
+Tarjetas del rango: **Bruto MP** y **Neto MP** vs **Tickets digitales** vs **Firmados** vs **Sin firmar / F9** vs **Cliente** (cobranza F6 en QR/tarjeta/transferencia). Esa cobranza queda en el mes en que **entró la plata**, aunque la venta a fiado sea de otro mes. La línea de cuentas suma el id de pago de cada titular.
 
 Grilla: **Concepto** `Venta QR` o `Cobranza QR · nombre`. **ID de pago** = id MP, o `F9 MANUAL` solo si fue F9. **Ticket venta** y **Ticket cobro** en columnas distintas. Pie: leyenda de los tres números.
 

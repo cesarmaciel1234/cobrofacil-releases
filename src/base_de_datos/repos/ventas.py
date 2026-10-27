@@ -616,6 +616,11 @@ class VentasRepoMixin:
                 return False
 
             conn.commit()
+            try:
+                from src.motor_auditoria_digital.libro_tickets.libro import marcar_cancelado
+                marcar_cancelado(str(id_venta))
+            except Exception:
+                pass
             return True
         except Exception as e:
             if conn: conn.rollback()

@@ -4,6 +4,10 @@ import threading
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
+from src.admin.mercadopago.historial.cuentas import (
+    es_pago_valido_en_periodo,
+    nombre_cuenta_para_pago,
+)
 from src.logger import logger
 
 ZONA_AR = timezone(timedelta(hours=-3))
@@ -20,6 +24,7 @@ def _proteger_archivo(funcion):
 
 RUTA = os.path.join("reportes", "mercado_pago_sync.csv")
 COLUMNA_CAMBIO_ESTADO = "Fecha Modificacion Estado Local"
+COLUMNA_CUENTA = "Cuenta / Token"
 COLUMNAS = [
     "Fecha Aprobacion",
     "ID de Pago",
@@ -32,6 +37,7 @@ COLUMNAS = [
     "Monto Neto",
     "Tarifa",
     COLUMNA_CAMBIO_ESTADO,
+    COLUMNA_CUENTA,
 ]
 
 
@@ -124,6 +130,9 @@ def _fila_de(pago):
         neto = monto
     op, nombre = _rotulo(pago)
     fecha_aprobacion = _fecha_ar(pago.get("date_approved"))
+    cuenta = str(pago.get("cuenta_nombre") or pago.get("cuenta") or "").strip()
+    if not cuenta:
+        cuenta = nombre_cuenta_para_pago(str(pago.get("collector_id") or ""), fecha_aprobacion)
     return [
         fecha_aprobacion,
         id_pago,
@@ -136,6 +145,7 @@ def _fila_de(pago):
         f"{neto:.2f}",
         f"{monto - neto:.2f}",
         fecha_aprobacion,
+        cuenta,
     ]
 
 
@@ -169,7 +179,7 @@ def guardar(pagos):
             continue
         fila = _fila_de(pago)
         if id_pago in por_id:
-            vieja = filas[por_id[id_pago]]
+            vieja = list(filas[por_id[id_pago]])
             if len(vieja) > 5 and vieja[5].strip() == "OMITIDO":
                 fila[5] = "OMITIDO"
             if len(vieja) > 6 and vieja[6].strip():
@@ -178,6 +188,8 @@ def guardar(pagos):
                 fila[10] = vieja[10]
             else:
                 fila[10] = vieja[6] if len(vieja) > 6 else fila[10]
+            if (not (len(fila) > 11 and fila[11].strip()) or fila[11].strip() == "MP") and len(vieja) > 11 and vieja[11].strip():
+                fila[11] = vieja[11].strip()
             if vieja != fila:
                 filas[por_id[id_pago]] = fila
                 cambio = True
@@ -189,10 +201,16 @@ def guardar(pagos):
     if not cambio:
         return 0
     try:
+        filas_a_guardar = []
+        for f in filas:
+            f_list = list(f)
+            if len(f_list) < len(COLUMNAS):
+                f_list.extend([""] * (len(COLUMNAS) - len(f_list)))
+            filas_a_guardar.append(f_list)
         with open(RUTA, mode="w", newline="", encoding="utf-8-sig") as archivo:
             escritor = csv.writer(archivo)
             escritor.writerow(COLUMNAS)
-            escritor.writerows(filas)
+            escritor.writerows(filas_a_guardar)
         if nuevas:
             logger.info(f"Se sincronizaron y respaldaron {nuevas} pagos nuevos en CSV.")
     except Exception as error:
@@ -237,6 +255,8 @@ def leer():
                 else:
                     tipo = "regular_payment"
                 fecha = _fecha_ar(fila[0].strip())
+                if not es_pago_valido_en_periodo(fecha):
+                    continue
                 estado = fila[5].strip()
                 nombre = fila[3].strip()
                 if nombre.lower() in ("none none", "none"):
@@ -246,6 +266,8 @@ def leer():
                         nombre = "Transferencia recibida"
                     else:
                         nombre = "Cliente"
+                guardada = fila[11].strip() if len(fila) > 11 else ""
+                cuenta = nombre_cuenta_para_pago("", fecha, guardada)
                 pagos.append({
                     "fecha": fecha,
                     "id": fila[1].strip(),
@@ -255,6 +277,7 @@ def leer():
                     "estado": estado,
                     "op_type": tipo,
                     "neto": neto,
+                    "cuenta": cuenta,
                 })
                 if estado.upper() == "APPROVED" and tipo != "account_fund":
                     if fecha.startswith(mes):
@@ -289,8 +312,11 @@ def omitir(id_pago):
                         fila.append(marca)
                 fila.extend([""] * (len(COLUMNAS) - len(fila)))
                 filas.append(fila)
-        if cabecera and COLUMNA_CAMBIO_ESTADO not in cabecera:
-            cabecera.append(COLUMNA_CAMBIO_ESTADO)
+        if cabecera:
+            if COLUMNA_CAMBIO_ESTADO not in cabecera:
+                cabecera.append(COLUMNA_CAMBIO_ESTADO)
+            if COLUMNA_CUENTA not in cabecera:
+                cabecera.append(COLUMNA_CUENTA)
         with open(RUTA, mode="w", newline="", encoding="utf-8-sig") as archivo:
             escritor = csv.writer(archivo)
             if cabecera:

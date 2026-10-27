@@ -2,6 +2,7 @@ from src.base_de_datos.database import db_manager
 from src.logger import logger
 
 TABLA_MAPEO = "abastecimiento_proveedor_map"
+_tabla_lista = False
 
 def _es_maria() -> bool:
     return getattr(db_manager, "db_engine_type", "") == "mariadb"
@@ -12,6 +13,9 @@ def asegurar_tabla_enlace():
     Crea la tabla aislada para relacionar departamentos o productos con proveedores,
     garantizando que la tabla original 'productos' no se toque ni se altere.
     """
+    global _tabla_lista
+    if _tabla_lista:
+        return
     if _es_maria():
         sql = f"""
             CREATE TABLE IF NOT EXISTS {TABLA_MAPEO} (
@@ -41,6 +45,7 @@ def asegurar_tabla_enlace():
     try:
         db_manager.execute_non_query(sql)
         _asegurar_columna_id()
+        _tabla_lista = True
     except Exception as e:
         logger.error(f"Error al asegurar tabla {TABLA_MAPEO}: {e}")
 

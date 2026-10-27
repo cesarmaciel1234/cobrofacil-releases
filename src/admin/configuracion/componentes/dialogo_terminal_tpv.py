@@ -80,7 +80,15 @@ class DialogoTerminalTPV(QDialog):
         self.txt_mp_token.setStyleSheet(
             "padding: 8px; border: 2px solid #8B5CF6; border-radius: 6px; font-size: 13px;"
         )
-        token_row.addWidget(self.txt_mp_token)
+        token_row.addWidget(self.txt_mp_token, stretch=2)
+
+        self.txt_mp_token_alias = QLineEdit(config.get("mp_token_alias", ""))
+        self.txt_mp_token_alias.setPlaceholderText("Titular / Alias (ej: Juanito)")
+        self.txt_mp_token_alias.setFixedHeight(38)
+        self.txt_mp_token_alias.setStyleSheet(
+            "padding: 8px; border: 1px solid #94A3B8; border-radius: 6px; font-size: 13px; font-weight: 600;"
+        )
+        token_row.addWidget(self.txt_mp_token_alias, stretch=1)
 
         btn_autoconfig = QPushButton("⚡ Auto-configurar")
         btn_autoconfig.setCursor(QCursor(Qt.PointingHandCursor))
@@ -1552,6 +1560,8 @@ class DialogoTerminalTPV(QDialog):
 
         token = self.txt_mp_token.text().strip()
         config.set("mp_access_token", token)
+        alias_texto = self.txt_mp_token_alias.text().strip()
+        config.set("mp_token_alias", alias_texto)
 
         dev_id = self.txt_mp_device.text().strip()
         if dev_id.startswith("N950") and "NEWLAND_N950__" not in dev_id:
@@ -1563,6 +1573,7 @@ class DialogoTerminalTPV(QDialog):
         config.set("clover_port", self.txt_clover_port.text().strip())
 
         # Obtener y persistir el user_id de la cuenta automáticamente usando curl
+        mp_user_id = ""
         if token:
             try:
                 curl_cmd = (
@@ -1584,13 +1595,21 @@ class DialogoTerminalTPV(QDialog):
                 if http_code == "200":
                     try:
                         user_data = json.loads(json_output)
-                        mp_user_id = user_data.get("id")
-                        if mp_user_id:
-                            config.set("mp_user_id", str(mp_user_id))
+                        uid = user_data.get("id")
+                        if uid:
+                            mp_user_id = str(uid)
+                            config.set("mp_user_id", mp_user_id)
                     except json.JSONDecodeError:
                         pass
             except Exception:
                 # Sin conexión — no bloqueamos el guardado
+                pass
+
+        if token:
+            try:
+                from src.admin.mercadopago.historial.cuentas import registrar_token_activo
+                registrar_token_activo(token, alias=alias_texto, collector_id=mp_user_id)
+            except Exception:
                 pass
 
         QMessageBox.information(self, "Guardado", "Configuración de terminales guardada correctamente.")

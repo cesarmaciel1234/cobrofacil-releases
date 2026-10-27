@@ -11,7 +11,7 @@ Después de cada venta o recepción, el stock ya quedó en `productos`. Este mot
 * `MotorPlanilla.leer()`: lee solo `planilla_reposicion`.
 * `MotorPlanilla.arrancar()`: prende `arrancar_hilo()`.
 * `arrancar_hilo()` / `avisar_planilla()` / `_bucle()`: hilo demonio. Limpia el aviso, actualiza, y espera 15 segundos o hasta el próximo `avisar()`.
-* `repo.reemplazar()`: escribe primero `planilla_reposicion_borrador`. Recién cuando ese borrador está completo pisa `planilla_reposicion`. Si la lectura del stock falló, `actualizar()` no llama a `reemplazar()` y la hoja anterior queda. `producto_id` es BIGINT: entra un código de barras. `asegurar()` ensancha la columna si la tabla vieja la tenía como INT.
+* `repo.reemplazar()`: escribe primero `planilla_reposicion_borrador` con un solo `execute_many`, y otro para la tabla viva. Recién cuando ese borrador está completo pisa `planilla_reposicion`. Si la lectura del stock falló, `actualizar()` no llama a `reemplazar()` y la hoja anterior queda. `producto_id` es BIGINT: entra un código de barras. `asegurar()` corre una vez por proceso y ensancha la columna si la tabla vieja la tenía como INT.
 * La cantidad: techo menos stock si hay techo por encima del piso. Piso menos stock si no hay techo. Cero si no hay piso ni techo (`motivo` = `sin_piso`).
 
 ## Cómo funciona, en el orden en que corre

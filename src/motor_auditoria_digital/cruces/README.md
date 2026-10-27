@@ -6,6 +6,6 @@ Qué función: `snapshot.armar(desde, hasta)` y `totales.de_filas(filas)` (monto
 
 Cómo funciona: pide pagos MP, vínculos (`mp_vinculos` y tickets ya publicados en `mp_pagos`), tickets, cobranzas F6 y F9. Concepto: `Venta QR` o `Cobranza QR · nombre`. ID de pago solo si hay MP o F9 de verdad. Ticket venta y ticket cobro van separados. Firmado / Sin firmar / F9 / Sin ticket / Cobranza. Si un pago SIN TICKET y un ticket SIN FIRMAR tienen el mismo monto, son únicos y están a menos de 10 minutos, se muestran como una sola fila FIRMADO. No escribe la base. El 5/25 cuenta esas firmas.
 
-Qué devuelve cuando falla: lista parcial o `[]`. Nunca lanza.
+Qué devuelve cuando falla: lista parcial o `[]`. Nunca lanza. La pantalla no llama `armar` en el clic: `empleado.pedir` devuelve la copia y el hilo publica la nueva. La cuenta de una fila es el titular del id de Mercado Pago de ese día. Ticket o F9 sin id queda sin cuenta. Si en el período hubo dos tokens, cada id queda en el suyo. La grilla filtra después, en `admin/mercadopago/filtros/clase.py`.
 
 Qué no debe cambiar: no escribir `ventas` ni `mp_pagos`. No abrir EscuchaMP.

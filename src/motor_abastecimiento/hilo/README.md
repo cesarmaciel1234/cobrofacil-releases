@@ -7,7 +7,7 @@ Aísla la pregunta. Si el inventario no contesta, abastecimiento sigue con lista
 
 ## Qué función, con el nombre real
 * `preguntar_alarma()`: llama a `MotorPlanilla.leer()`. No reescribe la planilla y no lee `productos`.
-* `HiloReposicion`: hilo de la pantalla. Espera el pase de la planilla y lee el resumen. No prende ese hilo y no reescribe la hoja.
+* `HiloReposicion`: hilo de la pantalla. Si ya hay un pase, o la lectura es local, no espera los 8 segundos de la maestra. Si está offline espera 0,4 s. No prende ese hilo y no reescribe la hoja.
 
 ## Cómo funciona, en el orden en que corre
 1. La pantalla arranca `HiloReposicion`. No llama al inventario ella.

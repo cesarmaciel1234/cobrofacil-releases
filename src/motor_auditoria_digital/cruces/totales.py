@@ -12,6 +12,8 @@ def de_filas(filas):
     n_tickets = 0
     sin_ticket = 0.0
     n_sin_ticket = 0
+    cancelados = 0.0
+    n_cancelados = 0
     for p in filas or []:
         try:
             estado = str(p.get("estado") or "").upper()
@@ -32,6 +34,13 @@ def de_filas(filas):
                 neto += neto_fila
                 sin_ticket += monto_mp
                 n_sin_ticket += 1
+                continue
+            if estado in ("CANCELADO", "CANCELADA"):
+                if monto_mp:
+                    bruto += monto_mp
+                    neto += neto_fila
+                cancelados += float(p.get("monto") or monto_mp)
+                n_cancelados += 1
                 continue
             if estado in ("F9 MANUAL", "SIN FIRMAR"):
                 plata = monto_ticket or float(p.get("monto") or 0)
@@ -61,4 +70,6 @@ def de_filas(filas):
         "n_tickets": n_tickets,
         "sin_ticket": sin_ticket,
         "n_sin_ticket": n_sin_ticket,
+        "cancelados": cancelados,
+        "n_cancelados": n_cancelados,
     }

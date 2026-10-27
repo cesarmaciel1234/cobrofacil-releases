@@ -28,7 +28,7 @@ def _guardar(datos):
 
 
 def fusionar(filas, avisar=False):
-    """Suma tickets. No saca uno que ya estaba. Si el disco falla, no lanza."""
+    """Suma o actualiza tickets. No saca uno que ya estaba. Si el disco falla, no lanza."""
     if not filas:
         return
     try:
@@ -38,14 +38,52 @@ def fusionar(filas, avisar=False):
                 nro = str((venta or {}).get("ticket") or "").strip()
                 if not nro:
                     continue
+                est = str((venta or {}).get("estado") or "COMPLETADA").upper().strip()
+                canc = bool((venta or {}).get("cancelado") or est in ("CANCELADA", "ANULADA", "CANCELADO", "ANULADO"))
                 datos[nro] = {
                     "ticket": nro,
                     "fecha": str((venta or {}).get("fecha") or "")[:19],
                     "monto": float((venta or {}).get("monto") or 0),
                     "metodo": str((venta or {}).get("metodo") or ""),
                     "clase": str((venta or {}).get("clase") or "digital"),
+                    "estado": "CANCELADA" if canc else est,
+                    "cancelado": canc,
                 }
             _guardar(datos)
+        if avisar:
+            try:
+                from src.motor_auditoria_digital.empleado import despertar
+
+                despertar()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+def marcar_cancelado(ticket: str, avisar: bool = True):
+    """Marca un ticket como CANCELADA en el libro local."""
+    ticket = str(ticket or "").strip()
+    if not ticket:
+        return
+    try:
+        with _LOCK:
+            datos = _leer()
+            if ticket in datos and isinstance(datos[ticket], dict):
+                datos[ticket]["estado"] = "CANCELADA"
+                datos[ticket]["cancelado"] = True
+                _guardar(datos)
+            else:
+                datos[ticket] = {
+                    "ticket": ticket,
+                    "fecha": "",
+                    "monto": 0.0,
+                    "metodo": "",
+                    "clase": "digital",
+                    "estado": "CANCELADA",
+                    "cancelado": True,
+                }
+                _guardar(datos)
         if avisar:
             try:
                 from src.motor_auditoria_digital.empleado import despertar

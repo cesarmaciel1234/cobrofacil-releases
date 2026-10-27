@@ -57,7 +57,7 @@ def _crear_carpeta(path: str) -> str:
 
 
 def _sembrar_desde_paquete(destino: str) -> None:
-    """Copia PNG del ZIP/EXE a Catalogos/ y Catalogos/png_productos/ si faltan."""
+    """Copia el paquete a Catalogos/. No toca png_productos: esa carpeta queda fija."""
     global _SEMBRADO
     if _SEMBRADO:
         return
@@ -69,47 +69,24 @@ def _sembrar_desde_paquete(destino: str) -> None:
         mismo = os.path.normpath(origen) == os.path.normpath(destino)
     except (OSError, ValueError):
         mismo = False
-    dest_prod = _crear_carpeta(os.path.join(destino, "png_productos"))
+    _crear_carpeta(os.path.join(destino, "png_productos"))
     if mismo:
-        _volcar_pngs_en_productos(destino, dest_prod)
         return
     for root, _dirs, files in os.walk(origen):
         rel = os.path.relpath(root, origen)
+        if rel.split(os.sep)[0].lower() == "png_productos":
+            continue
         target_root = destino if rel in (".", "") else os.path.join(destino, rel)
         _crear_carpeta(target_root)
         for name in files:
             src = os.path.join(root, name)
             dst = os.path.join(target_root, name)
-            if not os.path.isfile(dst):
-                try:
-                    shutil.copy2(src, dst)
-                except OSError:
-                    pass
-            if name.lower().endswith((".png", ".jpg", ".jpeg", ".webp", ".svg")):
-                dst_prod = os.path.join(dest_prod, os.path.basename(name))
-                if not os.path.isfile(dst_prod):
-                    try:
-                        shutil.copy2(src, dst_prod)
-                    except OSError:
-                        pass
-    _volcar_pngs_en_productos(destino, dest_prod)
-
-
-def _volcar_pngs_en_productos(raiz: str, dest_prod: str) -> None:
-    """Asegura que cada PNG de Catalogos/ también esté en png_productos/."""
-    _crear_carpeta(dest_prod)
-    if not raiz or not os.path.isdir(raiz):
-        return
-    for name in os.listdir(raiz):
-        if not name.lower().endswith((".png", ".jpg", ".jpeg", ".webp", ".svg")):
-            continue
-        src = os.path.join(raiz, name)
-        dst = os.path.join(dest_prod, name)
-        if os.path.isfile(src) and not os.path.isfile(dst):
+            if os.path.isfile(dst):
+                continue
             try:
                 shutil.copy2(src, dst)
             except OSError:
-                continue
+                pass
 
 
 def catalogos_dir() -> str:
@@ -131,17 +108,9 @@ def iconos_rubros_dir() -> str:
 
 
 def png_productos_dir() -> str:
-    """PNG de producto (vitrina): se crean y cargan en Catalogos/png_productos/."""
+    """PNG de producto. No se rellena sola: queda lo que hay hasta un PNG nuevo."""
     raiz = catalogos_dir()
-    dest = _crear_carpeta(os.path.join(raiz, "png_productos"))
-    _volcar_pngs_en_productos(raiz, dest)
-    bundled = _catalogos_empaquetado()
-    if bundled and os.path.normpath(bundled) != os.path.normpath(raiz):
-        _volcar_pngs_en_productos(bundled, dest)
-        bundled_prod = os.path.join(bundled, "png_productos")
-        if os.path.isdir(bundled_prod):
-            _volcar_pngs_en_productos(bundled_prod, dest)
-    return dest
+    return _crear_carpeta(os.path.join(raiz, "png_productos"))
 
 
 def carpetas_galeria_png() -> list[str]:

@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 def filtro(etiqueta, dia_yyyy_mm_dd=None, hasta_yyyy_mm_dd=None):
     hoy = datetime.now()
     nombre = (etiqueta or "Mes").strip()
+    if nombre == "Todos":
+        return "2000-01-01", hoy.strftime("%Y-%m-%d")
     if nombre == "Hoy":
         d = hoy.strftime("%Y-%m-%d")
         return d, d

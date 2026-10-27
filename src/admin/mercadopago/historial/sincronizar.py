@@ -40,8 +40,37 @@ def bajar_mes(token):
             mi_id = (respuesta.json() or {}).get("id")
     except Exception:
         pass
-    comienzo = quote(datetime.now().strftime("%Y-%m-01T00:00:00.000-03:00"), safe="")
-    fin = fecha_busqueda_mp()
+    from src.admin.mercadopago.historial.cuentas import (
+        asegurar_inicializacion,
+        es_pago_valido_en_periodo,
+        nombre_cuenta_para_pago,
+        rango_activo_token_actual,
+    )
+    from src.admin.mercadopago.historial.archivo import _fecha_ar
+
+    asegurar_inicializacion()
+    activo_desde, activo_hasta = rango_activo_token_actual()
+
+    primer_dia_mes = datetime.now().strftime("%Y-%m-01 00:00:00")
+    inicio_busqueda = primer_dia_mes
+    if activo_desde and activo_desde > primer_dia_mes:
+        inicio_busqueda = activo_desde
+
+    try:
+        dt_ini = datetime.strptime(inicio_busqueda[:19], "%Y-%m-%d %H:%M:%S")
+        comienzo = quote(dt_ini.strftime("%Y-%m-%dT%H:%M:%S.000-03:00"), safe="")
+    except Exception:
+        comienzo = quote(datetime.now().strftime("%Y-%m-01T00:00:00.000-03:00"), safe="")
+
+    if activo_hasta:
+        try:
+            dt_fin = datetime.strptime(activo_hasta[:19], "%Y-%m-%d %H:%M:%S")
+            fin = quote(dt_fin.strftime("%Y-%m-%dT%H:%M:%S.000-03:00"), safe="")
+        except Exception:
+            fin = fecha_busqueda_mp()
+    else:
+        fin = fecha_busqueda_mp()
+
     vistos = _ids()
     acumulados = []
     offset = 0
@@ -68,8 +97,13 @@ def bajar_mes(token):
     for pago in acumulados:
         if float(pago.get("transaction_amount") or 0) <= 0:
             continue
-        if mi_id and str(pago.get("collector_id")) != str(mi_id):
+        cid = str(pago.get("collector_id") or mi_id or "")
+        if mi_id and cid and str(pago.get("collector_id")) != str(mi_id):
             continue
+        f_pago = _fecha_ar(pago.get("date_approved") or pago.get("date_created"))
+        if not es_pago_valido_en_periodo(f_pago, cid):
+            continue
+        pago["cuenta_nombre"] = nombre_cuenta_para_pago(cid, f_pago)
         propios.append(pago)
     faltan = [
         pago for pago in propios

@@ -1,7 +1,7 @@
 from src.utils.qt_compat import qt_exec
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QDateEdit, QCheckBox,
+    QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QDateEdit,
 )
 from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
@@ -212,6 +212,7 @@ class Admin10MP(QWidget):
         self.card_avg, self.lbl_kpi_avg = create_kpi_card("SIN FIRMAR / F9", "$0,00", "#B45309")
         self.card_suelto, self.lbl_kpi_suelto = create_kpi_card("MP SIN TICKET", "$0,00", "#B91C1C")
         self.card_cliente, self.lbl_kpi_cliente = create_kpi_card("CLIENTE", "$0,00", "#075985")
+        self.card_cancelado, self.lbl_kpi_cancelado = create_kpi_card("CANCELADOS", "$0,00", "#DC2626")
 
         fila1 = (
             self.card_total_mes,
@@ -223,7 +224,7 @@ class Admin10MP(QWidget):
             self.card_avg,
             self.card_suelto,
             self.card_cliente,
-            hueco(),
+            self.card_cancelado,
         )
         for col, card in enumerate(fila1):
             kpi_lay.addWidget(card, 0, col)
@@ -253,7 +254,10 @@ class Admin10MP(QWidget):
         """)
         self.txt_buscar.textChanged.connect(self.aplicar_filtros)
 
-        self._periodo = "Mes"
+        self._periodo = "Hoy"
+        self._cruce = "Todos"
+        self._cuenta_filtro = ""
+        self._gen_vista = -1
         self._botones_periodo = {}
         _idle = (
             "QPushButton { background: #FFFFFF; color: #475569; border: 1px solid #E2E8F0; "
@@ -269,7 +273,7 @@ class Admin10MP(QWidget):
         for texto in ("Hoy", "Semana", "Mes", "Año", "Período"):
             b = QPushButton(texto)
             b.setCursor(Qt.CursorShape.PointingHandCursor)
-            b.setStyleSheet(_activo if texto == "Mes" else _idle)
+            b.setStyleSheet(_activo if texto == "Hoy" else _idle)
             b.clicked.connect(lambda _c=False, t=texto: self._elegir_periodo(t))
             self._botones_periodo[texto] = b
 
@@ -297,42 +301,63 @@ class Admin10MP(QWidget):
         self.date_hasta.dateChanged.connect(self.aplicar_filtros)
         self.date_hasta.hide()
 
-        self.chk_firmados = QCheckBox("Firmados")
-        self.chk_firmados.setChecked(True)
-        self.chk_firmados.setToolTip("Venta o cobranza con id de Mercado Pago enlazado al ticket o al COB-")
-        self.chk_firmados.setStyleSheet("QCheckBox { font-size: 13px; font-weight: 700; color: #047857; }")
-        self.chk_firmados.stateChanged.connect(self.aplicar_filtros)
-
-        self.chk_pendientes = QCheckBox("Pendientes")
-        self.chk_pendientes.setChecked(True)
-        self.chk_pendientes.setToolTip("Sin ticket, sin firmar o F9: falta enlace digital")
-        self.chk_pendientes.setStyleSheet("QCheckBox { font-size: 13px; font-weight: 700; color: #B45309; }")
-        self.chk_pendientes.stateChanged.connect(self.aplicar_filtros)
+        self.btn_filtros = QPushButton("Filtros")
+        self.btn_filtros.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_filtros.setStyleSheet(_idle)
+        self.btn_filtros.clicked.connect(self._abrir_filtros)
 
         filter_lay.addWidget(self.txt_buscar, stretch=1)
         for texto in ("Hoy", "Semana", "Mes", "Año", "Período"):
             filter_lay.addWidget(self._botones_periodo[texto])
         filter_lay.addWidget(self.date_desde)
         filter_lay.addWidget(self.date_hasta)
-        filter_lay.addWidget(self.chk_firmados)
-        filter_lay.addWidget(self.chk_pendientes)
+        filter_lay.addWidget(self.btn_filtros)
+        self.txt_buscar.setPlaceholderText("Buscar titular, concepto, ID de pago, ticket o COB-…")
         body.addLayout(filter_lay)
+        self.lbl_reparto = QLabel("")
+        self.lbl_reparto.setStyleSheet(
+            "QLabel { color: #0F172A; font-size: 13px; font-weight: 700; padding: 2px 2px 0 2px; }"
+        )
+        self.lbl_reparto.hide()
+        body.addWidget(self.lbl_reparto)
         body.addSpacing(10)
 
-        self.tabla = QTableWidget(0, 7)
+        self.tabla = QTableWidget(0, 8)
         self.tabla.setHorizontalHeaderLabels([
-            "Fecha", "ID de pago", "Concepto", "Monto", "Estado", "Ticket venta", "Ticket cobro",
+            "Fecha", "ID de pago", "Cuenta / Token", "Concepto", "Monto", "Estado", "Ticket venta", "Ticket cobro",
         ])
         self.tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tabla.setStyleSheet("background: white; alternate- font-size: 14px;")
-        self.tabla.setAlternatingRowColors(True)
+        self.tabla.setStyleSheet("""
+            QTableWidget {
+                background-color: #FFFFFF;
+                color: #0F172A;
+                gridline-color: #E2E8F0;
+                font-size: 13px;
+                border: 1px solid #CBD5E1;
+                border-radius: 8px;
+            }
+            QTableWidget::item {
+                padding: 6px;
+                border-bottom: 1px solid #F1F5F9;
+            }
+            QHeaderView::section {
+                background-color: #F1F5F9;
+                color: #334155;
+                font-size: 12px;
+                font-weight: 700;
+                padding: 8px;
+                border: none;
+                border-bottom: 2px solid #CBD5E1;
+            }
+        """)
+        self.tabla.setAlternatingRowColors(False)
         self.tabla.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tabla.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tabla.customContextMenuRequested.connect(self.mostrar_menu_contextual)
         body.addWidget(self.tabla)
         self.lbl_leyenda = QLabel(
-            "Ticket venta = qué se vendió  ·  Ticket cobro = COB-… abono F6  ·  "
-            "ID de pago = Mercado Pago o F9 MANUAL"
+            "Filtros: cruzados, ticket sin id, id sin ticket, y la cuenta del token que estaba activo.  ·  "
+            "Sin id de pago no hay cuenta.  ·  Ticket venta = qué se vendió  ·  Ticket cobro = COB-…"
         )
         self.lbl_leyenda.setWordWrap(True)
         self.lbl_leyenda.setStyleSheet(
@@ -401,7 +426,8 @@ class Admin10MP(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
-        self.cargar_datos_locales(sincronizar_nodo=True)
+        self.cargar_datos_locales(sincronizar_nodo=False)
+        self._programar_sincronizacion_nodo()
         self._marcas_archivos = self._marcas()
         self._reloj_ticket.start(1000)
 
@@ -410,7 +436,8 @@ class Admin10MP(QWidget):
         super().hideEvent(event)
 
     def sincronizar_historico(self):
-        self.cargar_datos_locales(sincronizar_nodo=True)
+        self._programar_sincronizacion_nodo()
+        self.cargar_datos_locales(sincronizar_nodo=False)
         self._marcas_archivos = self._marcas()
         bajada = getattr(self, "_bajando", None)
         if bajada is not None and bajada.isRunning():
@@ -514,6 +541,16 @@ class Admin10MP(QWidget):
         return tuple(marcas)
 
     def _refrescar_si_cambio(self):
+        try:
+            from src.motor_auditoria_digital.empleado import generacion
+
+            gen = generacion()
+        except Exception:
+            gen = getattr(self, "_gen_vista", -1)
+        if gen != getattr(self, "_gen_vista", -1):
+            self._gen_vista = gen
+            self.aplicar_filtros()
+            return
         marcas = self._marcas()
         if marcas != self._marcas_archivos:
             self._marcas_archivos = marcas
@@ -534,12 +571,7 @@ class Admin10MP(QWidget):
         puesto = barra.value()
         datos = leer()
         self.todos_los_pagos = datos["pagos"]
-        try:
-            from src.motor_auditoria_digital import despertar
-
-            despertar()
-        except Exception:
-            pass
+        self._forzar_cruce = True
         self.aplicar_filtros()
         barra.setValue(puesto)
 
@@ -548,21 +580,22 @@ class Admin10MP(QWidget):
         Aplica período, texto y los dos filtros de negocio: firmados vs pendientes.
         """
         filtro_texto = self.txt_buscar.text().lower().strip()
-
-        ver_firmados = self.chk_firmados.isChecked()
-        ver_pendientes = self.chk_pendientes.isChecked()
+        cruce = getattr(self, "_cruce", "Todos")
+        cuenta_f = str(getattr(self, "_cuenta_filtro", "") or "")
 
         from src.motor_auditoria_digital.consultas.rango import filtro as rango_filtro
 
         d0, d1 = rango_filtro(
-            getattr(self, "_periodo", "Mes"),
+            getattr(self, "_periodo", "Hoy"),
             self.date_desde.date().toString("yyyy-MM-dd"),
             self.date_hasta.date().toString("yyyy-MM-dd"),
         )
+        forzar = bool(getattr(self, "_forzar_cruce", False))
+        self._forzar_cruce = False
         try:
-            from src.motor_auditoria_digital import snapshot as filas_auditoria
+            from src.motor_auditoria_digital.empleado import pedir as filas_auditoria
 
-            crudo = filas_auditoria(d0, d1)
+            crudo = filas_auditoria(d0, d1, forzar=forzar)
         except Exception:
             crudo = []
         if not crudo:
@@ -578,26 +611,31 @@ class Admin10MP(QWidget):
                 p.setdefault("neto", p.get("neto") or p.get("monto") or 0)
                 crudo.append(p)
 
+        cuentas_periodo = []
+        for p in crudo:
+            nombre_cuenta = str(p.get("cuenta") or "").strip()
+            if nombre_cuenta and nombre_cuenta not in ("—", "-", "MP") and nombre_cuenta not in cuentas_periodo:
+                cuentas_periodo.append(nombre_cuenta)
+        self._cuentas_periodo = cuentas_periodo
+
+        from src.admin.mercadopago.filtros.clase import entra_en_reparto, pasa
+
         filas = []
+        para_reparto = []
         for p in crudo:
             op = p.get("op_type") or ""
             estado = str(p.get("estado") or "")
             fecha = str(p.get("fecha") or "")
             if op == "account_fund" or estado in ("CUENTA / DNI", "OMITIDO", "CARGA DE FONDOS"):
                 continue
-            grupo = self._grupo_fila(p)
-            if ver_firmados and ver_pendientes:
-                if grupo not in ("firmado", "pendiente"):
-                    continue
-            elif ver_firmados:
-                if grupo != "firmado":
-                    continue
-            elif ver_pendientes:
-                if grupo != "pendiente":
-                    continue
+            if entra_en_reparto(p):
+                para_reparto.append(p)
+            if not pasa(p, cruce, cuenta_f):
+                continue
             if filtro_texto:
                 blob = " ".join([
-                    fecha, str(p.get("id") or ""), str(p.get("nombre") or ""),
+                    fecha, str(p.get("id") or ""), str(p.get("cuenta") or ""),
+                    str(p.get("nombre") or ""),
                     str(p.get("email") or ""), str(p.get("ticket") or ""),
                     str(p.get("ticket_venta") or ""), str(p.get("ticket_cobro") or ""),
                     f"{float(p.get('monto') or 0):.2f}", estado,
@@ -622,6 +660,14 @@ class Admin10MP(QWidget):
         self.lbl_kpi_count.setText(fmt_plata(t["firmados"]))
         self.lbl_kpi_avg.setText(fmt_plata(t["sin_firmar"]))
         self.lbl_kpi_cliente.setText(fmt_plata(t.get("cliente", 0)))
+        if hasattr(self, "lbl_kpi_cancelado"):
+            self.lbl_kpi_cancelado.setText(fmt_plata(t.get("cancelados", 0)))
+            n_canc = int(t.get("n_cancelados") or 0)
+            if n_canc:
+                self.card_cancelado._nota.setText(f"{n_canc} ticket{'s' if n_canc != 1 else ''} cancelado{'s' if n_canc != 1 else ''}")
+                self.card_cancelado._nota.show()
+            else:
+                self.card_cancelado._nota.hide()
         sin_n = int(t.get("n_sin_firmar") or 0)
         tot_n = int(t.get("n_tickets") or 0)
         if tot_n:
@@ -629,6 +675,7 @@ class Admin10MP(QWidget):
             self.card_avg._nota.show()
         else:
             self.card_avg._nota.hide()
+        self._pintar_reparto(para_reparto)
         self.lbl_kpi_suelto.setText(fmt_plata(t.get("sin_ticket") or 0))
         n_suelto = int(t.get("n_sin_ticket") or 0)
         if n_suelto:
@@ -644,12 +691,36 @@ class Admin10MP(QWidget):
             row = self.tabla.rowCount()
             self.tabla.insertRow(row)
             estado = str(p.get("estado") or "")
-            self.tabla.setItem(row, 0, QTableWidgetItem(str(p.get("fecha") or "")))
-            self.tabla.setItem(row, 1, QTableWidgetItem(str(p.get("id") or "—") or "—"))
-            self.tabla.setItem(row, 2, QTableWidgetItem(str(p.get("nombre") or "—")))
+            fondo = QColor(self._fondo_estado(estado))
+            cuenta = str(p.get("cuenta") or "—")
+            fondo_cuenta, tinta_cuenta = self._tono_cuenta(cuenta)
+
+            item_fecha = QTableWidgetItem(str(p.get("fecha") or ""))
+            item_fecha.setForeground(QColor("#0F172A"))
+            item_fecha.setBackground(fondo)
+            self.tabla.setItem(row, 0, item_fecha)
+
+            item_id = QTableWidgetItem(str(p.get("id") or "—") or "—")
+            item_id.setForeground(QColor("#334155"))
+            item_id.setBackground(fondo)
+            self.tabla.setItem(row, 1, item_id)
+
+            item_cuenta = QTableWidgetItem(cuenta)
+            item_cuenta.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
+            item_cuenta.setForeground(QColor(tinta_cuenta))
+            item_cuenta.setBackground(QColor(fondo_cuenta))
+            self.tabla.setItem(row, 2, item_cuenta)
+
+            item_nombre = QTableWidgetItem(str(p.get("nombre") or "—"))
+            item_nombre.setForeground(QColor("#0F172A"))
+            item_nombre.setBackground(fondo)
+            self.tabla.setItem(row, 3, item_nombre)
+
             item_monto = QTableWidgetItem(f"${float(p.get('monto') or 0):.2f}")
             item_monto.setFont(QFont("Segoe UI", 12, QFont.Bold))
-            if estado in ("F9 MANUAL", "SIN FIRMAR"):
+            if estado in ("CANCELADO", "CANCELADA"):
+                item_monto.setForeground(QColor("#DC2626"))
+            elif estado in ("F9 MANUAL", "SIN FIRMAR"):
                 item_monto.setForeground(QColor("#B45309"))
             elif estado in ("SIN TICKET",):
                 item_monto.setForeground(QColor("#DC2626"))
@@ -657,40 +728,116 @@ class Admin10MP(QWidget):
                 item_monto.setForeground(QColor("#0369A1"))
             else:
                 item_monto.setForeground(QColor("#059669"))
-            self.tabla.setItem(row, 3, item_monto)
+            item_monto.setBackground(fondo)
+            self.tabla.setItem(row, 4, item_monto)
+
             item_estado = QTableWidgetItem(estado)
+            item_estado.setFont(QFont("Segoe UI", 10, QFont.Bold))
             colores = {
                 "APPROVED": "#059669",
                 "FIRMADO": "#059669",
                 "SIN TICKET": "#DC2626",
+                "CANCELADO": "#DC2626",
+                "CANCELADA": "#DC2626",
                 "SIN FIRMAR": "#B45309",
                 "F9 MANUAL": "#B45309",
                 "COBRANZA": "#0369A1",
             }
             item_estado.setForeground(QColor(colores.get(estado, "#334155")))
-            self.tabla.setItem(row, 4, item_estado)
+            item_estado.setBackground(fondo)
+            self.tabla.setItem(row, 5, item_estado)
+
             tv = str(p.get("ticket_venta") or "") or "—"
             tc = str(p.get("ticket_cobro") or "") or "—"
-            self.tabla.setItem(row, 5, QTableWidgetItem(tv))
-            self.tabla.setItem(row, 6, QTableWidgetItem(tc))
+            item_tv = QTableWidgetItem(tv)
+            item_tv.setForeground(QColor("#0F172A"))
+            item_tv.setBackground(fondo)
+            self.tabla.setItem(row, 6, item_tv)
+
+            item_tc = QTableWidgetItem(tc)
+            item_tc.setForeground(QColor("#0F172A"))
+            item_tc.setBackground(fondo)
+            self.tabla.setItem(row, 7, item_tc)
+
+    def _abrir_filtros(self):
+        from src.admin.mercadopago.filtros.panel import abrir
+        from src.admin.mercadopago.historial.cuentas import listar_cuentas
+
+        nombres = []
+        try:
+            nombres.extend(listar_cuentas())
+        except Exception:
+            pass
+        for nombre in getattr(self, "_cuentas_periodo", []) or []:
+            if nombre not in nombres:
+                nombres.append(nombre)
+        abrir(
+            self,
+            self.btn_filtros,
+            getattr(self, "_cruce", "Todos"),
+            str(getattr(self, "_cuenta_filtro", "") or ""),
+            nombres,
+            self._elegir_filtro,
+            self._estilo_periodo_activo,
+            self._estilo_periodo_idle,
+        )
+
+    def _elegir_filtro(self, cruce, cuenta):
+        from src.admin.mercadopago.filtros.clase import texto_boton
+
+        self._cruce = cruce or "Todos"
+        self._cuenta_filtro = cuenta or ""
+        panel = getattr(self, "_panel_filtros", None)
+        if panel is not None:
+            panel.hide()
+        self.btn_filtros.setText(texto_boton(self._cruce, self._cuenta_filtro))
+        self.btn_filtros.setStyleSheet(
+            self._estilo_periodo_activo if self.btn_filtros.text() != "Filtros" else self._estilo_periodo_idle
+        )
+        self.aplicar_filtros()
+
+    def _pintar_reparto(self, filas):
+        from src.admin.mercadopago.filtros.clase import sumar_cuentas
+
+        partes = [f"{nombre}   {fmt_plata(total)}" for nombre, total in sumar_cuentas(filas)]
+        if not partes or not hasattr(self, "lbl_reparto"):
+            if hasattr(self, "lbl_reparto"):
+                self.lbl_reparto.hide()
+            return
+        self.lbl_reparto.setText("   ·   ".join(partes))
+        self.lbl_reparto.show()
 
     @staticmethod
-    def _grupo_fila(p):
-        """firmado = hay id MP enlazado. pendiente = falta firma o falta ticket."""
-        estado = str((p or {}).get("estado") or "").upper()
-        pago = str((p or {}).get("id") or "").strip()
-        tiene_pago = bool(pago) and pago not in ("—", "-", "F9 MANUAL")
-        if estado in ("FIRMADO", "APPROVED") and tiene_pago:
-            return "firmado"
-        if estado == "COBRANZA" and tiene_pago:
-            return "firmado"
-        if estado in ("SIN TICKET", "SIN FIRMAR", "F9 MANUAL"):
-            return "pendiente"
-        if estado in ("COBRANZA", "CLIENTE"):
-            return "pendiente"
-        return "otro"
+    def _fondo_estado(estado: str) -> str:
+        clave = str(estado or "").upper()
+        if clave in ("FIRMADO", "APPROVED"):
+            return "#ECFDF5"
+        if clave in ("SIN FIRMAR", "F9 MANUAL"):
+            return "#FFFBEB"
+        if clave in ("CANCELADO", "CANCELADA", "SIN TICKET"):
+            return "#FEF2F2"
+        if clave in ("COBRANZA", "CLIENTE", "CUENTA / DNI"):
+            return "#F0F9FF"
+        return "#FFFFFF"
+
+    @staticmethod
+    def _tono_cuenta(nombre: str) -> tuple[str, str]:
+        clave = str(nombre or "").strip().lower()
+        if not clave or clave in ("—", "-", "mp"):
+            return "#F8FAFC", "#334155"
+        paleta = (
+            ("#E0E7FF", "#312E81"),
+            ("#D1FAE5", "#065F46"),
+            ("#FFEDD5", "#9A3412"),
+            ("#FCE7F3", "#9D174D"),
+            ("#E0F2FE", "#075985"),
+            ("#EDE9FE", "#5B21B6"),
+        )
+        return paleta[sum(ord(c) for c in clave) % len(paleta)]
 
     def _elegir_periodo(self, texto):
+        if texto == getattr(self, "_periodo", "") and texto != "Período":
+            texto = "Todos"
         self._periodo = texto
         for t, b in self._botones_periodo.items():
             b.setStyleSheet(self._estilo_periodo_activo if t == texto else self._estilo_periodo_idle)

@@ -4,9 +4,17 @@ El CSV local `reportes/mercado_pago_sync.csv`. La grilla lo usa como fuente de c
 
 La auditoría la arma `src/motor_auditoria_digital/`. Este historial solo guarda el CSV MP y mezcla el nodo. `tickets_digitales.py` queda como puente por si un import viejo lo pide.
 
+`cuentas.py`
+
+- `registrar_token_activo(token, alias, collector_id)` cierra el período si el collector es otro y abre el nuevo con el nombre legal de Mercado Pago. El apodo queda en `alias_viejos` y no pisa el nombre.
+- `alinear_cuenta_viva()` hace lo mismo con el token que ya está guardado, sin borrar los períodos anteriores.
+- `nombre_cuenta_para_pago(collector_id, fecha, almacenada)` devuelve el titular de ese id. Si no hay período para esa fecha, `""`.
+- `listar_cuentas()` devuelve los titulares, del más viejo al activo. No llama a la red.
+- Si `users/me` no responde, se usa el alias escrito y no se cierra el período por un nombre vacío.
+
 `archivo.py`
 
-- `guardar(pagos)` agrega filas nuevas y, si el id ya estaba, corrige la hora de Argentina, el nombre y el tipo. No repite el id. No guarda un id con `SIMULADO`. Una transferencia por CVU queda como `transferencia` y se ve en la grilla: no es una carga propia. Point queda «Venta con Point Smart» y el QR de mostrador «Venta con código QR». Si no puede escribir, devuelve 0. Lo llama el hilo y también el cobro cuando detecta un QR o una transferencia.
+- `guardar(pagos)` agrega filas nuevas y, si el id ya estaba, corrige la hora de Argentina, el nombre, el tipo y la cuenta si ya se conoce el titular. No repite el id. No guarda un id con `SIMULADO`. Al leer, la cuenta se resuelve otra vez: el nombre es el del token que estaba activo ese día, no un apodo viejo guardado en el CSV. Una venta sin id de pago no tiene cuenta. Una transferencia por CVU queda como `transferencia` y se ve en la grilla: no es una carga propia. Point queda «Venta con Point Smart» y el QR de mostrador «Venta con código QR». Si no puede escribir, devuelve 0. Lo llama el hilo y también el cobro cuando detecta un QR o una transferencia.
 - `leer()` devuelve los pagos y los totales del mes y de hoy. Una fila simulada vieja no entra.
 - `omitir(id_pago)` cambia `APPROVED` por `OMITIDO`, o al revés, conservando las demás filas y sus marcas de estado. Devuelve False si no hay archivo.
 - `nodo.py`, `sincronizar_nodo(root)`: une el CSV local con `root/reportes/mercado_pago_sync.csv` por ID de pago y actualiza ambas copias. `sincronizar_nodo_configurado()` usa la ruta del nodo en configuración; informa si el nodo asignado no está conectado.

@@ -58,7 +58,9 @@ class MotorProveedor:
 
     @staticmethod
     def tienda_disponible():
-        """True only when the authoritative MariaDB answers, never for punpro.db."""
+        """True si la maestra sigue siendo el motor. No abre un socket nuevo."""
+        import time
+
         db = MotorProveedor._get_db("admin")
         if (
             not db
@@ -66,16 +68,9 @@ class MotorProveedor:
             or getattr(db, "_forced_local_offline", False)
         ):
             return False
-        try:
-            conn = db.get_connection(caer_si_maestra_caida=False)
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute("SELECT 1 AS conectada")
-                    return bool(cursor.fetchone())
-            finally:
-                conn.close()
-        except Exception:
+        if time.monotonic() < float(getattr(db, "_maestra_muerta_hasta", 0) or 0):
             return False
+        return True
 
     @staticmethod
     def _abrir_conexion_tienda(db):
