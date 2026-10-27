@@ -77,9 +77,12 @@ def manejar_post(handler, path: str) -> bool:
         length = int(handler.headers.get("Content-Length", 0) or 0)
         if length:
             handler.rfile.read(length)
-        from src.central_red_global.sync_tienda.aviso_tv import pisar_sello
+        from src.central_red_global.sync_tienda.aviso_tv.avisar import repartir_desde_maestra
 
-        handler._send_response(200, {"ok": True, "sello": pisar_sello()})
+        repartir_desde_maestra()
+        from src.central_red_global.sync_tienda.aviso_tv.sello import leer_sello
+
+        handler._send_response(200, {"ok": True, "sello": leer_sello()})
         return True
     if path == "/api/carteleria/publicidad":
         try:

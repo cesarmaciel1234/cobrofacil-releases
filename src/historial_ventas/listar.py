@@ -37,6 +37,7 @@ def listar_tickets(
     texto: str = "",
     metodo: str = "TODOS",
     fecha_iso: str | None = None,
+    fecha_hasta: str | None = None,
     ver_todo: bool = False,
     hora_desde: str | None = None,
     hora_hasta: str | None = None,
@@ -58,16 +59,18 @@ def listar_tickets(
             clauses.append("v.caja_id = ?")
             params.append(caja_id)
     usar_dia = (not ver_todo) and bool(fecha_iso)
+    fin_iso = (fecha_hasta or fecha_iso or "")[:10]
+    ini_iso = (fecha_iso or "")[:10]
     if usar_dia:
         try:
             from src.jefe.reportes.periodo.sql import where_fecha
 
-            sql_f, p_f = where_fecha("v.fecha", fecha_iso, fecha_iso)
+            sql_f, p_f = where_fecha("v.fecha", ini_iso, fin_iso)
             clauses.append(sql_f)
             params.extend(p_f)
         except Exception:
             clauses.append("v.fecha >= ? AND v.fecha < ?")
-            params.extend([f"{fecha_iso} 00:00:00", f"{fecha_iso} 23:59:59"])
+            params.extend([f"{ini_iso} 00:00:00", f"{fin_iso} 23:59:59"])
     if clauses:
         where = "WHERE " + " AND ".join(clauses) + " "
     group = "GROUP BY v.id ORDER BY v.id DESC LIMIT 4000"
@@ -109,7 +112,7 @@ def listar_tickets(
         f_raw = r["fecha"]
         f_str = f_raw.strftime("%Y-%m-%d %H:%M:%S") if hasattr(f_raw, "strftime") else str(f_raw or "")
         dia = iso_dia(f_raw)
-        if usar_dia and dia != fecha_iso:
+        if usar_dia and (not dia or dia < ini_iso or dia > fin_iso):
             continue
         if filtrar_hora:
             dt = _parse_fecha(f_str) if not hasattr(f_raw, "hour") else f_raw

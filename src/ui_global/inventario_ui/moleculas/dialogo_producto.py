@@ -190,14 +190,15 @@ class DialogoProducto(QDialog):
         # --- BOTONES DE ACCIÓN ---
         main_lay.addStretch()
         h_btns = QHBoxLayout()
-        btn_cancel = QPushButton("Cancelar")
-        btn_cancel.setCursor(Qt.PointingHandCursor)
-        btn_cancel.setStyleSheet("padding: 15px; border-radius: 10px; font-weight: bold; font-size: 14px; background: #F1F5F9; color: #475569;")
-        btn_cancel.clicked.connect(self.reject)
+        self.btn_cancel = QPushButton("Cancelar")
+        self.btn_cancel.setCursor(Qt.PointingHandCursor)
+        self.btn_cancel.setStyleSheet("padding: 15px; border-radius: 10px; font-weight: bold; font-size: 14px; background: #F1F5F9; color: #475569;")
+        self.btn_cancel.clicked.connect(self.reject)
 
-        btn_save = QPushButton("💾 Guardar Producto")
-        btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet("""
+        self.btn_save = QPushButton("💾 Guardar Producto")
+        self.btn_save.setCursor(Qt.PointingHandCursor)
+        self.btn_save.setDefault(True)
+        self.btn_save.setStyleSheet("""
             QPushButton {
                 background-color: #2563EB; color: white; border: none;
                 border-radius: 10px; padding: 15px 30px; font-weight: bold; font-size: 14px;
@@ -205,12 +206,27 @@ class DialogoProducto(QDialog):
             QPushButton:hover { background-color: #1D4ED8; }
             QPushButton:pressed { background-color: #1E40AF; }
         """)
-        btn_save.clicked.connect(self._ok)
+        self.btn_save.clicked.connect(self._ok)
 
-        h_btns.addWidget(btn_cancel)
+        h_btns.addWidget(self.btn_cancel)
         h_btns.addStretch()
-        h_btns.addWidget(btn_save)
+        h_btns.addWidget(self.btn_save)
         main_lay.addLayout(h_btns)
+
+        # Tab order explícito para navegar con TAB secuencialmente
+        self.setTabOrder(self.txt_codigo, self.txt_nombre)
+        self.setTabOrder(self.txt_nombre, self.cmb_cat)
+        self.setTabOrder(self.cmb_cat, self.cmb_depto)
+        self.setTabOrder(self.cmb_depto, self.cmb_uni)
+        self.setTabOrder(self.cmb_uni, self.txt_costo)
+        self.setTabOrder(self.txt_costo, self.txt_precio)
+        self.setTabOrder(self.txt_precio, self.txt_mayoreo)
+        self.setTabOrder(self.txt_mayoreo, self.txt_cant_mayoreo)
+        self.setTabOrder(self.txt_cant_mayoreo, self.txt_stock)
+        self.setTabOrder(self.txt_stock, self.txt_min)
+        self.setTabOrder(self.txt_min, self.txt_max)
+        self.setTabOrder(self.txt_max, self.btn_save)
+        self.setTabOrder(self.btn_save, self.btn_cancel)
 
     def add_field_v(self, layout, label, widget):
         v = QVBoxLayout()
@@ -375,16 +391,36 @@ class DialogoProducto(QDialog):
         """)
 
     def keyPressEvent(self, event):
-        from PyQt6.QtWidgets import QPushButton
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-            if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
-                self._ok()
-                return
             fw = self.focusWidget()
-            if isinstance(fw, QPushButton):
-                fw.click()
-            else:
-                self.focusNextChild()
+            # Si el foco está en el botón Cancelar, cancelar
+            if fw == getattr(self, "btn_cancel", None):
+                self.reject()
+                return
+
+            # Si el popup de un combobox está abierto, dejar que Enter seleccione el ítem
+            from PyQt6.QtWidgets import QComboBox
+            if isinstance(fw, QComboBox) and fw.view() and fw.view().isVisible():
+                super().keyPressEvent(event)
+                return
+
+            # Si está en el código de barras y es un producto nuevo recién ingresado, verificarlo primero
+            if fw == self.txt_codigo and not getattr(self, '_id', None):
+                cod = self.txt_codigo.text().strip()
+                if cod and getattr(self, '_last_loaded_codigo', None) != cod:
+                    self._verificar_codigo()
+                    self.txt_nombre.setFocus()
+                    return
+
+            # ENTER EN CUALQUIER CAMPO GUARDA EL PRODUCTO DIRECTAMENTE
+            self._ok()
+            return
+        elif event.key() == Qt.Key.Key_Tab:
+            self.focusNextChild()
+            return
+        elif event.key() == Qt.Key.Key_Backtab:
+            self.focusPreviousChild()
+            return
         else:
             super().keyPressEvent(event)
 

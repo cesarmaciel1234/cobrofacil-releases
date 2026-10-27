@@ -244,23 +244,40 @@ class Grabar:
                 "--port=3306",
                 "-u", "root",
                 "-p1234",
+                "--default-character-set=utf8mb4",
                 "--single-transaction",
                 "--quick",
                 "punpro_db",
             ]
 
             flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-            result = subprocess.run(cmd, capture_output=True, text=True, creationflags=flags, timeout=90)
-
+            result = subprocess.run(cmd, capture_output=True, creationflags=flags, timeout=90)
+            salida = cls._decodificar_utf8(result.stdout)
+            if salida is None:
+                logger.error("Volcado rechazado: no es UTF-8. La copia anterior queda.")
+                return False
             if result.returncode == 0 and cls._guardar_volcado(
-                targets, result.stdout, minimo=500, ticket_id=ticket_id
+                targets, salida, minimo=500, ticket_id=ticket_id
             ):
                 return True
-            logger.error(f"mysqldump fallo: {(result.stderr or '')[:400]}")
+            aviso = cls._decodificar_utf8(result.stderr) or ""
+            logger.error(f"Volcado rechazado: {(aviso or 'sin detalle')[:400]}")
             return False
         except Exception as e:
             logger.error(f"Error en respaldo logico MariaDB: {e}")
             return False
+
+    @classmethod
+    def _decodificar_utf8(cls, data: bytes | str | None) -> str | None:
+        """El volcado sale en UTF-8. En Windows, text=True lo lee en cp1252 y corta el .sql."""
+        if data is None:
+            return ""
+        if isinstance(data, str):
+            return data
+        try:
+            return data.decode("utf-8")
+        except UnicodeDecodeError:
+            return None
 
     @classmethod
     def _volcado_aceptable(cls, texto: str, minimo: int, ticket_id: int = 0) -> bool:

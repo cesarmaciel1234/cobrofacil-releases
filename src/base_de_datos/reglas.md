@@ -11,6 +11,8 @@ Si `config.json` dice esclava (`is_master: false` o `db_host` de otra PC):
 - Si el puerto 3306 no contesta, o MariaDB tira circuit breaker / timeout / unreachable, la esclava pasa a ese SQLite. `is_master` no pasa a true.
 - La venta de ese rato se guarda en local y en `offline_queue.json`. No se cancela ni se espera el timeout de la API. Al encolar, avisa a Nexus con un UDP `VENTA_NUEVA` en el puerto 37021.
 - Cuando la maestra vuelve, `asegurar_lectura_tienda()` deja SQLite y engancha otra vez. La cola sube con el mismo `request_id`.
+- `offline_queue.json` se reemplaza entero (archivo al lado, `fsync`, `os.replace`). Un corte de luz deja la cola anterior. Si el archivo no se puede leer, no se vacía. La caja espera el candado de la subida antes de agregar un ticket, así una venta no pisa a la otra.
+- Cada ticket sube en una sola transacción. Si las líneas no coinciden con la cabecera, se deshace y el ticket sigue en la cola. No queda una parte en la maestra. Sale de la cola cuando la reserva lo tiene en el espejo (`en_titular` hasta el acuse). Si esta PC ya es la titular, sale al confirmarse el guardado.
 
 ## Dónde está el gancho
 

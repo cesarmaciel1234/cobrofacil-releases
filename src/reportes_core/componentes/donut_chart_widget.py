@@ -66,16 +66,13 @@ class DonutChartWidget(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush
-        from PyQt6.QtCore import QPoint, QRect, QRectF, Qt
-        import math
+        from PyQt6.QtGui import QPainter, QColor, QFont, QPen
+        from PyQt6.QtCore import QRect, Qt
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        # Leave enough horizontal space (80px on each side) for the text labels
-        avail_w = self.width() - 180
-        avail_h = self.height() - 40
-        size = min(avail_w, avail_h)
-        if size < 80: size = 80
+        size = min(self.width(), self.height()) - 12
+        if size < 80:
+            size = 80
 
         rect = QRect(int((self.width() - size) / 2), int((self.height() - size) / 2), size, size)
 
@@ -85,52 +82,13 @@ class DonutChartWidget(QWidget):
             painter.drawEllipse(rect); return
 
         start_angle = 90 * 16
-        for i, (cat, val) in enumerate(self.data.items()):
+        for i, (_cat, val) in enumerate(self.data.items()):
             if val <= 0: continue
             span_angle = int((val / total) * 360 * 16)
             color = QColor(self.colors[i % len(self.colors)])
             painter.setBrush(color)
             painter.setPen(QPen(QColor("#FFFFFF"), 2))
             painter.drawPie(rect, start_angle, -span_angle)
-
-            # Draw outside line and label for top 5
-            pct = (val / total) * 100
-            if i < 5 and pct >= 2.0:
-                mid_angle = (start_angle - span_angle / 2) / 16.0
-                rad = math.radians(mid_angle)
-
-                cx = rect.center().x()
-                cy = rect.center().y()
-                outer_radius = size / 2.0
-
-                edge_x = cx + outer_radius * math.cos(rad)
-                edge_y = cy - outer_radius * math.sin(rad)
-
-                line_len = 15
-                end_x = cx + (outer_radius + line_len) * math.cos(rad)
-                end_y = cy - (outer_radius + line_len) * math.sin(rad)
-
-                is_right = math.cos(rad) >= 0
-                horiz_len = 10
-                text_x = end_x + horiz_len if is_right else end_x - horiz_len
-
-                painter.setPen(QPen(color, 2))
-                painter.drawLine(int(edge_x), int(edge_y), int(end_x), int(end_y))
-                painter.drawLine(int(end_x), int(end_y), int(text_x), int(end_y))
-
-                painter.setPen(QColor("#1E293B"))
-                painter.setFont(QFont("Segoe UI", 8, QFont.Bold))
-                cat_str = str(cat)
-                if len(cat_str) > 12: cat_str = cat_str[:10] + ".."
-                label_text = f"{cat_str} {pct:.0f}%"
-
-                if is_right:
-                    text_rect = QRectF(text_x + 4, end_y - 10, 100, 20)
-                    painter.drawText(text_rect, Qt.AlignLeft | Qt.AlignVCenter | Qt.TextDontClip, label_text)
-                else:
-                    text_rect = QRectF(text_x - 104, end_y - 10, 100, 20)
-                    painter.drawText(text_rect, Qt.AlignRight | Qt.AlignVCenter | Qt.TextDontClip, label_text)
-
             start_angle -= span_angle
 
         # Center hole

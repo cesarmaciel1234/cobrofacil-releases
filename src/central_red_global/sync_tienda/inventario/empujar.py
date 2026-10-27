@@ -22,6 +22,11 @@ def empujar_producto_a_maestra(datos: dict) -> bool:
         return True
     host = host_maestra()
     if not host or es_esta_pc(host):
+        try:
+            from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+            offline_nutricion_manager.encolar_producto(datos)
+        except Exception:
+            pass
         return False
     body = json.dumps(datos, ensure_ascii=False, default=str).encode("utf-8")
     try:
@@ -37,7 +42,15 @@ def empujar_producto_a_maestra(datos: dict) -> bool:
                 from src.central_red_global.sync_tienda.aviso_tv import avisar_datos_nuevos
 
                 avisar_datos_nuevos()
+            else:
+                from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+                offline_nutricion_manager.encolar_producto(datos)
             return ok
     except Exception as exc:
         logger.warning("No se pudo empujar producto a maestra: %s", exc)
+        try:
+            from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+            offline_nutricion_manager.encolar_producto(datos)
+        except Exception:
+            pass
         return False

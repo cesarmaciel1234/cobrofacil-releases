@@ -320,18 +320,10 @@ class Admin1Inventario(QWidget):
             return
         if self.catalogo.filtros.txt_buscar.hasFocus():
             return
-        bar = self.catalogo.tabla.verticalScrollBar()
-        scroll_pos = bar.value() if bar else 0
-        target_count = self.catalogo.tabla.loaded_count
-        self.catalogo.cargar_datos()
-        if target_count > 50:
-            while (
-                self.catalogo.tabla.loaded_count < target_count
-                and self.catalogo.tabla.loaded_count < len(self.catalogo.all_rows)
-            ):
-                self.catalogo.tabla.cargar_siguiente_pagina()
-        if bar:
-            bar.setValue(scroll_pos)
+        # Evitar interrumpir si el usuario está seleccionando filas o navegando la tabla
+        if self.catalogo.tabla.hasFocus() or bool(self.catalogo.tabla.selectedItems()):
+            return
+        self.catalogo.cargar_datos(mantener_scroll=True)
 
     def _mostrar_departamentos(self, *args, **kwargs):
         self._asegurar_catalogo()

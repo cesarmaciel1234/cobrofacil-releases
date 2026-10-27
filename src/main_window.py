@@ -1091,12 +1091,12 @@ class MainWindow(QMainWindow):
         self.marco_alerta.raise_()
 
     def _on_udp_message_received(self, origen, tipo, datos):
-        print(f"[DEBUG] UDP recibido: origen={origen}, tipo={tipo}, datos={datos}")
+        if tipo != "FORCE_Z_CUT":
+            return
+        from src.central_red_global.network_engine import token_red
 
-        # ValidaciÃ³n de seguridad bÃ¡sica (AutenticaciÃ³n)
-        token = datos.get("token")
-        if token != "nexus_admin_5544":
-            print("[DEBUG] UDP rechazado: Token invÃ¡lido o ausente.")
+        token = (datos or {}).get("token")
+        if token != token_red():
             return
 
         if tipo == "FORCE_Z_CUT":

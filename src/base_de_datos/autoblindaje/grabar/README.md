@@ -21,7 +21,7 @@ Vuelca la base de quien dijo `host_vivo` a las tres carpetas. No elige la máqui
 
 1. Host vacío, o sin poder leer el último ticket: `False`. No toca el disco.
 2. Sin `mysqldump.exe`: `False`. No comprime la carpeta en caliente.
-3. `mysqldump` de toda `punpro_db`, `--single-transaction --quick`, tope 90 s. Hace falta `Dump completed`, más de 500 bytes, y el id del último ticket dentro del texto. Recién ahí reemplaza el archivo.
+3. `mysqldump` de toda `punpro_db`, `--default-character-set=utf8mb4 --single-transaction --quick`, tope 90 s. La salida se lee en bytes y se decodifica como UTF-8: en Windows, leerla como texto usa cp1252 y corta el archivo en el primer byte que esa tabla no tiene. Hace falta `Dump completed`, más de 500 bytes, y el id del último ticket dentro del texto. Recién ahí reemplaza el archivo. Si el volcado no es UTF-8, la copia anterior queda. Ese rechazo no se cura como si se hubiera caído la red.
 
 ## Las otras funciones
 

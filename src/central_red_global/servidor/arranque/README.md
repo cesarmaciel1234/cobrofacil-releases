@@ -11,5 +11,7 @@ Inicia los servicios base, pero retrasa el arranque de MariaDB para no congelar 
 Un temporizador revisa cada ciertos segundos (_watchdog()) si MariaDB sigue activo. Si lo encuentra apagado al inicio, lo levanta (start_server()).
 - **Punto crítico:** Debido a que el DatabaseManager del proceso principal pudo haberse rendido y asumido "Modo offline" (SQLite) si comprobó el estado de MariaDB antes de que el watchdog lo levantara, el watchdog ejecuta inmediatamente una reconexión forzada db.reconectar_mariadb() y lanza las migraciones/creación de tablas. Sin esta inyección, el Servidor operaría con un MariaDB vacío y los clientes perderían los usuarios predeterminados (como el cajero o admin).
 
+En oficio esclava el watchdog no llama a `start_server()`. El oficio vive en `../oficio/`. La ventana que se ve vive en `../ventana/` y queda abierta al arrancar. No se llama a `win.hide()` en el arranque: en Windows el icono de bandeja no alcanza para que el puesto se vea.
+
 ## Qué no debe cambiar una mejora futura
-- No quitar la invocación a _create_tables() y _migrate_db() en el evento de encendido exitoso del Watchdog para MariaDB. Es el pilar de sincronización cuando el arranque es diferido.
+- No quitar la invocación a _create_tables() y _migrate_db() en el evento de encendido exitoso del Watchdog para MariaDB. Es el pilar de sincronización cuando el arranque es diferido. Ese camino es solo de la maestra.

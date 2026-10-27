@@ -4,7 +4,7 @@
 lanzador/servidor/
   pulso.py            al abrir el hub: despertar si es maestra
   barra/
-    badge.py          ONLINE / ESCLAVA / OFFLINE
+    badge.py          ONLINE / ESCLAVA / OFFLINE. El clic trae la ventana del servidor.
     interruptor.py    Win/Auto (respaldo corte / Linux)
 ```
 

@@ -51,6 +51,7 @@ def kpis_rango(start_str: str, end_str: str) -> dict:
     hay_costo = costo > 0.009
     ganancia = (ventas - costo) if hay_costo else None
     margen = (ganancia / ventas * 100) if hay_costo and ventas > 0 else None
+    cobertura = _cobertura(db, start_str, end_str)
     return {
         "desde": start_str,
         "hasta": end_str,
@@ -61,7 +62,45 @@ def kpis_rango(start_str: str, end_str: str) -> dict:
         "hay_costo": hay_costo,
         "ganancia": ganancia,
         "margen": margen,
+        "cobertura": cobertura,
     }
+
+
+def _cobertura(db, start_str: str, end_str: str) -> float | None:
+    """Porcentaje de la venta que tiene costo cargado. None si no hay líneas."""
+    try:
+        w, params = where_ventas("v", start_str, end_str)
+        filas = db.execute_query(
+            "SELECT SUM(dv.subtotal) as venta, "
+            "SUM(CASE WHEN COALESCE(p.costo, 0) > 0.009 THEN dv.subtotal ELSE 0 END) as con_costo "
+            "FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id "
+            "LEFT JOIN productos p ON dv.id_producto = p.id "
+            f"WHERE {w}",
+            tuple(params),
+        )
+    except Exception:
+        return None
+    if not filas or not filas[0]:
+        return None
+    venta = float(filas[0]["venta"] or 0)
+    if venta <= 0:
+        return None
+    return round(float(filas[0]["con_costo"] or 0) / venta * 100, 1)
+
+
+def serie_diaria(start_str: str, end_str: str) -> dict[str, float]:
+    """Venta por día, con el mismo filtro que `kpis_rango`."""
+    db = _db()
+    w, params = where_ventas("", start_str, end_str)
+    try:
+        filas = db.execute_query(
+            "SELECT substr(fecha, 1, 10) as dia, SUM(total) as tot "
+            f"FROM ventas WHERE {w} GROUP BY substr(fecha, 1, 10)",
+            tuple(params),
+        )
+    except Exception:
+        return {}
+    return {str(r["dia"])[:10]: float(r["tot"] or 0) for r in filas or [] if r["dia"]}
 
 
 def payload_reporte_global() -> dict:

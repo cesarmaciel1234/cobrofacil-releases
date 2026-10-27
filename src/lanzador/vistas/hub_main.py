@@ -276,6 +276,11 @@ class PerfilPantalla(QDialog):
         QTimer.singleShot(200, self._refresh_server_badge)
         QTimer.singleShot(400, self._auto_ensure_server_if_offline)
         QTimer.singleShot(8000, self._auto_ensure_server_if_offline)
+        # Si el proceso se escondió y murió, la pastilla no puede quedarse en «activo».
+        self._timer_servidor = QTimer(self)
+        self._timer_servidor.setInterval(15000)
+        self._timer_servidor.timeout.connect(self._auto_ensure_server_if_offline)
+        self._timer_servidor.start()
 
     def _setup_ui(self):
         main_lay = QVBoxLayout(self)
@@ -300,11 +305,23 @@ class PerfilPantalla(QDialog):
 
         # ── Barra Superior (Subtítulo y Botón Cerrar) ──────────────────────────
         top_bar = QHBoxLayout()
-        sub = QLabel("✦  LANZADOR MAESTRO AUTÓNOMO DE ENTORNO  ✦")
+        try:
+            from src.central_red_global.master_presence import es_pc_maestra_local
+
+            es_maestra = es_pc_maestra_local()
+        except Exception:
+            es_maestra = True
+        rotulo = (
+            "LANZADOR MAESTRO AUTÓNOMO DE ENTORNO"
+            if es_maestra
+            else "LANZADOR ESCLAVA — ESPEJO DE LA TIENDA"
+        )
+        sub = QLabel(f"✦  {rotulo}  ✦")
         sub.setAlignment(Qt.AlignLeft)
+        color_rotulo = "#D97706" if es_maestra else "#1D4ED8"
         sub.setStyleSheet(f"""
             font-size: 9px; font-weight: 800;
-            color: #D97706; background: transparent; border: none;
+            color: {color_rotulo}; background: transparent; border: none;
             font-family: 'Segoe UI', sans-serif;
         """)
         top_bar.addWidget(sub)

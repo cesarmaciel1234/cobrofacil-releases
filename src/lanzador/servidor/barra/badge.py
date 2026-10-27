@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt6.QtWidgets import QLabel, QMessageBox
+from PyQt6.QtWidgets import QLabel
 
 
 def crear_badge(parent, on_click):
@@ -27,12 +27,20 @@ def pintar_badge(lbl: QLabel) -> None:
     online = is_store_server_online()
     pid = get_store_server_pid()
     if not es_pc_maestra_local():
-        lbl.setText("Rol: ESCLAVA")
+        from src.utils.candados import is_store_server_running
+
+        vivo = is_store_server_running()
+        lbl.setText("Espejo: activo" if vivo else "Espejo: apagado")
         lbl.setStyleSheet(
             "font-size: 10px; font-weight: 800; color: #1E3A8A; background: #DBEAFE; "
             "border: 1px solid #93C5FD; border-radius: 8px; padding: 4px 10px;"
+            if vivo
+            else "font-size: 10px; font-weight: 800; color: #9A3412; background: #FFEDD5; "
+            "border: 1px solid #FDBA74; border-radius: 8px; padding: 4px 10px;"
         )
-        lbl.setToolTip("Esta PC ya sabe su puesto: se conecta a la maestra. No levanta MariaDB.")
+        lbl.setToolTip(
+            "Esta PC es esclava. El servidor mantiene el espejo y no abre MariaDB."
+        )
         return
     if online:
         lbl.setText("Servidor: ONLINE" + (f" · {pid}" if pid else ""))
@@ -58,23 +66,18 @@ def al_clic_badge(parent, lbl: QLabel) -> None:
     from src.utils.candados import focus_existing_store_server
 
     if not es_pc_maestra_local():
-        QMessageBox.information(
-            parent,
-            "Esclava",
-            "Esta PC ya tiene puesto de ESCLAVA.\n"
-            "El servidor vive en la maestra. Acá no se levanta MariaDB.",
-        )
+        from src.utils.candados import is_store_server_running
+
+        if is_store_server_running():
+            focus_existing_store_server()
+        else:
+            end_apply_guard()
+            lbl.setText("Espejo: arrancando…")
+            ensure_store_server_process(timeout_sec=40.0)
+        pintar_badge(lbl)
         return
     if is_store_server_online():
-        if not focus_existing_store_server():
-            QMessageBox.information(
-                parent,
-                "Servidor",
-                "El servidor ya está encendido (PID en la pastilla verde).\n\n"
-                "No aparece junto a WhatsApp: está en una ventana propia "
-                "o en la bandeja, abajo a la derecha junto al reloj.\n\n"
-                "Doble clic en el icono de la bandeja para mostrarlo.",
-            )
+        focus_existing_store_server()
     else:
         end_apply_guard()
         lbl.setText("Servidor: arrancando…")

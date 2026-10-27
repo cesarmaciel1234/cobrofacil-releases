@@ -154,6 +154,14 @@ def armar(desde, hasta):
             except Exception:
                 continue
 
+        firmados_db = set()
+        try:
+            from src.motor_cobros_digitales.veredicto.conciliar import tickets_firmados
+
+            firmados_db = tickets_firmados(desde, hasta)
+        except Exception:
+            pass
+
         for venta in ventas:
             try:
                 if venta.get("clase") != "digital":
@@ -164,13 +172,15 @@ def armar(desde, hasta):
                 vistos.add(nro)
                 medio = _medio(venta.get("metodo") or "QR")
                 manual = nro in f9
+                firmado = nro in firmados_db
+                estado = "F9 MANUAL" if manual else ("FIRMADO" if firmado else "SIN FIRMAR")
                 filas.append(_fila(
                     fecha=venta.get("fecha") or "",
                     f9=manual,
                     nombre=f"Venta {medio}" + (" · F9" if manual else ""),
                     monto=float(venta.get("monto") or 0),
                     monto_ticket=float(venta.get("monto") or 0),
-                    estado="F9 MANUAL" if manual else "SIN FIRMAR",
+                    estado=estado,
                     ticket_venta=nro,
                     op_type="ticket",
                 ))

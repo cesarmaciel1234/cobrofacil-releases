@@ -210,14 +210,15 @@ class Paso5Terminal(QWidget):
         self._orig_title = title
 
     def refresh_status_bar(self):
-        import socket, uuid
-        from src.utils.paths import get_base_path
-        base_path = get_base_path().lower()
-        db_path = self.controller.get_db_path()
+        import uuid
 
-        # Determinar si la base de datos es local (Maestra) o remota (Cliente)
-        is_local = base_path in db_path or not db_path or db_path == "punpro.db"
-        self.lbl_estado.setText("Maestra" if is_local else "Cliente")
+        # El puesto sale de la config. Sin red la esclava usa punpro.db y sigue siendo esclava.
+        try:
+            from src.central_red_global.master_presence import es_pc_maestra_local
+
+            self.lbl_estado.setText("Maestra" if es_pc_maestra_local() else "Esclava")
+        except Exception:
+            self.lbl_estado.setText("Esclava")
 
         # Generar código de instalación único a partir de la dirección MAC
         mac_str = f"{uuid.getnode():012X}"

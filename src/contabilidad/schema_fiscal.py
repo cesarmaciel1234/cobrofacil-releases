@@ -38,10 +38,22 @@ class TipoAsiento(Enum):
 
 
 class Moneda(Enum):
-    """Monedas soportadas"""
+    """Monedas del asiento. El código sale de la config de la tienda."""
     ARS = "ARS"
     USD = "USD"
     EUR = "EUR"
+    MXN = "MXN"
+    CLP = "CLP"
+    COP = "COP"
+    PEN = "PEN"
+    GTQ = "GTQ"
+    HNL = "HNL"
+    BOB = "BOB"
+    BRL = "BRL"
+    UYU = "UYU"
+    PYG = "PYG"
+    JPY = "JPY"
+    GBP = "GBP"
 
 
 class EstadoAsiento(Enum):

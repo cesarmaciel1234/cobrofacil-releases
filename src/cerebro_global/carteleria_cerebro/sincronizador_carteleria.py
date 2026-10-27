@@ -26,6 +26,8 @@ class SincronizadorCarteleria:
         self.running = False
         self._thread = None
         self._fail_streak = 0
+        self._firma = None
+        self._aviso_pendiente = False
 
     def start(self):
         if not self.running:
@@ -43,6 +45,16 @@ class SincronizadorCarteleria:
         while self.running:
             time.sleep(self.intervalo)
             self.sincronizar_ahora()
+
+    def _avisar_red(self) -> None:
+        try:
+            from src.central_red_global.sync_tienda.aviso_tv.avisar import repartir_desde_maestra
+
+            repartir_desde_maestra()
+            self._aviso_pendiente = False
+        except Exception as aviso:
+            self._aviso_pendiente = True
+            logger.warning("reparto  la grilla quedo y el aviso no salio: %s", aviso)
 
     def sincronizar_ahora(self):
         try:
@@ -114,6 +126,12 @@ class SincronizadorCarteleria:
                     regla_texto
                 ))
 
+            firma = tuple(nuevos_datos)
+            if firma == self._firma:
+                if self._aviso_pendiente:
+                    self._avisar_red()
+                return
+
             # Una sola transacción: no dejar la tabla vacía si falla el INSERT
             conn = db_manager.get_connection()
             try:
@@ -140,7 +158,9 @@ class SincronizadorCarteleria:
                 except Exception:
                     pass
 
+            self._firma = firma
             self._fail_streak = 0
+            self._avisar_red()
 
         except Exception as e:
             self._fail_streak += 1

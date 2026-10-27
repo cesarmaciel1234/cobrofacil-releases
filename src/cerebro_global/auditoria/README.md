@@ -41,8 +41,11 @@ La caché dura 15 segundos (`_cache_duration`). `invalidar_cache` la vacía. `_v
 5. `aplicar_ajuste_stock`. Si falla, no registra el log.
 6. `registrar_ajuste`.
 7. Invalida esta caché y llama `invalidar_catalogo` del motor global. Si eso falla, el ajuste igual ya quedó.
+8. `MotorPlanilla.avisar()`. No reescribe la planilla desde acá. Si el aviso falla, el `SET` de stock ya quedó.
 
-`aplicar_lote_ajustes` llama `solicitar_ajuste_stock` por cada ítem. El motivo, si no viene, es «Ajuste de auditoría. Diferencia: …». Junta los errores con el nombre del producto. Al final invalida la caché otra vez. Devuelve `(True, [])` solo si no hubo errores.
+La consola del servidor no recibe un aviso aparte. Lee `auditorias_inventario` en solo lectura.
+
+`aplicar_lote_ajustes` llama `solicitar_ajuste_stock` por cada ítem con `avisar=False`. El motivo, si no viene, es «Ajuste de auditoría. Diferencia: …». Junta los errores con el nombre del producto. Al final invalida la caché otra vez y, si algún ítem sí escribió stock, avisa una sola vez. Devuelve `(True, [])` solo si no hubo errores. Un «Sin cambio» no avisa.
 
 `obtener_historial_ajustes` delega en el motor. `verificar_integridad` dice si hay catálogo, base, caché válida, cuántos productos hay y la hora de la última carga. No repara nada.
 

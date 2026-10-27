@@ -1,4 +1,4 @@
-﻿from typing import List, Tuple, Any, Optional
+from typing import List, Tuple, Any, Optional
 import sqlite3
 import os
 import sys
@@ -57,6 +57,10 @@ class ConnectionMixin:
         self.db_engine_type = "sqlite"
         self.mariadb_engine = None
         self._create_tables()
+        try:
+            self._migrate_db()
+        except Exception as mig_e:
+            logger.warning(f"Migrate SQLite offline: {mig_e}")
 
     def _init_db(self):
         # 1. Intentar cargar db_path desde config.json para MODO SERVIDOR RED

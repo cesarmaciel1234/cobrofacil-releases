@@ -20,11 +20,35 @@ class MotorRed:
 
     def obtener_estado_red(self):
         db_manager = _db_manager()
+        is_master = getattr(db_manager, "is_master", True)
+        is_forced_offline = getattr(db_manager, "_forced_local_offline", False)
+        host = config.get("db_host", "")
+        if not host and hasattr(db_manager, "_host_tienda"):
+            try:
+                host = db_manager._host_tienda()
+            except Exception:
+                host = ""
+
+        maestra_online = False
+        if not is_master and host:
+            try:
+                maestra_online = db_manager._puerto_maestra_vivo(host)
+            except Exception:
+                maestra_online = False
+
+        from src.base_de_datos.offline_sync import offline_sync_manager
+        resumen_pend = offline_sync_manager.obtener_resumen_completo_pendientes()
+        pendientes = resumen_pend.get("ventas", 0)
+
         return {
-            "is_master": getattr(db_manager, "is_master", True),
+            "is_master": is_master,
+            "is_forced_offline": is_forced_offline,
+            "maestra_online": maestra_online,
+            "ventas_pendientes": pendientes,
+            "resumen_pendientes": resumen_pend,
             "caja_id": config.get("caja_id", 1),
             "db_engine": getattr(db_manager, "db_engine_type", "sqlite"),
-            "db_host": config.get("db_host", "") or "localhost",
+            "db_host": host or "localhost",
             "descubrimiento_udp_puerto": 37020,
         }
 

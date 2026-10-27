@@ -12,8 +12,9 @@ _LOCK_DIR = os.path.join(get_base_path(), "locks")
 MASTER_LOCK_PATH = os.path.join(_LOCK_DIR, "lanzador_maestro.lock")
 STORE_SERVER_LOCK_PATH = os.path.join(_LOCK_DIR, "servidor_tienda.lock")
 STORE_SERVER_SPAWN_PATH = os.path.join(_LOCK_DIR, "servidor_tienda.spawning")
+STORE_SERVER_SHOW_PATH = os.path.join(_LOCK_DIR, "servidor_tienda.mostrar")
 MASTER_WINDOW_TITLE = "CobroFacil PRO 2026 — Lanzador Maestro Central"
-STORE_SERVER_WINDOW_TITLE = "CobroFacil PRO — Servidor de Tienda"
+STORE_SERVER_WINDOW_TITLE = "Servidor Cobro Fácil"
 
 
 def _lock_path(role: str) -> str:
@@ -176,6 +177,30 @@ def release_master_launcher_lock():
         pass
 
 
+_NOMBRES_SERVIDOR = ("cobrofacil_pos.exe", "python.exe", "pythonw.exe")
+
+
+def _pid_es_proceso_servidor(pid: int) -> bool | None:
+    """True si es python/PunPro y la línea trae --server.
+
+    None si no se pudo leer. La consola de Windows (conhost) también
+    lleva --server en su línea y no es este proceso.
+    """
+    try:
+        import psutil
+
+        proc = psutil.Process(pid)
+        name = (proc.name() or "").lower()
+        if name not in _NOMBRES_SERVIDOR:
+            return False
+        cmd = proc.cmdline() or []
+    except Exception:
+        return None
+    if not cmd:
+        return None
+    return any(str(c).strip().lower() == "--server" for c in cmd)
+
+
 def get_store_server_pid() -> int | None:
     """PID del proceso Servidor de Tienda, o None si no hay instancia viva."""
     if not os.path.exists(STORE_SERVER_LOCK_PATH):
@@ -186,6 +211,13 @@ def get_store_server_pid() -> int | None:
     except Exception:
         return None
     if pid > 0 and _pid_alive(pid) and _is_our_process(pid):
+        es_servidor = _pid_es_proceso_servidor(pid)
+        if es_servidor is False:
+            try:
+                os.remove(STORE_SERVER_LOCK_PATH)
+            except OSError:
+                pass
+            return None
         return pid
     try:
         os.remove(STORE_SERVER_LOCK_PATH)
@@ -212,6 +244,9 @@ def list_store_server_pids() -> list[int]:
             try:
                 pid = int(proc.info.get("pid") or 0)
                 if pid <= 0 or pid == me:
+                    continue
+                name = (proc.info.get("name") or "").lower()
+                if name not in _NOMBRES_SERVIDOR:
                     continue
                 cmd = proc.info.get("cmdline") or []
                 if any(str(c).strip().lower() == "--server" for c in cmd):
@@ -259,9 +294,14 @@ def acquire_store_server_lock() -> bool:
     try:
         fd = os.open(STORE_SERVER_LOCK_PATH, flags)
     except FileExistsError:
-        # Lock huérfano: si el PID murió, limpiar y reintentar una vez
-        if get_store_server_pid() is not None:
+        # El lanzador puede haber escrito este PID mientras el proceso arrancaba.
+        otro = get_store_server_pid()
+        if otro is not None and otro != os.getpid():
             return False
+        if otro == os.getpid():
+            atexit.register(release_store_server_lock)
+            return True
+        # Lock huérfano: si el PID murió, limpiar y reintentar una vez
         try:
             if os.path.exists(STORE_SERVER_LOCK_PATH):
                 os.remove(STORE_SERVER_LOCK_PATH)
@@ -304,8 +344,18 @@ def try_acquire_store_server_spawn_guard(ttl_sec: float = 60.0) -> bool:
     os.makedirs(_LOCK_DIR, exist_ok=True)
     try:
         if os.path.exists(STORE_SERVER_SPAWN_PATH):
-            age = time.time() - os.path.getmtime(STORE_SERVER_SPAWN_PATH)
-            if age < ttl_sec:
+            try:
+                with open(STORE_SERVER_SPAWN_PATH, "r", encoding="utf-8") as f:
+                    holder = int(f.read().strip() or "0")
+            except Exception:
+                holder = 0
+            if holder > 0 and not _pid_alive(holder):
+                try:
+                    os.remove(STORE_SERVER_SPAWN_PATH)
+                except OSError:
+                    return False
+            age = time.time() - os.path.getmtime(STORE_SERVER_SPAWN_PATH) if os.path.exists(STORE_SERVER_SPAWN_PATH) else ttl_sec
+            if os.path.exists(STORE_SERVER_SPAWN_PATH) and age < ttl_sec:
                 return False
             try:
                 os.remove(STORE_SERVER_SPAWN_PATH)
@@ -379,19 +429,93 @@ def focus_pid_window(pid: int) -> bool:
         return False
 
 
-def focus_existing_store_server() -> bool:
-    if sys.platform == "win32":
+def pedir_mostrar_servidor() -> None:
+    """Aviso para que el propio servidor se muestre. Mostrarlo desde afuera lo deja blanco."""
+    try:
+        os.makedirs(_LOCK_DIR, exist_ok=True)
+        fd = os.open(STORE_SERVER_SHOW_PATH, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        os.close(fd)
+    except OSError:
+        pass
+
+
+def _hwnd_servidor():
+    import ctypes
+
+    user32 = ctypes.windll.user32
+    hwnd = user32.FindWindowW(None, STORE_SERVER_WINDOW_TITLE)
+    if hwnd:
+        return hwnd
+    pid = get_store_server_pid()
+    if not pid:
+        return None
+    return _ventana_del_servidor(int(pid))
+
+
+def _ventana_del_servidor(pid: int):
+    """La ventana del proceso, aunque esté oculta en la bandeja."""
+    import ctypes
+    from ctypes import wintypes
+
+    user32 = ctypes.windll.user32
+    ruido = {"_q_titlebar", "qtrayiconmessagewindow", "msctfime ui", "default ime"}
+    halladas = []
+
+    @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def _recorrer(hwnd, _lparam):
+        dueño = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(dueño))
+        if int(dueño.value) != pid:
+            return True
+        largo = user32.GetWindowTextLengthW(hwnd)
+        if largo <= 0:
+            return True
+        buf = ctypes.create_unicode_buffer(largo + 1)
+        user32.GetWindowTextW(hwnd, buf, largo + 1)
+        titulo = buf.value or ""
+        if titulo.strip().lower() in ruido:
+            return True
+        halladas.append(hwnd)
+        return True
+
+    user32.EnumWindows(_recorrer, 0)
+    if not halladas:
+        return None
+
+    def _area(hwnd):
         try:
-            import ctypes
-            user32 = ctypes.windll.user32
-            hwnd = user32.FindWindowW(None, STORE_SERVER_WINDOW_TITLE)
-            if hwnd:
-                user32.ShowWindow(hwnd, 9)
-                user32.SetForegroundWindow(hwnd)
-                return True
+            rc = wintypes.RECT()
+            user32.GetWindowRect(hwnd, ctypes.byref(rc))
+            return max(0, rc.right - rc.left) * max(0, rc.bottom - rc.top)
         except Exception:
-            pass
-    return False
+            return 0
+
+    return max(halladas, key=_area)
+
+
+def focus_existing_store_server() -> bool:
+    """Pide que el servidor se dibuje solo y después lo trae delante."""
+    if sys.platform != "win32":
+        return False
+    try:
+        import ctypes
+
+        user32 = ctypes.windll.user32
+        pedir_mostrar_servidor()
+        hwnd = _hwnd_servidor()
+        if not hwnd:
+            return False
+        for _ in range(20):
+            if user32.IsWindowVisible(hwnd):
+                break
+            time.sleep(0.05)
+        if not user32.IsWindowVisible(hwnd):
+            return bool(get_store_server_pid())
+        user32.ShowWindow(hwnd, 9)
+        user32.SetForegroundWindow(hwnd)
+        return True
+    except Exception:
+        return False
 
 
 def _pid_es_perfil(pid: int, role: str) -> bool:

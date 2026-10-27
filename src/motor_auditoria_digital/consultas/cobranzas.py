@@ -46,11 +46,16 @@ def _desde_db(desde, hasta):
     if not d0:
         return None
     siguiente = datetime.strptime(d1, "%Y-%m-%d") + timedelta(days=1)
-    from src.base_de_datos.database import db_manager
+    try:
+        from src.jefe.nodo_portable.espejo import fuente
+        db = fuente()
+    except Exception:
+        from src.base_de_datos.database import db_manager
+        db = db_manager
 
     args = (f"{d0} 00:00:00", siguiente.strftime("%Y-%m-%d"))
     try:
-        filas = db_manager.execute_query(
+        filas = db.execute_query(
             "SELECT cc.id, cc.fecha, cc.monto, cc.descripcion, cc.medio_pago, c.nombre "
             "FROM cuenta_corriente cc LEFT JOIN clientes c ON c.id = cc.cliente_id "
             "WHERE cc.tipo = 'ABONO' AND cc.fecha >= ? AND cc.fecha < ? "
@@ -58,7 +63,7 @@ def _desde_db(desde, hasta):
             args,
         ) or []
     except Exception:
-        filas = db_manager.execute_query(
+        filas = db.execute_query(
             "SELECT cc.id, cc.fecha, cc.monto, cc.descripcion, c.nombre "
             "FROM cuenta_corriente cc LEFT JOIN clientes c ON c.id = cc.cliente_id "
             "WHERE cc.tipo = 'ABONO' AND cc.fecha >= ? AND cc.fecha < ? "

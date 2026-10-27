@@ -13,6 +13,13 @@ from src.logger import logger
 NEXUS_UDP_PORT = 37021
 HEARTBEAT_INTERVAL = 10
 PEER_TIMEOUT = 45
+_TOKEN_CIERRE = "nexus_admin_5544"
+
+
+def token_red() -> str:
+    """El de `config.json` `lan_api_token`. Si está vacío, el de cierre que ya usaba Nexus."""
+    guardado = str(config.get("lan_api_token") or "").strip()
+    return guardado or _TOKEN_CIERRE
 
 _engine = None
 

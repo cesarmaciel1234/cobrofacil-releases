@@ -1,7 +1,8 @@
-"""Despertar el proceso `--server` si esta PC es maestra."""
+"""Despertar el proceso `--server`. Maestra o esclava: el oficio lo lee el proceso."""
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import time
@@ -24,15 +25,6 @@ def ensure_store_server_process(timeout_sec: float = 45.0) -> bool:
 
         if is_apply_guard_active():
             logger.info("ensure_store_server: update en curso — no se lanza Servidor.")
-            return False
-    except Exception:
-        pass
-
-    try:
-        from src.central_red_global.master_presence import es_pc_maestra_local
-
-        if not es_pc_maestra_local():
-            logger.info("ensure_store_server: PC esclava — no se lanza Servidor de Tienda.")
             return False
     except Exception:
         pass
@@ -64,19 +56,27 @@ def ensure_store_server_process(timeout_sec: float = 45.0) -> bool:
         try:
             flags = 0
             if sys.platform == "win32":
-                flags = getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
+                # Sin DETACHED_PROCESS: ese flag deja el proceso fuera del escritorio
+                # y la bandeja no aparece. CREATE_NO_WINDOW oculta la consola.
+                flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
                 flags |= getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
             from src.utils.paths import get_base_path
 
-            subprocess.Popen(
-                cmd,
-                cwd=get_base_path(),
-                creationflags=flags,
-                close_fds=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-            )
+            base = get_base_path()
+            os.makedirs(os.path.join(base, "logs"), exist_ok=True)
+            fondo = open(os.path.join(base, "logs", "servidor_fondo.log"), "a", encoding="utf-8")
+            try:
+                subprocess.Popen(
+                    cmd,
+                    cwd=base,
+                    creationflags=flags,
+                    close_fds=True,
+                    stdout=fondo,
+                    stderr=fondo,
+                    stdin=subprocess.DEVNULL,
+                )
+            finally:
+                fondo.close()
         except Exception as e:
             logger.error(f"No se pudo lanzar Servidor de Tienda: {e}")
             return False

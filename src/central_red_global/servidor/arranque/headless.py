@@ -24,8 +24,27 @@ def run_store_server_headless() -> int:
         logger.info("Ya hay un Servidor de Tienda activo.")
         return 0
     try:
-        encender_servicios_tienda(arrancar_mysqld=True)
-        logger.info("Servidor de Tienda HEADLESS en ejecución.")
+        from src.central_red_global.servidor.oficio.agente import cumplir_esclava, vigila_mariadb
+
+        try:
+            from src.central_red_global.servidor.pareja.promover import ceder_si_hay_otra
+
+            ceder_si_hay_otra()
+        except Exception as e_ceder:
+            logger.warning("No se pudo ceder la titularidad: %s", e_ceder)
+
+        if vigila_mariadb():
+            encender_servicios_tienda(arrancar_mysqld=True)
+            try:
+                from src.central_red_global.servidor.pareja.repartir import prender
+
+                prender()
+            except Exception as e_re:
+                logger.warning("No se pudo repartir el espejo: %s", e_re)
+            logger.info("Servidor de Tienda HEADLESS en ejecución.")
+        else:
+            cumplir_esclava()
+            logger.info("Servidor esclava HEADLESS: espejo de backups.")
         try:
             import signal
 

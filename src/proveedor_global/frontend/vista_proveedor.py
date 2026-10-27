@@ -10,7 +10,23 @@ from src.contabilidad.shared_globals import (
     btn_primary, btn_ghost, PAL
 )
 
+from src.proveedor_global.backend.ficha import FichaProveedor, etiqueta, nombre_de_eleccion
 from src.proveedor_global.backend.motor_proveedor import MotorProveedor
+from src.proveedor_global.frontend.panel_pedidos_automaticos import (
+    DialogoAltaProveedor, PanelPedidosAutomaticos,
+)
+from src.proveedor_global.backend.moneda import leer, texto
+from src.proveedor_global.frontend.panel_recepcion_rapida import PanelRecepcionRapida, plata
+from src.utils.letra import vestir_id, vestir_nombre, vestir_numero
+
+
+def _dia(fecha) -> str:
+    texto = str(fecha or "").strip()
+    base = texto[:10]
+    partes = base.split("-")
+    if len(partes) == 3 and len(partes[0]) == 4:
+        return f"{partes[2]}/{partes[1]}/{partes[0]}"
+    return base or texto
 
 class VistaProveedor(QWidget):
     """
@@ -21,6 +37,12 @@ class VistaProveedor(QWidget):
         super().__init__(parent)
         self.perfil = perfil.lower()
         self._db_jefe = db_jefe
+        try:
+            from src.motor_inventario.planilla.orquestador import MotorPlanilla
+
+            MotorPlanilla.arrancar()
+        except Exception:
+            pass
 
         # Layout principal
         lay = QVBoxLayout(self)
@@ -60,7 +82,52 @@ class VistaProveedor(QWidget):
 
     def _build_ui(self):
         lay = self.lay_container
-        lay.addWidget(section_title("🚚  Proveedores — Frigorífico y Carga Rápida"))
+        lay.addWidget(section_title("🚚  Proveedores y Abastecimiento"))
+
+        # ── SELECTOR DE PESTAÑAS PRINCIPAL ────────────────────────────────────
+        tab_box = QHBoxLayout()
+        tab_box.setSpacing(10)
+
+        self.btn_tab_pedidos = QPushButton("📦 1. Pedidos Faltantes")
+        self.btn_tab_pedidos.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_tab_pedidos.setFixedHeight(38)
+
+        self.btn_tab_recepcion = QPushButton("⚡ 2. Recepción Rápida (Escáner)")
+        self.btn_tab_recepcion.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_tab_recepcion.setFixedHeight(38)
+
+        self.btn_tab_carga = QPushButton("🥩 3. Romaneo y Frigorífico")
+        self.btn_tab_carga.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_tab_carga.setFixedHeight(38)
+
+        self.btn_tab_pedidos.clicked.connect(lambda: self._switch_tab(0))
+        self.btn_tab_recepcion.clicked.connect(lambda: self._switch_tab(1))
+        self.btn_tab_carga.clicked.connect(lambda: self._switch_tab(2))
+
+        tab_box.addWidget(self.btn_tab_pedidos)
+        tab_box.addWidget(self.btn_tab_recepcion)
+        tab_box.addWidget(self.btn_tab_carga)
+        tab_box.addStretch()
+        lay.addLayout(tab_box)
+
+        # ── CONTENEDOR MULTI-PESTAÑA ──────────────────────────────────────────
+        self.stack = QStackedWidget()
+
+        # Pestaña 1: Motor Autónomo de Pedidos
+        self.panel_pedidos = PanelPedidosAutomaticos(self)
+        self.stack.addWidget(self.panel_pedidos)
+
+        # Pestaña 2: Recepción Rápida por Escáner
+        self.panel_recepcion = PanelRecepcionRapida(self, perfil=self.perfil)
+        self.panel_recepcion.compra_guardada.connect(self.cargar_datos)
+        self.stack.addWidget(self.panel_recepcion)
+
+        # Pestaña 3: Carga de Compras / Romaneo Tradicional
+        self.widget_carga = QWidget()
+        lay_carga = QVBoxLayout(self.widget_carga)
+        lay_carga.setContentsMargins(0, 0, 0, 0)
+        lay_carga.setSpacing(16)
+
         self._lbl_estado_red = QLabel("")
         self._lbl_estado_red.setWordWrap(True)
         self._lbl_estado_red.setStyleSheet(
@@ -69,7 +136,7 @@ class VistaProveedor(QWidget):
             "font-weight: 700; }}"
         )
         self._lbl_estado_red.hide()
-        lay.addWidget(self._lbl_estado_red)
+        lay_carga.addWidget(self._lbl_estado_red)
 
         main_h = QHBoxLayout()
         main_h.setSpacing(20)
@@ -104,13 +171,20 @@ class VistaProveedor(QWidget):
         self._prov_nombre.setEditable(True)
         self._prov_nombre.setPlaceholderText("Ej: Frigorífico Rioplatense")
         self._prov_nombre.setStyleSheet(f"QComboBox {{ background: white; border: 1px solid {PAL['border']}; padding: 8px; border-radius: 6px; color: {PAL['text']}; font-size: 13px; }}")
-        fl.addWidget(self._prov_nombre, 1, 3)
-
-        # Cargar proveedores históricos (si hay base de datos cargada)
-        provs = MotorProveedor.get_proveedores_unicos(self.perfil, self._db_jefe)
-        if provs:
-            self._prov_nombre.addItems(provs)
-            self._prov_nombre.setCurrentText("")
+        caja_prov = QHBoxLayout()
+        caja_prov.setSpacing(8)
+        caja_prov.addWidget(self._prov_nombre, 1)
+        self._btn_alta_prov = QPushButton("＋ Id")
+        self._btn_alta_prov.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_alta_prov.setFixedWidth(64)
+        self._btn_alta_prov.setStyleSheet(
+            "QPushButton { background: #EEF2FF; color: #4338CA; border: 1px solid #C7D2FE; "
+            "border-radius: 6px; padding: 8px; font-weight: 700; }"
+        )
+        self._btn_alta_prov.clicked.connect(self._alta_proveedor)
+        caja_prov.addWidget(self._btn_alta_prov)
+        fl.addLayout(caja_prov, 1, 3)
+        self._cargar_combo_proveedores()
 
         lbl_tropa = QLabel("Tropa/Lote:")
         lbl_tropa.setStyleSheet(f"QLabel {{ color: {PAL['text']}; font-weight: bold; }}")
@@ -129,7 +203,7 @@ class VistaProveedor(QWidget):
         lbl_precio = QLabel("Precio Unit.:")
         lbl_precio.setStyleSheet(f"QLabel {{ color: {PAL['text']}; font-weight: bold; }}")
         fl.addWidget(lbl_precio, 3, 0)
-        self._prov_precio = input_field("$ Precio x Kg/Caja")
+        self._prov_precio = input_field("Precio x Kg/Caja")
         self._prov_precio.setStyleSheet(f"QLineEdit {{ background: #FEF3C7; border: 2px solid #F59E0B; padding: 10px; border-radius: 8px; color: #92400E; font-weight: bold; font-size: 14px; }}")
         fl.addWidget(self._prov_precio, 3, 1)
 
@@ -165,7 +239,7 @@ class VistaProveedor(QWidget):
         lbl_t1.setStyleSheet("QLabel { color: #94A3B8; font-weight: 900; font-size: 12px; letter-spacing: 2px; }")
         t_lay.addWidget(lbl_t1)
 
-        self._lbl_romaneo_totals = QLabel("0 items - $0.00")
+        self._lbl_romaneo_totals = QLabel(f"0 items - {texto(0)}")
         self._lbl_romaneo_totals.setStyleSheet("QLabel { color: #38BDF8; font-weight: 900; font-size: 22px; }")
         t_lay.addWidget(self._lbl_romaneo_totals)
 
@@ -213,15 +287,65 @@ class VistaProveedor(QWidget):
         right_panel.addStretch()
 
         main_h.addLayout(right_panel, stretch=4)
-        lay.addLayout(main_h)
+        lay_carga.addLayout(main_h)
+        lay_carga.addStretch()
 
-        lbl_hist = section_title("📋  Histórico de Compras a Proveedores")
-        lay.addWidget(lbl_hist)
-        self._tbl_prov = build_table(["ID", "Proveedor", "Monto Total", "Pagado", "Restante", "Vencimiento", "Estado", "Acción"])
+        self.stack.addWidget(self.widget_carga)
+        lay.addWidget(self.stack)
+
+        # ── SECCIÓN INFERIOR COMPARTIDA: HISTÓRICO Y CUENTAS CORRIENTES ───────
+        self.history_container = QWidget()
+        h_box = QVBoxLayout(self.history_container)
+        h_box.setContentsMargins(0, 0, 0, 0)
+        h_box.setSpacing(10)
+
+        lbl_hist = section_title("📋  Histórico de Compras a Proveedores (Cuentas Corrientes)")
+        h_box.addWidget(lbl_hist)
+
+        self._tbl_prov = build_table(["ID", "Proveedor", "Monto Total", "Pagado", "Restante", "Fecha", "Estado", "Acción"])
         self._tbl_prov.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents)
-        self._tbl_prov.setFixedHeight(200)
-        lay.addWidget(self._tbl_prov)
-        lay.addStretch()
+        self._tbl_prov.setFixedHeight(210)
+        h_box.addWidget(self._tbl_prov)
+
+        lay.addWidget(self.history_container)
+
+        self._switch_tab(0)
+
+    def _switch_tab(self, idx):
+        self.stack.setCurrentIndex(idx)
+        
+        btn_activo_style = """
+            QPushButton {
+                background: #2563EB; color: #FFFFFF; border: none;
+                border-radius: 8px; padding: 0 16px; font-weight: 800; font-size: 13px;
+            }
+        """
+        btn_inactivo_style = """
+            QPushButton {
+                background: #FFFFFF; color: #475569; border: 1.5px solid #CBD5E1;
+                border-radius: 8px; padding: 0 16px; font-weight: 700; font-size: 13px;
+            }
+            QPushButton:hover { background: #F8FAFC; border-color: #94A3B8; }
+        """
+
+        self.btn_tab_pedidos.setStyleSheet(btn_activo_style if idx == 0 else btn_inactivo_style)
+        self.btn_tab_recepcion.setStyleSheet(btn_activo_style if idx == 1 else btn_inactivo_style)
+        self.btn_tab_carga.setStyleSheet(btn_activo_style if idx == 2 else btn_inactivo_style)
+
+        if idx == 0:
+            self.history_container.hide()
+            if hasattr(self, 'panel_pedidos'):
+                self.panel_pedidos.refrescar_datos()
+        elif idx == 1:
+            self.history_container.show()
+            self.cargar_datos()
+            if hasattr(self, 'panel_recepcion'):
+                self.panel_recepcion.recargar_proveedores()
+                self.panel_recepcion.enfocar_escaner()
+        elif idx == 2:
+            self.history_container.show()
+            self._cargar_combo_proveedores()
+            self.cargar_datos()
 
     def _on_prov_type_change(self, text):
         if text == "Pollo":
@@ -259,7 +383,7 @@ class VistaProveedor(QWidget):
             merc_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._romaneo_table.setItem(row, 1, merc_item)
 
-            pu_item = QTableWidgetItem(f"${precio_float:,.2f}")
+            pu_item = QTableWidgetItem(texto(precio_float))
             pu_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._romaneo_table.setItem(row, 2, pu_item)
 
@@ -267,7 +391,7 @@ class VistaProveedor(QWidget):
             peso_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._romaneo_table.setItem(row, 3, peso_item)
 
-            sub_item = QTableWidgetItem(f"${subtotal:,.2f}")
+            sub_item = QTableWidgetItem(texto(subtotal))
             sub_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._romaneo_table.setItem(row, 4, sub_item)
 
@@ -307,10 +431,9 @@ class VistaProveedor(QWidget):
         monto_total = 0.0
         items_count = self._romaneo_table.rowCount()
         for i in range(items_count):
-            sub_str = self._romaneo_table.item(i, 4).text().replace('$','').replace(',','')
-            monto_total += float(sub_str)
+            monto_total += leer(self._romaneo_table.item(i, 4).text())
 
-        self._lbl_romaneo_totals.setText(f"{items_count} items - ${monto_total:,.2f}")
+        self._lbl_romaneo_totals.setText(f"{items_count} items - {texto(monto_total)}")
         self._prov_amount.setText(f"{monto_total:.2f}")
 
     def cargar_datos(self):
@@ -350,17 +473,25 @@ class VistaProveedor(QWidget):
             vals = [
                 str(r["id"]),
                 r["proveedor"],
-                f"$ {r['monto']:,.2f}",
-                f"$ {r['pagado']:,.2f}",
-                f"$ {r['restante']:,.2f}",
-                r["fecha"],
+                plata(r["monto"]),
+                plata(r["pagado"]),
+                plata(r["restante"]),
+                _dia(r["fecha"]),
                 "✅ Pagado" if r["estado"] not in ("Pendiente", "pending") else "⏳ Pendiente"
             ]
 
             for c, v in enumerate(vals):
                 it = QTableWidgetItem(v)
+                if c == 0:
+                    vestir_id(it)
+                elif c == 1:
+                    vestir_nombre(it)
+                elif c in (2, 3, 4):
+                    vestir_numero(it)
                 if c == 6 and "Pendiente" in v:
                     it.setForeground(QColor(PAL["danger"]))
+                elif c == 6 and "Pagado" in v:
+                    it.setForeground(QColor("#10B981"))
                 self._tbl_prov.setItem(row, c, it)
 
             w = QWidget()
@@ -385,7 +516,7 @@ class VistaProveedor(QWidget):
         lay.addSpacing(20)
 
         if restante > 0 and not getattr(self, "_solo_lectura", False):
-            btn_pagar = btn_primary(f"💳 Pagar Deuda (Falta ${restante:,.2f})")
+            btn_pagar = btn_primary(f"💳 Pagar Deuda (Falta {texto(restante)})")
             btn_pagar.clicked.connect(lambda: [dlg.accept(), self._pagar_proveedor(debt_id, restante)])
             lay.addWidget(btn_pagar)
 
@@ -403,14 +534,42 @@ class VistaProveedor(QWidget):
         if restante <= 0:
             QMessageBox.information(self, "Aviso", "Esta cuenta ya está saldada.")
             return
-        amt, ok = QInputDialog.getDouble(self, "Pagar a Proveedor", f"Monto a pagar (Restante: ${restante:,.2f}):", min=0, max=restante, decimals=2)
+        amt, ok = QInputDialog.getDouble(self, "Pagar a Proveedor", f"Monto a pagar (Restante: {texto(restante)}):", min=0, max=restante, decimals=2)
         if ok and amt > 0:
             try:
                 MotorProveedor.pagar_proveedor(debt_id, amt, self.perfil, self._db_jefe)
-                QMessageBox.information(self, "Éxito", f"Pago de ${amt:,.2f} registrado.")
+                QMessageBox.information(self, "Éxito", f"Pago de {texto(amt)} registrado.")
                 self.cargar_datos()
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"No se pudo registrar el pago: {e}")
+
+    def _cargar_combo_proveedores(self, conservar=True):
+        texto = self._prov_nombre.currentText() if conservar else ""
+        self._prov_nombre.blockSignals(True)
+        self._prov_nombre.clear()
+        self._prov_nombre.addItem("Sin Proveedor (Proveedor General)", {"nombre": "Proveedor General", "codigo": "P00000"})
+        vistos = {"PROVEEDOR GENERAL"}
+        for ficha in FichaProveedor.listar():
+            self._prov_nombre.addItem(etiqueta(ficha), ficha)
+            vistos.add(ficha["nombre"].strip().upper())
+        for nombre in MotorProveedor.get_proveedores_unicos(self.perfil, self._db_jefe) or []:
+            limpio = str(nombre or "").strip()
+            if limpio and limpio.upper() not in vistos:
+                self._prov_nombre.addItem(limpio)
+                vistos.add(limpio.upper())
+        if texto:
+            self._prov_nombre.setCurrentText(texto)
+        self._prov_nombre.blockSignals(False)
+
+    def _alta_proveedor(self):
+        alta = DialogoAltaProveedor(self)
+        if alta.exec() != QDialog.DialogCode.Accepted or not alta.ficha:
+            return
+        self._cargar_combo_proveedores(conservar=False)
+        marca = etiqueta(alta.ficha)
+        idx = self._prov_nombre.findText(marca)
+        if idx >= 0:
+            self._prov_nombre.setCurrentIndex(idx)
 
     def _save_proveedor(self):
         if getattr(self, "_solo_lectura", False):
@@ -426,14 +585,16 @@ class VistaProveedor(QWidget):
         try:
             amount = float(amount_text)
             date = self._prov_date.date().toString("yyyy-MM-dd")
-            prov_name = self._prov_nombre.currentText().strip() or "Proveedor General"
+            prov_name = nombre_de_eleccion(
+                self._prov_nombre.currentText(), self._prov_nombre.currentData()
+            )
             tropa = self._prov_tropa.text() or "-"
 
             grupos = {}
             for i in range(self._romaneo_table.rowCount()):
                 nro = self._romaneo_table.item(i, 0).text()
                 merc = self._romaneo_table.item(i, 1).text()
-                precio = float(self._romaneo_table.item(i, 2).text().replace('$','').replace(',',''))
+                precio = leer(self._romaneo_table.item(i, 2).text())
                 peso = float(self._romaneo_table.item(i, 3).text())
                 key = (merc, precio)
                 if key not in grupos: grupos[key] = []
@@ -452,6 +613,7 @@ class VistaProveedor(QWidget):
                 self._prov_amount.clear()
                 self._romaneo_input.clear()
                 self._prov_tropa.clear()
+                self._cargar_combo_proveedores(conservar=False)
                 if hasattr(self, '_prov_nombre'):
                     self._prov_nombre.setCurrentText("")
                 self._update_prov_calc()

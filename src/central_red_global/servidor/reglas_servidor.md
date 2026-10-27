@@ -7,8 +7,12 @@ servidor/
   arranque/
     proceso.py        el lanzador despierta el proceso
     servicios.py      MariaDB + LAN + presencia
-    bandeja.py        ventana (primera captura)
+    bandeja.py        muestra la ventana y la bandeja
     headless.py       Linux sin pantalla
+  ventana/
+    lienzo.py         lo que se lee: Espejo o Servidor de Tienda
+  oficio/
+    agente.py         maestra enciende la tienda; esclava refresca el espejo
   autostart/
     os_boot.py        interruptor Win/Auto
     windows.py
@@ -22,7 +26,7 @@ servidor/
 
 Compat: `store_server.py` y `motor_red.py` solo reexportan.
 
-El puesto vive en `config.json`. Maestra: despierta servidor. Esclava: no.
+El puesto vive en `config.json`. El proceso `--server` arranca en los dos. El oficio está en `oficio/`: maestra enciende MariaDB y la red; esclava solo refresca el espejo. El cajero no entra a esa carpeta.
 
 Cualquier perfil en PC esclava lee y graba en la maestra. SQLite local solo si `3306` no responde; al volver la tienda, se reengancha. Ver `src/base_de_datos/reglas.md`.
 

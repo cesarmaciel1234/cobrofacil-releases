@@ -20,17 +20,25 @@ Al mostrarse, `showEvent` aplica el perfil, el tema claro u oscuro y a los 80 ms
 - cajas si es CJ, CAJA o CAJAS
 - si no, unidades
 
-Escanear (`_on_codigo_escaneado`) busca la fila por id, código exacto o un tramo del código (si hay dos códigos juntos). Un código de barras de 8 dígitos o más abre el diálogo a los 180 ms, aunque el lector no mande Enter. Cualquier unidad abre `DialogoConteo`. El cajero no entra.
+Escanear (`_on_codigo_escaneado`) soporta multiplicador (`10*779001` o `5*Alitas` vía `BarcodeParser`) y busca la fila por id, código exacto o parte del código. Un código de barras de 8 dígitos o más abre el diálogo a los 180 ms sin necesidad de Enter. Abre `DialogoConteo` precargando la cantidad escaneada. El cajero no entra.
 
-Doble clic o editar también abre `DialogoConteo`. El teclado escribe el número con coma. `valor()` lo pasa a float. Guardar llama `_aplicar_conteo_fila`: SET de stock ya, pinta la fila en verde y deja el buscador listo para el próximo escaneo. No hay que esperar al botón verde.
+Doble clic o Enter sobre una fila también abre `DialogoConteo`. El teclado escribe el número con coma. `valor()` lo pasa a float. Guardar con Enter (teclado físico o numpad) llama `_aplicar_conteo_fila`: SET de stock en la BD de forma inmediata, pinta la fila en verde, recalcula diferencias y KPIs en vivo, y devuelve el foco instantáneamente al buscador para disparo continuo con pistola láser.
 
-Al cambiar el conteo, `_on_item_changed` calcula diferencia = conteo − stock del sistema. Azul si sobra, rojo si falta. `_actualizar_kpis` cuenta SKU, contados, faltante y sobrante.
+Al cambiar el conteo, `_on_item_changed` calcula diferencia = conteo − stock del sistema. Azul si sobra, rojo si falta. `_actualizar_kpis` cuenta SKU, contados, faltante y sobrante con tipografía de góndola peso 900.
 
 El filtro de texto busca en id, código, nombre y departamento. La vista puede ser todos, solo contados o solo con diferencia.
 
-Historial: `_ver_historial_ajustes` abre un diálogo y `_cargar_historial_producto` pide al conector las filas de ese producto. Muestra fecha, usuario, stock anterior, stock nuevo, diferencia y motivo.
-
-Aplicar: `_recoger_ajustes` junta solo las filas con conteo y con diferencia distinta de cero. `_aplicar_ajustes` pide confirmación y llama `aplicar_lote_ajustes` con el nombre del usuario de `config.current_user`. Después recarga la tabla desde la base.
+Barra inferior empresarial limpia y automática:
+- Se eliminaron los botones redundantes `EDITAR CONTEO` y `CONFIRMAR Y APLICAR AJUSTES` (cada conteo es 100% automático y en vivo al dar Enter).
+- `📋 HISTORIAL DE AJUSTES`: abre el diálogo avanzado `DialogoHistorialAuditoria` (`dialogo_historial.py`). Cuenta con:
+  - Botón nativo de maximizar `[🗖]` al lado de la `[X]` en la barra de título de Windows y botón manual `🗖 PANTALLA COMPLETA` / `🗗 RESTAURAR`.
+  - Filtro por Producto (selector desplegable con conteo de movimientos por artículo).
+  - Buscador en tiempo real por texto libre (producto, PLU/ID, código de barras, usuario o motivo).
+  - Filtro por Responsable / Usuario y por sentido de diferencia (Faltantes, Sobrantes, Exactos).
+  - 4 tarjetas KPI en vivo (Registros, Productos, Faltante acumulado y Sobrante acumulado).
+  - Exportación directa del historial filtrado a CSV (`UTF-8-SIG`).
+- `📊 EXPORTAR AUDITORÍA (CSV / Excel)`: descarga el reporte completo en formato CSV UTF-8-SIG compatible con Excel con estado de cada ítem (Exacto, Faltante, Sobrante, Pendiente).
+- Badge de estado: `⚡ Auditoría Automática en Vivo · Cada conteo se guarda e impacta el stock al instante`.
 
 ## Fondo
 
@@ -43,8 +51,10 @@ El conector es `obtener_conector_auditoria()` en `motor_conector_auditoria.py`. 
 1. `MotorAuditoria.aplicar_ajuste_stock` hace un solo `UPDATE productos SET stock = ? WHERE id = ?`. Es un SET al conteo, no una resta de venta.
 2. Después `registrar_ajuste` hace un INSERT en `auditorias_inventario`. Ese insert no vuelve a tocar `productos.stock`.
 3. Se invalida la caché del conector y la del catálogo global.
+4. `MotorPlanilla.avisar()` despierta el hilo de la planilla. Este conector no llama a `actualizar()` y no escribe `planilla_reposicion`. Si la planilla no contesta, el stock contado queda.
+5. La consola del servidor lee `auditorias_inventario` en `punpro.db` y en la réplica. No escribe un archivo aparte y no mete el conteo en la cola de cambios.
 
-`aplicar_lote_ajustes` repite eso producto por producto. No llama `procesar_auditoria` después del UPDATE: eso volvería a hacer el SET y podría pisar una venta del medio.
+`aplicar_lote_ajustes` repite el `SET` producto por producto y avisa una sola vez al final. No llama `procesar_auditoria` después del UPDATE: eso volvería a hacer el SET y podría pisar una venta del medio.
 
 `procesar_auditoria` existe en el motor y también hace SET más log. No usarlo encima de `solicitar_ajuste_stock`.
 

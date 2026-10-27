@@ -15,6 +15,12 @@ class InventarioService:
         return motor.obtener_productos(buscar, depto, limite, offset)
 
     @staticmethod
+    def contar_productos(buscar="", depto="") -> tuple[int, int]:
+        """Cuenta total de productos y cantidad sin stock de forma ultra-rápida vía SQL (total, sin_stock)."""
+        motor = MotorCatalogo()
+        return motor.contar_productos(buscar, depto)
+
+    @staticmethod
     def buscar_producto_por_id(producto_id) -> dict | None:
         """Busca y devuelve un producto usando su ID."""
         motor = MotorCatalogo()

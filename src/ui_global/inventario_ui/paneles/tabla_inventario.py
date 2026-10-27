@@ -3,6 +3,8 @@ from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView, QMessag
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
 from src.utils.theme_manager import theme_manager
+from src.utils.letra import fuente_id, fuente_nombre, fuente_numero
+from src.config import config
 
 
 def _n(v, d=0.0):
@@ -89,7 +91,7 @@ class TablaInventario(QTableWidget):
         self.cargar_siguiente_pagina()
 
     def cargar_siguiente_pagina(self):
-        """Carga la siguiente tanda de 50 productos en la grilla."""
+        """Carga la siguiente tanda de 50 productos en la grilla sin congelar la interfaz."""
         if self._loading_page:
             return
         self._loading_page = True
@@ -100,9 +102,26 @@ class TablaInventario(QTableWidget):
             inicio = self.loaded_count
             fin = min(inicio + 50, len(self.all_rows))
 
+            self.setUpdatesEnabled(False)
             self.blockSignals(True)
             self.setRowCount(fin)
-            fuente_negrita = QFont("Segoe UI", 11, QFont.Weight.Bold)
+
+            default_iva = float(config.get("tax_percentage", 21.0))
+            f_id = fuente_id(10)
+            f_nombre = fuente_nombre(11)
+            f_numero = fuente_numero(11)
+
+            color_normal_text = QColor("#0F172A")
+            color_oferta = QColor(theme_manager.get_color("oferta"))
+            color_mayoreo = QColor("#7C3AED")
+            color_agotado = QColor(theme_manager.get_color("stock_agotado"))
+            color_bg_agotado = QColor(theme_manager.get_color("bg_stock_agotado"))
+            color_bajo = QColor(theme_manager.get_color("stock_bajo"))
+            color_bg_bajo = QColor(theme_manager.get_color("bg_stock_bajo"))
+            color_saludable = QColor(theme_manager.get_color("stock_saludable"))
+            color_tipo = QColor(theme_manager.get_color("tipo_producto"))
+            color_bg_impar = QColor(theme_manager.get_color("bg_fila_impar"))
+
             idx_stock = len(self.HEADERS) - 1
             idx_tipo = len(self.HEADERS) - 2
 
@@ -115,8 +134,7 @@ class TablaInventario(QTableWidget):
 
                 depto_iva = r.get("depto_iva")
                 if depto_iva is None:
-                    from src.config import config
-                    depto_iva = float(config.get("tax_percentage", 21.0))
+                    depto_iva = default_iva
                 else:
                     depto_iva = float(depto_iva)
 
@@ -127,8 +145,9 @@ class TablaInventario(QTableWidget):
                 base_hex = self._depto_color_map[dep_key]
 
                 if i % 2 == 1 and base_hex == "#FFFFFF":
-                    base_hex = theme_manager.get_color("bg_fila_impar")
-                row_bg = QColor(base_hex)
+                    row_bg = color_bg_impar
+                else:
+                    row_bg = QColor(base_hex)
 
                 chk = QTableWidgetItem()
                 chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
@@ -142,58 +161,55 @@ class TablaInventario(QTableWidget):
                 cant_may = _n(r.get("cant_mayoreo"))
                 precio_may = _n(r.get("precio_mayoreo"))
                 vals = [
-                    (str(r.get("id")), Qt.AlignmentFlag.AlignRight),
-                    (r.get("nombre") or "", Qt.AlignmentFlag.AlignLeft),
-                    (dep, Qt.AlignmentFlag.AlignLeft),
-                    (f"{depto_iva:.0f}%", Qt.AlignmentFlag.AlignCenter),
-                    (_fmt_plata(r.get("costo")), Qt.AlignmentFlag.AlignRight),
-                    (_fmt_plata(r.get("precio")), Qt.AlignmentFlag.AlignRight),
-                    (_fmt_num(cant_of) if cant_of > 0 else "—", Qt.AlignmentFlag.AlignCenter),
-                    (_fmt_plata(precio_of) if precio_of > 0 else "—", Qt.AlignmentFlag.AlignRight),
-                    (_fmt_plata(relampago) if relampago > 0 else "—", Qt.AlignmentFlag.AlignRight),
-                    (_fmt_num(cant_may) if cant_may > 0 else "—", Qt.AlignmentFlag.AlignCenter),
-                    (_fmt_plata(precio_may) if precio_may > 0 else "—", Qt.AlignmentFlag.AlignRight),
-                    (_fmt_num(r.get("stock_minimo")), Qt.AlignmentFlag.AlignCenter),
-                    (_fmt_num(r.get("stock_maximo")), Qt.AlignmentFlag.AlignCenter),
-                    (tipo, Qt.AlignmentFlag.AlignCenter),
-                    (_fmt_num(stock), Qt.AlignmentFlag.AlignRight),
+                    (str(r.get("id")), Qt.AlignmentFlag.AlignRight, f_id),
+                    (r.get("nombre") or "", Qt.AlignmentFlag.AlignLeft, f_nombre),
+                    (dep, Qt.AlignmentFlag.AlignLeft, f_nombre),
+                    (f"{depto_iva:.0f}%", Qt.AlignmentFlag.AlignCenter, f_numero),
+                    (_fmt_plata(r.get("costo")), Qt.AlignmentFlag.AlignRight, f_numero),
+                    (_fmt_plata(r.get("precio")), Qt.AlignmentFlag.AlignRight, f_numero),
+                    (_fmt_num(cant_of) if cant_of > 0 else "—", Qt.AlignmentFlag.AlignCenter, f_numero),
+                    (_fmt_plata(precio_of) if precio_of > 0 else "—", Qt.AlignmentFlag.AlignRight, f_numero),
+                    (_fmt_plata(relampago) if relampago > 0 else "—", Qt.AlignmentFlag.AlignRight, f_numero),
+                    (_fmt_num(cant_may) if cant_may > 0 else "—", Qt.AlignmentFlag.AlignCenter, f_numero),
+                    (_fmt_plata(precio_may) if precio_may > 0 else "—", Qt.AlignmentFlag.AlignRight, f_numero),
+                    (_fmt_num(r.get("stock_minimo")), Qt.AlignmentFlag.AlignCenter, f_numero),
+                    (_fmt_num(r.get("stock_maximo")), Qt.AlignmentFlag.AlignCenter, f_numero),
+                    (tipo, Qt.AlignmentFlag.AlignCenter, f_nombre),
+                    (_fmt_num(stock), Qt.AlignmentFlag.AlignRight, f_numero),
                 ]
 
-                for j, (v, align) in enumerate(vals, 1):
+                for j, (v, align, font_col) in enumerate(vals, 1):
                     it = QTableWidgetItem(v)
+                    it.setFont(font_col)
                     it.setTextAlignment(Qt.AlignmentFlag.AlignVCenter | align)
                     it.setBackground(row_bg)
-                    it.setForeground(QColor("#0F172A"))
+                    it.setForeground(color_normal_text)
 
                     if j in (7, 8, 9) and v != "—":
-                        it.setForeground(QColor(theme_manager.get_color("oferta")))
-                        it.setFont(fuente_negrita)
+                        it.setForeground(color_oferta)
 
                     if j in (10, 11) and v != "—":
-                        it.setForeground(QColor("#7C3AED"))
-                        it.setFont(fuente_negrita)
+                        it.setForeground(color_mayoreo)
 
                     if j == idx_stock:
                         if stock <= 0:
-                            it.setForeground(QColor(theme_manager.get_color("stock_agotado")))
-                            it.setBackground(QColor(theme_manager.get_color("bg_stock_agotado")))
-                            it.setFont(fuente_negrita)
+                            it.setForeground(color_agotado)
+                            it.setBackground(color_bg_agotado)
                         elif stock < 5:
-                            it.setForeground(QColor(theme_manager.get_color("stock_bajo")))
-                            it.setBackground(QColor(theme_manager.get_color("bg_stock_bajo")))
-                            it.setFont(fuente_negrita)
+                            it.setForeground(color_bajo)
+                            it.setBackground(color_bg_bajo)
                         else:
-                            it.setForeground(QColor(theme_manager.get_color("stock_saludable")))
+                            it.setForeground(color_saludable)
 
                     if j == idx_tipo:
-                        it.setForeground(QColor(theme_manager.get_color("tipo_producto")))
-                        it.setFont(fuente_negrita)
+                        it.setForeground(color_tipo)
 
                     self.setItem(i, j, it)
 
             self.loaded_count = fin
         finally:
             self.blockSignals(False)
+            self.setUpdatesEnabled(True)
             self._loading_page = False
 
     def _al_hacer_scroll(self, value):

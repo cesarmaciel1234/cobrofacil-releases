@@ -60,45 +60,14 @@ class Quien:
 
     @classmethod
     def _maestra_anunciada(cls) -> str:
-        """La maestra responde PUNPRO_DISCOVER con la IP que tiene en este momento."""
-        import json as _json
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        """La que contesta en la red, con la IP que tiene ahora. La reserva indica a la titular."""
         try:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            sock.settimeout(0.4)
-            sock.sendto(b"PUNPRO_DISCOVER", ("255.255.255.255", 37020))
-            fin = time.time() + 1.6
-            while time.time() < fin:
-                sock.settimeout(max(0.2, fin - time.time()))
-                try:
-                    data, addr = sock.recvfrom(2048)
-                except socket.timeout:
-                    break
-                try:
-                    info = _json.loads(data.decode("utf-8", errors="ignore"))
-                except Exception:
-                    continue
-                if not isinstance(info, dict):
-                    continue
-                if str(info.get("mode") or "").upper() != "MAESTRA":
-                    continue
-                if str(info.get("esclava") or "").lower() in ("1", "true", "si"):
-                    continue
-                motor = str(info.get("db_engine") or "").lower()
-                if motor and motor != "mariadb":
-                    continue
-                ip = str(info.get("server_ip") or addr[0] or "").strip()
-                if ip:
-                    return ip
+            from src.central_red_global.servidor.pareja.buscar import elegir
+
+            return elegir()
         except Exception as e:
             logger.info(f"Respaldo: no se anunció maestra ({e})")
-        finally:
-            try:
-                sock.close()
-            except Exception:
-                pass
-        return ""
+            return ""
 
     @staticmethod
     def _host_local(host: str) -> bool:

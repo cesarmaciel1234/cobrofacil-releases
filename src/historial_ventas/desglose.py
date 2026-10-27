@@ -18,12 +18,25 @@ def desglose(ids_venta: list) -> list:
     db = _get_db()
 
     ph = ",".join("?" for _ in ids_venta)
+    params = tuple(str(i) for i in ids_venta)
+    con_unidad = (
+        "SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_monto, "
+        "MAX(p.unidad) as unidad, MAX(p.es_pesable) as es_pesable, MAX(p.departamento) as departamento "
+        "FROM detalles_ventas dv LEFT JOIN productos p ON dv.id_producto = p.id "
+        f"WHERE dv.id_venta IN ({ph}) GROUP BY dv.nombre_producto ORDER BY total_cant DESC"
+    )
+    try:
+        filas = db.execute_query(con_unidad, params)
+        if filas:
+            return filas
+    except Exception:
+        filas = None
     return (
         db.execute_query(
-            f"SELECT nombre_producto, SUM(cantidad) as total_cant, SUM(subtotal) as total_monto "
+            "SELECT nombre_producto, SUM(cantidad) as total_cant, SUM(subtotal) as total_monto "
             f"FROM detalles_ventas WHERE id_venta IN ({ph}) "
-            f"GROUP BY nombre_producto ORDER BY total_cant DESC",
-            tuple(str(i) for i in ids_venta),
+            "GROUP BY nombre_producto ORDER BY total_cant DESC",
+            params,
         )
         or []
     )

@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 from src.motor_cobros_digitales.libro import tabla
+from src.motor_auditoria_digital.empleado import snapshot
 
 DIGITALES = ("Transferencia", "Tarjeta", "QR")
 CLASES = ("verdadero", "otro_medio", "devuelto", "pendiente", "sin_cobro", "cancelada")

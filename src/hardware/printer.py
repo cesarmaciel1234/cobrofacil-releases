@@ -348,7 +348,7 @@ class PosPrinter:
         factura_electronica_data = None
         if config.get("factura_electronica_mode", False) and should_use_afip:
             try:
-                from src.services.facturacion_service import FacturacionService
+                from src.afip.facturacion_service import FacturacionService
                 venta_data = {
                     'id': num_venta,
                     'total': total,
@@ -725,6 +725,20 @@ class PosPrinter:
                 f"La impresora no es un modelo fiscal certificado.\n"
                 f"Para facturación legal, configure una Hasar 320F o Epson TM-H6000."
             )
+
+    def imprimir_volumen_articulos(self, filas, periodo, tickets) -> bool:
+        """Desglose del día o del mes, al ancho configurado (58 mm o 80 mm)."""
+        from src.historial_ventas.ticket_volumen import armar_ticket_volumen
+
+        config._load_config()
+        raw = armar_ticket_volumen(filas, periodo, tickets)
+        return self._send_raw_data(bytes(raw), printer_name_override=_impresora_cajero_activo())
+
+    def imprimir_etiquetas_gondola(self, raw_bytes: bytes, printer_name_override=None) -> bool:
+        """Envía lote de etiquetas de góndola térmicas con corte a la impresora configurada."""
+        p_name = printer_name_override or _impresora_cajero_activo()
+        logger.info(f"Enviando {len(raw_bytes)} bytes de etiquetas de góndola a {p_name or 'Simulación'}...")
+        return self._send_raw_data(raw_bytes, printer_name_override=p_name)
 
 
 printer_manager = PosPrinter()

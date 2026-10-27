@@ -17,7 +17,7 @@
 - `crear_snapshot_pre_restore`: guarda `pre_restore_FECHA.sql` antes de pisar. Si el volcado falla y el host es esta PC, deja el zip físico. Si no, `None` y el restaurar sigue con aviso.
 - `_exportar_delta_hoy` / `_reinyectar_delta_hoy`: ventas, detalle y movimientos de hoy. Sirven para restaurar un día anterior sin perder lo cobrado hoy. Si no se puede leer el delta, el log lo dice y no inventa filas.
 - `restaurar_ultimo_backup_valido`: elige con `_list_usable_backups`. Salta los que `_is_quarantined` marcó. `only_today` no baja a un día viejo.
-- `_aplicar_archivo_restore`: un `.zip` físico solo se descomprime en el MariaDB de esta PC. Un `.sql` va al host que se pidió; si el host viene vacío, no se aplica. Un `.zip` o `.sql` no pisa el `punpro.db` de una caja SQLite.
+- `_aplicar_archivo_restore`: un `.zip` físico solo se descomprime en el MariaDB de esta PC. Un `.sql` va al host que se pidió, en bytes y con `--default-character-set=utf8mb4`: el archivo ya está en UTF-8 y no se recodifica a cp1252 al entrar. Si el host viene vacío, no se aplica. Un `.zip` o `.sql` no pisa el `punpro.db` de una caja SQLite.
 - `restaurar_archivo_con_merge`: aplica y después reinyecta el delta de hoy.
 
 ## Qué no debe cambiar

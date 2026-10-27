@@ -559,6 +559,17 @@ class VentasRepoMixin:
                 datos_fiado["ya_vendido"] = True
                 _aplicar_fiado(cursor, datos_fiado, id_venta)
 
+            cursor.execute(
+                "SELECT COUNT(*) FROM detalles_ventas WHERE id_venta = ?",
+                (id_venta,),
+            )
+            cuenta = cursor.fetchone()
+            lineas = int((cuenta[0] if not isinstance(cuenta, dict) else next(iter(cuenta.values()), 0)) or 0)
+            if lineas != len(items or []):
+                conn.rollback()
+                logger.warning("Ticket incompleto, no se pasa a la maestra (venta %s).", id_venta)
+                return False
+
             conn.commit()
             return True
         except Exception as e:

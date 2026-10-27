@@ -14,8 +14,8 @@ def crear_interruptor(on_toggle) -> QPushButton:
     btn.setFixedHeight(26)
     btn.setCursor(Qt.PointingHandCursor)
     btn.setToolTip(
-        "Respaldo: arrancar --server al encender el PC (corte de luz / Linux sin pantalla). "
-        "El lanzador ya despierta el servidor solo si esta PC es MAESTRA."
+        "Arranca el servidor con Windows. "
+        "En maestra es la tienda. En esclava mantiene el espejo."
     )
     btn.clicked.connect(on_toggle)
     return btn

@@ -113,12 +113,25 @@ def alta(campos: dict, via: str) -> bool:
             ficha = {k: datos.get(k) for k in CAMPOS_FICHA + ("limite_credito",) if k in datos}
             guardar(fila_evento("ALTA", cliente_uid=uid, cliente_id=cid, nombre=datos.get("nombre"),
                                 detalle={"ficha": ficha, "via": via}, db=db), db)
+            if not tabla.es_tienda(db):
+                try:
+                    from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+                    offline_nutricion_manager.encolar_cliente("ALTA", sellado)
+                except Exception:
+                    pass
             return True
     cols = list(datos.keys())
-    return bool(db.execute_non_query(
+    res_insert = bool(db.execute_non_query(
         f"INSERT INTO clientes ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})",
         tuple(datos[c] for c in cols),
     ))
+    if res_insert and not tabla.es_tienda(db):
+        try:
+            from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+            offline_nutricion_manager.encolar_cliente("ALTA", datos)
+        except Exception:
+            pass
+    return res_insert
 
 
 def editar(cliente_id, cambios: dict, accion: str = "EDICION") -> bool:
@@ -143,6 +156,12 @@ def editar(cliente_id, cambios: dict, accion: str = "EDICION") -> bool:
             guardar(fila_evento(accion, cliente_uid=antes.get("uid"), cliente_id=cliente_id,
                                 nombre=cambios.get("nombre") or antes.get("nombre"),
                                 detalle={"antes": dif_antes, "despues": dif_despues}, db=db), db)
+    if ok and not tabla.es_tienda(db):
+        try:
+            from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+            offline_nutricion_manager.encolar_cliente("EDICION", {"id": cliente_id, "cambios": datos})
+        except Exception:
+            pass
     return bool(ok)
 
 

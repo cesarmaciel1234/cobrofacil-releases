@@ -12,7 +12,7 @@ class BloqueEstado(LineaDato):
         super().__init__("Estado:", parent)
         self.etiqueta_estado = self.valor
         self.etiqueta_estado.setObjectName("TerminalCabeceraEstado")
-        self.etiqueta_estado.setText("Maestra")
+        self.etiqueta_estado.setText("Esclava")
         self.etiqueta_instalacion = QLabel("")
         self.etiqueta_instalacion.setObjectName("TerminalCabeceraInstalacion")
         self.etiqueta_instalacion.hide()

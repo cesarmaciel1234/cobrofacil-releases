@@ -695,14 +695,17 @@ class Sanar:
                     logger.error(f"Restauración MariaDB: no está {mysql_exe}")
                     return False
                 flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-                with open(latest_backup, "r", encoding="utf-8") as f:
+                with open(latest_backup, "rb") as f:
                     r = subprocess.run(
                         [mysql_exe, f"--host={mariadb_host}", "--port=3306",
-                         "-u", "root", "-p1234", "punpro_db"],
-                        stdin=f, creationflags=flags, timeout=300, capture_output=True, text=True,
+                         "-u", "root", "-p1234",
+                         "--default-character-set=utf8mb4",
+                         "punpro_db"],
+                        stdin=f, creationflags=flags, timeout=300, capture_output=True,
                     )
                 if r.returncode != 0:
-                    logger.error(f"Restauración MariaDB desde SQL falló: {(r.stderr or '').strip()[:500]}")
+                    aviso = (r.stderr or b"").decode("utf-8", errors="replace").strip()
+                    logger.error(f"Restauración MariaDB desde SQL falló: {aviso[:500]}")
                     return False
                 logger.info(f"✅ Restauración MariaDB desde SQL completada en {mariadb_host}.")
                 return True

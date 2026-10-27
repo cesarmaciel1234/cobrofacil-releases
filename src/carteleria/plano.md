@@ -43,4 +43,4 @@ De dónde sale cada cosa, en el pulso (`vitrina/pulso.py`, cada 15 s, o al insta
 
 Aviso a la otra PC: `avisar_datos_nuevos` pisa `carteleria_datos.sello` en esta máquina, manda UDP `DATOS` y, si esta PC es esclava, POST `:8000/api/carteleria/datos_nuevos`. La otra PC solo pisa su sello (no reenvía). El lanzador mira el sello cada 1 s y vuelve a leer. Si el UDP no llega, el pulso de 15 s igual lee MariaDB.
 
-Maestra y esclava leen la misma base. Por eso un precio nuevo no se copia a mano: se escribe una vez y las dos teles lo levantan.
+Maestra y esclava leen la misma base mientras hay red. Por eso un precio nuevo no se copia a mano: se escribe una vez y las dos teles lo levantan. El servidor esclava, en el hilo `oficio-carteleria`, llama a `pulso_vitrina` cada minuto. Si esa vuelta no trae precios, `carteleria_cache.json` queda como estaba y la TV sigue en caché. Ese hilo no ejecuta `sincronizador_carteleria`.

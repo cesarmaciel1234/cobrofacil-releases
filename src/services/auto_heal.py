@@ -238,6 +238,23 @@ def _probe_tcp(host: str, port: int = 3306, timeout: float = 1.2) -> bool:
         return False
 
 
+def _es_fallo_de_volcado(blob: str) -> bool:
+    """Un .sql rechazado no es una caída de red. «mysqldump» contiene «mysql»."""
+    if "mysqldump" not in blob and "volcado rechazado" not in blob:
+        return False
+    conexion = (
+        "2003",
+        "2002",
+        "2013",
+        "can't connect",
+        "connection refused",
+        "lost connection",
+        "timed out",
+        "winerror",
+    )
+    return not any(marca in blob for marca in conexion)
+
+
 def _heal_mariadb(blob: str) -> Optional[HealResult]:
     """Cura conexiones MariaDB. Solo healed=True si la BD responde de verdad.
 
@@ -245,6 +262,8 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
     - Maestra local → levantar mysqld portable y verificar.
     - Si localhost falla pero hay IP maestra guardada → failover a esclava.
     """
+    if _es_fallo_de_volcado(blob):
+        return None
     keywords = (
         "mariadb",
         "mysql",
@@ -293,15 +312,6 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             pass
 
     def _try_connect(host: str, *, as_slave: bool) -> tuple[bool, str]:
-        if as_slave:
-            _persist_slave(host)
-        else:
-            try:
-                config.set("is_master", True)
-                config.set("db_host", host if not _is_loopback_host(host) else "localhost")
-                config.set("db_engine", "mariadb")
-            except Exception:
-                pass
         try:
             db_manager.reconectar_mariadb(host)
         except Exception as e:
@@ -311,6 +321,19 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
                 return False, "sin_respuesta_select"
         except Exception as e:
             return False, str(e)
+        try:
+            db_manager.execute_query("SELECT 1 FROM productos LIMIT 1")
+        except Exception:
+            return False, "sin_tienda"
+        if as_slave:
+            _persist_slave(host)
+        else:
+            try:
+                config.set("is_master", True)
+                config.set("db_host", host if not _is_loopback_host(host) else "localhost")
+                config.set("db_engine", "mariadb")
+            except Exception:
+                pass
         return True, host
 
     # 1) Rol esclavo / maestra remota conocida

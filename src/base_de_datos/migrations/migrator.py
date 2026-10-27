@@ -334,17 +334,31 @@ class MigratorMixin:
         except Exception as e:
             logger.warning(f"Error creando tabla configuracion (compat): {e}")
 
-        # Crear índice para optimizar búsqueda instantánea
-        for q_idx in [
-            "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
-            "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
-            "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
-            "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)"
-        ]:
+        # Crear índices para optimizar búsqueda instantánea (compatibilidad MariaDB y SQLite)
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            indices_opt = [
+                "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
+                "CREATE INDEX IF NOT EXISTS idx_productos_codigo ON productos (codigo(50))",
+                "CREATE INDEX IF NOT EXISTS idx_productos_departamento ON productos (departamento(100))",
+                "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
+                "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
+                "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)"
+            ]
+        else:
+            indices_opt = [
+                "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre COLLATE NOCASE)",
+                "CREATE INDEX IF NOT EXISTS idx_productos_codigo ON productos (codigo)",
+                "CREATE INDEX IF NOT EXISTS idx_productos_departamento ON productos (departamento COLLATE NOCASE)",
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_departamentos_nombre ON departamentos (nombre COLLATE NOCASE)",
+                "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
+                "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
+                "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)"
+            ]
+        for q_idx in indices_opt:
             try:
                 cursor.execute(q_idx)
-            except Exception:
-                pass
+            except Exception as ex_idx:
+                logger.debug(f"Aviso al crear índice: {ex_idx}")
 
         # Crear tablas para módulo de clientes
         try:

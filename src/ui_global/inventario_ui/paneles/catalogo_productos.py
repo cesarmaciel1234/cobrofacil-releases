@@ -12,13 +12,12 @@ from src.ui_global.inventario_ui.paneles.tabla_inventario import TablaInventario
 from src.ui_global.inventario_ui.atomos.pie_inventario import PieInventario
 
 class MotorBusquedaInventario(QThread):
-    busqueda_terminada = pyqtSignal(list, int)
+    busqueda_terminada = pyqtSignal(list, int, int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.buscar = ""
         self.depto = None
-        self._motor = None
 
     def setup(self, buscar, depto):
         self.buscar = buscar
@@ -26,13 +25,13 @@ class MotorBusquedaInventario(QThread):
 
     def run(self):
         try:
-            filas, _ = InventarioService.obtener_lista_de_productos(self.buscar, self.depto, limite=8000)
-            sin_stock = sum(1 for r in filas if (r.get('stock') or 0.0) <= 0)
-            self.busqueda_terminada.emit(filas, sin_stock)
+            total_real, sin_stock = InventarioService.contar_productos(self.buscar, self.depto)
+            filas, _ = InventarioService.obtener_lista_de_productos(self.buscar, self.depto, limite=1000)
+            self.busqueda_terminada.emit(filas, total_real, sin_stock)
         except Exception as e:
             import logging
             logging.getLogger("MotorBusquedaInventario").error(f"Error en busqueda: {e}")
-            self.busqueda_terminada.emit([], 0)
+            self.busqueda_terminada.emit([], 0, 0)
 
 class CatalogoProductos(QWidget):
     volver = pyqtSignal()
@@ -40,6 +39,7 @@ class CatalogoProductos(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.all_rows = []
+        self._restaurar_scroll_info = None
         self.user_role = SessionService.obtener_rol_usuario()
 
         self.motor_busqueda = MotorBusquedaInventario(self)
@@ -187,9 +187,16 @@ class CatalogoProductos(QWidget):
             import logging
             logging.getLogger("CatalogoProductos").error(f"Error al cargar departamentos: {e}")
 
-    def cargar_datos(self):
+    def cargar_datos(self, mantener_scroll=False):
         buscar = self.filtros.obtener_texto_buscar()
         depto = self.filtros.obtener_departamento_seleccionado()
+
+        if mantener_scroll:
+            bar = self.tabla.verticalScrollBar()
+            self._restaurar_scroll_info = (bar.value() if bar else 0, self.tabla.loaded_count)
+        else:
+            self._restaurar_scroll_info = None
+
         if self.motor_busqueda.isRunning():
             self._busqueda_pendiente = (buscar, depto)
             return
@@ -198,7 +205,7 @@ class CatalogoProductos(QWidget):
         self.motor_busqueda.setup(buscar, depto)
         self.motor_busqueda.start()
 
-    def _on_busqueda_terminada(self, filas, sin_stock):
+    def _on_busqueda_terminada(self, filas, total_real, sin_stock):
         pend = self._busqueda_pendiente
         self._busqueda_pendiente = None
         if pend:
@@ -207,8 +214,24 @@ class CatalogoProductos(QWidget):
             return
         self.all_rows = filas
         self.tabla.set_datos(filas)
-        extra = " (máx. 8000)" if len(filas) >= 8000 else ""
-        self.pie.actualizar_totales(len(filas), sin_stock)
+
+        if self._restaurar_scroll_info:
+            scroll_val, target_count = self._restaurar_scroll_info
+            self._restaurar_scroll_info = None
+            if target_count > 50:
+                self.tabla.setUpdatesEnabled(False)
+                while (
+                    self.tabla.loaded_count < target_count
+                    and self.tabla.loaded_count < len(self.tabla.all_rows)
+                ):
+                    self.tabla.cargar_siguiente_pagina()
+                self.tabla.setUpdatesEnabled(True)
+            bar = self.tabla.verticalScrollBar()
+            if bar:
+                bar.setValue(scroll_val)
+
+        extra = f" (mostrando primeros {len(filas)})" if total_real > len(filas) else ""
+        self.pie.actualizar_totales(total_real, sin_stock)
         if extra:
             self.pie.lbl_total.setText(self.pie.lbl_total.text() + extra)
 

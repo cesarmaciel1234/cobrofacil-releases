@@ -35,6 +35,26 @@ def _al_udp_datos(_origen, tipo, _datos):
     pisar_sello()
 
 
+def repartir_desde_maestra(server_ip: str = "") -> None:
+    """La maestra avisa a teles y esclavas. No se pide el aviso a sí misma."""
+    from src.central_red_global.master_presence import es_pc_maestra_local
+
+    if not es_pc_maestra_local():
+        return
+    from src.central_red_global.sync_tienda.aviso_tv.sello import pisar_sello
+
+    pisar_sello()
+    try:
+        from src.central_red_global.network_engine import get_network_engine, init_network_engine
+
+        eng = get_network_engine() or init_network_engine("maestra")
+        datos = {"server_ip": server_ip} if server_ip else {}
+        eng.broadcast("DATOS", datos)
+        logger.info("reparto  datos a teles y esclavas")
+    except Exception as exc:
+        logger.warning("reparto  no salio: %s", exc)
+
+
 def avisar_datos_nuevos() -> None:
     from src.central_red_global.sync_tienda.aviso_tv.sello import pisar_sello
 

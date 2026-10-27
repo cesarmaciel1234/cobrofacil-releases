@@ -1018,6 +1018,12 @@ def apply_pending_update_on_startup(ui_delegate=None) -> bool:
         _purge_cara_tv_vieja(base)
         _save_pending({})
         end_apply_guard()
+        try:
+            from src.central_red_global.servidor.oficio.agente import rearmar_arranque
+
+            rearmar_arranque()
+        except Exception:
+            pass
 
         if logger:
             logger.info("Actualización silenciosa aplicada correctamente. Reiniciando proceso...")

@@ -14,7 +14,11 @@ def _cmdline_es_servidor(pid: int) -> bool:
     try:
         import psutil
 
-        cmd = psutil.Process(pid).cmdline() or []
+        proc = psutil.Process(pid)
+        name = (proc.name() or "").lower()
+        if name not in ("cobrofacil_pos.exe", "python.exe", "pythonw.exe"):
+            return False
+        cmd = proc.cmdline() or []
         return any(str(c).strip().lower() == "--server" for c in cmd)
     except Exception:
         return False

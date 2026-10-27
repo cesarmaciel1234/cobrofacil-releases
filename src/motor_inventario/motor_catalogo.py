@@ -11,6 +11,10 @@ class MotorCatalogo:
         # Devuelve (filas_dict, tiene_mas)
         return buscador_productos.buscar_productos_en_db(buscar, depto, limite, offset)
 
+    def contar_productos(self, buscar="", depto=""):
+        # Devuelve (total_productos, sin_stock) ultra-rapido
+        return buscador_productos.contar_productos_en_db(buscar, depto)
+
     def obtener_producto_por_id(self, id_producto):
         return buscador_productos.buscar_producto_por_id(id_producto)
 
@@ -22,6 +26,12 @@ class MotorCatalogo:
 
     def obtener_total_sin_stock(self):
         return productos_db.contar_productos_sin_stock()
+
+    def productos_con_alarma_reposicion(self):
+        """Lo que hay que reponer, según la regla del inventario."""
+        from src.motor_inventario.alarma.consulta import productos_con_alarma_reposicion
+
+        return productos_con_alarma_reposicion()
 
     def borrar_producto(self, _id):
         return productos_db.eliminar_producto_de_db(_id)

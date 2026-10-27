@@ -9,7 +9,7 @@ Piezas de UI reutilizables del inventario: filtros, diálogos y paneles de depto
 | Archivo | Clase | Rol |
 |---------|--------|-----|
 | `filtros_inventario.py` | `FiltrosInventario` | Buscar, departamento, check Urgencia → señales `filtros_cambiados` / `urgencia_toggled` |
-| `dialogo_producto.py` | `DialogoProducto` | Alta/edición de un producto (precio, costo, stock, mayoreo, etc.) |
+| `dialogo_producto.py` | `DialogoProducto` | Alta/edición de un producto (precio, costo, stock, mayoreo, etc.). Navegación con TAB ordenada y guardado directo con ENTER desde cualquier campo. |
 | `panel_departamentos.py` | `PanelDepartamentos` | ABM departamentos |
 | `panel_categorias.py` | `PanelCategorias` | ABM categorías |
 | `dialogo_galeria_iconos.py` | `DialogoGaleriaIconos` / `DialogoCargarPng` | Iconos PNG de productos |

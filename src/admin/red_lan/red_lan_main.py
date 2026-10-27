@@ -107,17 +107,6 @@ class Admin6RedLan(QWidget):
     # TARJETA ESTADO
     # ──────────────────────────────────────────────────────────────────────────
     def _build_card_estado(self) -> QFrame:
-        motor = MotorRed()
-        estado = motor.obtener_estado_red()
-
-        is_master      = estado["is_master"]
-        caja_id        = estado["caja_id"]
-        db_engine      = estado["db_engine"]
-        db_host        = estado["db_host"]
-        modo           = "PC MAESTRA (servidor)" if is_master else "PC ESCLAVA (terminal LAN)"
-        color_modo     = "#065F46" if is_master else "#1E3A8A"
-        bg_modo        = "#D1FAE5" if is_master else "#DBEAFE"
-
         card = QFrame()
         card.setStyleSheet(
             "QFrame { background: white; border: 1px solid #E2E8F0; border-radius: 12px; }"
@@ -131,27 +120,56 @@ class Admin6RedLan(QWidget):
         lbl_modo_titulo = QLabel("Modo actual:")
         lbl_modo_titulo.setStyleSheet("font-size: 15px; font-weight: bold; color: #374151; border: none;")
 
-        self.lbl_modo_badge = QLabel(f"  {modo}  ")
-        self.lbl_modo_badge.setStyleSheet(
-            f"font-size: 14px; font-weight: bold; color: {color_modo}; "
-            f"background: {bg_modo}; border-radius: 8px; padding: 4px 12px; border: none;"
-        )
+        self.lbl_modo_badge = QLabel()
         row_modo.addWidget(lbl_modo_titulo)
         row_modo.addWidget(self.lbl_modo_badge)
         row_modo.addStretch()
         lay.addLayout(row_modo)
 
         # Detalles técnicos
-        for line in (
-            f"Motor de datos: {db_engine.upper()}",
-            f"Host de red: {db_host}",
-            f"ID de caja local: {caja_id}",
-            "Descubrimiento UDP: puerto 37020",
-        ):
-            lbl = QLabel(line)
-            lbl.setStyleSheet("font-size: 13px; color: #6B7280; border: none;")
-            lay.addWidget(lbl)
+        self.lbl_motor = QLabel()
+        self.lbl_motor.setStyleSheet("font-size: 13px; color: #6B7280; border: none;")
+        lay.addWidget(self.lbl_motor)
 
+        self.lbl_host = QLabel()
+        self.lbl_host.setStyleSheet("font-size: 13px; color: #6B7280; border: none;")
+        lay.addWidget(self.lbl_host)
+
+        self.lbl_caja = QLabel()
+        self.lbl_caja.setStyleSheet("font-size: 13px; color: #6B7280; border: none;")
+        lay.addWidget(self.lbl_caja)
+
+        lbl_udp = QLabel("Descubrimiento UDP: puerto 37020")
+        lbl_udp.setStyleSheet("font-size: 13px; color: #6B7280; border: none;")
+        lay.addWidget(lbl_udp)
+
+        # Sub-panel de estado offline / sincronización
+        self.box_offline = QFrame()
+        self.box_offline.setStyleSheet("background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px;")
+        box_lay = QVBoxLayout(self.box_offline)
+        box_lay.setContentsMargins(14, 12, 14, 12)
+        box_lay.setSpacing(8)
+
+        self.lbl_enlace = QLabel()
+        box_lay.addWidget(self.lbl_enlace)
+
+        self.lbl_pendientes = QLabel()
+        self.lbl_pendientes.setStyleSheet("font-size: 13px; color: #334155; font-weight: 600; border: none;")
+        box_lay.addWidget(self.lbl_pendientes)
+
+        self.btn_sync_now = QPushButton("🔄 Probar conexión con Maestra y sincronizar")
+        self.btn_sync_now.setCursor(QCursor(Qt.PointingHandCursor))
+        self.btn_sync_now.setStyleSheet(
+            "QPushButton { background: #2563EB; color: white; font-weight: bold; font-size: 12px; "
+            "padding: 8px 16px; border-radius: 6px; border: none; } "
+            "QPushButton:hover { background: #1D4ED8; }"
+        )
+        self.btn_sync_now.clicked.connect(self._forzar_sync_click)
+        box_lay.addWidget(self.btn_sync_now)
+
+        lay.addWidget(self.box_offline)
+
+        self._refrescar_estado()
         return card
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -388,19 +406,93 @@ class Admin6RedLan(QWidget):
             QMessageBox.warning(self, "Atención", msg)
         self._actualizar_botones()
 
+    def _forzar_sync_click(self):
+        from src.base_de_datos.offline_sync import offline_sync_manager
+        self.btn_sync_now.setEnabled(False)
+        self.btn_sync_now.setText("⏳ Probando conexión...")
+        QApplication.processEvents()
+        try:
+            ok, msg = offline_sync_manager.forzar_sincronizacion()
+            if ok:
+                QMessageBox.information(self, "Sincronización LAN", msg)
+            else:
+                QMessageBox.warning(self, "Modo Autónomo Offline", msg)
+        finally:
+            self.btn_sync_now.setEnabled(True)
+            self.btn_sync_now.setText("🔄 Probar conexión con Maestra y sincronizar")
+            self._refrescar_estado()
+
     def _refrescar_estado(self):
-        """Actualiza el badge de modo y los botones."""
+        """Actualiza el badge de modo, enlaces de red y los botones."""
         motor = MotorRed()
         estado = motor.obtener_estado_red()
-        is_master  = estado["is_master"]
-        modo       = "PC MAESTRA (servidor)" if is_master else "PC ESCLAVA (terminal LAN)"
-        color_modo = "#065F46" if is_master else "#1E3A8A"
-        bg_modo    = "#D1FAE5" if is_master else "#DBEAFE"
-        self.lbl_modo_badge.setText(f"  {modo}  ")
-        self.lbl_modo_badge.setStyleSheet(
-            f"font-size: 14px; font-weight: bold; color: {color_modo}; "
-            f"background: {bg_modo}; border-radius: 8px; padding: 4px 12px; border: none;"
-        )
+        is_master      = estado["is_master"]
+        caja_id        = estado["caja_id"]
+        db_engine      = estado["db_engine"]
+        db_host        = estado["db_host"]
+        is_offline     = estado.get("is_forced_offline", False)
+        maestra_ok     = estado.get("maestra_online", False)
+        pendientes     = estado.get("ventas_pendientes", 0)
+
+        if is_master:
+            modo = "PC MAESTRA (servidor central)"
+            color_modo = "#065F46"
+            bg_modo = "#D1FAE5"
+            if hasattr(self, "box_offline"):
+                self.box_offline.hide()
+        elif not maestra_ok or is_offline:
+            modo = "PC ESCLAVA (Modo Autónomo Offline)"
+            color_modo = "#C2410C"
+            bg_modo = "#FFEDD5"
+            if hasattr(self, "box_offline"):
+                self.box_offline.show()
+        else:
+            modo = f"PC ESCLAVA (en línea con Maestra {db_host})"
+            color_modo = "#1E3A8A"
+            bg_modo = "#DBEAFE"
+            if hasattr(self, "box_offline"):
+                self.box_offline.show()
+
+        if hasattr(self, "lbl_modo_badge"):
+            self.lbl_modo_badge.setText(f"  {modo}  ")
+            self.lbl_modo_badge.setStyleSheet(
+                f"font-size: 14px; font-weight: bold; color: {color_modo}; "
+                f"background: {bg_modo}; border-radius: 8px; padding: 4px 12px; border: none;"
+            )
+        if hasattr(self, "lbl_motor"):
+            self.lbl_motor.setText(f"Motor de datos activo: {db_engine.upper()}")
+        if hasattr(self, "lbl_host"):
+            self.lbl_host.setText(f"Host servidor Maestra: {db_host}")
+        if hasattr(self, "lbl_caja"):
+            self.lbl_caja.setText(f"ID de caja local: {caja_id}")
+
+        if not is_master and hasattr(self, "lbl_enlace"):
+            if maestra_ok:
+                self.lbl_enlace.setText(f"🟢 Enlace red: Conectado a la PC Maestra ({db_host})")
+                self.lbl_enlace.setStyleSheet("font-size: 13px; font-weight: bold; color: #15803D; border: none;")
+            else:
+                self.lbl_enlace.setText(f"🟠 Enlace red: La PC Maestra ({db_host}) no responde. Modo Autónomo activo.")
+                self.lbl_enlace.setStyleSheet("font-size: 13px; font-weight: bold; color: #C2410C; border: none;")
+
+            res_p = estado.get("resumen_pendientes") or {}
+            tot_p = res_p.get("total", pendientes)
+            if tot_p == 0:
+                self.lbl_pendientes.setText("✅ Todo sincronizado con la Maestra (sin pendientes)")
+                self.lbl_pendientes.setStyleSheet("font-size: 13px; color: #15803D; font-weight: 700; border: none;")
+            else:
+                detalles_txt = []
+                if res_p.get("ventas", 0):
+                    detalles_txt.append(f"{res_p['ventas']} ventas")
+                if res_p.get("productos", 0):
+                    detalles_txt.append(f"{res_p['productos']} precios/prod")
+                if res_p.get("recepciones", 0):
+                    detalles_txt.append(f"{res_p['recepciones']} recepciones")
+                if res_p.get("clientes", 0):
+                    detalles_txt.append(f"{res_p['clientes']} clientes")
+                txt_det = f" ({', '.join(detalles_txt)})" if detalles_txt else ""
+                self.lbl_pendientes.setText(f"📦 Cambios pendientes de sincronizar: {tot_p}{txt_det}")
+                self.lbl_pendientes.setStyleSheet("font-size: 13px; color: #C2410C; font-weight: 700; border: none;")
+
         self._actualizar_botones()
 
     # ──────────────────────────────────────────────────────────────────────────

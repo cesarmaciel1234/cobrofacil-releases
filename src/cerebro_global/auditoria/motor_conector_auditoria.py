@@ -125,7 +125,7 @@ class MotorConectorAuditoria:
         return None
 
     def solicitar_ajuste_stock(
-        self, producto_id: int, stock_nuevo: float, usuario: str, motivo: str = ""
+        self, producto_id: int, stock_nuevo: float, usuario: str, motivo: str = "", avisar: bool = True
     ) -> Tuple[bool, str]:
         db = self._obtener_db_manager()
         if not db:
@@ -165,28 +165,45 @@ class MotorConectorAuditoria:
             invalidar_catalogo()
         except Exception:
             pass
+        if avisar:
+            self._avisar_planilla()
         return True, "Ajuste aplicado correctamente"
+
+    def _avisar_planilla(self):
+        """El stock ya quedó. Si la planilla no contesta, el conteo no se deshace."""
+        try:
+            from src.motor_inventario.planilla.orquestador import MotorPlanilla
+
+            MotorPlanilla.avisar()
+        except Exception as e:
+            logger.warning("El stock quedó y la planilla se entera en su próximo pase: %s", e)
 
     def aplicar_lote_ajustes(self, ajustes: List[Dict], usuario: str, motivo: str = "") -> Tuple[bool, List[str]]:
         errores = []
+        escribio = False
         for ajuste in ajustes:
             exito, mensaje = self.solicitar_ajuste_stock(
                 ajuste["id"],
                 ajuste["stock_fisico"],
                 usuario,
                 motivo or f"Ajuste de auditoría. Diferencia: {ajuste.get('diferencia', 0):.2f}",
+                avisar=False,
             )
+            if exito and mensaje != "Sin cambio":
+                escribio = True
             if not exito:
                 errores.append(f"{ajuste.get('nombre', ajuste['id'])}: {mensaje}")
         self.invalidar_cache()
+        if escribio:
+            self._avisar_planilla()
         return (len(errores) == 0), errores
 
-    def obtener_historial_ajustes(self, producto_id: Optional[int] = None, codigo: Optional[str] = None) -> List[Dict]:
+    def obtener_historial_ajustes(self, producto_id: Optional[int] = None, codigo: Optional[str] = None, limite: int = 1000) -> List[Dict]:
         db = self._obtener_db_manager()
         if not db:
             return []
         from src.cerebro_global.auditoria.motor_auditoria import MotorAuditoria
-        return MotorAuditoria.obtener_historial_ajustes(db, producto_id=producto_id, codigo=codigo)
+        return MotorAuditoria.obtener_historial_ajustes(db, producto_id=producto_id, codigo=codigo, limite=limite)
 
     def verificar_integridad(self) -> Dict:
         return {

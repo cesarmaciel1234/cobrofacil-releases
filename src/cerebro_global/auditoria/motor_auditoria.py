@@ -147,22 +147,25 @@ class MotorAuditoria:
         return exito
 
     @staticmethod
-    def obtener_historial_ajustes(db_admin, producto_id=None, codigo=None, limite=200):
+    def obtener_historial_ajustes(db_admin, producto_id=None, codigo=None, limite=1000):
         if not db_admin:
             return []
         MotorAuditoria.asegurar_tabla_auditorias(db_admin)
         try:
             if producto_id is not None:
                 q = (
-                    "SELECT fecha, responsable, stock_sistema, stock_fisico, diferencia, motivo "
-                    "FROM auditorias_inventario WHERE producto_id = ? "
-                    "ORDER BY fecha DESC, id DESC LIMIT ?"
+                    "SELECT a.id, a.fecha, a.responsable, a.stock_sistema, a.stock_fisico, "
+                    "a.diferencia, a.motivo, a.nombre_producto, a.producto_id, p.codigo "
+                    "FROM auditorias_inventario a "
+                    "LEFT JOIN productos p ON p.id = a.producto_id "
+                    "WHERE a.producto_id = ? "
+                    "ORDER BY a.fecha DESC, a.id DESC LIMIT ?"
                 )
                 res = db_admin.execute_query(q, (producto_id, limite))
             elif codigo:
                 q = (
-                    "SELECT a.fecha, a.responsable, a.stock_sistema, a.stock_fisico, "
-                    "a.diferencia, a.motivo "
+                    "SELECT a.id, a.fecha, a.responsable, a.stock_sistema, a.stock_fisico, "
+                    "a.diferencia, a.motivo, a.nombre_producto, a.producto_id, p.codigo "
                     "FROM auditorias_inventario a "
                     "JOIN productos p ON p.id = a.producto_id "
                     "WHERE p.codigo = ? "
@@ -171,9 +174,11 @@ class MotorAuditoria:
                 res = db_admin.execute_query(q, (codigo, limite))
             else:
                 q = (
-                    "SELECT fecha, responsable, stock_sistema, stock_fisico, diferencia, motivo, "
-                    "nombre_producto, producto_id "
-                    "FROM auditorias_inventario ORDER BY fecha DESC, id DESC LIMIT ?"
+                    "SELECT a.id, a.fecha, a.responsable, a.stock_sistema, a.stock_fisico, "
+                    "a.diferencia, a.motivo, a.nombre_producto, a.producto_id, p.codigo "
+                    "FROM auditorias_inventario a "
+                    "LEFT JOIN productos p ON p.id = a.producto_id "
+                    "ORDER BY a.fecha DESC, a.id DESC LIMIT ?"
                 )
                 res = db_admin.execute_query(q, (limite,))
             return [dict(r) for r in (res or [])]

@@ -20,10 +20,15 @@ def _desde_db(desde, hasta, clases):
     if not d0:
         return None
     siguiente = datetime.strptime(d1, "%Y-%m-%d") + timedelta(days=1)
-    from src.base_de_datos.database import db_manager
+    try:
+        from src.jefe.nodo_portable.espejo import fuente
+        db = fuente()
+    except Exception:
+        from src.base_de_datos.database import db_manager
+        db = db_manager
     from src.motor_cobros_digitales.veredicto.medios import clase
 
-    filas = db_manager.execute_query(
+    filas = db.execute_query(
         f"""
         SELECT id, fecha, total, metodo_pago
         FROM ventas

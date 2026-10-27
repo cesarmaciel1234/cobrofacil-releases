@@ -29,14 +29,21 @@ def _identidad_db(db):
     )
 
 
+def _columna_sqlite(db, columna: str) -> bool:
+    return any(
+        (f["name"] if hasattr(f, "keys") else f[1]) == columna
+        for f in db.execute_query("PRAGMA table_info(mp_pagos)") or []
+    )
+
+
 def _tiene(db, columna: str) -> bool:
     try:
         if getattr(db, "db_engine_type", "sqlite") == "mariadb":
-            return bool(db.execute_query(f"SHOW COLUMNS FROM mp_pagos LIKE '{columna}'"))
-        return any(
-            (f.get("name") if hasattr(f, "get") else f[1]) == columna
-            for f in db.execute_query("PRAGMA table_info(mp_pagos)") or []
-        )
+            filas = db.execute_query(f"SHOW COLUMNS FROM mp_pagos LIKE '{columna}'")
+            if getattr(db, "db_engine_type", "sqlite") != "mariadb":
+                return _columna_sqlite(db, columna)
+            return bool(filas)
+        return _columna_sqlite(db, columna)
     except Exception:
         return False
 

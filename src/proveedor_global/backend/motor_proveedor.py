@@ -1,6 +1,18 @@
 import re
 
 
+def _plata(numero) -> str:
+    from src.proveedor_global.backend.moneda import texto
+
+    return texto(numero)
+
+
+def _moneda_asiento():
+    from src.proveedor_global.backend.moneda import contable
+
+    return contable()
+
+
 class _ConexionTienda:
     def __init__(self, manager, conn):
         self.manager = manager
@@ -195,6 +207,13 @@ class MotorProveedor:
             from src.base_de_datos.database import db_manager
             from src.cerebro_global.desposte.motor_rendimiento import MotorRendimiento
 
+            try:
+                from src.proveedor_global.backend.ficha import FichaProveedor
+
+                FichaProveedor.obtener_o_crear(prov_name)
+            except Exception:
+                pass
+
             conn = MotorProveedor._abrir_conexion_tienda(db_manager)
             tienda = _ConexionTienda(db_manager, conn)
 
@@ -211,7 +230,7 @@ class MotorProveedor:
                 desc += f"  ↳ Pesos: [{pesos_str}]\n"
                 desc += (
                     f"  ↳ Total Kg/Cajas: {total_kilos:.2f} | Precio Unit: "
-                    f"${precio:,.2f} | Subtotal: ${monto_grupo:,.2f}\n\n"
+                    f"{_plata(precio)} | Subtotal: {_plata(monto_grupo)}\n\n"
                 )
                 if not tienda.execute_non_query(
                     "INSERT INTO romaneos (fecha, proveedor, tropa, tipo_carne, precio_unitario, "
@@ -274,11 +293,11 @@ class MotorProveedor:
                         cuenta_pago = "2.1.01.01"  # Proveedores (Cuentas a Pagar)
                     
                     # Generar asiento de compra
-                    from src.contabilidad.schema_fiscal import AsientoContable, LineaAsiento, TipoAsiento, Moneda, EstadoAsiento
+                    from src.contabilidad.schema_fiscal import AsientoContable, LineaAsiento, TipoAsiento, EstadoAsiento
                     
                     lineas = [
                         LineaAsiento(
-                            cuenta_codigo="1.2.01.01",  # Mercaderías
+                            cuenta_codigo="1.1.03.01",  # Mercaderías
                             debe=amount,
                             descripcion=f"Compra mercadería - {prov_name}"
                         ),
@@ -294,7 +313,7 @@ class MotorProveedor:
                         tipo=TipoAsiento.COMPRA,
                         descripcion=f"Compra mercadería - {prov_name} - Tropa {tropa}",
                         lineas=lineas,
-                        moneda=Moneda.ARS,
+                        moneda=_moneda_asiento(),
                         estado=EstadoAsiento.APROBADO,
                         referencia=f"ROMANEO-{tropa}",
                         usuario=perfil

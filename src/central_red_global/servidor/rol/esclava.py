@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 
 from src.config import config
-from src.central_red_global.servidor.rol.apagar import detener_servidor_tienda_local
 from src.central_red_global.servidor.rol.constantes import SLAVE_FAIL_COOLDOWN_SEC
 from src.central_red_global.servidor.rol.ip import es_ip_de_esta_pc, normalizar_ip, probe_mariadb
 
@@ -66,7 +65,7 @@ def convertir_en_esclava(logger, ip_maestra):
             try:
                 config.set("carteleria_master_ip", ip_maestra)
                 config.set("carteleria_is_slave", True)
-                config.set("auto_start_store_server", False)
+                config.set("auto_start_store_server", True)
                 config.set("api_url", f"http://{ip_maestra}:8000")
                 config.data["preferred_master_ip"] = ip_maestra
                 config.data["is_master"] = False
@@ -74,24 +73,27 @@ def convertir_en_esclava(logger, ip_maestra):
                 config.save()
             except Exception:
                 pass
-            def _apagar_servidor_local():
+            def _retomar():
                 try:
-                    detener_servidor_tienda_local()
-                except Exception:
-                    pass
-                try:
-                    from src.central_red_global.servidor.autostart import set_os_autostart
+                    from src.central_red_global.servidor.oficio.agente import retomar_oficio
 
-                    set_os_autostart(False)
-                except Exception:
-                    pass
+                    retomar_oficio()
+                except Exception as e_of:
+                    logger.warning(f"No se pudo retomar el oficio esclava: {e_of}")
 
             try:
+                import threading
+
                 from PyQt6.QtCore import QTimer
 
-                QTimer.singleShot(500, _apagar_servidor_local)
+                QTimer.singleShot(
+                    500,
+                    lambda: threading.Thread(
+                        target=_retomar, name="retomar-oficio", daemon=True
+                    ).start(),
+                )
             except Exception:
-                _apagar_servidor_local()
+                _retomar()
             try:
                 from src.central_red_global.sync_tienda import al_conectar_esclava
 

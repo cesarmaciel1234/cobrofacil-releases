@@ -149,7 +149,11 @@ class VistaHistorial(QWidget):
         filt = QGridLayout()
         filt.setHorizontalSpacing(8)
         filt.setVerticalSpacing(8)
-        filt.addWidget(_lbl("Día"), 0, 0)
+        self.cb_alcance = QComboBox()
+        self.cb_alcance.addItem("Día", "dia")
+        self.cb_alcance.addItem("Mes", "mes")
+        self.cb_alcance.currentIndexChanged.connect(self._al_cambiar_alcance)
+        filt.addWidget(self.cb_alcance, 0, 0)
         self.fecha = QDateEdit(QDate.currentDate())
         vestir_fecha(self.fecha)
         self._pintar_dias_calendario()
@@ -291,6 +295,20 @@ class VistaHistorial(QWidget):
         self._sin_historico()
         self.refrescar()
 
+    def _al_cambiar_alcance(self):
+        self._sin_historico()
+        self.refrescar()
+
+    def _rango(self):
+        if self.chk_todo.isChecked():
+            return None, None, "Historico"
+        q = self.fecha.date()
+        if self.cb_alcance.currentData() == "mes":
+            from src.historial_ventas.ticket_volumen import periodo_mes
+
+            return periodo_mes(q.year(), q.month())
+        return q.toString("yyyy-MM-dd"), None, q.toString("dd/MM/yyyy")
+
     def _pintar_dias_calendario(self):
         from src.jefe.reportes.periodo.dialogo.dias_trabajados import (
             fechas_trabajadas,
@@ -309,11 +327,14 @@ class VistaHistorial(QWidget):
         caja_filtro = self.cb_caja.currentData()
         t0 = self.t0.time()
         t1 = self.t1.time()
+        fecha_iso, fecha_hasta, periodo = self._rango()
+        self._periodo_volumen = periodo
         notas_dict = cargar_todas_notas()
         filas, total = motor_historial.listar(
             texto=self.txt.text(),
             metodo=self.cb_pago.currentText(),
-            fecha_iso=self.fecha.date().toString("yyyy-MM-dd"),
+            fecha_iso=fecha_iso,
+            fecha_hasta=fecha_hasta,
             ver_todo=ver_todo,
             hora_desde=f"{t0.hour():02d}:{t0.minute():02d}",
             hora_hasta=f"{t1.hour():02d}:{t1.minute():02d}",
@@ -489,28 +510,76 @@ class VistaHistorial(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Impresora", str(e))
 
-    def _desglose(self):
+    def _ids_cerrados(self):
         ids = []
         for i in range(self.tabla.rowCount()):
+            est = self.tabla.item(i, 7)
+            if est and str(est.text()).startswith("Cancelada"):
+                continue
             it = self.tabla.item(i, 0)
-            if it:
+            if it and it.text():
                 ids.append(it.text())
+        return ids
+
+    def _desglose(self):
+        ids = self._ids_cerrados()
         rows = motor_historial.desglose(ids)
+        periodo = getattr(self, "_periodo_volumen", "")
         dlg = QDialog(self)
         dlg.setWindowTitle("Desglose de artículos")
-        dlg.resize(560, 420)
+        dlg.resize(560, 460)
         lay = QVBoxLayout(dlg)
+        lay.addWidget(_lbl(periodo or "Periodo", 14))
         t = QTableWidget()
         t.setColumnCount(3)
         t.setHorizontalHeaderLabels(["Producto", "Cantidad", "Monto"])
         t.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         t.setRowCount(len(rows))
+        from src.historial_ventas.ticket_volumen import medida_de
+
+        kilos = 0.0
+        unidades = 0.0
+        plata = 0.0
         for i, r in enumerate(rows):
-            t.setItem(i, 0, QTableWidgetItem(str(r["nombre_producto"])))
-            t.setItem(i, 1, QTableWidgetItem(f"{r['total_cant']:g}"))
-            t.setItem(i, 2, QTableWidgetItem(fmt_plata(r["total_monto"])))
+            t.setItem(i, 0, vestir_nombre(QTableWidgetItem(str(r["nombre_producto"]))))
+            cant = float(r["total_cant"] or 0)
+            monto = float(r["total_monto"] or 0)
+            medida = medida_de(r)
+            if medida == "kg":
+                kilos += cant
+            elif medida == "un":
+                unidades += cant
+            plata += monto
+            t.setItem(i, 1, vestir_numero(QTableWidgetItem(f"{cant:g} {medida}")))
+            t.setItem(i, 2, vestir_numero(QTableWidgetItem(fmt_plata(monto))))
         lay.addWidget(t)
+        partes = [f"{len(rows)} articulos"]
+        if kilos:
+            partes.append(f"{kilos:g} kg")
+        if unidades:
+            partes.append(f"{unidades:g} un")
+        partes.append(fmt_plata(plata))
+        lay.addWidget(_lbl("  ·  ".join(partes), 14))
+        imprimir = QPushButton("Imprimir")
+        imprimir.clicked.connect(lambda: self._imprimir_volumen(rows, periodo, len(ids)))
+        lay.addWidget(imprimir)
         qt_exec(dlg)
+
+    def _imprimir_volumen(self, rows, periodo, tickets):
+        if not rows:
+            QMessageBox.information(self, "Imprimir", "No hay ventas cerradas en este filtro.")
+            return
+        try:
+            from src.hardware.printer import printer_manager
+
+            ok = printer_manager.imprimir_volumen_articulos(rows, periodo, tickets)
+        except Exception as e:
+            QMessageBox.critical(self, "Impresora", str(e))
+            return
+        if ok:
+            QMessageBox.information(self, "Listo", "Ticket de volumen enviado a la impresora configurada.")
+        else:
+            QMessageBox.warning(self, "Impresora", "No se pudo imprimir el desglose.")
 
     def _excel(self):
         if self.tabla.rowCount() == 0:

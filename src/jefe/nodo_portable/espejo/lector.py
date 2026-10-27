@@ -49,16 +49,9 @@ def _hay_tienda() -> bool:
 
 def _ruta_lectura() -> str:
     """La copia de esta PC; si no hay (otra PC en casa), la del pendrive."""
-    try:
-        from src.config import config
-
-        esclava = bool(str(config.get("db_host", "") or "").strip())
-    except Exception:
-        esclava = False
-    if esclava:
-        for candidata in copia.rutas_nodo():
-            if copia.existe(candidata):
-                return candidata
+    for candidata in copia.rutas_nodo():
+        if copia.existe(candidata):
+            return candidata
     try:
         from src.jefe.nodo_portable.motor_nodo import _negocio_db_path, estado_nodo, get_nodo_path
 

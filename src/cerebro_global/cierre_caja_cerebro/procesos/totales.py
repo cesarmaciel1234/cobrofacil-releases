@@ -53,7 +53,13 @@ def _ultima_apertura(
     )
     if not row:
         return 0.0, None
-    return float(row[0].get("monto") or 0.0), str(row[0].get("fecha") or "") or None
+    fila = row[0]
+    if hasattr(fila, "keys"):
+        monto = fila["monto"]
+        fecha = fila["fecha"]
+    else:
+        monto, fecha = fila[0], fila[1]
+    return float(monto or 0.0), str(fecha or "") or None
 
 
 def obtener_datos_cierre(

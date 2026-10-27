@@ -183,15 +183,15 @@ class NexusController(QObject):
 
         # Logica Industrial: Enviar comando remoto al cajero en lugar de abrir popup local
         try:
-            from src.central_red_global.network_engine import get_network_engine
+            from src.central_red_global.network_engine import get_network_engine, token_red
             engine = get_network_engine()
             target = "todas las cajas" if self.current_caja_filter == "todas" else f"caja {self.current_caja_filter}"
 
             if engine:
                 if self.current_caja_filter == "todas":
-                    engine.broadcast("FORCE_Z_CUT", {"caja_id": "all", "token": "nexus_admin_5544"})
+                    engine.broadcast("FORCE_Z_CUT", {"caja_id": "all", "token": token_red()})
                 else:
-                    engine.broadcast("FORCE_Z_CUT", {"caja_id": self.current_caja_filter, "token": "nexus_admin_5544"})
+                    engine.broadcast("FORCE_Z_CUT", {"caja_id": self.current_caja_filter, "token": token_red()})
 
                 # Registrar en Terminal SYS.OP con formato estructurado
                 if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_structured_log'):

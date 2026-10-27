@@ -1,12 +1,15 @@
+import csv
+from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QLineEdit,
-    QDialog, QComboBox, QAbstractItemView, QFrame, QGridLayout,
+    QDialog, QComboBox, QAbstractItemView, QFrame, QGridLayout, QFileDialog,
 )
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QColor, QBrush, QKeyEvent
+from PyQt6.QtCore import Qt, QTimer, QEvent
+from PyQt6.QtGui import QColor, QBrush, QKeyEvent, QShortcut, QKeySequence
 from src.cerebro_global.auditoria.motor_conector_auditoria import obtener_conector_auditoria
 from src.utils.theme_manager import theme_manager
+from src.utils.barcode_parser import BarcodeParser
 from src.utils.letra import vestir_id, vestir_nombre, vestir_numero
 from src.config import config
 
@@ -164,6 +167,9 @@ class DialogoConteo(QDialog):
         for txt, r, c in teclas:
             b = QPushButton(txt)
             b.setMinimumHeight(64)
+            b.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            b.setAutoDefault(False)
+            b.setDefault(False)
             if txt == "⌫":
                 b.setStyleSheet("background: #FEE2E2; color: #991B1B; font-size: 22px;")
             else:
@@ -177,16 +183,23 @@ class DialogoConteo(QDialog):
         if on_historial:
             btn_h = QPushButton("Historial")
             btn_h.setMinimumHeight(48)
+            btn_h.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            btn_h.setAutoDefault(False)
+            btn_h.setDefault(False)
             btn_h.setStyleSheet("background: #3B82F6; color: white; font-size: 14px; padding: 0 16px;")
             btn_h.clicked.connect(on_historial)
             acciones.addWidget(btn_h)
         btn_cancel = QPushButton("Cancelar")
         btn_cancel.setMinimumHeight(48)
+        btn_cancel.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        btn_cancel.setAutoDefault(False)
+        btn_cancel.setDefault(False)
         btn_cancel.setStyleSheet("background: #64748B; color: white; font-size: 14px; padding: 0 16px;")
         btn_cancel.clicked.connect(self.reject)
         self.btn_ok = QPushButton("Guardar y aplicar stock")
         self.btn_ok.setMinimumHeight(48)
         self.btn_ok.setStyleSheet("background: #10B981; color: white; font-size: 16px; padding: 0 22px;")
+        self.btn_ok.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.btn_ok.setDefault(True)
         self.btn_ok.setAutoDefault(True)
         self.btn_ok.clicked.connect(self._aceptar)
@@ -194,11 +207,32 @@ class DialogoConteo(QDialog):
         acciones.addWidget(btn_cancel)
         acciones.addWidget(self.btn_ok)
         root.addLayout(acciones)
+
+        # Atajos globales de teclado para ENTER / RETURN y ESC
+        self._sc_ret = QShortcut(QKeySequence(Qt.Key.Key_Return), self)
+        self._sc_ret.activated.connect(self._aceptar)
+        self._sc_ent = QShortcut(QKeySequence(Qt.Key.Key_Enter), self)
+        self._sc_ent.activated.connect(self._aceptar)
+        self._sc_esc = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+        self._sc_esc.activated.connect(self.reject)
+
+        self.installEventFilter(self)
         self._refrescar()
+        self.btn_ok.setFocus()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.KeyPress:
+            if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                self._aceptar()
+                return True
+            if event.key() == Qt.Key.Key_Escape:
+                self.reject()
+                return True
+        return super().eventFilter(obj, event)
 
     def _aceptar(self):
         if not (self._buffer or "").strip():
-            return
+            self._buffer = "0"
         self.accept()
 
     def keyPressEvent(self, event: QKeyEvent):
@@ -206,15 +240,23 @@ class DialogoConteo(QDialog):
         txt = event.text() or ""
         if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._aceptar()
+            event.accept()
+            return
+        if key == Qt.Key.Key_Escape:
+            self.reject()
+            event.accept()
             return
         if key in (Qt.Key.Key_Backspace, Qt.Key.Key_Delete):
             self._tecla("⌫")
+            event.accept()
             return
         if txt in (",", "."):
             self._tecla(",")
+            event.accept()
             return
         if txt.isdigit():
             self._tecla(txt)
+            event.accept()
             return
         super().keyPressEvent(event)
 
@@ -235,7 +277,7 @@ class DialogoConteo(QDialog):
         num = self._buffer if self._buffer != "" else "0"
         self.lbl_valor.setText(f"{num}  {self._sufijo}")
         if hasattr(self, "btn_ok"):
-            self.btn_ok.setEnabled(bool((self._buffer or "").strip()))
+            self.btn_ok.setEnabled(True)
 
     def valor(self) -> float:
         raw = (self._buffer or "0").replace(",", ".")
@@ -304,20 +346,19 @@ class AuditoriaMain(QWidget):
     def aplicar_permisos_perfil(self):
         self.user_role = self._rol_actual()
         lectura = self._es_lectura()
-        self.btn_aplicar.setEnabled(not lectura)
-        self.btn_editar.setEnabled(not lectura)
-        if lectura:
-            self.btn_aplicar.setStyleSheet(
-                "background: #64748B; color: #94A3B8; font-weight: bold; font-size: 16px; "
-                "padding: 12px 24px; border-radius: 8px; border: none;"
-            )
-            self.btn_aplicar.setToolTip("El perfil cajero no puede aplicar ajustes de stock.")
-        else:
-            self.btn_aplicar.setStyleSheet(
-                "background: #10B981; color: white; font-weight: bold; font-size: 16px; "
-                "padding: 12px 24px; border-radius: 8px; border: none;"
-            )
-            self.btn_aplicar.setToolTip("")
+        if hasattr(self, "lbl_modo_auto"):
+            if lectura:
+                self.lbl_modo_auto.setText("👁️ Modo Consulta: Perfil cajero (solo lectura de inventario)")
+                self.lbl_modo_auto.setStyleSheet(
+                    "background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px; "
+                    "color: #B45309; font-weight: 800; font-size: 13px; padding: 10px 18px;"
+                )
+            else:
+                self.lbl_modo_auto.setText("⚡ Auditoría Automática en Vivo · Cada conteo se guarda e impacta el stock al instante")
+                self.lbl_modo_auto.setStyleSheet(
+                    "background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; "
+                    "color: #059669; font-weight: 800; font-size: 13px; padding: 10px 18px;"
+                )
 
     def setup_ui(self):
         root = QVBoxLayout(self)
@@ -354,7 +395,8 @@ class AuditoriaMain(QWidget):
         for w in (self.kpi_total, self.kpi_contados, self.kpi_faltante, self.kpi_sobrante):
             w.setStyleSheet(
                 "background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; "
-                "padding: 8px 14px; font-weight: 700; color: #0F172A;"
+                "padding: 8px 16px; font-weight: 900; font-family: 'Segoe UI', sans-serif; "
+                "font-size: 13px; color: #0F172A;"
             )
             kpis.addWidget(w)
         kpis.addStretch()
@@ -401,32 +443,40 @@ class AuditoriaMain(QWidget):
         self.tabla.setAlternatingRowColors(True)
         self.tabla.itemChanged.connect(self._on_item_changed)
         self.tabla.cellDoubleClicked.connect(self._on_producto_doble_click)
+        self.tabla.installEventFilter(self)
         root.addWidget(self.tabla)
 
         bot_lay = QHBoxLayout()
-        self.btn_editar = QPushButton("EDITAR CONTEO")
-        self.btn_editar.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_editar.setStyleSheet(
-            "background: #3B82F6; color: white; font-weight: bold; font-size: 14px; "
-            "padding: 12px 20px; border-radius: 8px; border: none;"
-        )
-        self.btn_editar.clicked.connect(self._editar_fila_seleccionada)
-
-        self.btn_historial = QPushButton("HISTORIAL")
+        self.btn_historial = QPushButton("📋 HISTORIAL DE AJUSTES")
         self.btn_historial.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_historial.setToolTip("Ver historial de ajustes del producto seleccionado o general")
         self.btn_historial.setStyleSheet(
-            "background: #64748B; color: white; font-weight: bold; font-size: 14px; "
-            "padding: 12px 20px; border-radius: 8px; border: none;"
+            "QPushButton { background: #475569; color: white; font-weight: bold; font-size: 13px; "
+            "padding: 11px 20px; border-radius: 8px; border: none; }"
+            "QPushButton:hover { background: #334155; }"
         )
         self.btn_historial.clicked.connect(self._historial_fila_seleccionada)
 
-        self.btn_aplicar = QPushButton("CONFIRMAR Y APLICAR AJUSTES")
-        self.btn_aplicar.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_aplicar.clicked.connect(self._aplicar_ajustes)
-        bot_lay.addWidget(self.btn_editar)
+        self.btn_exportar = QPushButton("📊 EXPORTAR AUDITORÍA (CSV / Excel)")
+        self.btn_exportar.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_exportar.setToolTip("Exportar planilla de conteos y diferencias")
+        self.btn_exportar.setStyleSheet(
+            "QPushButton { background: #0284C7; color: white; font-weight: bold; font-size: 13px; "
+            "padding: 11px 20px; border-radius: 8px; border: none; }"
+            "QPushButton:hover { background: #0369A1; }"
+        )
+        self.btn_exportar.clicked.connect(self._exportar_auditoria)
+
+        self.lbl_modo_auto = QLabel("⚡ Auditoría Automática en Vivo · Cada conteo se guarda e impacta el stock al instante")
+        self.lbl_modo_auto.setStyleSheet(
+            "background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; "
+            "color: #059669; font-weight: 800; font-size: 13px; padding: 10px 18px;"
+        )
+
         bot_lay.addWidget(self.btn_historial)
+        bot_lay.addWidget(self.btn_exportar)
         bot_lay.addStretch()
-        bot_lay.addWidget(self.btn_aplicar)
+        bot_lay.addWidget(self.lbl_modo_auto)
         root.addLayout(bot_lay)
 
     def _volver(self):
@@ -449,7 +499,8 @@ class AuditoriaMain(QWidget):
     def _on_texto_buscar(self, *_):
         self._aplicar_filtros()
         texto = self.txt_buscar.text().strip()
-        if _parece_barras(texto):
+        cod_limpio, _ = BarcodeParser.parse_scan_text(texto)
+        if _parece_barras(cod_limpio or texto):
             self._timer_scan.start()
         else:
             self._timer_scan.stop()
@@ -461,9 +512,13 @@ class AuditoriaMain(QWidget):
         if not self._puede_editar():
             self.lbl_estado.setText("Solo lectura: el cajero no puede cargar conteos.")
             return
-        codigo = self.txt_buscar.text().strip()
-        if not codigo:
+        texto_raw = self.txt_buscar.text().strip()
+        if not texto_raw:
             return
+
+        codigo, multiplicador = BarcodeParser.parse_scan_text(texto_raw)
+        if not codigo:
+            codigo = texto_raw
 
         row = self._buscar_fila(codigo)
         if row is None:
@@ -481,7 +536,8 @@ class AuditoriaMain(QWidget):
         self._aplicar_filtros()
         self.tabla.selectRow(row)
         self.tabla.scrollToItem(self.tabla.item(row, 0))
-        self._mostrar_dialogo_edicion(row)
+        conteo_sugerido = multiplicador if multiplicador > 1 else None
+        self._mostrar_dialogo_edicion(row, conteo_inicial=conteo_sugerido)
         QTimer.singleShot(40, self.txt_buscar.setFocus)
 
     def _buscar_fila(self, codigo: str):
@@ -513,6 +569,13 @@ class AuditoriaMain(QWidget):
                 row = sel[0].row()
         return row
 
+    def eventFilter(self, obj, event):
+        if obj is getattr(self, "tabla", None) and event.type() == QEvent.Type.KeyPress:
+            if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                self._editar_fila_seleccionada()
+                return True
+        return super().eventFilter(obj, event)
+
     def _editar_fila_seleccionada(self):
         row = self._fila_seleccionada()
         if row < 0:
@@ -523,7 +586,7 @@ class AuditoriaMain(QWidget):
     def _historial_fila_seleccionada(self):
         row = self._fila_seleccionada()
         if row < 0:
-            QMessageBox.information(self, "Auditoría", "Seleccioná un producto de la lista.")
+            self._ver_historial_ajustes(None, None, "Auditoría General (Todos los productos)")
             return
         p_id = self.tabla.item(row, self.COL_ID).text()
         codigo = self.tabla.item(row, self.COL_COD).text()
@@ -535,7 +598,7 @@ class AuditoriaMain(QWidget):
             return
         self._mostrar_dialogo_edicion(row)
 
-    def _mostrar_dialogo_edicion(self, row):
+    def _mostrar_dialogo_edicion(self, row, conteo_inicial=None):
         if getattr(self, "_dialogo_abierto", False):
             return
         def _txt(col):
@@ -546,7 +609,7 @@ class AuditoriaMain(QWidget):
         nombre = _txt(self.COL_NOM)
         depto = _txt(self.COL_DEP)
         stock_sist = _txt(self.COL_SIST)
-        conteo_actual = _txt(self.COL_REAL)
+        conteo_actual = str(conteo_inicial) if conteo_inicial is not None else _txt(self.COL_REAL)
         p_id = _txt(self.COL_ID)
         if not nombre and not p_id:
             return
@@ -611,49 +674,66 @@ class AuditoriaMain(QWidget):
         self.lbl_estado.setText(f"Stock aplicado: {nombre} = {float(conteo):g}")
 
     def _ver_historial_ajustes(self, p_id, codigo, nombre):
-        dialog = QDialog(self)
-        dialog.setWindowTitle(f"Historial — {nombre}")
-        dialog.setFixedSize(720, 420)
-        dialog.setStyleSheet("QDialog { background-color: #F8FAFC; }")
-        layout = QVBoxLayout(dialog)
-        layout.addWidget(QLabel(f"{nombre} ({codigo or p_id})"))
-        tabla_hist = QTableWidget()
-        tabla_hist.setColumnCount(6)
-        tabla_hist.setHorizontalHeaderLabels(
-            ["Fecha", "Usuario", "Stock ant.", "Stock nuevo", "Dif.", "Motivo"]
-        )
-        tabla_hist.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        layout.addWidget(tabla_hist)
-        self._cargar_historial_producto(tabla_hist, p_id, codigo)
-        btn_cerrar = QPushButton("CERRAR")
-        btn_cerrar.clicked.connect(dialog.accept)
-        layout.addWidget(btn_cerrar)
-        dialog.exec()
+        from src.admin.auditoria_inventario.dialogo_historial import DialogoHistorialAuditoria
 
-    def _cargar_historial_producto(self, tabla, p_id, codigo):
-        pid = None
-        try:
-            pid = int(p_id)
-        except (TypeError, ValueError):
-            pid = None
-        filas = self.conector_auditoria.obtener_historial_ajustes(producto_id=pid, codigo=codigo)
-        tabla.setRowCount(0)
-        if not filas:
-            tabla.insertRow(0)
-            tabla.setItem(0, 0, QTableWidgetItem("Sin ajustes registrados"))
+        dlg = DialogoHistorialAuditoria(
+            parent=self,
+            producto_id=p_id,
+            codigo=codigo,
+            nombre_producto=nombre,
+            conector=self.conector_auditoria,
+        )
+        dlg.exec()
+
+    def _exportar_auditoria(self):
+        fecha_str = datetime.now().strftime("%Y%m%d_%H%M")
+        sug_nombre = f"auditoria_stock_{fecha_str}.csv"
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Exportar Auditoría a CSV / Excel",
+            sug_nombre,
+            "Archivos CSV (*.csv);;Todos los archivos (*.*)",
+        )
+        if not path:
             return
-        for i, r in enumerate(filas):
-            tabla.insertRow(i)
-            vals = [
-                str(r.get("fecha") or ""),
-                str(r.get("responsable") or ""),
-                f"{float(r.get('stock_sistema') or 0):.3f}",
-                f"{float(r.get('stock_fisico') or 0):.3f}",
-                f"{float(r.get('diferencia') or 0):.3f}",
-                str(r.get("motivo") or ""),
-            ]
-            for c, v in enumerate(vals):
-                tabla.setItem(i, c, QTableWidgetItem(v))
+        try:
+            with open(path, "w", newline="", encoding="utf-8-sig") as f:
+                writer = csv.writer(f, delimiter=";")
+                writer.writerow([
+                    "ID", "Código", "Nombre", "Departamento", "Stock Sistema",
+                    "Conteo Físico", "Diferencia", "Estado"
+                ])
+                for i in range(self.tabla.rowCount()):
+                    p_id = self.tabla.item(i, self.COL_ID).text() if self.tabla.item(i, self.COL_ID) else ""
+                    cod = self.tabla.item(i, self.COL_COD).text() if self.tabla.item(i, self.COL_COD) else ""
+                    nom = self.tabla.item(i, self.COL_NOM).text() if self.tabla.item(i, self.COL_NOM) else ""
+                    dep = self.tabla.item(i, self.COL_DEP).text() if self.tabla.item(i, self.COL_DEP) else ""
+                    sist = self.tabla.item(i, self.COL_SIST).text() if self.tabla.item(i, self.COL_SIST) else ""
+                    real = self.tabla.item(i, self.COL_REAL).text() if self.tabla.item(i, self.COL_REAL) else ""
+                    dif = self.tabla.item(i, self.COL_DIF).text() if self.tabla.item(i, self.COL_DIF) else ""
+
+                    if not real:
+                        estado = "Pendiente"
+                    else:
+                        try:
+                            dif_val = float(dif)
+                            if abs(dif_val) < 1e-9:
+                                estado = "Exacto (OK)"
+                            elif dif_val > 0:
+                                estado = "Sobrante"
+                            else:
+                                estado = "Faltante"
+                        except ValueError:
+                            estado = "Contado"
+                    writer.writerow([p_id, cod, nom, dep, sist, real, dif, estado])
+            self.lbl_estado.setText(f"Auditoría exportada exitosamente: {path}")
+            QMessageBox.information(
+                self,
+                "Auditoría Exportada",
+                f"Se exportaron {self.tabla.rowCount()} filas a:\n{path}\n\nCompatible con Microsoft Excel.",
+            )
+        except Exception as e:
+            QMessageBox.warning(self, "Error al Exportar", f"No se pudo guardar el archivo:\n{e}")
 
     def cargar_datos(self, forzar=True):
         self.tabla.blockSignals(True)

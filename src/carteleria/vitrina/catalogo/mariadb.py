@@ -50,7 +50,11 @@ def leer_catalogo_db(db_manager) -> dict:
     rows_cfg = db_manager.execute_query("SELECT config_json FROM carteleria_config WHERE id = 1")
     cfg_data = {}
     if rows_cfg:
-        cfg_str = rows_cfg[0][0] if isinstance(rows_cfg[0], tuple) else rows_cfg[0].get("config_json")
+        fila = rows_cfg[0]
+        try:
+            cfg_str = fila["config_json"]
+        except Exception:
+            cfg_str = fila[0]
         cfg_data = json.loads(cfg_str or "{}")
     else:
         config_path = os.path.join(get_base_path(), "config.json")
