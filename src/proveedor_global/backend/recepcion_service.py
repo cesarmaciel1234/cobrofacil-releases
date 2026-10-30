@@ -2,7 +2,51 @@ from datetime import datetime
 from src.base_de_datos.database import db_manager
 from src.utils.barcode_parser import BarcodeParser
 from src.logger import logger
-from src.proveedor_global.backend.ficha import FichaProveedor
+
+
+def _avisar_formula(cursor, items):
+    """La recepción no parte el huevo. Le dice a la fórmula cuántos cajones entraron."""
+    aviso = None
+    for it in items or []:
+        if not it.get("desde_formula"):
+            continue
+        aviso = it
+        break
+    if not aviso:
+        return
+    try:
+        bultos = float(aviso.get("bultos") or 0)
+    except (TypeError, ValueError):
+        bultos = 0.0
+    if bultos <= 0:
+        return
+    try:
+        precio = float(aviso.get("precio_bulto") or 0)
+    except (TypeError, ValueError):
+        precio = 0.0
+    formula = str(aviso.get("formula") or "")
+    if not formula:
+        from src.proveedor_global.frontend.formula.motores.verdad import huevos_de
+        if huevos_de(aviso.get("nombre")):
+            formula = "Huevo"
+    if formula == "Huevo":
+        from src.proveedor_global.frontend.formula.motores.verdad import entrar
+        entrar(cursor, "Huevo", bultos, precio)
+        return
+    if formula in ("Mocho", "Pecho", "Media res", "Pollo", "Cerdo", "Congelado"):
+        from src.proveedor_global.frontend.formula.motores.carne_stock import entrar as entrar_carne
+        cortes = []
+        for it in items or []:
+            if it.get("extension") or not it.get("kilos"):
+                continue
+            cortes.append((it.get("nombre") or "", it.get("kilos")))
+        entrar_carne(cursor, db_manager, formula, bultos, precio, cortes or None)
+        try:
+            from src.proveedor_global.frontend.formula.motores.extension import escribir
+            escribir(cursor, items)
+        except Exception:
+            pass
+
 
 class RecepcionService:
     """
@@ -128,7 +172,77 @@ class RecepcionService:
         return resultados, multiplicador
 
     @staticmethod
-    def procesar_ingreso_mercaderia(proveedor_nombre: str, items: list, condicion_pago: str = "A Pagar", perfil: str = "admin") -> tuple[bool, str, dict]:
+    def buscar_productos_por_iniciales(texto_raw: str, limit: int = 12, departamento: str = "") -> list[dict]:
+        """Nombre, segunda palabra o código de barras. Si hay departamento, solo ese."""
+        query = (texto_raw or "").strip()
+        if len(query) < 2 and not query.isdigit():
+            return []
+        exacto = query.upper()
+        prefijo = exacto + "%"
+        segunda = "% " + exacto + "%"
+        depto = (departamento or "").strip().upper()
+        filtro = ""
+        params = [prefijo, segunda, prefijo, prefijo]
+        if depto:
+            filtro = " AND UPPER(TRIM(COALESCE(departamento, ''))) = ?"
+            params.append(depto)
+        params.extend([exacto, exacto, prefijo, segunda, limit])
+        sql = f"""
+            SELECT id, codigo, nombre, departamento
+            FROM productos
+            WHERE (
+                UPPER(nombre) LIKE ?
+                OR UPPER(nombre) LIKE ?
+                OR UPPER(COALESCE(codigo, '')) LIKE ?
+                OR CAST(id AS TEXT) LIKE ?
+            ){filtro}
+            ORDER BY
+                CASE
+                    WHEN UPPER(COALESCE(codigo, '')) = ? OR CAST(id AS TEXT) = ? THEN 0
+                    WHEN UPPER(nombre) LIKE ? THEN 1
+                    WHEN UPPER(nombre) LIKE ? THEN 2
+                    ELSE 3
+                END,
+                LENGTH(nombre),
+                nombre
+            LIMIT ?
+        """
+        try:
+            rows = db_manager.execute_query(sql, tuple(params)) or []
+        except Exception as e:
+            logger.error(f"Error en buscar_productos_por_iniciales: {e}")
+            return []
+        salida = []
+        for r in rows:
+            if isinstance(r, dict):
+                salida.append({
+                    "id": r.get("id"),
+                    "codigo": r.get("codigo") or str(r.get("id") or ""),
+                    "nombre": r.get("nombre") or "Sin nombre",
+                    "departamento": r.get("departamento") or "",
+                })
+            else:
+                salida.append({
+                    "id": r[0],
+                    "codigo": r[1] or str(r[0] or ""),
+                    "nombre": r[2] or "Sin nombre",
+                    "departamento": r[3] or "",
+                })
+        return salida
+
+    @staticmethod
+    def _fechas(fecha=None):
+        ahora = datetime.now()
+        texto = str(fecha or "").strip()
+        if len(texto) >= 10:
+            corta = texto[:10]
+            if len(texto) > 10:
+                return corta, texto
+            return corta, f"{corta} {ahora.strftime('%H:%M:%S')}"
+        return ahora.strftime("%Y-%m-%d"), ahora.strftime("%Y-%m-%d %H:%M:%S")
+
+    @staticmethod
+    def procesar_ingreso_mercaderia(proveedor_nombre: str, items: list, condicion_pago: str = "A Pagar", perfil: str = "admin", fecha=None) -> tuple[bool, str, dict]:
         """
         Registra el ingreso de mercadería en un solo tiro atómico:
         1. Para cada producto: incrementa el stock (stock = stock + cantidad)
@@ -144,33 +258,59 @@ class RecepcionService:
         if not prov_clean or prov_clean in ("Seleccionar o escribir...", "Seleccionar o escribir proveedor...", "Sin Proveedor (Proveedor General)"):
             prov_clean = "Proveedor General"
 
-        # Asegurar ficha de proveedor en la maestra
-        try:
-            FichaProveedor.obtener_o_crear(prov_clean)
-        except Exception:
-            pass
-
-        fecha_hoy = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        fecha_corta = datetime.now().strftime("%Y-%m-%d")
+        fecha_corta, fecha_hoy = RecepcionService._fechas(fecha)
         total_monto = 0.0
         total_bultos = 0.0
 
         for it in items:
             cant = float(it.get("cantidad", 1.0))
             costo = float(it.get("costo", 0.0))
-            subt = cant * costo
+            if it.get("desde_formula"):
+                subt = float(it.get("subtotal") or 0)
+            else:
+                subt = cant * costo
             total_monto += subt
-            total_bultos += cant
+            if not it.get("extension"):
+                total_bultos += cant
 
         from src.proveedor_global.backend.moneda import texto
 
-        estado_pago_val = "Pagado" if "contado" in condicion_pago.lower() else "Pendiente"
-        detalle_desc = f"Recepción Escáner - Proveedor: {prov_clean}\n"
+        es_contado = "contado" in condicion_pago.lower()
+        estado_pago_val = "Pagado" if es_contado else "Pendiente"
+        condicion = "Contado" if es_contado else "Fiado"
+        detalle_desc = f"Recepción Escáner - Proveedor: {prov_clean}\nCondición: {condicion}\n"
         for it in items:
+            if it.get("extension"):
+                continue
             cant = float(it.get("cantidad", 1.0))
             costo_nuevo = float(it.get("costo", 0.0))
             nom = it.get("nombre", "")
             detalle_desc += f"• {cant}x {nom} ({texto(costo_nuevo)})\n"
+        try:
+            from src.proveedor_global.frontend.formula.motores.extension import texto as texto_extension
+            detalle_desc += texto_extension(items)
+        except Exception:
+            pass
+        formula_carga = ""
+        bultos_carga = 0.0
+        for it in items:
+            nombre_formula = str(it.get("formula") or "")
+            if nombre_formula in ("Mocho", "Pecho", "Media res", "Pollo", "Cerdo", "Congelado"):
+                formula_carga = nombre_formula
+                try:
+                    bultos_carga = float(it.get("bultos") or 0)
+                except (TypeError, ValueError):
+                    bultos_carga = 0.0
+                break
+        if formula_carga and bultos_carga > 0:
+            detalle_desc += f"Fórmula: {formula_carga} · {bultos_carga:g} bultos\n"
+            utiles = [
+                f"{it.get('nombre')} {float(it.get('kilos') or 0):g}"
+                for it in items
+                if it.get("kilos")
+            ]
+            if utiles:
+                detalle_desc += "Útiles: " + ", ".join(utiles) + "\n"
 
         wa_texto = RecepcionService.generar_whatsapp_conformidad(
             prov_clean, items, total_bultos, total_monto, condicion_pago
@@ -196,20 +336,24 @@ class RecepcionService:
                 cant = float(it.get("cantidad", 1.0))
                 costo_nuevo = float(it.get("costo", 0.0))
                 cod = it.get("codigo", "")
-                cursor.execute(
-                    """
-                    UPDATE productos
-                    SET stock = COALESCE(stock, 0) + ?,
-                        costo = ?
-                    WHERE id = ?
-                    """,
-                    (cant, costo_nuevo, p_id),
-                )
+                if it.get("extension"):
+                    continue
+                if not it.get("desde_formula"):
+                    cursor.execute(
+                        """
+                        UPDATE productos
+                        SET stock = COALESCE(stock, 0) + ?,
+                            costo = ?
+                        WHERE id = ?
+                        """,
+                        (cant, costo_nuevo, p_id),
+                    )
                 cursor.execute(
                     "INSERT INTO romaneo_items (romaneo_id, nro_garrote, peso) VALUES (?, ?, ?)",
                     (romaneo_id, cod or str(p_id), cant),
                 )
 
+            _avisar_formula(cursor, items)
             cursor.execute(
                 """
                 INSERT INTO gastos (fecha, categoria, descripcion, monto, status, usuario)
@@ -228,13 +372,12 @@ class RecepcionService:
             }
 
             logger.info(f"Recepción de mercadería completada: {len(items)} productos ingresados a stock para {prov_clean}.")
-            # Si estamos en modo esclavo/offline (ej: trabajando en la notebook en casa),
-            # encolar la recepción en offline_nutricion para alimentar a la Maestra al reconectar.
             if getattr(db_manager, "db_engine_type", "") != "mariadb" or not db_manager.is_connected() or getattr(db_manager, "_forced_local_offline", False):
                 try:
                     from src.base_de_datos.offline_nutricion import offline_nutricion_manager
                     offline_nutricion_manager.encolar_recepcion(
-                        prov_clean, items, total_bultos, total_monto, condicion_pago, perfil
+                        prov_clean, items, total_bultos, total_monto, condicion_pago, perfil,
+                        fecha=fecha_hoy,
                     )
                 except Exception as e_enc:
                     logger.warning(f"No se pudo encolar recepción offline: {e_enc}")
@@ -280,6 +423,8 @@ class RecepcionService:
         ]
 
         for it in items:
+            if it.get("extension"):
+                continue
             cant = int(it['cantidad']) if isinstance(it['cantidad'], (int, float)) and float(it['cantidad']).is_integer() else f"{it['cantidad']}"
             nom = it['nombre']
             cod = f" [{it['codigo']}]" if it.get('codigo') else ""

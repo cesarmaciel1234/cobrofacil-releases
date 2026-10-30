@@ -2,7 +2,6 @@
 
 from src.notificaciones.motor.estado import vigentes_detalle
 
-_URGENCIA = "🚨 URGENCIA ACTIVA — Venta permitida SIN STOCK"
 _VACIO = {"mensaje": None, "iconos": []}
 _ORDEN = ("cobro_cancelado", "cobro_ok", "cajon", "urgencia", "stock", "efectivo")
 
@@ -63,13 +62,6 @@ def _fila(codigo: str, texto: str, nivel: str, detalle: str, en_franja: bool) ->
 
 
 def _urgencia() -> str | None:
-    try:
-        from src.config import config
-
-        if config.get("opt_stock_negativo", False):
-            return _URGENCIA
-    except Exception:
-        return None
     return None
 
 

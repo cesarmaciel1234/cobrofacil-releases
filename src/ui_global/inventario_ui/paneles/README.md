@@ -10,7 +10,7 @@ El cuerpo del catálogo: filtros + grilla + pie. No es la venta; solo administra
 |---------|--------|-----|
 | `catalogo_productos.py` | `CatalogoProductos` | Junta filtros, tabla y pie; carga, alta, Excel, precarga |
 | `catalogo_productos.py` | `MotorBusquedaInventario` | Hilo: `InventarioService.obtener_lista_de_productos` |
-| `tabla_inventario.py` | `TablaInventario` | Grilla: oferta (lectura) + mayoreo (2 cols); Stock al final |
+| `tabla_inventario.py` | `TablaInventario` | Grilla: la columna Código muestra el código de barras (si no hay, el id). El id real queda en la celda para editar y borrar. Si el producto es fracción de una fórmula, el stock lo dice el intermediario de promedios (kilos o cajas) y no pisa el número guardado. |
 
 ## Cómo corre
 

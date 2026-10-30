@@ -140,27 +140,15 @@ class CatalogoProductos(QWidget):
         self.tabla.aplicar_tema(bg, text, border, hover, sel_bg, sel_text, header_bg, header_text)
 
     def _sync_urgencia_banner(self):
-        activo = bool(self.filtros.chk_urgencia.isChecked())
-        self._urgencia_banner.set_active(activo)
-        self.filtros.chk_urgencia.setStyleSheet(
-            "QCheckBox { font-weight: 800; color: #B91C1C; padding: 4px 8px; "
-            "border: 2px solid #DC2626; border-radius: 6px; background: #FEE2E2; }"
-            "QCheckBox::indicator { width: 18px; height: 18px; }"
-            if activo
-            else "QCheckBox { font-weight: 800; color: #B91C1C; padding: 4px 8px; "
-            "border: 1px solid #FECACA; border-radius: 6px; background: #FFF7ED; }"
-            "QCheckBox::indicator { width: 18px; height: 18px; }"
-        )
+        self._urgencia_banner.set_active(False)
 
     def _toggle_venta_sin_stock(self, checked: bool):
         if checked:
             r = QMessageBox.warning(
                 self,
-                "Modo urgencia — vender sin stock",
-                "Estás activando una excepción a las reglas de inventario.\n\n"
-                "• El cajero podrá vender productos sin existencia.\n"
-                "• Habrá una alerta PARPADEANTE en inventario y en el terminal.\n\n"
-                "Desactivalo cuando termine la urgencia.",
+                "No vender sin stock",
+                "El cajero no va a poder vender si no hay existencia.\n\n"
+                "Si lo dejás sin marcar, el stock sigue en -1, -2 y -3 hasta que cargues mercadería.",
                 QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
                 QMessageBox.StandardButton.Cancel,
             )
@@ -169,12 +157,12 @@ class CatalogoProductos(QWidget):
                 self._sync_urgencia_banner()
                 return
 
-        config.set("opt_stock_negativo", bool(checked))
+        config.set("opt_stock_negativo", not bool(checked))
         self._sync_urgencia_banner()
 
     def showEvent(self, event):
         super().showEvent(event)
-        self.filtros.set_chk_urgencia_state(bool(config.get("opt_stock_negativo", False)))
+        self.filtros.set_chk_urgencia_state(not bool(config.get("opt_stock_negativo", True)))
         self._sync_urgencia_banner()
         self.aplicar_permisos_perfil(self.user_role)
 
@@ -246,9 +234,10 @@ class CatalogoProductos(QWidget):
         def get_val(col, default=0.0):
             return r.get(col) if r.get(col) is not None else default
 
+        codigo = str(r.get('codigo') or '').strip() or str(r.get('id') or '').strip()
         datos = {
             'id': r.get('id'),
-            'codigo': r.get('codigo') or '',
+            'codigo': codigo,
             'nombre': r.get('nombre') or '',
             'precio': get_val('precio', 0.0),
             'precio_mayoreo': get_val('precio_mayoreo', 0.0),
@@ -262,7 +251,7 @@ class CatalogoProductos(QWidget):
             'unidad': r.get('unidad') or 'UN',
             'es_pesable': get_val('es_pesable', 0),
             'departamento': r.get('departamento') or '',
-            'categoria': r.get('categoria') or 'GENERAL'
+            'categoria': r.get('categoria') or ''
         }
 
         from src.ui_global.inventario_ui.moleculas.dialogo_producto import DialogoProducto

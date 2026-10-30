@@ -1,7 +1,30 @@
+_BASE = [("Pechito", 10), ("Bondiola", 5), ("Matambre", 3), ("Carré", 8), ("Costillitas", 12)]
+
+
 class MotorCerdo:
     @staticmethod
+    def base():
+        return list(_BASE)
+
+    @staticmethod
+    def receta():
+        """La fórmula guardada. None si todavía está la lista de fábrica."""
+        try:
+            from src.base_de_datos.database import DatabaseManager
+            from src.proveedor_global.frontend.formula.motores.orden import traer
+            datos = traer(DatabaseManager(), "Cerdo")
+        except Exception:
+            return None
+        if not datos.get("cortes"):
+            return None
+        return datos
+
+    @staticmethod
     def get_cortes():
-        return [("Pechito", 10), ("Bondiola", 5), ("Matambre", 3), ("Carré", 8), ("Costillitas", 12)]
+        datos = MotorCerdo.receta()
+        if not datos:
+            return list(_BASE)
+        return [(nombre, kilos) for nombre, kilos in datos["cortes"]]
 
     @staticmethod
     def calcular_costo_real(kilos_totales: float, precio_kg: float, suma_kilos_cortes: float):

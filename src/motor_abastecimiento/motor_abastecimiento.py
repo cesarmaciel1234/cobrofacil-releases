@@ -41,7 +41,8 @@ class MotorAbastecimiento:
 
         # Generar texto de WhatsApp para cada proveedor
         for prov_nombre, datos in agrupados.items():
-            datos["texto_whatsapp"] = generar_texto_whatsapp(datos, nombre_comercio)
+            if datos.get("total_items"):
+                datos["texto_whatsapp"] = generar_texto_whatsapp(datos, nombre_comercio)
 
         return generar_resumen_general(agrupados)
 
@@ -65,7 +66,7 @@ class MotorAbastecimiento:
 
     @staticmethod
     def listar_proveedores():
-        """Fichas con id y código P00012. Vacío si la maestra no contesta."""
+        """Fichas con id y código P00012. En casa también entran las que esperan el id."""
         from src.proveedor_global.backend.ficha import FichaProveedor
 
         return FichaProveedor.listar()

@@ -24,14 +24,48 @@ def contar_productos_sin_stock():
         logger.error(f"Error al contar productos sin stock: {e}")
     return 0
 
+def _en_casa() -> bool:
+    return bool(getattr(db_manager, "_forced_local_offline", False)) and not bool(getattr(db_manager, "is_master", True))
+
+
 def eliminar_producto_de_db(producto_id):
-    """Elimina un producto de la base de datos usando su ID."""
+    """Elimina un producto. En casa la copia lo esconde hasta que la tienda lo borre."""
+    ident = str(producto_id or "").strip()
+    if not ident:
+        return False, "Sin producto."
+    codigo = ""
+    nombre = ""
     try:
-        db_manager.execute_non_query("DELETE FROM productos WHERE id = ?", (producto_id,))
-        return True, "Producto eliminado correctamente."
+        filas = db_manager.execute_query(
+            "SELECT codigo, nombre FROM productos WHERE id = ?", (ident,)
+        ) or []
+        if filas:
+            fila = filas[0]
+            if isinstance(fila, dict):
+                codigo = str(fila.get("codigo") or "")
+                nombre = str(fila.get("nombre") or "")
+            else:
+                codigo = str(fila[0] or "")
+                nombre = str(fila[1] or "") if len(fila) > 1 else ""
+    except Exception:
+        pass
+    try:
+        ok = bool(db_manager.execute_non_query("DELETE FROM productos WHERE id = ?", (ident,)))
     except Exception as e:
-        logger.error(f"Error al eliminar producto {producto_id}: {e}")
-        return False, f"Error al eliminar: {e}"
+        logger.error(f"Error al eliminar producto {ident}: {e}")
+        ok = False
+    if _en_casa():
+        try:
+            from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+            offline_nutricion_manager.encolar_baja_producto(ident, codigo, nombre)
+        except Exception as e:
+            logger.error(f"No se anotó la baja de {ident}: {e}")
+            if not ok:
+                return False, "No se pudo eliminar."
+        return True, "Producto eliminado correctamente."
+    if not ok:
+        return False, "No se pudo eliminar."
+    return True, "Producto eliminado correctamente."
 
 def actualizar_precio_por_nombre(nombre, precio):
     """Actualiza el precio de venta de un producto buscando por su nombre exacto."""

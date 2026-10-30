@@ -4,9 +4,10 @@ import math
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
-from src.contabilidad.shared_globals import PAL, btn_primary, build_table
+from src.contabilidad.shared_globals import PAL, btn_danger, btn_primary, build_table
 from .motor_cerdo import MotorCerdo
 from src.jefe.promedios.motor_global_promedios import MotorPromedios
+from src.utils.letra import vestir_id
 from src.base_de_datos.database import DatabaseManager
 
 class UICerdo(QWidget):
@@ -53,6 +54,8 @@ class UICerdo(QWidget):
                     it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     if col == 2: it.setForeground(QColor(PAL['text3']))
                 self._prom_tabla.setItem(i, col, it)
+            codigo = str(row_data[13]) if len(row_data) > 13 else ""
+            self._prom_tabla.setItem(i, 13, vestir_id(QTableWidgetItem(codigo)))
         self._add_empty_row()
         self._prom_tabla.blockSignals(False)
         self._sync_calc()
@@ -170,12 +173,21 @@ class UICerdo(QWidget):
         lay.addLayout(r1_lay)
 
         r2_lay = QHBoxLayout()
-        lbl_kilos = QLabel("Kilos:")
+        lbl_kilos = QLabel("Kilos del bulto:")
         self._prom_kilos = QLineEdit()
         self._prom_kilos.setFixedWidth(100)
         
         self._btn_repartir = btn_primary("Repartir")
+        self._btn_repartir.setToolTip("Calcula la merma: kilos del bulto menos el peso de cada corte. No cambia los pesos.")
         self._btn_repartir.clicked.connect(self._repartir_kilos)
+        self._btn_alta = btn_primary("Alta corte")
+        self._btn_alta.setStyleSheet(self._btn_alta.styleSheet().replace(PAL['primary'], "#059669"))
+        self._btn_alta.clicked.connect(self._alta_corte)
+        self._btn_baja = btn_danger("Baja corte")
+        self._btn_baja.clicked.connect(self._baja_corte)
+        self._btn_formula = btn_primary("Guardar nueva fórmula")
+        self._btn_formula.setStyleSheet(self._btn_formula.styleSheet().replace(PAL['primary'], "#0F766E"))
+        self._btn_formula.clicked.connect(self._guardar_formula)
         
         lbl_merma = QLabel("Merma:")
         self._prom_merma = QLineEdit()
@@ -198,6 +210,9 @@ class UICerdo(QWidget):
         r2_lay.addWidget(lbl_kilos)
         r2_lay.addWidget(self._prom_kilos)
         r2_lay.addWidget(self._btn_repartir)
+        r2_lay.addWidget(self._btn_alta)
+        r2_lay.addWidget(self._btn_baja)
+        r2_lay.addWidget(self._btn_formula)
         r2_lay.addWidget(lbl_merma)
         r2_lay.addWidget(self._prom_merma)
         r2_lay.addWidget(lbl_precio)
@@ -213,10 +228,12 @@ class UICerdo(QWidget):
         # 13 COLUMNS
         self._prom_tabla = build_table([
             "Corte", "Kilos", "Costo $/kg", "Precio Venta", "% Ganancia", 
-            "P. Mayoreo", "Desde kg", "% Mayoreo", "V. Costo", "V. Total", "V. Mayoreo", "Ganancia", "G. Mayoreo"
+            "P. Mayoreo", "Desde kg", "% Mayoreo", "V. Costo", "V. Total", "V. Mayoreo", "Ganancia", "G. Mayoreo",
+            "Código",
         ])
         self._prom_tabla.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed | QAbstractItemView.EditTrigger.AnyKeyPressed)
         self._prom_tabla.itemChanged.connect(self._on_tabla_changed)
+        self._prom_tabla.setToolTip("Doble clic cambia el nombre o los kilos del corte.")
         lay.addWidget(self._prom_tabla)
 
         # Single Line Footer
@@ -257,53 +274,195 @@ class UICerdo(QWidget):
         except: pass
         self._sync_calc()
 
-    def _load_defaults(self):
-        self._prom_tabla.blockSignals(True)
-        self._prom_tabla.setRowCount(0)
-        cortes = MotorCerdo.get_cortes()
-        for i, (corte, kilos) in enumerate(cortes):
-            self._prom_tabla.insertRow(i)
-            self._prom_tabla.setItem(i, 0, QTableWidgetItem(corte))
-            self._prom_tabla.setItem(i, 1, QTableWidgetItem(str(kilos)))
-            for col in range(2, 13):
-                it = QTableWidgetItem("0.00" if col != 6 else "")
-                if col in [2, 8, 9, 10, 11, 12]:
-                    it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    if col == 2: it.setForeground(QColor(PAL['text3']))
-                self._prom_tabla.setItem(i, col, it)
-        
-        self._add_empty_row()
-        self._prom_tabla.blockSignals(False)
-        self._sync_calc()
+    def _texto_num(self, kilos) -> str:
+        numero = float(kilos or 0)
+        if abs(numero - round(numero)) < 1e-9:
+            return str(int(round(numero)))
+        return f"{numero:.2f}".rstrip("0").rstrip(".")
 
-    def _add_empty_row(self):
-        i = self._prom_tabla.rowCount()
-        self._prom_tabla.insertRow(i)
-        self._prom_tabla.setItem(i, 0, QTableWidgetItem(""))
-        self._prom_tabla.setItem(i, 1, QTableWidgetItem(""))
+    def _poner_fila(self, i, nombre, kilos, codigo):
+        self._prom_tabla.setItem(i, 0, QTableWidgetItem(nombre))
+        self._prom_tabla.setItem(i, 1, QTableWidgetItem(str(kilos)))
         for col in range(2, 13):
             it = QTableWidgetItem("0.00" if col != 6 else "")
             if col in [2, 8, 9, 10, 11, 12]:
                 it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 if col == 2: it.setForeground(QColor(PAL['text3']))
             self._prom_tabla.setItem(i, col, it)
+        self._prom_tabla.setItem(i, 13, vestir_id(QTableWidgetItem(codigo or "")))
+
+    def _fila_vacia(self, fila) -> bool:
+        if fila < 0 or fila >= self._prom_tabla.rowCount():
+            return True
+        item = self._prom_tabla.item(fila, 0)
+        return not (item.text().strip() if item else "")
+
+    def _load_defaults(self):
+        self._prom_tabla.blockSignals(True)
+        self._prom_kilos.blockSignals(True)
+        self._prom_tabla.setRowCount(0)
+        datos = MotorCerdo.receta()
+        if datos:
+            codigos = datos.get("codigos") or {}
+            cortes = list(datos.get("cortes") or [])
+            bulto = float(datos.get("kilos_bulto") or 0)
+            if bulto > 0:
+                self._prom_kilos.setText(self._texto_num(bulto))
+        else:
+            codigos = {}
+            cortes = MotorCerdo.base()
+        for i, par in enumerate(cortes):
+            nombre, kilos = par[0], par[1]
+            self._prom_tabla.insertRow(i)
+            codigo = codigos.get(str(nombre).upper(), "")
+            self._poner_fila(i, nombre, self._texto_num(kilos), codigo)
+        self._add_empty_row()
+        self._prom_tabla.blockSignals(False)
+        self._prom_kilos.blockSignals(False)
+        self._sync_calc()
+
+    def _add_empty_row(self):
+        i = self._prom_tabla.rowCount()
+        self._prom_tabla.insertRow(i)
+        self._poner_fila(i, "", "", "")
+
+    def _alta_corte(self):
+        pedido = self._pedir_corte()
+        if not pedido:
+            return
+        nombre, kilos, codigo = pedido
+        if self._nombre_repetido(nombre):
+            QMessageBox.warning(self, "Alta", f"{nombre} ya está en la fórmula.")
+            return
+        self._prom_tabla.blockSignals(True)
+        ultima = self._prom_tabla.rowCount() - 1
+        if ultima < 0 or not self._fila_vacia(ultima):
+            fila = self._prom_tabla.rowCount()
+            self._prom_tabla.insertRow(fila)
+            self._poner_fila(fila, nombre, self._texto_num(kilos), codigo)
+            self._add_empty_row()
+        else:
+            self._prom_tabla.insertRow(ultima)
+            self._poner_fila(ultima, nombre, self._texto_num(kilos), codigo)
+        self._prom_tabla.blockSignals(False)
+        self._sync_calc()
+
+    def _baja_corte(self):
+        fila = self._prom_tabla.currentRow()
+        if fila < 0:
+            QMessageBox.information(self, "Baja", "Elegí el corte en la tabla.")
+            return
+        item = self._prom_tabla.item(fila, 0)
+        nombre = item.text().strip() if item else ""
+        if not nombre:
+            QMessageBox.information(self, "Baja", "Esa fila está vacía.")
+            return
+        aviso = QMessageBox(self)
+        aviso.setWindowTitle("Baja de corte")
+        aviso.setText(f"¿Dar de baja {nombre}?")
+        aviso.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        aviso.button(QMessageBox.StandardButton.Yes).setText("Dar de baja")
+        aviso.button(QMessageBox.StandardButton.No).setText("Cancelar")
+        if aviso.exec() != QMessageBox.StandardButton.Yes:
+            return
+        self._prom_tabla.blockSignals(True)
+        self._prom_tabla.removeRow(fila)
+        if self._prom_tabla.rowCount() == 0 or not self._fila_vacia(self._prom_tabla.rowCount() - 1):
+            self._add_empty_row()
+        self._prom_tabla.blockSignals(False)
+        self._sync_calc()
+
+    def _guardar_formula(self):
+        db = DatabaseManager()
+        ok, error = MotorPromedios.guardar_formula(db, self._tipo_promedio, self.get_state())
+        if not ok:
+            QMessageBox.warning(self, "Fórmula", error or "No se pudo guardar la fórmula.")
+            return
+        QMessageBox.information(self, "Fórmula", self._texto_formula())
+
+    def _texto_formula(self) -> str:
+        try:
+            bulto = float(self._prom_kilos.text().replace(",", ".") or 0)
+        except ValueError:
+            bulto = 0.0
+        partes = []
+        utiles = 0.0
+        for fila in range(self._prom_tabla.rowCount()):
+            item = self._prom_tabla.item(fila, 0)
+            nombre = item.text().strip() if item else ""
+            if not nombre:
+                continue
+            try:
+                kilos = float((self._prom_tabla.item(fila, 1).text() or "0").replace(",", "."))
+            except (AttributeError, ValueError):
+                continue
+            if kilos <= 0:
+                continue
+            utiles += kilos
+            partes.append(f"{nombre} {self._texto_num(kilos)} kg")
+        return (
+            f"Fórmula de Cerdo guardada. Bulto {self._texto_num(bulto)} kg, "
+            f"útiles {self._texto_num(utiles)} kg. "
+            + ", ".join(partes)
+            + ". El precio sale de estos kilos."
+        )
+
+    def _nombre_repetido(self, nombre) -> bool:
+        clave = str(nombre or "").strip().upper()
+        for fila in range(self._prom_tabla.rowCount()):
+            item = self._prom_tabla.item(fila, 0)
+            if item and item.text().strip().upper() == clave:
+                return True
+        return False
+
+    def _pedir_corte(self):
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Alta de corte")
+        dlg.setStyleSheet(f"background: {PAL['bg']}; color: {PAL['text']}; font-size: 14px;")
+        dlg.setMinimumWidth(360)
+        caja = QVBoxLayout(dlg)
+        caja.addWidget(QLabel("Corte y peso. El bulto sigue siendo el de arriba."))
+        nombre = QLineEdit()
+        nombre.setPlaceholderText("Nombre del corte")
+        kilos = QLineEdit()
+        kilos.setPlaceholderText("Kilos de este corte")
+        codigo = QLineEdit()
+        codigo.setPlaceholderText("Código del producto, si el nombre no coincide")
+        for campo in (nombre, kilos, codigo):
+            campo.setStyleSheet(f"background: {PAL['surface']}; padding: 8px; border: 1px solid {PAL['border']}; border-radius: 4px;")
+            caja.addWidget(campo)
+        botones = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        botones.accepted.connect(dlg.accept)
+        botones.rejected.connect(dlg.reject)
+        aceptar = botones.button(QDialogButtonBox.StandardButton.Ok)
+        aceptar.setText("Dar de alta")
+        aceptar.setStyleSheet("background: #059669; color: white; padding: 6px 16px; border-radius: 4px; font-weight: 700;")
+        cancelar = botones.button(QDialogButtonBox.StandardButton.Cancel)
+        cancelar.setText("Cancelar")
+        cancelar.setStyleSheet(f"background: {PAL['border']}; color: #0F172A; padding: 6px 16px; border-radius: 4px; font-weight: 700;")
+        caja.addWidget(botones)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return None
+        texto = nombre.text().strip()
+        if not texto:
+            QMessageBox.warning(self, "Alta", "Falta el nombre del corte.")
+            return None
+        from src.jefe.promedios.receta import numero
+        peso = numero(kilos.text())
+        if peso is None or peso <= 0:
+            QMessageBox.warning(self, "Alta", "El peso tiene que ser mayor a cero.")
+            return None
+        return texto, peso, codigo.text().strip()
 
     def _repartir_kilos(self):
         try:
             kt = float(self._prom_kilos.text().replace(',', '.') or 0)
-            if kt <= 0: return
-            cortes = MotorCerdo.get_cortes()
-            if not cortes: return
-            sd = sum(k for c, k in cortes)
-            if sd <= 0: return
-            
-            self._prom_tabla.blockSignals(True)
-            for r in range(min(len(cortes), self._prom_tabla.rowCount())):
-                k_nuevo = (cortes[r][1] / sd) * kt
-                self._prom_tabla.setItem(r, 1, QTableWidgetItem(f"{k_nuevo:.2f}"))
-            self._prom_tabla.blockSignals(False)
-            self._sync_calc()
-        except: pass
+        except ValueError:
+            kt = 0
+        if kt <= 0:
+            QMessageBox.information(self, "Bulto", "Cargá los kilos del bulto. Cada corte conserva su peso.")
+            return
+        self._sync_calc()
 
     def _sync_calc(self):
         kt = float(self._prom_kilos.text().replace(',', '.') or 0)

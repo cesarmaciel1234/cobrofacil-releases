@@ -365,7 +365,7 @@ class Admin1Inventario(QWidget):
                 chk = tabla.item(i, 0)
                 if not item_id:
                     continue
-                pid = item_id.text()
+                pid = self.catalogo.tabla.id_de_fila(i) or item_id.text()
                 if chk and chk.checkState() == Qt.CheckState.Checked:
                     ids_pre.add(str(pid))
         from src.ui_global.inventario_ui.moleculas.dialogo_catalogo_clientes import abrir_catalogo_clientes
@@ -431,7 +431,7 @@ class Admin1Inventario(QWidget):
             item_id = self.catalogo.tabla.item(row, 1)
             item_nom = self.catalogo.tabla.item(row, 2)
             if item_id and item_nom:
-                ids_a_borrar.append(item_id.text())
+                ids_a_borrar.append(self.catalogo.tabla.id_de_fila(row) or item_id.text())
                 nombres.append(item_nom.text())
 
         if not ids_a_borrar:

@@ -1,0 +1,20 @@
+"""De 10 huevos. Un cajón son 36. No conoce a las otras."""
+
+HUEVOS = 10
+NOMBRE = "Maple 10 huevos"
+CAJON = 360
+
+
+def salen() -> int:
+    if CAJON % HUEVOS != 0:
+        raise ValueError("10 no cierra en 360")
+    return CAJON // HUEVOS
+
+
+def stock(cajones) -> float:
+    from src.proveedor_global.frontend.formula.motores.carga import stock_de
+    return stock_de(cajones, HUEVOS)
+
+
+def cuadra() -> bool:
+    return salen() * HUEVOS == CAJON

@@ -21,6 +21,23 @@ _ACENTOS = {
     "disp": "#0F766E",
     "serv": "#7C3AED",
     "mant": "#D97706",
+    "pedido": "#2563EB",
+    "carga": "#0F766E",
+    "escaner": "#7C3AED",
+    "peso": "#D97706",
+    "fichas": "#0369A1",
+    "pago": "#059669",
+    "historial": "#7C3AED",
+    "formula": "#0F766E",
+    "carne": "#DC2626",
+    "cerdo": "#DB2777",
+    "pollo": "#D97706",
+    "huevo": "#CA8A04",
+    "congelado": "#0284C7",
+    "media_res": "#DC2626",
+    "mocho": "#B45309",
+    "pecho": "#BE123C",
+    "predictiva": "#7C3AED",
 }
 
 

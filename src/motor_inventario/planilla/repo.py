@@ -30,7 +30,7 @@ def _crear(nombre: str) -> str:
     if _es_maria():
         return f"""
             CREATE TABLE IF NOT EXISTS {nombre} (
-                producto_id BIGINT NOT NULL PRIMARY KEY,
+                producto_id VARCHAR(64) NOT NULL PRIMARY KEY,
                 codigo VARCHAR(64) NOT NULL DEFAULT '',
                 nombre VARCHAR(255) NOT NULL DEFAULT '',
                 departamento VARCHAR(255) NOT NULL DEFAULT '',
@@ -45,7 +45,7 @@ def _crear(nombre: str) -> str:
         """
     return f"""
         CREATE TABLE IF NOT EXISTS {nombre} (
-                producto_id INTEGER PRIMARY KEY,
+                producto_id TEXT PRIMARY KEY,
                 codigo TEXT DEFAULT '',
                 nombre TEXT DEFAULT '',
                 departamento TEXT DEFAULT '',
@@ -61,11 +61,13 @@ def _crear(nombre: str) -> str:
 
 
 def _ancho_id() -> None:
-    """El id del producto puede ser el código de barras. INT de MariaDB no lo entra."""
+    """El id puede ser un código de barras o formula:Pollo. BIGINT no entra el texto."""
     if not _es_maria():
         return
     for nombre in (TABLA, BORRADOR):
-        db_manager.execute_non_query(f"ALTER TABLE {nombre} MODIFY producto_id BIGINT NOT NULL")
+        db_manager.execute_non_query(
+            f"ALTER TABLE {nombre} MODIFY producto_id VARCHAR(64) NOT NULL"
+        )
 
 
 def asegurar():
@@ -82,7 +84,7 @@ def asegurar():
 def _params(filas: list[dict], ahora: str) -> list[tuple]:
     return [
         (
-            r.get("id"),
+            str(r.get("id") if r.get("id") is not None else ""),
             r.get("codigo") or "",
             r.get("nombre") or "",
             r.get("departamento") or "",
@@ -118,7 +120,7 @@ def reemplazar(filas: list[dict]) -> None:
         if not db_manager.execute_many(sql.format(tabla=TABLA), params):
             raise RuntimeError("No se pudo publicar la planilla")
     if filas:
-        ids = tuple(r.get("id") for r in filas)
+        ids = tuple(str(r.get("id") if r.get("id") is not None else "") for r in filas)
         marcas = ", ".join("?" for _ in ids)
         ok = db_manager.execute_non_query(
             f"DELETE FROM {TABLA} WHERE producto_id NOT IN ({marcas})",

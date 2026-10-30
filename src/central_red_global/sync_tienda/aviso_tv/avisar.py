@@ -41,6 +41,11 @@ def repartir_desde_maestra(server_ip: str = "") -> None:
 
     if not es_pc_maestra_local():
         return
+    try:
+        from src.cerebro_global.servicios.cache_productos import cache_productos
+        cache_productos.invalidar()
+    except Exception:
+        pass
     from src.central_red_global.sync_tienda.aviso_tv.sello import pisar_sello
 
     pisar_sello()

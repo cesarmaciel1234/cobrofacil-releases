@@ -15,6 +15,7 @@ class ColumnasCarne(IntEnum):
     VENTA_MAYOREO = 10
     GANANCIA_N = 11
     GANANCIA_M = 12
+    CODIGO = 13
 
 class MotorCarne:
     @staticmethod

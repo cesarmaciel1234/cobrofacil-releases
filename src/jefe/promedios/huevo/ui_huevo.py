@@ -197,7 +197,7 @@ class UIHuevo(QWidget):
         # Tabla con 12 columnas (igual a pollo)
         self._prom_tabla = build_table([
             "Maple Venta", "Huevos", "Costo Maple", "Precio Venta", "% Ganancia", 
-            "P. Mayoreo", "Desde unid", "% Mayoreo", "V. Costo", "V. Total", "V. Mayoreo", "Ganancia", "G. Mayoreo"
+            "P. Mayoreo", "Desde unid", "% Mayoreo", "Costo cajón", "Venta cajón", "Mayoreo cajón", "Gana cajón", "Gana mayoreo"
         ])
         self._prom_tabla.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed | QAbstractItemView.EditTrigger.AnyKeyPressed)
         self._prom_tabla.itemChanged.connect(self._on_tabla_changed)
@@ -390,6 +390,7 @@ class UIHuevo(QWidget):
         finally:
             self._prom_tabla.blockSignals(False)
             self._is_updating = False
+            self._publicar_cortes()
     
     def _sync_calc_huevo(self):
         """Calcula automáticamente los costos al cambiar el precio del cajón"""
@@ -440,6 +441,7 @@ class UIHuevo(QWidget):
         
         self._prom_tabla.blockSignals(False)
         self._sync_calc_huevo()
+        self._publicar_cortes()
     
     def _on_tabla_changed(self, item, from_calc=False):
         """Calcula automáticamente precios, ganancias y mayoreo (como pollo)"""
@@ -459,88 +461,83 @@ class UIHuevo(QWidget):
                 ct = ''.join(c for c in t if c.isdigit() or c in '.-')
                 if ct != t: item.setText(ct)
             
-            t_vn = 0.0
-            t_gn = 0.0
-            t_vo = 0.0
-            t_go = 0.0
-            
+            try:
+                precio_cajon = float(self._input_precio_cajon.text().replace(",", ".") or 0)
+            except (TypeError, ValueError):
+                precio_cajon = 0.0
+
             for r in range(self._prom_tabla.rowCount()):
                 try:
                     item_huevos = self._prom_tabla.item(r, 1)
                     huevos = int(item_huevos.text() or 0) if item_huevos else 0
-                    
-                    # Costo proporcional del maple según cantidad de huevos
-                    costo_proporcion = self._costo_maple * (huevos / 30) if self._costo_maple > 0 else 0.0
-                    self._prom_tabla.setItem(r, 2, QTableWidgetItem(f"{costo_proporcion:.2f}"))
-                    
                     pv = float(self._prom_tabla.item(r, 3).text() or 0)
                     pg = float(self._prom_tabla.item(r, 4).text() or 0)
                     pm = float(self._prom_tabla.item(r, 5).text() or 0)
                     pmg = float(self._prom_tabla.item(r, 7).text() or 0)
-                    
-                    if costo_proporcion > 0:
-                        # Recalcular % ganancia si se editó precio venta
-                        if c_ed == 4 and r == r_ed:
-                            pg = ((pv / costo_proporcion) - 1) * 100 if pv > 0 else 0.0
-                            self._prom_tabla.setItem(r, 4, QTableWidgetItem(f"{pg:.2f}"))
-                        # Recalcular precio venta si se editó % ganancia
-                        elif c_ed == 4:
-                            pv = costo_proporcion * (1 + pg / 100)
-                            self._prom_tabla.setItem(r, 3, QTableWidgetItem(f"{pv:.2f}"))
-                        
-                        # Recalcular % mayoreo si se editó precio mayoreo
-                        if c_ed == 7 and r == r_ed:
-                            pmg = ((pm / costo_proporcion) - 1) * 100 if pm > 0 else 0.0
-                            self._prom_tabla.setItem(r, 7, QTableWidgetItem(f"{pmg:.2f}"))
-                        # Recalcular precio mayoreo si se editó % mayoreo
-                        elif c_ed == 7:
-                            pm = costo_proporcion * (1 + pmg / 100)
-                            self._prom_tabla.setItem(r, 5, QTableWidgetItem(f"{pm:.2f}"))
-                    else:
-                        if from_calc:
-                            pg = 0.0
-                            pmg = 0.0
-                            self._prom_tabla.setItem(r, 4, QTableWidgetItem("0.00"))
-                            self._prom_tabla.setItem(r, 7, QTableWidgetItem("0.00"))
-                    
-                    # Cálculos de totales
-                    v_costo = costo_proporcion
-                    if pv > 0:
-                        vn = pv
-                        gn = vn - v_costo
-                    else:
-                        vn = 0.0
-                        gn = 0.0
-                    t_vn += vn
-                    t_gn += gn
-                    
-                    if pm > 0:
-                        vo = pm
-                        go = vo - v_costo
-                    else:
-                        vo = 0.0
-                        go = 0.0
-                    t_vo += vo
-                    t_go += go
-                    
-                    self._prom_tabla.setItem(r, 8, QTableWidgetItem(f"{v_costo:.2f}"))
-                    self._prom_tabla.setItem(r, 9, QTableWidgetItem(f"{vn:.2f}"))
-                    self._prom_tabla.setItem(r, 10, QTableWidgetItem(f"{vo:.2f}"))
-                    self._prom_tabla.setItem(r, 11, QTableWidgetItem(f"{gn:.2f}"))
-                    self._prom_tabla.setItem(r, 12, QTableWidgetItem(f"{go:.2f}"))
-                except: pass
-            
-            # Actualizar totales
+                    cuenta = MotorHuevo.ganancia_de_cajon(precio_cajon, huevos, pv, pm)
+                    costo = cuenta["costo"]
+                    self._set_num(r, 2, costo)
+                    if costo > 0 and c_ed == 4 and r == r_ed:
+                        pv = costo * (1 + pg / 100)
+                        self._set_num(r, 3, pv)
+                        cuenta = MotorHuevo.ganancia_de_cajon(precio_cajon, huevos, pv, pm)
+                    elif costo > 0 and pv > 0:
+                        self._set_num(r, 4, cuenta["pct"])
+                    if costo > 0 and c_ed == 7 and r == r_ed:
+                        pm = costo * (1 + pmg / 100)
+                        self._set_num(r, 5, pm)
+                        cuenta = MotorHuevo.ganancia_de_cajon(precio_cajon, huevos, pv, pm)
+                    elif costo > 0 and pm > 0:
+                        self._set_num(r, 7, cuenta["pct_mayoreo"])
+                    self._set_num(r, 8, precio_cajon if huevos > 0 else 0)
+                    self._set_num(r, 9, cuenta["venta"])
+                    self._set_num(r, 10, cuenta["venta_mayoreo"])
+                    self._set_num(r, 11, cuenta["ganancia"])
+                    self._set_num(r, 12, cuenta["ganancia_mayoreo"])
+                except Exception:
+                    pass
+
             self._lbl_totales.setText(
-                f'<span style="color: #10B981;">Normal =&gt; Venta: ${t_vn:,.2f} | Ganancia: ${t_gn:,.2f}</span>'
-                f'&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;&nbsp;'
-                f'<span style="color: #3B82F6;">Mayoreo =&gt; Venta: ${t_vo:,.2f} | Ganancia: ${t_go:,.2f}</span>'
+                "Cada fila es un cajón vendido por esa fórmula. "
+                "La ganancia de mayor sale si esa fila tiene precio de mayoreo. No se suman."
             )
             
         finally:
             self._prom_tabla.blockSignals(False)
             self._is_updating = False
-    
+            self._publicar_cortes()
+
+    def _set_num(self, fila, col, valor):
+        item = QTableWidgetItem(f"{float(valor or 0):,.2f}")
+        if col in (2, 8, 9, 10, 11, 12):
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        self._prom_tabla.setItem(fila, col, item)
+
+    def _publicar_cortes(self):
+        filas = []
+        try:
+            for r in range(self._prom_tabla.rowCount()):
+                nombre_item = self._prom_tabla.item(r, 0)
+                huevos_item = self._prom_tabla.item(r, 1)
+                nombre = nombre_item.text().strip() if nombre_item else ""
+                huevos = huevos_item.text().strip() if huevos_item else ""
+                if nombre:
+                    filas.append((nombre, huevos))
+        except Exception:
+            return
+        try:
+            from src.base_de_datos.database import db_manager
+            from src.proveedor_global.frontend.formula.motores.lectura import publicar
+            publicar(db_manager, "Huevo", filas)
+        except Exception:
+            pass
+        try:
+            from src.base_de_datos.database import db_manager
+            from src.proveedor_global.frontend.formula.motores.carga import de_un_cajon, publicar_formula
+            publicar_formula(db_manager, de_un_cajon(filas), "Cajón de huevo")
+        except Exception:
+            pass
+
     def _cargar_filas_defecto(self):
         """Carga las filas por defecto para huevo (maples de venta)"""
         # Maples de venta: 30, 15, 10, 6 huevos

@@ -137,7 +137,7 @@ def test_si_la_planilla_no_contesta_el_conteo_queda(monkeypatch):
 def test_el_ingreso_avisa_una_vez(monkeypatch):
     from src.base_de_datos.database import db_manager
     from src.motor_inventario.planilla.orquestador import MotorPlanilla
-    from src.proveedor_global.backend.recepcion_service import FichaProveedor, RecepcionService
+    from src.proveedor_global.backend.recepcion_service import RecepcionService
 
     def execute_non_query(sql, params=()):
         return True
@@ -150,7 +150,6 @@ def test_el_ingreso_avisa_una_vez(monkeypatch):
     avisos = []
     monkeypatch.setattr(db_manager, "execute_non_query", execute_non_query)
     monkeypatch.setattr(db_manager, "execute_query", execute_query)
-    monkeypatch.setattr(FichaProveedor, "obtener_o_crear", staticmethod(lambda nombre: None))
     monkeypatch.setattr(MotorPlanilla, "avisar", staticmethod(lambda: avisos.append(1)))
 
     ok, _msg, resumen = RecepcionService.procesar_ingreso_mercaderia(

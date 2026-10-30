@@ -35,6 +35,8 @@ No devolver `9999999`. No borrar `request_id` del cobro ni del motor. No ignorar
 src/base_de_datos/repos/red.py (asegurar_lectura_tienda)
 Cuando una caja esclava pierde red, entra en SQLite local. Los intentos de reconexion al MariaDB de la Maestra (reconectar_mariadb) se realizan en un hilo asincrono (threading.Thread). Esto evita colgar la UI (2 a 5 segundos de timeout) cada vez que el cajero escanea o cobra mientras la red esta caida.
 
+`offline_nutricion.py` también sube, al oler el WiFi, los proveedores, los enlaces y las ediciones de producto armadas en casa. `encolar_producto` guarda la ficha por id. `productos_pendientes` es lo que el catálogo pinta encima de la copia. El id del proveedor no se inventa en la notebook: nace con `AUTO_INCREMENT` en la maestra y el vínculo se reescribe con ese id. `quitar_vinculo` anota la baja: al reconectar se borra el enlace y no se vuelve a subir.
+
 ## Autoblindaje de Base de Datos
 
 La rama es `src/base_de_datos/autoblindaje/` (README). La puerta `autoblindaje_db.py` solo importa `AutoBlindajeDB`.

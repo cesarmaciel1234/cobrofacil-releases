@@ -4,6 +4,41 @@ from src.base_de_datos.database import db_manager
 
 logger = logging.getLogger("buscador_productos")
 
+
+def _fusionar_ediciones(filas: list[dict]) -> list[dict]:
+    """La copia de la tienda no trae lo editado en casa. Se pisa con la cola."""
+    if not filas:
+        return filas
+    try:
+        from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+
+        pendientes = offline_nutricion_manager.productos_pendientes()
+    except Exception:
+        return filas
+    por_id = {}
+    bajas_id = set()
+    for registro in pendientes or []:
+        if registro.get("baja"):
+            if registro.get("id") not in (None, ""):
+                bajas_id.add(str(registro.get("id")))
+            continue
+        datos = registro.get("datos") or {}
+        pid = datos.get("id") if datos.get("id") not in (None, "") else registro.get("id")
+        if pid not in (None, ""):
+            por_id[str(pid)] = datos
+    if bajas_id:
+        filas = [fila for fila in filas if str(fila.get("id")) not in bajas_id]
+    if not por_id:
+        return filas
+    for fila in filas:
+        cambio = por_id.get(str(fila.get("id")))
+        if not cambio:
+            continue
+        for clave, valor in cambio.items():
+            if clave != "id" and valor is not None:
+                fila[clave] = valor
+    return filas
+
 def _get_join_departamentos_clause():
     """Genera la cláusula de JOIN compatible e indexada según el motor de base de datos."""
     if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite":
@@ -85,7 +120,7 @@ def buscar_productos_en_db(buscar="", depto="", limite=50, offset=0):
     try:
         resultados = db_manager.execute_query(query, params) or []
         # Convertimos las filas a diccionarios estándar de inmediato
-        resultados_dict = [dict(r) for r in resultados]
+        resultados_dict = _fusionar_ediciones([dict(r) for r in resultados])
 
         if len(resultados_dict) > limite:
             return resultados_dict[:limite], True
@@ -106,7 +141,8 @@ def buscar_producto_por_id(producto_id):
         )
         resultados = db_manager.execute_query(query, (producto_id,))
         if resultados:
-            return dict(resultados[0])
+            filas = _fusionar_ediciones([dict(resultados[0])])
+            return filas[0] if filas else None
     except Exception as e:
         logger.error(f"Error al buscar producto por ID {producto_id}: {e}")
     return None
@@ -125,7 +161,8 @@ def buscar_producto_por_codigo(codigo):
         )
         resultados = db_manager.execute_query(query, (codigo,))
         if resultados:
-            return dict(resultados[0])
+            filas = _fusionar_ediciones([dict(resultados[0])])
+            return filas[0] if filas else None
     except Exception as e:
         logger.error(f"Error al buscar producto por codigo {codigo}: {e}")
     return None

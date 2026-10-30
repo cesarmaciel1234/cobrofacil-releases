@@ -286,7 +286,13 @@ class OfflineSync:
             ok, _msg, stats = offline_nutricion_manager.nutrir_maestra(db_manager)
             ventas = int(self.sync_pendientes() or 0)
             stats = stats or {}
-            cambios = int(stats.get("productos", 0) or 0) + int(stats.get("recepciones", 0) or 0) + int(stats.get("clientes", 0) or 0)
+            cambios = (
+                int(stats.get("productos", 0) or 0)
+                + int(stats.get("recepciones", 0) or 0)
+                + int(stats.get("clientes", 0) or 0)
+                + int(stats.get("proveedores", 0) or 0)
+                + int(stats.get("vinculos", 0) or 0)
+            )
             if ventas or cambios:
                 logger.info("tickets  subidos a la maestra: %s  cambios %s", ventas, cambios)
                 try:
@@ -379,6 +385,7 @@ class OfflineSync:
           - Sube modificaciones de productos y precios hechas en casa.
           - Sube recepciones de mercadería y compras cargadas con escáner.
           - Sube altas y ediciones de clientes.
+          - Sube proveedores y enlaces armados en casa. El id nace en la maestra.
           - Sube tickets de venta guardados en el buffer offline.
           - Avisa por red LAN a todas las terminales y TVs.
         FASE 2 (Nutrir Notebook - Download):
@@ -594,13 +601,13 @@ class OfflineSync:
                 if v_ids:
                     min_id = min(v_ids)
                     detalles_rec = db_manager.execute_query("""
-                        SELECT id, venta_id, producto_id, nombre_producto, cantidad, precio_unitario, subtotal
+                        SELECT id, id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal
                         FROM detalles_ventas
-                        WHERE venta_id >= ?
+                        WHERE id_venta >= ?
                     """, (min_id,))
                     if detalles_rec:
                         reg_d = [
-                            (d.get('id'), d.get('venta_id'), d.get('producto_id'),
+                            (d.get('id'), d.get('id_venta'), d.get('id_producto'),
                              d.get('nombre_producto', ''), d.get('cantidad', 1),
                              d.get('precio_unitario', 0), d.get('subtotal', 0))
                             for d in detalles_rec

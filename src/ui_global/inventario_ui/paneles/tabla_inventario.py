@@ -36,7 +36,7 @@ class TablaInventario(QTableWidget):
 
     # Oferta (lectura; se edita en Ofertas). Mayoreo (Inventario + Promedios jefe).
     HEADERS = [
-        "", "ID / Cód", "Producto", "Depto", "IVA %",
+        "", "Código", "Producto", "Depto", "IVA %",
         "Costo", "P. venta",
         "Cant. of.", "P. oferta", "Relámpago",
         "Cant. may.", "P. mayoreo",
@@ -67,7 +67,7 @@ class TablaInventario(QTableWidget):
         self.setFont(fuente)
         self.horizontalHeader().setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
 
-        col_widths = [36, 100, -1, 110, 64, 90, 100, 80, 96, 96, 80, 96, 70, 70, 80, 96]
+        col_widths = [36, 168, -1, 110, 64, 90, 100, 80, 96, 96, 80, 96, 70, 70, 80, 96]
         hh = self.horizontalHeader()
         hh.setMinimumSectionSize(56)
         hh.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -84,6 +84,12 @@ class TablaInventario(QTableWidget):
 
     def set_datos(self, filas):
         """Asigna todas las filas y carga la primera pagina."""
+        try:
+            from src.base_de_datos.database import db_manager
+            from src.jefe.promedios.formula.intermediario import aplicar_filas
+            filas = aplicar_filas(db_manager, filas)
+        except Exception:
+            pass
         self.all_rows = filas
         self._depto_color_map = {}
         self.loaded_count = 0
@@ -128,7 +134,12 @@ class TablaInventario(QTableWidget):
             for i in range(inicio, fin):
                 r = self.all_rows[i]
                 dep = r.get("departamento") or ""
-                stock = _n(r.get("stock"))
+                if r.get("stock_texto"):
+                    stock = _n(r.get("stock_vista"))
+                    texto_stock = str(r.get("stock_texto"))
+                else:
+                    stock = _n(r.get("stock"))
+                    texto_stock = _fmt_num(stock)
                 uni = (r.get("unidad") or "UN").upper()
                 tipo = "KILO" if uni == "KG" else "UNIDAD"
 
@@ -155,13 +166,15 @@ class TablaInventario(QTableWidget):
                 chk.setBackground(row_bg)
                 self.setItem(i, 0, chk)
 
+                codigo = str(r.get("codigo") or "").strip()
+                id_real = str(r.get("id") or "")
                 cant_of = _n(r.get("cant_oferta"))
                 precio_of = _n(r.get("precio_oferta"))
                 relampago = _n(r.get("precio_oferta_relampago"))
                 cant_may = _n(r.get("cant_mayoreo"))
                 precio_may = _n(r.get("precio_mayoreo"))
                 vals = [
-                    (str(r.get("id")), Qt.AlignmentFlag.AlignRight, f_id),
+                    (codigo or id_real, Qt.AlignmentFlag.AlignLeft, f_id),
                     (r.get("nombre") or "", Qt.AlignmentFlag.AlignLeft, f_nombre),
                     (dep, Qt.AlignmentFlag.AlignLeft, f_nombre),
                     (f"{depto_iva:.0f}%", Qt.AlignmentFlag.AlignCenter, f_numero),
@@ -175,7 +188,7 @@ class TablaInventario(QTableWidget):
                     (_fmt_num(r.get("stock_minimo")), Qt.AlignmentFlag.AlignCenter, f_numero),
                     (_fmt_num(r.get("stock_maximo")), Qt.AlignmentFlag.AlignCenter, f_numero),
                     (tipo, Qt.AlignmentFlag.AlignCenter, f_nombre),
-                    (_fmt_num(stock), Qt.AlignmentFlag.AlignRight, f_numero),
+                    (texto_stock, Qt.AlignmentFlag.AlignRight, f_numero),
                 ]
 
                 for j, (v, align, font_col) in enumerate(vals, 1):
@@ -204,6 +217,10 @@ class TablaInventario(QTableWidget):
                     if j == idx_tipo:
                         it.setForeground(color_tipo)
 
+                    if j == 1:
+                        it.setData(Qt.ItemDataRole.UserRole, id_real)
+                        if codigo and codigo != id_real:
+                            it.setToolTip(f"Id {id_real}")
                     self.setItem(i, j, it)
 
             self.loaded_count = fin
@@ -221,19 +238,28 @@ class TablaInventario(QTableWidget):
         sel = len(self.selectedItems()) // len(self.HEADERS)
         self.seleccion_cambiada.emit(sel)
 
+    def id_de_fila(self, row):
+        """El id real. La celda muestra el código de barras."""
+        item = self.item(row, 1)
+        if not item:
+            return None
+        guardado = item.data(Qt.ItemDataRole.UserRole)
+        if guardado not in (None, ""):
+            return str(guardado)
+        return item.text() or None
+
     def _on_double_click(self):
         row = self.currentRow()
         if row != -1:
-            item_id = self.item(row, 1)
-            if item_id:
-                self.producto_doble_clic.emit(item_id.text())
+            pid = self.id_de_fila(row)
+            if pid:
+                self.producto_doble_clic.emit(pid)
 
     def obtener_producto_id_seleccionado(self):
         row = self.currentRow()
         if row == -1:
             return None
-        item_id = self.item(row, 1)
-        return item_id.text() if item_id else None
+        return self.id_de_fila(row)
 
     def aplicar_tema(self, bg, text, border, hover, sel_bg, sel_text, header_bg, header_text):
         self.setStyleSheet(f"""

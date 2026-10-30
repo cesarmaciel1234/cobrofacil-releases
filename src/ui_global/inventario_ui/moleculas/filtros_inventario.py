@@ -46,16 +46,17 @@ class FiltrosInventario(QFrame):
         self.cmb_depto.currentIndexChanged.connect(self.filtros_cambiados.emit)
         layout.addWidget(self.cmb_depto)
 
-        self.chk_urgencia = QCheckBox("Urgencia: vender sin stock")
+        self.chk_urgencia = QCheckBox("No vender sin stock")
         self.chk_urgencia.setToolTip(
-            "Solo para emergencias. El cajero podrá vender aunque no haya existencia."
+            "Marcado: el cajero no vende si no hay existencia. "
+            "Sin marcar: el stock sigue en -1, -2, -3 hasta que cargues mercadería."
         )
         self.chk_urgencia.setStyleSheet(
-            "QCheckBox { font-weight: 800; font-size: 13px; color: #991B1B; padding: 8px 12px; "
-            "border: 1px solid #FECACA; border-radius: 8px; background: #FFF7ED; }"
+            "QCheckBox { font-weight: 800; font-size: 13px; color: #334155; padding: 8px 12px; "
+            "border: 1px solid #CBD5E1; border-radius: 8px; background: white; }"
             "QCheckBox::indicator { width: 20px; height: 20px; }"
         )
-        self.chk_urgencia.setChecked(bool(config.get("opt_stock_negativo", False)))
+        self.chk_urgencia.setChecked(not bool(config.get("opt_stock_negativo", True)))
         self.chk_urgencia.toggled.connect(self.urgencia_toggled.emit)
         layout.addWidget(self.chk_urgencia)
 

@@ -147,10 +147,26 @@ class MotorPromedios:
                 "INSERT INTO historial_promedios (tipo_carne, fecha_guardado, proveedor, kilos_base, precio_kg_base, datos_json) VALUES (?, ?, ?, ?, ?, ?)",
                 (tipo_carne, fecha_str, prov, kilos, precio, datos_json)
             )
+            _publicar_orden(db, tipo_carne, estado_promedio)
             return True
         except Exception as e:
             print("Error al guardar historial:", e)
             return False
+
+    @staticmethod
+    def guardar_formula(db, tipo_carne: str, estado_promedio: dict):
+        """Deja el producto, los kilos de cada corte y los kilos del bulto. No pide proveedor ni precio."""
+        from src.jefe.promedios.receta import revisar
+
+        error = revisar(
+            (estado_promedio or {}).get("filas"),
+            (estado_promedio or {}).get("kilos"),
+        )
+        if error:
+            return False, error
+        if not _publicar_orden(db, tipo_carne, estado_promedio or {}):
+            return False, "No se pudo guardar la fórmula."
+        return True, ""
 
     @staticmethod
     def obtener_historial(db, tipo_carne: str):
@@ -184,3 +200,87 @@ class MotorPromedios:
         except Exception as e:
             print("Error al cargar historial:", e)
             return []
+
+
+def _num_orden(valor) -> float:
+    texto = str(valor or "").strip().replace(" ", "")
+    if not texto:
+        return 0.0
+    if "," in texto and "." in texto:
+        texto = texto.replace(",", "")
+    else:
+        texto = texto.replace(",", ".")
+    try:
+        return float(texto)
+    except ValueError:
+        return 0.0
+
+
+def _tipo_orden(tipo: str) -> str:
+    bajo = str(tipo or "").strip().lower()
+    return {
+        "media res": "Media res",
+        "mocho": "Mocho",
+        "pecho": "Pecho",
+        "pollo": "Pollo",
+        "cerdo": "Cerdo",
+        "huevo": "Huevo",
+        "congelado": "Congelado",
+    }.get(bajo, "")
+
+
+def _publicar_orden(db, tipo_carne: str, estado: dict) -> bool:
+    """Deja los kilos, la merma, el costo y los kilos del bulto. La fórmula los acepta sin recalcular."""
+    tipo = _tipo_orden((estado or {}).get("orden") or tipo_carne)
+    if not tipo:
+        return False
+    cortes = []
+    costo = 0.0
+    for fila in (estado or {}).get("filas") or []:
+        if not isinstance(fila, (list, tuple)) or len(fila) < 2:
+            continue
+        nombre = str(fila[0] or "").strip()
+        kilos = _num_orden(fila[1])
+        codigo = str(fila[13]).strip() if len(fila) > 13 else ""
+        if nombre and kilos > 0:
+            cortes.append([nombre, kilos, codigo])
+        if costo <= 0 and len(fila) > 2:
+            costo = _num_orden(fila[2])
+    if not cortes:
+        return False
+    datos = {
+        "cortes": cortes,
+        "merma": _num_orden((estado or {}).get("merma")),
+        "costo_kg": costo,
+        "kilos_bulto": _num_orden((estado or {}).get("kilos")),
+    }
+    payload = json.dumps(datos)
+    copia = False
+    try:
+        from src.proveedor_global.frontend.formula.motores.orden import guardar_copia
+        copia = guardar_copia(tipo, datos)
+    except Exception:
+        copia = False
+    hecho = db.execute_non_query(
+        "CREATE TABLE IF NOT EXISTS formula_orden (tipo VARCHAR(40) PRIMARY KEY, orden_json TEXT)"
+    )
+    if not hecho:
+        hecho = db.execute_non_query(
+            "CREATE TABLE IF NOT EXISTS formula_orden (tipo TEXT PRIMARY KEY, orden_json TEXT)"
+        )
+    if not hecho:
+        return copia
+    try:
+        from src.proveedor_global.frontend.formula.motores.orden import tabla_presente
+        tabla_presente()
+    except Exception:
+        pass
+    try:
+        db.execute_non_query("DELETE FROM formula_orden WHERE tipo = ?", (tipo,))
+        ok = db.execute_non_query(
+            "INSERT INTO formula_orden (tipo, orden_json) VALUES (?, ?)",
+            (tipo, payload),
+        )
+        return bool(ok) or copia
+    except Exception:
+        return copia

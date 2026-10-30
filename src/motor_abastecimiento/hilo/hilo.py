@@ -38,7 +38,7 @@ class HiloReposicion(QThread):
             if not _ya_hay_pase() and not _lectura_local():
                 MotorPlanilla.esperar(8)
             elif not _primer_pase.is_set() and _lectura_local():
-                MotorPlanilla.esperar(0.4)
+                MotorPlanilla.esperar(3)
             self.listo.emit(MotorAbastecimiento.obtener_resumen_reposicion() or {})
         except Exception as exc:
             logger.warning("Hilo de reposición vacío: %s", exc)

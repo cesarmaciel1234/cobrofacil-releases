@@ -80,6 +80,17 @@ def guardar_producto_en_db(datos_producto, es_nuevo=True, producto_id=None):
             exito = db_manager.execute_non_query(query, valores)
 
         if exito:
+            if "stock" in params and target_id is not None:
+                try:
+                    from src.proveedor_global.frontend.formula.motores.extension import seguir
+                    seguir(db_manager, target_id)
+                except Exception:
+                    pass
+                try:
+                    from src.motor_inventario.planilla.orquestador import MotorPlanilla
+                    MotorPlanilla.avisar()
+                except Exception:
+                    pass
             try:
                 from src.cerebro_global.motor_global import invalidar_catalogo
                 invalidar_catalogo()
@@ -131,7 +142,23 @@ def comprobar_si_codigo_existe(codigo, id_excluir=None):
             res = db_manager.execute_query("SELECT id FROM productos WHERE codigo=? AND id!=?", (codigo, id_excluir))
         else:
             res = db_manager.execute_query("SELECT id FROM productos WHERE codigo=?", (codigo,))
-        return bool(res)
+        if not res:
+            return False
+        try:
+            from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+            bajas = {
+                str(p.get("id"))
+                for p in offline_nutricion_manager.productos_pendientes()
+                if p.get("baja") and p.get("id") not in (None, "")
+            }
+        except Exception:
+            bajas = set()
+        vivas = []
+        for fila in res:
+            ident = fila.get("id") if isinstance(fila, dict) else fila[0]
+            if str(ident) not in bajas:
+                vivas.append(fila)
+        return bool(vivas)
     except Exception as e:
         logger.error(f"Error comprobando codigo existente ({codigo}): {e}")
         return False

@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QFormLayout, QTreeWidget, QTreeWidgetItem, QSplitter,
     QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QColor, QFont, QBrush
 
 # Removed db_manager import
@@ -21,6 +21,8 @@ class DialogoProducto(QDialog):
         self.setFixedSize(780, 680)
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI', sans-serif;")
         self._id = dict(datos).get('id') if datos else None
+        self._abierto_con_id = bool(self._id)
+        self._codigo_original = str(dict(datos).get('codigo') or '') if datos else ''
         self._cant_oferta = dict(datos).get('cant_oferta', 0.0) if datos else 0.0
         self._precio_oferta = dict(datos).get('precio_oferta', 0.0) if datos else 0.0
         self.setup_ui(datos)
@@ -43,8 +45,12 @@ class DialogoProducto(QDialog):
 
         lbl_bc = QLabel("CÓDIGO DE BARRAS / PLU:")
         lbl_bc.setStyleSheet("font-weight: bold; font-size: 11px; border: none; color: #64748B;")
-        self.txt_codigo = QLineEdit(dict(datos).get('codigo', '') if datos else '')
-        self.txt_codigo.setPlaceholderText("Escanea o escribe el código...")
+        codigo_inicial = str(dict(datos).get('codigo') or '').strip() if datos else ''
+        if datos and not codigo_inicial and dict(datos).get('id'):
+            codigo_inicial = str(dict(datos).get('id')).strip()
+        self.txt_codigo = QLineEdit(codigo_inicial)
+        if not datos:
+            self.txt_codigo.setPlaceholderText("Escanea o escribe el código...")
         self.txt_codigo.setStyleSheet("""
             QLineEdit {
                 background: #F8FAFC; border: 2px solid transparent; border-bottom: 2px solid #CBD5E1; border-radius: 8px;
@@ -57,10 +63,6 @@ class DialogoProducto(QDialog):
             }
         """)
 
-        self._barcode_timer = QTimer(self)
-        self._barcode_timer.setSingleShot(True)
-        self._barcode_timer.timeout.connect(self._verificar_codigo)
-        self.txt_codigo.textChanged.connect(lambda: self._barcode_timer.start(400))
         self.txt_codigo.returnPressed.connect(self._verificar_codigo)
 
         bar_lay.addWidget(lbl_bc)
@@ -90,8 +92,14 @@ class DialogoProducto(QDialog):
             self.cmb_cat.addItems(cats_names)
         except: pass
 
-        idx_cat = self.cmb_cat.findText(dict(datos).get('categoria', 'GENERAL') if datos else 'GENERAL')
-        if idx_cat >= 0: self.cmb_cat.setCurrentIndex(idx_cat)
+        cat_txt = str(dict(datos).get('categoria') or '') if datos else 'GENERAL'
+        idx_cat = self.cmb_cat.findText(cat_txt) if cat_txt else -1
+        if idx_cat >= 0:
+            self.cmb_cat.setCurrentIndex(idx_cat)
+        elif cat_txt:
+            self.cmb_cat.setEditText(cat_txt)
+        else:
+            self.cmb_cat.setCurrentIndex(-1)
 
         self.add_field_v(col_izq, "Departamento (Mercadería):", self.cmb_cat)
 
@@ -316,14 +324,16 @@ class DialogoProducto(QDialog):
         return inp
 
     def _verificar_codigo(self):
-        if hasattr(self, '_barcode_timer'):
-            self._barcode_timer.stop()
         cod = self.txt_codigo.text().strip()
         if not cod:
             self._reset_barcode_style()
             return
 
-        # Prevenir recarga si ya estamos editando este mismo producto
+        # Editando: el texto del código es el que se guarda. No se cambia de producto.
+        if self._abierto_con_id:
+            self._reset_barcode_style()
+            return
+
         if getattr(self, '_id', None) and getattr(self, '_last_loaded_codigo', None) == cod:
             return
 
@@ -434,22 +444,11 @@ class DialogoProducto(QDialog):
 
         from src.motor_inventario.motor_catalogo import MotorCatalogo
         if cod and MotorCatalogo().verificar_codigo_existe(cod, self._id):
-            ans = QMessageBox.question(
-                self, "Código Duplicado",
-                f"⚠️ Atención: El código de barras '{cod}' ya está asignado a otro producto.\n\n¿Deseas guardarlo de todos modos?",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+            QMessageBox.warning(
+                self, "Código duplicado",
+                f"El código {cod} ya está en otro producto. El código no se repite.",
             )
-            if ans == QMessageBox.No:
-                return
-
-        if MotorCatalogo().verificar_nombre_existe(nom, self._id):
-            ans = QMessageBox.question(
-                self, "Nombre Duplicado",
-                f"⚠️ Atención: Ya existe un producto con el nombre '{nom}'.\n\n¿Deseas registrar este duplicado de todos modos?",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-            )
-            if ans == QMessageBox.No:
-                return
+            return
 
         self.accept()
 
@@ -489,7 +488,7 @@ class DialogoProducto(QDialog):
             'stock_minimo':parse_f(self.txt_min.text()),
             'stock_maximo':parse_f(self.txt_max.text()),
             'departamento':self.cmb_depto.currentText().strip() or None,
-            'categoria':self.cmb_cat.currentText().strip() or 'GENERAL',
+            'categoria':self.cmb_cat.currentText().strip() or ('' if self._abierto_con_id else 'GENERAL'),
             'unidad':self.cmb_uni.currentText(),
             'es_pesable':1 if self.cmb_uni.currentText() == 'KG' else 0,
         }

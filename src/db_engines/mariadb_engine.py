@@ -45,6 +45,10 @@ class MariaDBCursorWrapper:
     def lastrowid(self):
         return self._cursor.lastrowid
 
+    @property
+    def rowcount(self):
+        return self._cursor.rowcount
+
     def __enter__(self):
         return self
 

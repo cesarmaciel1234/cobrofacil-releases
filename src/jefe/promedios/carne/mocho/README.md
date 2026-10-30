@@ -3,3 +3,5 @@ Contiene la vista y el motor matemático exclusivo para carne/mocho.
 Al cargar la interfaz, solo se precargan los cortes y kilos por defecto. El resto de la tabla se inicializa en 0 o vacío para evitar cálculos fantasma.
 Al editar cualquier celda de la tabla, su motor interno recalcula las 12 columnas en orden:
 Corte | Kilos | Costo$/kg | Precio Venta | % Ganancia | P. Mayoreo | Desde kg | % Mayoreo | V. Total | V. Mayoreo | Ganancia | G. Mayoreo
+
+La recepción de este bulto usa el método de `../README.md`. Solo entran los cortes de mocho. No arrastra el pecho ni la media res.

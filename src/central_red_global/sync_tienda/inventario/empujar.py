@@ -15,6 +15,13 @@ def empujar_producto_a_maestra(datos: dict) -> bool:
         return False
     from src.base_de_datos.database import db_manager
 
+    if getattr(db_manager, "_forced_local_offline", False):
+        try:
+            from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+            offline_nutricion_manager.encolar_producto(datos)
+        except Exception:
+            pass
+        return False
     if getattr(db_manager, "db_engine_type", "") == "mariadb" and db_manager.is_connected():
         from src.central_red_global.sync_tienda.aviso_tv import avisar_datos_nuevos
 

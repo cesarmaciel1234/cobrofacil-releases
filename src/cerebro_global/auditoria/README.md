@@ -10,9 +10,9 @@ Clase `MotorAuditoria`. Todo es estático y habla con la base que le pasan.
 
 `obtener_inventario` lee `productos`: id, codigo, nombre, departamento, precio, stock, unidad, es_pesable. Orden: departamento, nombre. Si falla, devuelve lista vacía.
 
-`leer_producto` hace `SELECT id, codigo, nombre, stock FROM productos WHERE id = ?`. Es la lectura que usa el conector antes del SET, para no depender del catálogo.
+`leer_producto` le pregunta a `motor_inventario/puerta.por_id`. Es la lectura que usa el conector antes del SET, para no depender del catálogo.
 
-`aplicar_ajuste_stock` ejecuta `UPDATE productos SET stock = ? WHERE id = ?`. Un solo update. Pone el stock en el número contado. No resta.
+`aplicar_ajuste_stock` le pide a `puerta.fijar` que deje el stock en el número contado. No resta. Si la puerta no contesta, devuelve falso.
 
 `registrar_ajuste` solo inserta en `auditorias_inventario`. No toca `productos`. Campos: producto_id, nombre_producto, stock_sistema, stock_fisico, diferencia, responsable, motivo.
 

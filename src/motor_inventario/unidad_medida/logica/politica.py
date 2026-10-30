@@ -1,8 +1,8 @@
 def permitir_cobro_sin_stock() -> bool:
-    """True solo si la opción 'Permitir vender sin stock' está prendida."""
+    """True si «No vender sin stock» está apagado y el stock puede seguir en negativo."""
     from src.config import config
 
-    return bool(config.get("opt_stock_negativo", False))
+    return bool(config.get("opt_stock_negativo", True))
 
 
 def alcanza_stock(disponible, cantidad, permitir_negativo: bool) -> bool:

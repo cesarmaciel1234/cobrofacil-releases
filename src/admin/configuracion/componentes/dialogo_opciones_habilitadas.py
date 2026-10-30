@@ -39,7 +39,7 @@ class DialogoOpcionesHabilitadas(QDialog):
 
         # Opciones
         self.opciones = [
-            ("opt_stock_negativo", "Permitir vender sin stock (Stock Negativo)", False),
+            ("opt_stock_negativo", "No vender sin stock", False),
             ("opt_ventas_credito", "Habilitar Ventas a Crédito (Fiado)", True),
             ("opt_impresion_auto", "Imprimir ticket automáticamente al cobrar", True),
             ("opt_corte_papel_sin_ticket", "Cortar papel (ruido) aunque no se imprima el ticket", False),
@@ -68,8 +68,10 @@ class DialogoOpcionesHabilitadas(QDialog):
             lbl.setStyleSheet("font-size: 13px; font-weight: bold;  border: none;")
 
             chk = QCheckBox()
-            # Leer de config
-            chk.setChecked(config.get(key, default))
+            if key == "opt_stock_negativo":
+                chk.setChecked(not bool(config.get(key, True)))
+            else:
+                chk.setChecked(config.get(key, default))
             chk.setStyleSheet("""
                 QCheckBox::indicator { width: 40px; height: 20px; }
                 QCheckBox::indicator:unchecked { image: none;  border-radius: 10px; }
@@ -95,7 +97,11 @@ class DialogoOpcionesHabilitadas(QDialog):
 
     def guardar(self):
         for key, _, _ in self.opciones:
-            config.set(key, self.checkboxes[key].isChecked())
+            marcado = self.checkboxes[key].isChecked()
+            if key == "opt_stock_negativo":
+                config.set(key, not marcado)
+            else:
+                config.set(key, marcado)
 
         QMessageBox.information(self, "Guardado", "Los permisos y opciones han sido actualizados exitosamente.")
         self.accept()

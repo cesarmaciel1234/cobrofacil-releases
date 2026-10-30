@@ -13,7 +13,16 @@ def descontar_stock(cursor, producto_id, cantidad) -> None:
     from src.config import config
 
     cant = cantidad or 0
-    if config.get("opt_stock_negativo", False):
+    try:
+        from src.proveedor_global.frontend.formula.motores.pieza import original_id
+        destino = original_id(cursor, producto_id)
+    except Exception:
+        destino = None
+    if destino:
+        producto_id = destino
+    if _consumir_formula(cursor, producto_id, cant):
+        return
+    if config.get("opt_stock_negativo", True):
         cursor.execute(
             "UPDATE productos SET stock = stock - ? WHERE id = ?",
             (cant, producto_id),
@@ -25,3 +34,21 @@ def descontar_stock(cursor, producto_id, cantidad) -> None:
     )
     if getattr(cursor, "rowcount", None) == 0:
         raise SinStock(producto_id)
+
+
+def _consumir_formula(cursor, producto_id, cantidad) -> bool:
+    try:
+        from src.jefe.promedios.formula.motor import consumir_base
+        if consumir_base(cursor, producto_id, cantidad):
+            return True
+    except SinStock:
+        raise
+    except Exception:
+        pass
+    try:
+        from src.proveedor_global.frontend.formula.motores.verdad import consumir
+        return bool(consumir(cursor, producto_id, cantidad))
+    except SinStock:
+        raise
+    except Exception:
+        return False

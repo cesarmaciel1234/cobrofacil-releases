@@ -1,4 +1,4 @@
-"""Ficha del proveedor. El id nace en la maestra y no se inventa sin red."""
+"""Ficha del proveedor. El id nace en la maestra. En casa queda pendiente y se sube al volver."""
 
 from __future__ import annotations
 
@@ -10,7 +10,11 @@ def codigo_visible(proveedor_id: int) -> str:
 
 
 def etiqueta(ficha: dict) -> str:
-    return f"{ficha.get('codigo') or ''}  {ficha.get('nombre') or ''}".strip()
+    nombre = str(ficha.get("nombre") or "").strip()
+    codigo = str(ficha.get("codigo") or "").strip()
+    if not codigo or codigo.upper() == "EN CASA" or ficha.get("pendiente"):
+        return nombre
+    return f"{codigo}  {nombre}".strip()
 
 
 def nombre_de_eleccion(texto: str, ficha: dict | None) -> str:
@@ -75,7 +79,9 @@ class FichaProveedor:
 
         db, _modo = MotorProveedor._get_read_db("admin")
         if not db:
-            return []
+            salida = []
+            FichaProveedor._sumar_pendientes(salida)
+            return salida
         try:
             FichaProveedor.asegurar(db)
         except Exception:
@@ -86,17 +92,44 @@ class FichaProveedor:
                 "WHERE activo = 1 ORDER BY nombre"
             ) or []
         except Exception:
-            return []
+            salida = []
+            FichaProveedor._sumar_pendientes(salida)
+            return salida
         salida = []
         for fila in filas:
             ficha = FichaProveedor._fila(fila)
             if ficha and ficha["id"] and ficha["nombre"]:
                 salida.append(ficha)
+        FichaProveedor._sumar_pendientes(salida)
+        salida.sort(key=lambda ficha: ficha["nombre"].upper())
         return salida
 
     @staticmethod
+    def _sumar_pendientes(salida: list[dict]) -> None:
+        """Las fichas armadas en casa aparecen en el combo antes de tener id."""
+        try:
+            from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+
+            pendientes = offline_nutricion_manager.proveedores_pendientes()
+        except Exception:
+            return
+        nombres = {ficha["nombre"].strip().upper() for ficha in salida}
+        for pendiente in pendientes:
+            nombre = str(pendiente.get("nombre") or "").strip()
+            if not nombre or nombre.upper() in nombres:
+                continue
+            salida.append({
+                "id": 0,
+                "codigo": "EN CASA",
+                "nombre": nombre,
+                "telefono": str(pendiente.get("telefono") or ""),
+                "pendiente": True,
+            })
+            nombres.add(nombre.upper())
+
+    @staticmethod
     def crear(nombre: str, telefono: str = "") -> tuple[bool, dict | str]:
-        """Crea el id solo si la maestra contesta. Sin red no hay ficha local."""
+        """Con la tienda, crea el id. En casa guarda la ficha y el id nace mañana."""
         from src.base_de_datos.database import db_manager
         from src.proveedor_global.backend.motor_proveedor import MotorProveedor, _ConexionTienda
 
@@ -104,11 +137,21 @@ class FichaProveedor:
         telefono = (telefono or "").strip()
         if not nombre:
             return False, "Falta el nombre del proveedor."
-        if not MotorProveedor.tienda_disponible():
-            return False, "Sin la maestra no se crea el id. Conectá la tienda."
         ya = FichaProveedor.buscar_por_nombre(nombre)
         if ya:
             return True, ya
+        if not MotorProveedor.tienda_disponible():
+            from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+
+            if not offline_nutricion_manager.encolar_proveedor(nombre, telefono):
+                return False, "No se pudo guardar el proveedor en esta PC."
+            return True, {
+                "id": 0,
+                "codigo": "EN CASA",
+                "nombre": nombre,
+                "telefono": telefono,
+                "pendiente": True,
+            }
 
         conn = MotorProveedor._abrir_conexion_tienda(db_manager)
         try:
@@ -150,6 +193,74 @@ class FichaProveedor:
             conn.close()
 
     @staticmethod
+    def actualizar(ficha: dict, nombre: str, telefono: str = "") -> tuple[bool, dict | str]:
+        """Cambia nombre y teléfono. En casa reescribe la cola y los enlaces."""
+        from src.base_de_datos.database import db_manager
+        from src.proveedor_global.backend.motor_proveedor import MotorProveedor, _ConexionTienda
+
+        nombre = (nombre or "").strip()
+        telefono = (telefono or "").strip()
+        anterior = str((ficha or {}).get("nombre") or "").strip()
+        if not nombre:
+            return False, "Falta el nombre del proveedor."
+        otro = FichaProveedor.buscar_por_nombre(nombre)
+        pid_ficha = int((ficha or {}).get("id") or 0)
+        if otro and int(otro.get("id") or 0) not in (0, pid_ficha) and otro.get("nombre", "").upper() == nombre.upper():
+            if anterior.upper() != nombre.upper():
+                return False, "Ya hay un proveedor con ese nombre."
+        pendiente = bool((ficha or {}).get("pendiente")) or pid_ficha <= 0
+        if pendiente or not MotorProveedor.tienda_disponible():
+            from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+
+            if not offline_nutricion_manager.actualizar_proveedor_pendiente(anterior, nombre, telefono):
+                return False, "No se pudo guardar el cambio en esta PC."
+            FichaProveedor._renombrar_enlace_local(anterior, nombre, telefono)
+            salida = dict(ficha or {})
+            salida.update({"nombre": nombre, "telefono": telefono, "pendiente": True, "id": pid_ficha})
+            return True, salida
+
+        conn = MotorProveedor._abrir_conexion_tienda(db_manager)
+        try:
+            tienda = _ConexionTienda(db_manager, conn)
+            if not tienda.execute_non_query(
+                "UPDATE proveedores SET nombre = ?, telefono = ? WHERE id = ?",
+                (nombre, telefono, pid_ficha),
+            ):
+                raise RuntimeError("La maestra no guardó el cambio.")
+            tienda.execute_non_query(
+                "UPDATE abastecimiento_proveedor_map SET proveedor_nombre = ?, proveedor_telefono = ? "
+                "WHERE proveedor_id = ? OR UPPER(proveedor_nombre) = UPPER(?)",
+                (nombre, telefono, pid_ficha, anterior),
+            )
+            conn.commit()
+            salida = dict(ficha or {})
+            salida.update({"id": pid_ficha, "nombre": nombre, "telefono": telefono})
+            return True, salida
+        except Exception as error:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            return False, str(error) or "No se pudo editar el proveedor."
+        finally:
+            conn.close()
+
+    @staticmethod
+    def _renombrar_enlace_local(anterior: str, nombre: str, telefono: str) -> None:
+        from src.base_de_datos.database import db_manager
+
+        if not anterior:
+            return
+        try:
+            db_manager.execute_non_query(
+                "UPDATE abastecimiento_proveedor_map SET proveedor_nombre = ?, proveedor_telefono = ? "
+                "WHERE UPPER(proveedor_nombre) = UPPER(?)",
+                (nombre, telefono, anterior),
+            )
+        except Exception:
+            pass
+
+    @staticmethod
     def buscar_por_nombre(nombre: str) -> dict | None:
         from src.proveedor_global.backend.motor_proveedor import MotorProveedor
 
@@ -171,7 +282,7 @@ class FichaProveedor:
 
     @staticmethod
     def obtener_o_crear(nombre: str, telefono: str = "") -> dict | None:
-        """Reusa la ficha si el nombre ya está. Si no hay maestra, None. No toca el romaneo."""
+        """Reusa la ficha si el nombre ya está. En casa deja una ficha pendiente. No toca el romaneo."""
         limpio = (nombre or "").strip()
         if not limpio or limpio.upper() == "SIN PROVEEDOR ASIGNADO":
             return None

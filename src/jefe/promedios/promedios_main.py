@@ -60,6 +60,14 @@ class PromediosMain(QWidget):
             tabs_lay.addWidget(b)
         tabs_lay.addStretch()
         
+        self.btn_formula = QPushButton("Fórmula de stock")
+        self.btn_formula.setStyleSheet(
+            "background: #0F766E; color: white; border-radius: 8px; padding: 8px 16px; font-weight: bold;"
+        )
+        self.btn_formula.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_formula.clicked.connect(self._abrir_formula)
+        tabs_lay.addWidget(self.btn_formula)
+
         self.btn_sync = QPushButton("🔄 Sincronizar")
         self.btn_export = QPushButton("💾 Exportar a Inventario")
         self.btn_redondear = QPushButton("Redondear Precios (500)")
@@ -114,6 +122,10 @@ class PromediosMain(QWidget):
         self.btn_huevo.clicked.connect(lambda: self._switch_tab(3))
         self.btn_congelado.clicked.connect(lambda: self._switch_tab(4))
         self._switch_tab(0)
+
+    def _abrir_formula(self):
+        from src.jefe.promedios.formula.dialogo import DialogoFormula
+        DialogoFormula(self).exec()
 
     def _switch_tab(self, idx):
         self.stack.setCurrentIndex(idx)

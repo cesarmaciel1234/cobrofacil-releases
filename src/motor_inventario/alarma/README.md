@@ -14,6 +14,7 @@ Lee `productos` y devuelve los que ya están en alarma.
 3. Entra si hay piso cargado (`stock_minimo` > 0) y el stock está en ese piso o debajo (`motivo` = `reposicion`). Si las dos cosas pasan, gana `reposicion`.
 4. Deja afuera artículo común y venta libre.
 5. Un stock bajo pero todavía positivo, sin piso cargado, no entra. El color de la grilla (menos de 5) no es una alarma de pedido.
+6. Una fracción de un producto con fórmula no se pide suelta. Huevo, Mocho, Pecho, Media res, Cerdo, Pollo y Congelado entran una vez, como cajón o bulto, con ese nombre. Lo junta `formula/motores/bulto_pedido.py`.
 
 ## Qué devuelve cuando falla
 Lista vacía. El error queda en el log `alarma_inventario`.

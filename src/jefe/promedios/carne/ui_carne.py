@@ -8,6 +8,7 @@ from src.contabilidad.shared_globals import PAL, btn_primary, build_table
 from .motor_carne import MotorCarne, ColumnasCarne
 from src.utils.parser import parse_float_regional
 from src.jefe.promedios.motor_global_promedios import MotorPromedios
+from src.utils.letra import vestir_id
 from src.base_de_datos.database import DatabaseManager
 
 class UICarne(QWidget):
@@ -29,7 +30,8 @@ class UICarne(QWidget):
             "merma": self._prom_merma.text(),
             "precio": self._prom_precio.text(),
             "costo_total": self._prom_costo_total.text(),
-            "filas": filas
+            "filas": filas,
+            "orden": getattr(self, "_sub_tipo", ""),
         }
 
     def set_state(self, estado):
@@ -54,6 +56,8 @@ class UICarne(QWidget):
                     it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     if col == ColumnasCarne.COSTO: it.setForeground(QColor(PAL['text3']))
                 self._prom_tabla.setItem(i, col, it)
+            codigo = str(row_data[ColumnasCarne.CODIGO]) if len(row_data) > ColumnasCarne.CODIGO else ""
+            self._prom_tabla.setItem(i, ColumnasCarne.CODIGO, vestir_id(QTableWidgetItem(codigo)))
         self._add_empty_row()
         self._prom_tabla.blockSignals(False)
         self._sync_calc()
@@ -229,7 +233,8 @@ class UICarne(QWidget):
         # 13 COLUMNS
         self._prom_tabla = build_table([
             "Corte", "Kilos", "Costo $/kg", "Precio Venta", "% Ganancia", 
-            "P. Mayoreo", "Desde kg", "% Mayoreo", "V. Costo", "V. Total", "V. Mayoreo", "Ganancia", "G. Mayoreo"
+            "P. Mayoreo", "Desde kg", "% Mayoreo", "V. Costo", "V. Total", "V. Mayoreo", "Ganancia", "G. Mayoreo",
+            "Código",
         ])
         self._prom_tabla.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed | QAbstractItemView.EditTrigger.AnyKeyPressed)
         self._prom_tabla.itemChanged.connect(self._on_tabla_changed)
@@ -296,6 +301,7 @@ class UICarne(QWidget):
                     it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     if col == ColumnasCarne.COSTO: it.setForeground(QColor(PAL['text3']))
                 self._prom_tabla.setItem(i, col, it)
+            self._prom_tabla.setItem(i, ColumnasCarne.CODIGO, vestir_id(QTableWidgetItem("")))
         
         self._add_empty_row()
         self._prom_tabla.blockSignals(False)
@@ -312,6 +318,7 @@ class UICarne(QWidget):
                 it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 if col == ColumnasCarne.COSTO: it.setForeground(QColor(PAL['text3']))
             self._prom_tabla.setItem(i, col, it)
+        self._prom_tabla.setItem(i, ColumnasCarne.CODIGO, vestir_id(QTableWidgetItem("")))
 
     def _repartir_kilos(self):
         try:

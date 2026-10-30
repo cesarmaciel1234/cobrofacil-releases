@@ -42,10 +42,8 @@ class MotorAuditoria:
         if not db_admin:
             return []
         try:
-            res = db_admin.execute_query(
-                "SELECT id, codigo, nombre, departamento, precio, stock, unidad, es_pesable "
-                "FROM productos ORDER BY departamento, nombre"
-            )
+            from src.motor_inventario.puerta import catalogo
+            res = catalogo(db_admin)
             if not res:
                 return []
             return [dict(r) if not isinstance(r, dict) else r for r in res]
@@ -90,14 +88,16 @@ class MotorAuditoria:
         except (TypeError, ValueError):
             return None
         try:
-            res = db_admin.execute_query(
-                "SELECT id, codigo, nombre, stock FROM productos WHERE id = ?",
-                (pid,),
-            )
-            if not res:
+            from src.motor_inventario.puerta import por_id
+            fila = por_id(pid, db_admin)
+            if not fila:
                 return None
-            fila = res[0]
-            return dict(fila) if not isinstance(fila, dict) else fila
+            return {
+                "id": fila.get("id"),
+                "codigo": fila.get("codigo"),
+                "nombre": fila.get("nombre"),
+                "stock": fila.get("stock"),
+            }
         except Exception as e:
             logger.error(f"Error leyendo producto id={producto_id}: {e}")
             return None
@@ -113,12 +113,15 @@ class MotorAuditoria:
             logger.error(f"ID de producto inválido: {producto_id}")
             return False
         try:
-            return bool(
-                db_admin.execute_non_query(
-                    "UPDATE productos SET stock = ? WHERE id = ?",
-                    (float(stock_fisico), pid),
-                )
-            )
+            from src.motor_inventario.puerta import fijar
+            ok = fijar(db_admin, pid, float(stock_fisico))
+            if ok:
+                try:
+                    from src.motor_inventario.planilla.orquestador import MotorPlanilla
+                    MotorPlanilla.avisar()
+                except Exception:
+                    pass
+            return ok
         except Exception as e:
             logger.error(f"Error aplicando stock id={producto_id}: {e}")
             return False

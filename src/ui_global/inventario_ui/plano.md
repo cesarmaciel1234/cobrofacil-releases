@@ -4,7 +4,7 @@
 
 Pantalla admin de catálogo: productos, precios, stock, departamentos y categorías. Entrada desde el panel admin (índice inventario / `Admin1Inventario`). Tema claro (`#F8FAFC`).
 
-Pinta: listado con filtros, alta/edición de producto (precio, costo, stock, mayoreo), columnas de oferta en lectura (cant/precio/relámpago), deptos/categorías, Excel, urgencia.
+Pinta: listado con filtros, alta/edición de producto (precio, costo, stock, mayoreo), columna Código con el código de barras, columnas de oferta en lectura (cant/precio/relámpago), deptos/categorías, Excel, urgencia. Al volver a abrir la ficha se ve el código, el nombre, el precio y el stock que se guardaron.
 
 No pinta: edición de promo (Ofertas). Impresión de carteles (Imprenta). Terminal cajero.
 ## Fondo
