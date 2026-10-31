@@ -1,7 +1,7 @@
 class MotorPollo:
     @staticmethod
     def get_cortes():
-        return [("Suprema", 5), ("Pata Muslo", 8), ("Alitas", 2), ("Menudos", 1), ("Carcasa", 1.5)]
+        return [("Suprema", 15), ("Pata Muslo", 20), ("Alitas", 2), ("Menudos", 1), ("Carcasa", 1.5)]
 
     @staticmethod
     def calcular_costo_real(kilos_totales: float, precio_kg: float, suma_kilos_cortes: float):

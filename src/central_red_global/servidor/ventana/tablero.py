@@ -15,12 +15,12 @@ from src.central_red_global.servidor.ventana.grilla import Grilla
 from src.central_red_global.servidor.ventana.presencia import arrancar as arrancar_presencia
 from src.central_red_global.servidor.ventana.presencia import foto as foto_presencia
 from src.central_red_global.servidor.ventana.vigia import (
-    acortar,
     canal,
     catalogo,
     filas_auditoria,
     filas_cambios,
     filas_tickets,
+    linea_consola,
 )
 
 _ENGANCHADO = False
@@ -226,9 +226,10 @@ class Tablero(QWidget):
         self.bitacora.agregar((hora, f"{nombre} {marca}", texto))
 
     def _desde_log(self, nivel: int, texto: str) -> None:
-        corto = acortar(texto)
-        if not corto:
+        linea = linea_consola(nivel, texto)
+        if not linea:
             return
+        nivel, corto = linea
         destino = canal(corto)
         if destino == "red":
             ahora = time.time()

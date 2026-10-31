@@ -4,24 +4,45 @@ La decisión la toman solo los cortes que generan ganancia: suprema y pata y mus
 Las alitas no cuentan. Menudos y carcasa viajan adentro de la caja y tampoco se piden solos.
 La merma no es stock.
 
-El día vende de 3 a 5 cajas. Con las dos de plata en 3 o más, no se pide.
-Si las dos están por debajo de 3, se piden cajas hasta que la que más tiene llegue a 5.
+Se mira el cajón entero, no el kilo suelto. Se completa a 10 cajas.
+En buena época (diciembre y enero) se completa a 15.
+Adentro del día se mantienen 5 cajones más lo cortado.
+
+Si las enteras ya cubren el techo, no se pide.
+Si faltan, se piden cajas enteras hasta el techo.
 Si una ya cubre el día y la otra no, es el caso extremo: se piden los kilos de esa,
-hasta 5 cajas de ese corte, y no se carga la otra.
+    hasta 5 cajas de ese corte, y no se carga la otra.
 
 Mejoras futuras del pedido: un corte pasa a decidir cuando _rol lo marca plata.
-El piso y el techo son _DIA_MIN y _DIA_MAX. Cerdo y carne no usan este módulo.
+El piso y el techo salen de _techo. Cerdo y carne no usan este módulo.
 """
 
 import math
+from datetime import date
 
-_DIA_MIN = 3
-_DIA_MAX = 5
+_DIA_MIN = 5
+_DIA_MAX = 10
+_BUENA_EPOCA_MAX = 15
 _CORTE_MAX = 6
 _DIFERENCIA_CORTE = 3
 
 
-def consultar(db) -> dict:
+def _es_buena_epoca(dia=None) -> bool:
+    """Diciembre y enero son buena época. El resto completa a 10."""
+    cuando = dia or date.today()
+    return cuando.month in (12, 1)
+
+
+def _techo(dia=None, buena_epoca=None):
+    """Piso y techo en cajones enteros. dia=None es hoy."""
+    if buena_epoca is None:
+        buena_epoca = _es_buena_epoca(dia)
+    if buena_epoca:
+        return _DIA_MIN, _BUENA_EPOCA_MAX
+    return _DIA_MIN, _DIA_MAX
+
+
+def consultar(db, dia=None, buena_epoca=None) -> dict:
     """Lee la composición y el stock. No escribe."""
     cortes = _composicion(db)
     merma = _merma(db)
@@ -33,10 +54,10 @@ def consultar(db) -> dict:
         if stock is None:
             stock = 0.0
         filas.append({"nombre": nombre, "kilos": kilos, "stock": stock})
-    return desde(filas, merma, costo_kg)
+    return desde(filas, merma, costo_kg, dia=dia, buena_epoca=buena_epoca)
 
 
-def desde(filas, merma=0.0, costo_kg=0.0) -> dict:
+def desde(filas, merma=0.0, costo_kg=0.0, dia=None, buena_epoca=None) -> dict:
     """La misma cuenta, con los stocks que ya se leyeron. No vuelve a consultar."""
     try:
         merma = float(merma or 0)
@@ -66,7 +87,7 @@ def desde(filas, merma=0.0, costo_kg=0.0) -> dict:
     filas = armadas
     plata = [f for f in filas if f["rol"] == "plata"]
     if not plata:
-        return _vacio(merma, filas, costo_kg)
+        return _vacio(merma, filas, costo_kg, dia, buena_epoca)
     peor = min(plata, key=lambda f: (f["cajas"], f["nombre"]))
     mejor = max(plata, key=lambda f: (f["cajas"], f["nombre"]))
     enteras = math.floor(peor["cajas"] + 1e-9)
@@ -74,25 +95,26 @@ def desde(filas, merma=0.0, costo_kg=0.0) -> dict:
         enteras = 0
     utiles = sum(f["kilos"] for f in filas)
     costo_caja = round(costo_kg * utiles, 2) if costo_kg > 0 and utiles > 0 else 0.0
-    corto = [f for f in plata if f["cajas"] <= _DIA_MIN]
-    decision = _decidir(corto, peor, mejor, costo_kg, costo_caja, enteras)
+    dia_min, dia_max = _techo(dia, buena_epoca)
+    corto = enteras < dia_max
+    decision = _decidir(corto, peor, mejor, costo_kg, costo_caja, enteras, dia_min, dia_max)
     decision.update({
         "merma": merma,
         "filas": filas,
-        "texto": _texto(decision, peor, mejor, filas, merma),
+        "texto": _texto(decision, peor, mejor, filas, merma, dia_min, dia_max),
     })
     return decision
 
 
-def _decidir(corto, peor, mejor, costo_kg, costo_caja, enteras) -> dict:
+def _decidir(corto, peor, mejor, costo_kg, costo_caja, enteras, dia_min, dia_max) -> dict:
     base = {
         "enteras": enteras,
         "costo_kg": costo_kg,
         "costo_caja": costo_caja,
         "corte": "",
         "stock_pedido": enteras,
-        "min_kg": float(_DIA_MIN),
-        "max_kg": float(_DIA_MAX),
+        "min_kg": float(dia_min),
+        "max_kg": float(dia_max),
     }
     diferencia = mejor["cajas"] - peor["cajas"]
     if diferencia >= _DIFERENCIA_CORTE:
@@ -107,7 +129,7 @@ def _decidir(corto, peor, mejor, costo_kg, costo_caja, enteras) -> dict:
                 "nombre": peor["nombre"],
                 "corte": peor["nombre"],
                 "stock_pedido": peor["stock"],
-                "min_kg": round(_DIA_MIN * peor["kilos"], 2),
+                "min_kg": round(dia_min * peor["kilos"], 2),
                 "max_kg": round(_CORTE_MAX * peor["kilos"], 2),
                 "costo": costo_kg,
             })
@@ -123,7 +145,7 @@ def _decidir(corto, peor, mejor, costo_kg, costo_caja, enteras) -> dict:
         return base
     if float(peor["stock"] or 0) <= 0:
         return _refuerzo(base, peor, mejor, costo_caja)
-    pedir = int(math.ceil(_DIA_MAX - mejor["cajas"]))
+    pedir = int(dia_max - enteras)
     if pedir < 1:
         pedir = 1
     parejo = (mejor["cajas"] - peor["cajas"]) <= 1
@@ -226,7 +248,7 @@ def _costo_kg(db) -> float:
         return 0.0
 
 
-def _texto(decision, peor, mejor, filas, merma) -> str:
+def _texto(decision, peor, mejor, filas, merma, dia_min, dia_max) -> str:
     alitas = next((f for f in filas if f["rol"] == "no_cuenta"), None)
     nota_alitas = " Las alitas no cuentan: no generan ganancia y no se piden."
     if alitas is None:
@@ -261,16 +283,16 @@ def _texto(decision, peor, mejor, filas, merma) -> str:
         frase += nota_alitas
     else:
         frase = (
-            f"Suprema y pata están por debajo de {_DIA_MIN} cajas. "
-            f"Se piden {decision['pedir']} cajas de {decision['nombre']} "
-            f"para llegar a {_DIA_MAX}.{nota_alitas}"
+            f"Se mira el cajón entero y faltan para {dia_max:g}. "
+            f"Se piden {decision['pedir']} cajas de {decision['nombre']}.{nota_alitas}"
         )
     if merma > 0:
         frase += f" La merma es {merma:g} kg y no entra."
     return frase
 
 
-def _vacio(merma, filas, costo_kg) -> dict:
+def _vacio(merma, filas, costo_kg, dia=None, buena_epoca=None) -> dict:
+    dia_min, dia_max = _techo(dia, buena_epoca)
     return {
         "modo": "nada",
         "enteras": 0,
@@ -279,8 +301,8 @@ def _vacio(merma, filas, costo_kg) -> dict:
         "nombre": "Pollo entero",
         "corte": "",
         "stock_pedido": 0,
-        "min_kg": float(_DIA_MIN),
-        "max_kg": float(_DIA_MAX),
+        "min_kg": float(dia_min),
+        "max_kg": float(dia_max),
         "costo_kg": costo_kg,
         "costo_caja": 0.0,
         "costo": 0.0,

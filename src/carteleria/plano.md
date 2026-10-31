@@ -28,7 +28,7 @@ Qué no romper: `src/cajero`, `qt_dpi`, puerto 8765, singleton `_lanzador_direct
 
 ## Carga y actualización automática
 
-La cara no consulta MariaDB. Al abrir pinta la plantilla guardada en el navegador (la última forma) y pide `http://127.0.0.1:8765/api/state` (600 ms hasta que haya precios, después 4 s). Si la página queda en los recuadros grises, se recarga sola; si Chrome no responde, el kiosk se vuelve a abrir. Un JSON sin precios no borra lo que ya se ve. Si cambia una venta, una foto o un precio, la cara lo pinta en el siguiente pedido. `/api/state` no espera a MariaDB.
+La cara no consulta MariaDB. Al abrir pinta la plantilla guardada en el navegador (la última forma) y pide `http://127.0.0.1:8765/api/state` (600 ms hasta que haya precios, después 4 s). Un JSON sin precios no borra lo que ya se ve. Si cambia una venta, una foto o un precio, la cara lo pinta en el siguiente pedido. `/api/state` no espera a MariaDB. El kiosk no se mata porque falte `/api/viva` ni porque un fetch falle: eso abría Chrome en bucle.
 
 De dónde sale cada cosa, en el pulso (`vitrina/pulso.py`, cada 15 s, o al instante si cambia el sello):
 

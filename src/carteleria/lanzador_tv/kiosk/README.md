@@ -7,7 +7,7 @@ Qué función:
 - `ServidorCuello.navegador_vivo` / `asegurar_navegador` / `_lanzar_navegador` en `lanzador_tv/cerebro_lanzador_tv.py`
 - `_vigilar_navegador` en `directo/motores/pulso.py`
 
-Cómo funciona: en Windows el `chrome.exe` que se lanza a veces termina y deja el kiosk en otro proceso. `navegador_vivo` da True si el Popen sigue, si el lock del perfil `tpv-carteleria-kiosk` está tomado, o si hace menos de 15 s que se lanzó. El watchdog cada 3 s no abre otra. Lanzar TV con el HTTP ya arriba llama `asegurar_navegador` y sale. F11 / `detener` mata el árbol y el perfil kiosk (no el Chrome del cajero). F10 usa `_lanzar_navegador(forzar=True)`: cierra esa y abre una en el otro monitor. No hay `os.startfile`.
+Cómo funciona: en Windows el `chrome.exe` que se lanza a veces termina y deja el kiosk en otro proceso. `navegador_vivo` da True si el Popen sigue, si el lock del perfil `tpv-carteleria-kiosk` está tomado, o si hace menos de 15 s que se lanzó. El watchdog cada 3 s no abre otra. Si el kiosk ya está vivo, no lo cierra aunque `/api/viva` tarde (la cara sin datos no es Chrome muerto). Lanzar TV con el HTTP ya arriba llama `asegurar_navegador` y sale. F11 / `detener` mata el árbol y el perfil kiosk (no el Chrome del cajero). F10 usa `_lanzar_navegador(forzar=True)`: cierra esa y abre una en el otro monitor. No hay `os.startfile`.
 
 Qué devuelve cuando falla: `last_error` (sin Chrome/Edge). No abre el navegador por defecto.
 

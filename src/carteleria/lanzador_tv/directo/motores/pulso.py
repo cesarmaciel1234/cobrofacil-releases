@@ -73,24 +73,10 @@ class MotoresMixin:
         if not self._vivo or not self._cuello:
             return
         try:
-            if not self._cuello.navegador_vivo():
-                logger.info("TV: el kiosk no está; abro una sola ventana en %s", self._cuello.url_tv())
-                self._cuello.asegurar_navegador()
+            if self._cuello.navegador_vivo():
                 return
-            import time
-
-            ahora = time.monotonic()
-            lanzado = float(getattr(self._cuello, "_nav_launch_mono", 0) or 0)
-            if lanzado and (ahora - lanzado) < 20:
-                return
-            ultima = float(getattr(self, "_cara_viva_mono", 0) or 0)
-            if ultima and (ahora - ultima) < 25:
-                return
-            if not ultima and lanzado and (ahora - lanzado) < 25:
-                return
-            logger.warning("TV sin señal de la cara; reabro el kiosk")
-            self._cara_viva_mono = ahora
-            self._cuello._lanzar_navegador(forzar=True)
+            logger.info("TV: el kiosk no está; abro una sola ventana en %s", self._cuello.url_tv())
+            self._cuello.asegurar_navegador()
         except Exception as e:
             logger.warning("Watchdog TV: %s", e)
 
@@ -111,7 +97,7 @@ class MotoresMixin:
                 if status and not self.rows_precios:
                     self._sync_status = status
                     self._publicar_estado()
-                logger.warning("Sync '%s' sin productos — se conserva el catálogo", status)
+                logger.info("carteleria  sync %s sin productos, se conserva el catalogo", status)
                 if self.rows_precios:
                     return
                 self._retry_count += 1

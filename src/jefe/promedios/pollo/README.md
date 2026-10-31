@@ -9,7 +9,7 @@ La última columna es Código. No entra en esa cuenta. Es el producto de la gón
 
 Este es el que ya corre en recepción y el que usan Carne y Cerdo.
 
-Un bulto son 17,5 kg útiles: Suprema 5, Pata Muslo 8, Alitas 2, Menudos 1, Carcasa 1,5. La merma no entra. El costo del kilo es el precio del bulto dividido por esos kilos. Con 2 bultos a $70.000 el total es $140.000 y el kilo sale $4.000. Las cantidades son 10, 16, 4, 2 y 3 kg. Los subtotales $40.000, $64.000, $16.000, $8.000 y $12.000 suman $140.000.
+Un bulto rinde 15 kg de suprema y 20 kg de pata y muslo. Alitas 2, menudos 1 y carcasa 1,5 viajan adentro y no deciden el pedido. La merma no entra. El costo del kilo es el precio del bulto dividido por los kilos útiles. Si en Promedios quedó una receta vieja de 5 y 8, hay que guardar 15 y 20 para que el pedido cuente cajas de verdad.
 
 La oferta del corte se ve debajo, en gris. Lleva la misma cantidad y el mismo costo, y el subtotal queda en cero. Al confirmar, ese producto copia el stock y el costo del original. Pollo entero lleva los kilos útiles de la carga (35 kg en ese ejemplo) al mismo costo, y tampoco suma. El resumen cuenta 5 artículos y 2 bultos. La fórmula solo guarda los cortes reales.
 
@@ -17,9 +17,9 @@ Si se borra menudos o carcasa, esos kilos pasan a merma, el costo del kilo sube 
 
 ## Pedido
 
-La cuenta está en `src/proveedor_global/frontend/formula/motores/caja_pollo.py`. El día vende de 3 a 5 cajas. Deciden suprema y pata y muslo, que son los cortes que generan ganancia. Las alitas no cuentan y no se piden. Menudos y carcasa van adentro de la caja y tampoco se piden solos. La merma no entra.
+La cuenta está en `src/proveedor_global/frontend/formula/motores/caja_pollo.py`. Se mira el cajón entero y se completa a 10. En buena época (diciembre y enero) se completa a 15. Adentro del día se mantienen 5 cajones más lo cortado. Deciden suprema y pata y muslo. Las alitas no cuentan y no se piden. Menudos y carcasa van adentro de la caja y tampoco se piden solos. La merma no entra.
 
-Con 3 cajas o menos en alguno de los dos cortes, si están parejos (menos de 3 cajas de diferencia) y los dos tienen stock, el pedido es pollo entero, en cajas, hasta que el que más tiene llegue a 5. Si uno de los dos no queda, las cajas suben hasta que el que todavía tiene stock llegue a 6, y los kilos que falten de ese corte vacío se piden aparte para completar 6. Suprema en 2 cajas y pata en cero piden 4 cajas y 16 kg de pata y muslo. Si Suprema y Pata Muslo ya tienen más de 3 cajas, esta vuelta no se compra, aunque las alitas estén en cero. Cuando entre los dos hay 3 cajas o más de diferencia, no se pide la caja porque agrandaría el desnivel: se inyectan solo los kilos del corte menor hasta completar 6 cajas de ese corte.
+Si faltan cajas enteras y están parejos (menos de 3 cajas de diferencia) y los dos tienen stock, el pedido es pollo entero hasta 10, o 15 en buena época. Si uno de los dos no queda, las cajas suben hasta que el que todavía tiene stock llegue a 6, y los kilos que falten de ese corte vacío se piden aparte para completar 6. Si ya hay 10 cajas enteras (15 en buena época), esta vuelta no se compra, aunque las alitas estén en cero. Cuando entre los dos hay 3 cajas o más de diferencia, no se pide la caja porque agrandaría el desnivel: se inyectan solo los kilos del corte menor hasta completar 6 cajas de ese corte.
 
 El stock de la fórmula es la suma de los cortes en la tabla, no la última carga menos lo vendido. En la columna Stock se puede cambiar el original a mano: eso escribe el producto, la oferta copia el mismo número y el pedido de abajo se recalcula. La oferta no entra en la suma.
 

@@ -13,7 +13,7 @@ Mira `config.json` y cumple un solo oficio. No mezcla los dos.
 * `pedir_bajada()`: la cola de esta PC ya subió. Adelanta el espejo.
 * `agente_tiene_el_espejo()`: verdadero si esta PC es esclava y el proceso `--server` ya está vivo. La ventana del jefe, en ese caso, no prende otro hilo de copia.
 * `rearmar_arranque()`: vuelve a escribir el acceso directo de Inicio con el programa de ahora, si `auto_start_store_server` está prendido.
-* `retomar_oficio()`: mata el `--server` viejo, apaga MariaDB local si el puesto pasó a esclava, rearma el acceso directo y lanza el proceso de nuevo.
+* `retomar_oficio()`: mata el `--server` viejo, apaga MariaDB local si el puesto pasó a esclava, rearma el acceso directo y lanza el proceso de nuevo. Si se llamó hace menos de 20 s, no hace nada: evita el bucle de abrir y cerrar la consola.
 
 ## Cómo funciona, en el orden en que corre
 1. Windows o el lanzador abren `--server`.

@@ -218,8 +218,17 @@ def rearmar_arranque() -> bool:
         return False
 
 
+_ultimo_retomar = 0.0
+
+
 def retomar_oficio() -> None:
     """Cierra el proceso viejo y deja uno con el oficio que dice la config."""
+    global _ultimo_retomar
+    ahora = time.time()
+    if ahora - _ultimo_retomar < 20:
+        logger.info("oficio  retomar ignorado, hace poco se relanzó el servidor")
+        return
+    _ultimo_retomar = ahora
     from src.central_red_global.servidor.rol.apagar import detener_servidor_tienda_local
 
     detener_servidor_tienda_local()

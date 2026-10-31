@@ -32,7 +32,7 @@ def test_una_vuelta_caida_no_sale(monkeypatch):
         raise RuntimeError("sin red")
 
     monkeypatch.setattr("src.jefe.nodo_portable.espejo.copia.refrescar", _caer)
-    agente._paso_espejo()
+    agente._bajar_lo_que_falta()
 
 
 def test_la_carteleria_caida_no_sale(monkeypatch):

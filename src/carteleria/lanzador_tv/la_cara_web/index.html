@@ -176,11 +176,17 @@
                     return;
                 }
                 intentos += 1;
-                if (intentos >= 4) location.reload();
+                if (intentos < 15) return;
+                clearInterval(vigia);
+                try {
+                    if (sessionStorage.getItem("tv_reload")) return;
+                    sessionStorage.setItem("tv_reload", "1");
+                } catch (err) {}
+                location.reload();
             }, 2000);
         })();
     </script>
-    <script type="module" src="app.js?v=tv272"></script>
+            <script type="module" src="app.js?v=tv273"></script>
 </body>
 </html>
 

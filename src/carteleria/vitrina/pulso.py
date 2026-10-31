@@ -38,7 +38,7 @@ def _desde_cache(motivo: str):
     if cached:
         logger.info("Caché offline (%s ítems) — %s", len(cached.get("precios") or []), motivo)
         return cached, "offline"
-    logger.error("Sin caché ni DB — %s", motivo)
+    logger.info("carteleria  sin cache, esperando datos (%s)", motivo)
     return VACIO
 
 
@@ -69,7 +69,7 @@ def pulso_vitrina(abortar=None) -> tuple[dict, str]:
     try:
         return _pulso(abortar)
     except Exception as e:
-        logger.warning("Pulso TV: %s", e, exc_info=True)
+        logger.info("carteleria  pulso a cache (%s)", e)
         return _desde_cache("excepción del pulso")
 
 
@@ -111,7 +111,7 @@ def _pulso(abortar=None) -> tuple[dict, str]:
             _bajar_pngs()
         return data, "online"
     except Exception as e_req:
-        logger.warning("DB directa: %s", e_req, exc_info=True)
+        logger.info("carteleria  db a cache (%s)", e_req)
         if _con_precios(http_data):
             guardar_cache(http_data)
             return http_data, "online"

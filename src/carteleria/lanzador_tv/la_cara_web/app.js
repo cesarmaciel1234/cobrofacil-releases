@@ -10,7 +10,7 @@ import { iniciarRotacionColumna4 } from "./modules/columna4/columna4.js";
 import { renderMensajeZocalo } from "./modules/mensaje_zocalo/mensaje_zocalo.js";
 import { precargarFotosEstado, revelarFotosEn } from "./modules/shared/foto_tarjeta/index.js";
 
-const TV_UI = "268";
+const TV_UI = "273";
 const API_URL = "/api/state";
 const REFRESH_RAPIDO = 600;
 const REFRESH_NORMAL = 4000;
@@ -227,10 +227,6 @@ async function fetchState() {
         fallosRed += 1;
         console.error("[Cartelería] Error al obtener datos:", error);
         marcarCabeceraDesconectada(els);
-        if (fallosRed >= 4 && !(state.productos || []).length) {
-            location.reload();
-            return;
-        }
         programarPoll();
     } finally {
         clearTimeout(timer);
@@ -332,7 +328,7 @@ function setupTvKeys() {
 }
 
 async function init() {
-    document.body.dataset.boot = "1";
+    if (document.body) document.body.dataset.boot = "1";
     aplicarPerfil();
     ajustarZoomTv();
     window.addEventListener("resize", ajustarZoomTv);
@@ -352,6 +348,11 @@ async function init() {
     setTimeout(() => { if (state.isLoading) quitarCarga(); }, 12000);
 }
 
-document.addEventListener("DOMContentLoaded", init);
+if (document.body) document.body.dataset.boot = "1";
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+} else {
+    init();
+}
 
 

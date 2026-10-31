@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from datetime import datetime
 
@@ -37,7 +38,32 @@ def acortar(mensaje: str) -> str:
         return "maestra sin respuesta"
     if "timed out" in m and "png" in m:
         return "carteleria  png sin respuesta"
+    if "timed out" in m or "timeout" in m:
+        return "maestra sin respuesta"
     return " ".join((mensaje or "").split())
+
+
+_RUIDO_RED = (
+    "maestra sin respuesta",
+    "carteleria  png sin respuesta",
+    "sin caché",
+    "sin cache",
+    "sin productos",
+    "se conserva",
+    "aviso tv",
+    "pulso tv",
+)
+
+
+def linea_consola(nivel: int, texto: str) -> tuple[int, str] | None:
+    """Lo que entra a la bitácora. Un timeout de red no se pinta como ERROR."""
+    corto = acortar(texto)
+    if not corto:
+        return None
+    bajo = corto.lower()
+    if nivel >= logging.ERROR and any(marca in bajo for marca in _RUIDO_RED):
+        nivel = logging.INFO
+    return nivel, corto
 
 
 def _hora(valor) -> str:
