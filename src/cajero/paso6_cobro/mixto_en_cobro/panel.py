@@ -169,6 +169,8 @@ class PanelMixtoCobro(QFrame):
 
     def enfocar(self, clave_activa):
         """Deja efectivo (si ya hay plata) y el medio digital vivo. El QR no recorta el total."""
+        if not self._filas:
+            return
         keep = {clave_activa}
         if redondear_dinero(self._valores.get("efectivo") or 0) > 0.009:
             keep.add("efectivo")
