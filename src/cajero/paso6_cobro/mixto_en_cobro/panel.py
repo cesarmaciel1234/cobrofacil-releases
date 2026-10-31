@@ -18,6 +18,7 @@ class PanelMixtoCobro(QFrame):
         self._cerrado = False
         self._hechos = set()
         self._marcas = {}
+        self._filas = {}
         self._valores = {
             "efectivo": 0.0, "tarjeta": 0.0, "mercadopago": 0.0, "qr": 0.0, "cliente": 0.0,
         }
@@ -45,13 +46,13 @@ class PanelMixtoCobro(QFrame):
         self.txt_efectivo = self._campo("Efectivo ($)", "#10B981")
         self.txt_tarjeta = self._campo("Tarjeta ($)", "#F59E0B")
         self.txt_mercadopago = self._campo("Transferencia ($)", "#0EA5E9")
-        self.txt_qr = self._campo("QR ($)", "#7C3AED")
+        self.txt_qr = self._campo("Q", "#7C3AED")
         self.txt_cliente = self._campo("Cliente ($)", "#1D4ED8")
         for fila, (clave, rotulo, caja) in enumerate((
             ("efectivo", "Efectivo ($)", self.txt_efectivo),
             ("tarjeta", "Tarjeta ($)", self.txt_tarjeta),
             ("mercadopago", "Transferencia ($)", self.txt_mercadopago),
-            ("qr", "QR ($)", self.txt_qr),
+            ("qr", "Q", self.txt_qr),
             ("cliente", "Cliente ($)", self.txt_cliente),
         )):
             lbl = QLabel(rotulo)
@@ -67,6 +68,7 @@ class PanelMixtoCobro(QFrame):
                 "color: #047857; font-size: 26px; font-weight: 900; background: transparent; border: none;"
             )
             self._marcas[clave] = marca
+            self._filas[clave] = (lbl, caja, marca)
             grid.addWidget(lbl, fila, 0)
             grid.addWidget(caja, fila, 1)
             grid.addWidget(marca, fila, 2)
@@ -124,10 +126,12 @@ class PanelMixtoCobro(QFrame):
             )
         finally:
             self._silencio = False
+        self.mostrar_filas()
 
     def mostrar(self, total):
         self.vaciar()
         self._total = float(total or 0)
+        self.mostrar_filas()
         self._recalcular()
         self.show()
         self.txt_efectivo.setFocus()
@@ -148,11 +152,31 @@ class PanelMixtoCobro(QFrame):
         self._cerrado = True
         for _clave, caja in self._claves():
             caja.setReadOnly(True)
+        if redondear_dinero(self._valores.get("efectivo") or 0) > 0.009:
+            self.marcar_hecho("efectivo")
 
     def abrir_reparto(self):
         self._cerrado = False
+        self.mostrar_filas()
         for clave, caja in self._claves():
             caja.setReadOnly(clave in self._hechos)
+
+    def mostrar_filas(self):
+        for lbl, caja, marca in self._filas.values():
+            lbl.show()
+            caja.show()
+            marca.show()
+
+    def enfocar(self, clave_activa):
+        """Deja efectivo (si ya hay plata) y el medio digital vivo. El QR no recorta el total."""
+        keep = {clave_activa}
+        if redondear_dinero(self._valores.get("efectivo") or 0) > 0.009:
+            keep.add("efectivo")
+        for clave, (lbl, caja, marca) in self._filas.items():
+            visible = clave in keep
+            lbl.setVisible(visible)
+            caja.setVisible(visible)
+            marca.setVisible(visible)
 
     def marcar_hecho(self, clave):
         if clave not in self._marcas:

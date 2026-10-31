@@ -520,6 +520,7 @@ class Paso6Cobro(QDialog):
         content_lay.addWidget(self.hueco_pie, 1)
         self._idx_qr = content_lay.indexOf(self.panel_qr)
         self._idx_tarjeta = content_lay.indexOf(self.panel_tarjeta)
+        self._idx_mixto = content_lay.indexOf(self.panel_mixto)
         self._idx_monto = content_lay.indexOf(self.panel_monto)
         self._idx_hueco = content_lay.indexOf(self.hueco_pie)
         content_lay.addWidget(self.panel_redondeo_recargo)
@@ -1636,6 +1637,8 @@ class Paso6Cobro(QDialog):
     def _repartir_hueco(self, qr=0, tarjeta=0, monto=0, hueco=0):
         self.content_lay.setStretch(self._idx_qr, qr)
         self.content_lay.setStretch(self._idx_tarjeta, tarjeta)
+        if hasattr(self, "_idx_mixto"):
+            self.content_lay.setStretch(self._idx_mixto, 0)
         self.content_lay.setStretch(self._idx_monto, monto)
         self.content_lay.setStretch(self._idx_hueco, hueco)
         if hasattr(self, "panel_fiado"):
@@ -1661,6 +1664,13 @@ class Paso6Cobro(QDialog):
             self.panel_monto.hide()
             self._repartir_hueco(hueco=0)
             self.content_lay.setStretch(self.content_lay.indexOf(self.panel_fiado), 1)
+            return
+        if self.current_metodo == "Mixto":
+            self.panel_monto.hide()
+            if getattr(self, "_mixto_esperando_qr", False):
+                self._repartir_hueco(qr=1)
+            else:
+                self._repartir_hueco(hueco=0)
             return
         llena = self.panel_monto.ajustar(self.current_metodo, foto)
         if llena:
@@ -2036,6 +2046,7 @@ class Paso6Cobro(QDialog):
         tipo, monto = pasos[self._mixto_i]
         if tipo == "tarjeta":
             self.panel_mixto.show()
+            self.panel_mixto.enfocar("tarjeta")
             self.panel_mixto.estado.setText(f"Point: {self._monto(monto)}")
             self.panel_mixto.estado.setStyleSheet(
                 "color: #D97706; font-size: 20px; font-weight: 800; background: transparent; border: none;"
@@ -2074,6 +2085,7 @@ class Paso6Cobro(QDialog):
             from datetime import datetime, timezone
             self._transf_desde = datetime.now(timezone.utc)
             self.panel_mixto.show()
+            self.panel_mixto.enfocar("mercadopago")
             self._mixto_espera_transferencia = float(monto)
             from src.services.mp_escucha import EscuchaMP
             EscuchaMP.asegurar()
@@ -2086,12 +2098,13 @@ class Paso6Cobro(QDialog):
             self.timer_spinner.start(60)
             return
         self.panel_mixto.show()
+        self.panel_mixto.enfocar("qr")
         self._mixto_espera_transferencia = None
         self.timer_mp.stop()
         self.timer_spinner.stop()
         self.lbl_mp_status.hide()
         self._mixto_esperando_qr = True
-        self.panel_mixto.estado.setText(f"QR {self._monto(monto)}")
+        self.panel_mixto.estado.setText(self._monto(monto))
         self.panel_mixto.estado.setStyleSheet(
             "color: #7C3AED; font-size: 20px; font-weight: 800; background: transparent; border: none;"
         )
