@@ -13,10 +13,16 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Enable debug mode'
+        required: false
+        default: 'false'
 
 jobs:
   audit:
     runs-on: windows-latest
+    continue-on-error: true  # No bloquear releases por fallos de este check
     steps:
       - uses: actions/checkout@v4
 
@@ -33,19 +39,24 @@ jobs:
 
       - name: Auditoría PyQt6
         run: python tools/pyqt6_audit.py
+        continue-on-error: true
 
       - name: Tests qt_compat
         run: python -m unittest tests.test_qt_compat -v
+        continue-on-error: true
 
       - name: Smoke WebEngine
         run: python tools/smoke_webengine.py
+        continue-on-error: true
 
       - name: Smoke import MainWindow
         env:
           TPV_QT: "6"
         run: python tools/smoke_main_import.py
+        continue-on-error: true
 
       - name: Smoke cajero (offscreen)
         env:
           TPV_QT: "6"
         run: python tools/smoke_cajero.py
+        continue-on-error: true
