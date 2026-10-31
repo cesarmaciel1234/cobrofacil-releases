@@ -4,6 +4,8 @@
 
 Hub de configuración para el sistema TPV, permitiendo gestionar todas las opciones de forma modular y organizada.
 
+Ecosistema: cada diálogo lee y escribe su clave en `config.json`. No importa inventario ni ventas. El flag `opt_stock_negativo` lo consume el motor de stock; esta pantalla solo lo guarda. «No vender sin stock» es la UI invertida de ese flag.
+
 ## 📐 Estructura del Módulo
 
 ```

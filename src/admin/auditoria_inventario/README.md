@@ -21,7 +21,7 @@ Permite al personal autorizado (administrador y jefe de local) auditar el invent
 ## 2. Qué función cumple cada componente
 
 ### `auditoria_main.py`
-- **`AuditoriaMain`**: Widget principal que se monta en la pestaña 25 de `src/admin/main_window.py`.
+- **`AuditoriaMain`**: Widget principal que se monta en `Screen.AUDITORIA` (25) de `src/main_window.py`.
   - **Barra superior**: Botón «VOLVER AL PANEL», título con tipografía góndola (`font-weight: 900`) y mensaje de estado dinámico.
   - **KPIs en vivo**: Total SKU, productos contados, faltante acumulado y sobrante acumulado.
   - **Filtro y buscador**: `txt_buscar` con temporizador de escáner continuo de 180 ms y selector de vista (`Todos`, `Solo contados`, `Solo diferencias`).

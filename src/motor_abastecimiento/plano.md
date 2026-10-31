@@ -54,6 +54,7 @@ src/motor_abastecimiento/
 ---
 
 ## 🚫 Qué NO hay que romper en futuras mejoras
-1. **Aislamiento total del inventario:** Este módulo opera en **modo solo-lectura (`SELECT`)** sobre la tabla `productos`. Nunca debe ejecutar `UPDATE` o `DELETE` sobre el inventario.
-2. **Independencia del cajero:** La ejecución de este motor nunca debe bloquear el hilo del cajero ni demorar la lectura de códigos de barras.
-3. **Tolerancia a faltantes:** Si un producto no tiene proveedor asignado, debe agruparse bajo `"SIN PROVEEDOR ASIGNADO"` sin lanzar excepciones. La fila local pasa por `_fila` antes de leerse: un vínculo guardado en casa no deja la lista en cero.
+1. **La raíz del inventario no se toca.** Este módulo puede hacer todas las cuentas que quiera (piso, techo, WhatsApp, bulto). Al inventario solo le pide stock y le deja stock y precio de costo por producto: «Suprema × stock × costo». No le manda una fórmula. No le cambia el id. El inventario no tiene que saber por qué se pidió.
+2. **Aislamiento total del inventario:** opera en **modo solo-lectura (`SELECT`)** sobre `productos`. Nunca `UPDATE` o `DELETE` sobre el inventario.
+3. **Independencia del cajero:** nunca debe bloquear el hilo del cajero ni demorar la lectura de códigos de barras.
+4. **Tolerancia a faltantes:** Si un producto no tiene proveedor asignado, debe agruparse bajo `"SIN PROVEEDOR ASIGNADO"` sin lanzar excepciones. La fila local pasa por `_fila` antes de leerse: un vínculo guardado en casa no deja la lista en cero.

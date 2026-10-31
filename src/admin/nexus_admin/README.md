@@ -3,6 +3,8 @@
 
 El módulo **Nexus Control Center** es una herramienta de supervisión global de alto nivel (High-Level Monitoring) diseñada para escenarios corporativos e industriales (ej. múltiples cajas, supervisores en oficinas, guardias de seguridad).
 
+Ecosistema autónomo: el frente pide métricas y ventas al cerebro. No escribe stock. El cierre Z se ordena por UDP; el arqueo corre en la caja.
+
 ### 1. Rol y Función de NEXUS
 - **Supervisión Pasiva / Activa:** Nexus permite a un supervisor o guardia monitorear en tiempo real (en vivo) el estado de 10 a 20+ terminales de cobro (cajas) sin necesidad de interactuar físicamente con ellas.
 - **Topología de Red UDP:** Muestra qué nodos (PCs) están vivos y emitiendo latidos (Heartbeats) mediante la red LAN (UDP a través de 

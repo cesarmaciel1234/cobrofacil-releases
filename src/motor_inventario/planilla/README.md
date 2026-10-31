@@ -11,7 +11,7 @@ Después de cada venta o recepción, el stock ya quedó en `productos`. Este mot
 * `MotorPlanilla.leer()`: lee solo `planilla_reposicion`.
 * `MotorPlanilla.arrancar()`: prende `arrancar_hilo()`.
 * `arrancar_hilo()` / `avisar_planilla()` / `_bucle()`: hilo demonio. Limpia el aviso, actualiza, y espera 15 segundos o hasta el próximo `avisar()`.
-* `repo.reemplazar()`: escribe primero `planilla_reposicion_borrador` con un solo `execute_many`, y otro para la tabla viva. Recién cuando ese borrador está completo pisa `planilla_reposicion`. Si la lectura del stock falló, `actualizar()` no llama a `reemplazar()` y la hoja anterior queda. `producto_id` es texto: entra un código de barras o `formula:Pollo`. `asegurar()` corre una vez por proceso y ensancha la columna si la tabla vieja la tenía como INT o BIGINT.
+* `repo.reemplazar()`: escribe primero `planilla_reposicion_borrador` con un solo `execute_many`, y otro para la tabla viva. Recién cuando ese borrador está completo pisa `planilla_reposicion`. Si la lectura del stock falló, `actualizar()` no llama a `reemplazar()` y la hoja anterior queda. `producto_id` es el id del producto. No entra `formula:Pollo`: esa fila se descarta. `asegurar()` corre una vez por proceso y deja la columna en texto por si el id es un código de barras.
 * La cantidad: techo menos stock si hay techo por encima del piso. Piso menos stock si no hay techo. Cero si no hay piso ni techo (`motivo` = `sin_piso`).
 
 ## Cómo funciona, en el orden en que corre
@@ -25,6 +25,7 @@ Después de cada venta o recepción, el stock ya quedó en `productos`. Este mot
 `actualizar()` devuelve `0`. `leer()` devuelve `[]`. El hilo sigue al próximo pase. La venta no se entera.
 
 ## Qué no debe cambiar una mejora futura
+* Esta hoja pide stock y copia stock. No corre la fórmula.
 * No llamar a `avisar()` ni a `actualizar()` desde `descontar_stock` ni desde el cajero.
 * No escribir `productos` desde acá.
 * Pedidos no llama a `actualizar()` ni a `avisar()`. Solo lee.

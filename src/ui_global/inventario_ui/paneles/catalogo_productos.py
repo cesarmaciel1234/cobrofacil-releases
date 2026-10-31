@@ -157,12 +157,16 @@ class CatalogoProductos(QWidget):
                 self._sync_urgencia_banner()
                 return
 
-        config.set("opt_stock_negativo", not bool(checked))
+        from src.motor_inventario.unidad_medida import guardar_bloqueo_venta_sin_stock
+
+        guardar_bloqueo_venta_sin_stock(checked)
         self._sync_urgencia_banner()
 
     def showEvent(self, event):
         super().showEvent(event)
-        self.filtros.set_chk_urgencia_state(not bool(config.get("opt_stock_negativo", True)))
+        from src.motor_inventario.unidad_medida import bloquear_venta_sin_stock
+
+        self.filtros.set_chk_urgencia_state(bloquear_venta_sin_stock())
         self._sync_urgencia_banner()
         self.aplicar_permisos_perfil(self.user_role)
 

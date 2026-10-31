@@ -1,6 +1,10 @@
 # Plano - Proveedor Global (`src/proveedor_global`)
 
-Este módulo centraliza la gestión de Proveedores, Abastecimiento Automático, Recepción de Mercadería por Escáner y Compras Tradicionales (Romaneos de carne/frigorífico). Al ser un módulo transversal, es utilizado directamente por:
+Este módulo centraliza la gestión de Proveedores, Abastecimiento Automático, Recepción de Mercadería por Escáner y Compras Tradicionales (Romaneos de carne/frigorífico).
+
+La raíz del inventario ya está y no se reescribe desde acá. Fórmula, pedido y reposición piden stock y envían stock y costo de cada producto (Suprema, un id). Pueden hacer todas las cuentas que necesiten. Al motor de inventario no le importa el porqué. No se mezcla un id de fórmula en `productos` ni en `planilla_reposicion`.
+
+Al ser un módulo transversal, es utilizado directamente por:
 - `src/admin` (Gestión de compras, pedidos de reposición e ingreso de mercadería)
 - `src/contabilidad` (Control de deudas de proveedores del Jefe y Cuenta Corriente)
 - `src/carteleria` (Consulta rápida de ingresos de mercadería)

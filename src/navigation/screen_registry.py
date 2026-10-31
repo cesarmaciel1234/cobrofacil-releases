@@ -1,13 +1,17 @@
-﻿"""FÃ¡bricas lazy-load de pantallas para MainWindow."""
+﻿"""Fábricas lazy-load de pantallas para MainWindow.
+
+Tiene que listar los mismos índices que `MainWindow._screen_factories`.
+El stacked real se arma en main_window (28 slots, 0–27).
+"""
 
 from src.navigation.screen_indices import Screen
 
-SCREEN_COUNT = 24
+SCREEN_COUNT = 28
 FREE_SCREEN_SLOTS = Screen.FREE
 
 
 def build_screen_factories(main_window):
-    """Retorna {Ã­ndice: callable} que instancia cada pantalla bajo demanda."""
+    """Retorna {índice: callable} que instancia cada pantalla bajo demanda."""
     mw = main_window
     _imp = __import__
 
@@ -15,6 +19,9 @@ def build_screen_factories(main_window):
         Screen.ADMIN_DASHBOARD: lambda: _imp(
             "src.admin.dashboard.dashboard_main", fromlist=["Admin0Dashboard"]
         ).Admin0Dashboard(),
+        Screen.CAJERO: lambda: _imp(
+            "src.cajero.paso5_terminal", fromlist=["Paso5Terminal"]
+        ).Paso5Terminal(),
         Screen.INVENTARIO: lambda: _imp(
             "src.ui_global.inventario_ui.vistas.inventario_main", fromlist=["Admin1Inventario"]
         ).Admin1Inventario(),
@@ -44,13 +51,16 @@ def build_screen_factories(main_window):
         ).Admin10MP(),
         Screen.PROVEEDORES: lambda: _imp(
             "src.proveedor_global.frontend.vista_proveedor", fromlist=["VistaProveedor"]
-        ).VistaProveedor(perfil='admin'),
+        ).VistaProveedor(perfil="admin"),
         Screen.HARDWARE: lambda: _imp(
             "src.admin.hardware.hardware_main", fromlist=["Admin13Hardware"]
         ).Admin13Hardware(),
         Screen.VENTAS_DIGITALES: lambda: _imp(
             "src.admin.ventas_digitales.ventas_digitales_main", fromlist=["Admin14VentasDigitales"]
         ).Admin14VentasDigitales(),
+        Screen.CARTELERIA_CONFIG: lambda: _imp(
+            "src.carteleria.admin15_carteleria", fromlist=["Admin15Carteleria"]
+        ).Admin15Carteleria(),
         Screen.CLIENTES: lambda: _imp(
             "src.admin.clientes.admin_clientes_main", fromlist=["AdminClientes"]
         ).AdminClientes(),
@@ -66,12 +76,22 @@ def build_screen_factories(main_window):
         Screen.CARTELERIA: lambda: _imp(
             "src.carteleria.el_cuello", fromlist=["CarteleriaMain"]
         ).CarteleriaMain(),
-        Screen.CARTELERIA_CONFIG: lambda: _imp(
-            "src.carteleria.admin15_carteleria", fromlist=["Admin15Carteleria"]
-        ).Admin15Carteleria(),
+        Screen.CARTELERIA_DASHBOARD: lambda: _imp(
+            "src.carteleria.dashboard.dashboard_main", fromlist=["CarteleriaDashboard"]
+        ).CarteleriaDashboard(),
         Screen.IA_BOSS: lambda: _imp(
-            "src.admin.admin12_ai_boss", fromlist=["Admin12AIBoss"]
-        ).Admin12AIBoss(),
+            "src.jefe.ia.jefe_ia_proactiva", fromlist=["JefeIAProactiva"]
+        ).JefeIAProactiva(mw),
+        Screen.PROMEDIOS: lambda: _imp(
+            "src.jefe.promedios.promedios_main", fromlist=["PromediosMain"]
+        ).PromediosMain(),
+        Screen.AUDITORIA: lambda: _imp(
+            "src.admin.auditoria_inventario.auditoria_main", fromlist=["AuditoriaMain"]
+        ).AuditoriaMain(),
+        Screen.PROVEEDORES_JEFE: lambda: _imp(
+            "src.proveedor_global.frontend.vista_proveedor", fromlist=["VistaProveedor"]
+        ).VistaProveedor(perfil="jefe"),
+        Screen.PROVEEDORES_CARTELERIA: lambda: _imp(
+            "src.proveedor_global.frontend.vista_proveedor", fromlist=["VistaProveedor"]
+        ).VistaProveedor(perfil="carteleria"),
     }
-
-

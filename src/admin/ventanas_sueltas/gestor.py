@@ -25,10 +25,12 @@ TITULOS = {
     Screen.CLIENTES: "Clientes",
     Screen.NEXUS: "Nexus",
     Screen.JEFE_REPORTES: "Reportes",
-    22: "Cartelería",
-    23: "IA",
-    24: "Promedios",
-    25: "Auditoría inventario",
+    Screen.CARTELERIA_DASHBOARD: "Cartelería",
+    Screen.IA_BOSS: "IA",
+    Screen.PROMEDIOS: "Promedios",
+    Screen.AUDITORIA: "Auditoría inventario",
+    Screen.PROVEEDORES_JEFE: "Proveedores",
+    Screen.PROVEEDORES_CARTELERIA: "Proveedores",
 }
 
 

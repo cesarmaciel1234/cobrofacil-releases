@@ -30,11 +30,8 @@ class NexusExtremeControl(QWidget):
             self.view.panel_izq.spectrum.timer.start(100)
 
         try:
-            from datetime import datetime
-            from src.base_de_datos.database import db_manager
-            hoy = datetime.now().strftime("%Y-%m-%d")
-            max_id = db_manager.execute_scalar("SELECT MAX(id) FROM ventas WHERE DATE(fecha) = ?", (hoy,))
-            self.controller.last_sale_id = max_id if max_id is not None else 0
+            from src.cerebro_global.nexus_cerebro import CerebroNexus
+            self.controller.last_sale_id = CerebroNexus.max_id_ventas_hoy()
         except Exception as e:
             print(f"Error actualizando last_sale_id en showEvent: {e}")
 

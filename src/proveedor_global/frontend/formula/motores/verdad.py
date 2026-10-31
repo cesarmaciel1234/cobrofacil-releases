@@ -86,9 +86,9 @@ def consumir(cursor, producto_id, cantidad) -> bool:
     if cant == 0:
         return True
     consumo = cant * huevos / 360.0
-    from src.config import config
+    from src.motor_inventario.unidad_medida import permitir_cobro_sin_stock
 
-    if config.get("opt_stock_negativo", True):
+    if permitir_cobro_sin_stock():
         queda = actual["cajones"] - consumo
     else:
         if actual["cajones"] + 1e-9 < consumo:

@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from src.admin.admin_card import AdminCard
+from src.navigation.screen_indices import Screen
 from src.utils.theme_manager import theme_manager
 
 STATS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "module_stats.json")
@@ -199,21 +200,21 @@ class Admin0Dashboard(QWidget):
 
         # ── GRID ─────────────────────────────────────────────────────────────
         self.modules_info = [
-            ("nexus_pro",     "Nexus Pro\nControl Center",  "🌌", "indigo",  "Gestión Centralizada",  18),
-            ("inventario",    "Gestión de\nInventario",     "📦", "blue",    "Stock y productos",      2),
-            ("ofertas",       "Motor de\nPromociones",      "🏷️", "amber",   "Gestión de Reglas de Precio", 3),
-            ("reportes",      "Reportes y\nVentas",         "📊", "emerald", "Analytics",              4),
-            ("cierre",        "Cierre\nde Caja",            "🔒", "rose",    "Corte Z",                7),
-            ("mercadopago",   "Pagos\nDigitales (MP)",      "📱", "violet",  "Mercado Pago",           10),
-            ("etiquetas",     "Etiquetas\nGóndolas",        "🖨️", "pink",    "Impresión",              8),
-            ("configuracion", "Configuración",              "⚙️", "slate",   "Sistema",                5),
-            ("red_lan",       "Servidor LAN",               "🌐", "sky",     "Maestra / Esclava",      6),
-            ("hardware",      "Hardware\ny Test",           "🔌", "indigo",  "Diagnóstico",            13),
-            ("panel_fiscal",  "Panel\nFiscal",              "🏦", "sky",     "Ventas digitales",       14),
-            ("clientes",      "Fiado y\nClientes",          "👥", "sky",     "Cuenta Corriente",       17),
-            ("contabilidad",  "Contabilidad",               "💹", "emerald", "Finanzas",                9),
-            ("proveedores",   "Proveedores",                "🚚", "blue",    "Compras y Stock",        11),
-            ("auditoria",     "Auditoría\nInventario",      "📋", "amber",   "Ajustes Manuales",       25),
+            ("nexus_pro",     "Nexus Pro\nControl Center",  "🌌", "indigo",  "Gestión Centralizada",  Screen.NEXUS),
+            ("inventario",    "Gestión de\nInventario",     "📦", "blue",    "Stock y productos",      Screen.INVENTARIO),
+            ("ofertas",       "Motor de\nPromociones",      "🏷️", "amber",   "Gestión de Reglas de Precio", Screen.OFERTAS),
+            ("reportes",      "Reportes y\nVentas",         "📊", "emerald", "Analytics",              Screen.REPORTES),
+            ("cierre",        "Cierre\nde Caja",            "🔒", "rose",    "Corte Z",                Screen.CIERRE),
+            ("mercadopago",   "Pagos\nDigitales (MP)",      "📱", "violet",  "Mercado Pago",           Screen.MERCADO_PAGO),
+            ("etiquetas",     "Etiquetas\nGóndolas",        "🖨️", "pink",    "Impresión",              Screen.ETIQUETAS),
+            ("configuracion", "Configuración",              "⚙️", "slate",   "Sistema",                Screen.CONFIGURACION),
+            ("red_lan",       "Servidor LAN",               "🌐", "sky",     "Maestra / Esclava",      Screen.RED_LAN),
+            ("hardware",      "Hardware\ny Test",           "🔌", "indigo",  "Diagnóstico",            Screen.HARDWARE),
+            ("panel_fiscal",  "Panel\nFiscal",              "🏦", "sky",     "Ventas digitales",       Screen.VENTAS_DIGITALES),
+            ("clientes",      "Fiado y\nClientes",          "👥", "sky",     "Cuenta Corriente",       Screen.CLIENTES),
+            ("contabilidad",  "Contabilidad",               "💹", "emerald", "Finanzas",                Screen.CONTABILIDAD),
+            ("proveedores",   "Proveedores",                "🚚", "blue",    "Compras y Stock",        Screen.PROVEEDORES),
+            ("auditoria",     "Auditoría\nInventario",      "📋", "amber",   "Ajustes Manuales",       Screen.AUDITORIA),
         ]
 
         # Módulos visibles si el jefe entra al dashboard admin (F11 / escalada)

@@ -4,7 +4,9 @@ Esta carpeta es donde arranca la rama. El frente está acá. El fondo está en `
 
 ## Frente
 
-Pantalla: `auditoria_main.py`, clase `AuditoriaMain`. La abre el admin en la pestaña 25 de `main_window.py`.
+Pantalla: `auditoria_main.py`, clase `AuditoriaMain`. La abre el admin en `Screen.AUDITORIA` (25) de `src/main_window.py`.
+
+Ecosistema: pide el listado al conector, envía el conteo como SET de stock de un producto real. No importa el motor de ofertas ni la fórmula. No inserta ids sintéticos.
 
 Al mostrarse, `showEvent` aplica el perfil, el tema claro u oscuro y a los 80 ms pone el foco en el buscador.
 

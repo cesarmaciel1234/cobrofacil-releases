@@ -15,7 +15,7 @@ En el hub: clic abre el módulo en esta ventana. El **+** de la tile (también C
 
 ## Fondo
 
-`MainWindow._desanclar_modulo` saca el widget del `QStackedWidget` (queda oculto) y `HojaSuelta` lo vuelve a mostrar. Mismo PID, mismo candado `perfil_admin.lock`. No hay `QProcess`. Cajero (1) y la TV (21) no se desanclan.
+`MainWindow._desanclar_modulo` saca el widget del `QStackedWidget` (queda oculto) y `HojaSuelta` lo vuelve a mostrar. Mismo PID, mismo candado `perfil_admin.lock`. No hay `QProcess`. Cajero (1) y la TV (21) no se desanclan. Auditoría (25) sí se puede desanclar.
 
 ## Qué no cambiar
 

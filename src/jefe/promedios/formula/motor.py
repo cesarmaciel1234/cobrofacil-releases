@@ -214,10 +214,10 @@ def consumir_base(cursor, producto_id, cantidad) -> bool:
     consumo = float(cantidad) * float(info.get("consumo_por_unidad") or 0)
     if not base_id or base_id == str(producto_id) or consumo <= 0:
         return False
-    from src.config import config
     from src.base_de_datos.repos.stock_descuento import SinStock
+    from src.motor_inventario.unidad_medida import permitir_cobro_sin_stock
 
-    if config.get("opt_stock_negativo", True):
+    if permitir_cobro_sin_stock():
         cursor.execute(
             "UPDATE productos SET stock = COALESCE(stock, 0) - ? WHERE id = ?",
             (consumo, base_id),

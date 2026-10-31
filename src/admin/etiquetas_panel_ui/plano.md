@@ -10,6 +10,8 @@ Dispone de dos modalidades de lanzamiento:
 
 Las letras de esta pantalla (Consolas Bold en id, Segoe UI Bold en nombre y precio, KPI 900 en QLabel) son la referencia del proyecto: `src/utils/letra.py`. Al tocar otro módulo admin/jefe se copian de ahí. No en el cajero.
 
+Ecosistema: pide id, nombre y precio al catálogo para imprimir. No cambia stock ni promo.
+
 ## Fondo
 
 1. **Modo Térmica (ESC/POS)**:

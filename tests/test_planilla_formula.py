@@ -1,11 +1,15 @@
 from src.motor_inventario.planilla import repo
 
 
-def test_params_acepta_id_de_formula():
-    filas = [{"id": "formula:Pollo", "nombre": "Pollo entero (cajas)", "cantidad_sugerida": 2}]
+def test_la_planilla_no_guarda_formula_pollo():
+    filas = repo._filas_producto([
+        {"id": "formula:Pollo", "nombre": "Caja de pollo"},
+        {"id": 44, "nombre": "Yerba", "cantidad_sugerida": 2},
+    ])
+    assert [f["id"] for f in filas] == ["44"]
     params = repo._params(filas, "2026-10-30 18:49:14")
-    assert params[0][0] == "formula:Pollo"
-    assert params[0][2] == "Pollo entero (cajas)"
+    assert params[0][0] == "44"
+    assert params[0][2] == "Yerba"
 
 
 def test_replica_offline_usa_id_venta():

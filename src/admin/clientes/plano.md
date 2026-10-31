@@ -11,6 +11,8 @@ admin/clientes/
   componentes/               diálogos
 ```
 
+Ecosistema: la pantalla pide historial y cargos al motor de fiado. Cobra con F6 en perfil Admin. No lee el estado en vivo del cajero.
+
 ## Frente
 
 **Abonar** abre F6 con `perfil=Admin`, la misma hoja que el cajero: monto, medio, mixto (dos medios, Point primero), billetes si es efectivo. El cobro se asienta una sola vez. Sin deuda deja saldo a favor. Sin PIN. El aviso es el mensajero `COBRO EXITOSO`, no un cartel extra. No es el mixto del paso 6.

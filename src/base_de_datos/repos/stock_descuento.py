@@ -10,7 +10,7 @@ class SinStock(Exception):
 def descontar_stock(cursor, producto_id, cantidad) -> None:
     if not producto_id or str(producto_id).strip() in ("000", ""):
         return
-    from src.config import config
+    from src.motor_inventario.unidad_medida import permitir_cobro_sin_stock
 
     cant = cantidad or 0
     try:
@@ -22,7 +22,7 @@ def descontar_stock(cursor, producto_id, cantidad) -> None:
         producto_id = destino
     if _consumir_formula(cursor, producto_id, cant):
         return
-    if config.get("opt_stock_negativo", True):
+    if permitir_cobro_sin_stock():
         cursor.execute(
             "UPDATE productos SET stock = stock - ? WHERE id = ?",
             (cant, producto_id),

@@ -6,6 +6,8 @@ La rama arranca en esta carpeta. La base es `src/admin` y no lleva plano.
 
 `mercadopago_main.py`, clase `Admin10MP`. Se abre desde el menú de admin. El título es **Auditoría de cobros digitales**. La grilla la arma `src/motor_auditoria_digital/` en un hilo aparte: cobros reales de MP, tickets digitales y F9. Si ese motor falla, la caja sigue y la pantalla cae al CSV local.
 
+Ecosistema: pide cobros al motor digital. No guarda el token (Configuración). No escribe stock.
+
 Arriba: volver, el título, el interruptor «Cajero silencioso» / «Con sonido», Actualizar y el estado. No hay campo de token, ni «Guardar e Iniciar», ni «Simular», ni importar un CSV a mano.
 
 El cuerpo: cuatro tarjetas por línea. Arriba bruto, neto, tickets, firmados. Abajo sin firmar, MP sin ticket, cliente y cancelados. Montos en formato AR, enteros, sin recortar. Período Hoy / Semana / Mes / Año / Período. Abre en **Hoy**. Un clic sobre el período ya marcado lo suelta y muestra todas las fechas.

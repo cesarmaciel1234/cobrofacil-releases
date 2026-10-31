@@ -2,7 +2,7 @@
 
 No pinta y no ejecuta SQL. Recibe la vista en el constructor y le habla por métodos.
 
-`_get_initial_max_id` toma el último id conocido para no repetir eventos viejos al abrir.
+`_get_initial_max_id` pide `CerebroNexus.max_id_ventas_hoy()` para no repetir eventos viejos al abrir. No ejecuta SQL acá.
 
 `_connect_signals` une los paneles con este controlador. `_start_timers` prende el refresco y el destello.
 

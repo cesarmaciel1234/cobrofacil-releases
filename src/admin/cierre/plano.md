@@ -4,6 +4,8 @@
 
 Sistema centralizado de cierre de caja con arqueo, métricas y consolidación multi-caja.
 
+Ecosistema: el wrapper admin abre la UI global y pide números al cerebro de cierre. No toca inventario. Si MariaDB no contesta, usa la copia local.
+
 ## 📐 Estructura Modular (Centralizada)
 
 ```

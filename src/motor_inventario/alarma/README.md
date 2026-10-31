@@ -14,7 +14,7 @@ Lee `productos` y devuelve los que ya están en alarma.
 3. Entra si hay piso cargado (`stock_minimo` > 0) y el stock está en ese piso o debajo (`motivo` = `reposicion`). Si las dos cosas pasan, gana `reposicion`.
 4. Deja afuera artículo común y venta libre.
 5. Un stock bajo pero todavía positivo, sin piso cargado, no entra. El color de la grilla (menos de 5) no es una alarma de pedido.
-6. Una fracción de un producto con fórmula no se pide suelta. Huevo, Mocho, Pecho, Media res, Cerdo, Pollo y Congelado entran una vez, como cajón o bulto, con ese nombre. Lo junta `formula/motores/bulto_pedido.py`.
+6. Una fracción de fórmula no entra: el intermediario la deja afuera. La fórmula trabaja aparte y solo actualiza stock y costo del producto en `productos`. La planilla no guarda `formula:Pollo`. El pedido, si junta bultos, lo hace después de leer stock, no en esta hoja.
 
 ## Qué devuelve cuando falla
 Lista vacía. El error queda en el log `alarma_inventario`.
@@ -22,3 +22,4 @@ Lista vacía. El error queda en el log `alarma_inventario`.
 ## Qué no debe cambiar una mejora futura
 * La regla vive acá. Abastecimiento pregunta, no copia el `SELECT`.
 * No escribir `productos` desde esta carpeta.
+* No juntar bultos ni ids de fórmula. Eso es de otro módulo. Acá solo hay productos.

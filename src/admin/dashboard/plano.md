@@ -17,6 +17,8 @@ Tras el login de admin se ve el hub: saludo, fecha y tiles (inventario, ofertas,
 
 `main.py` con `--role admin` arma `MainWindow` y `apply_roles` instancia solo esta pantalla. `switch_tab(0)` no pega a la maestra. Inventario, cierre y Mercado Pago no se precargan: en el ejecutable esa precarga congelaba el hub. El dashboard no importa `db_manager`.
 
+Cada tile es un ecosistema: clic → `request_screen(Screen.*)`. Auditoría es `Screen.AUDITORIA` (25). El hub no carga el motor del módulo.
+
 ## Qué no cambiar
 
 - No precargar inventario (2), cierre (7) ni MP (10) al abrir admin.

@@ -27,13 +27,7 @@ class NexusController(QObject):
         self._connect_to_network()
 
     def _get_initial_max_id(self):
-        try:
-            hoy = datetime.now().strftime("%Y-%m-%d")
-            from src.base_de_datos.database import db_manager
-            max_id = db_manager.execute_scalar("SELECT MAX(id) FROM ventas WHERE DATE(fecha) = ?", (hoy,))
-            return max_id if max_id is not None else 0
-        except Exception as e:
-            return 0
+        return CerebroNexus.max_id_ventas_hoy()
 
     def _connect_signals(self):
         if hasattr(self.view.panel_cen, 'request_z_close'):

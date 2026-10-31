@@ -18,3 +18,4 @@ Copia la planilla. No calcula la cantidad.
 ## Qué no debe cambiar una mejora futura
 * La alarma la responde `src/motor_inventario/alarma`. Desde acá, `productos` solo se lee para el costo y el precio de los id que ya están en la planilla.
 * No escribir `productos`.
+* Las cuentas de bulto o fórmula, si existen, se quedan en este módulo o en el pedido. No se graban en la planilla ni en el inventario.

@@ -65,26 +65,63 @@ def _ancho_id() -> None:
     if not _es_maria():
         return
     for nombre in (TABLA, BORRADOR):
-        db_manager.execute_non_query(
+        if db_manager.execute_non_query(
             f"ALTER TABLE {nombre} MODIFY producto_id VARCHAR(64) NOT NULL"
-        )
+        ):
+            continue
+        _rehacer_texto(nombre)
+
+
+def _rehacer_texto(nombre: str) -> None:
+    """Si el ALTER no pasa, copia la hoja a una tabla de texto y la deja en el mismo nombre."""
+    tmp = f"{nombre}_txt"
+    db_manager.execute_non_query(f"DROP TABLE IF EXISTS {tmp}")
+    if not db_manager.execute_non_query(_crear(tmp)):
+        logger.warning("No se pudo preparar %s para ids de fórmula.", nombre)
+        return
+    copio = db_manager.execute_non_query(
+        f"INSERT IGNORE INTO {tmp} "
+        f"(producto_id, codigo, nombre, departamento, stock, stock_minimo, "
+        f"stock_maximo, costo, motivo, cantidad_sugerida, actualizado) "
+        f"SELECT CAST(producto_id AS CHAR), codigo, nombre, departamento, stock, "
+        f"stock_minimo, stock_maximo, costo, motivo, cantidad_sugerida, actualizado "
+        f"FROM {nombre}"
+    )
+    if not copio:
+        db_manager.execute_non_query(f"DROP TABLE IF EXISTS {tmp}")
+        logger.warning("No se pudo copiar %s a texto.", nombre)
+        return
+    db_manager.execute_non_query(f"DROP TABLE {nombre}")
+    db_manager.execute_non_query(f"RENAME TABLE {tmp} TO {nombre}")
 
 
 def asegurar():
     global _lista
-    if _lista:
-        return
-    for nombre in (TABLA, BORRADOR):
-        if not db_manager.execute_non_query(_crear(nombre)):
-            raise RuntimeError(f"No se pudo preparar {nombre}")
+    if not _lista:
+        for nombre in (TABLA, BORRADOR):
+            if not db_manager.execute_non_query(_crear(nombre)):
+                raise RuntimeError(f"No se pudo preparar {nombre}")
+        _lista = True
     _ancho_id()
-    _lista = True
+
+
+def _filas_producto(filas: list[dict]) -> list[dict]:
+    """La hoja es de productos. formula:Pollo no es un id de inventario."""
+    salida = []
+    for r in filas or []:
+        ident = str(r.get("id") if r.get("id") is not None else "").strip()
+        if not ident or ident.lower().startswith("formula:"):
+            continue
+        fila = dict(r)
+        fila["id"] = ident
+        salida.append(fila)
+    return salida
 
 
 def _params(filas: list[dict], ahora: str) -> list[tuple]:
     return [
         (
-            str(r.get("id") if r.get("id") is not None else ""),
+            r.get("id"),
             r.get("codigo") or "",
             r.get("nombre") or "",
             r.get("departamento") or "",
@@ -106,7 +143,8 @@ def reemplazar(filas: list[dict]) -> None:
     if not db_manager.execute_non_query(f"DELETE FROM {BORRADOR}"):
         raise RuntimeError("No se pudo vaciar el borrador")
     ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    params = _params(filas or [], ahora)
+    filas = _filas_producto(filas or [])
+    params = _params(filas, ahora)
     if params:
         verbo = "REPLACE INTO" if _es_maria() else "INSERT OR REPLACE INTO"
         columnas = (

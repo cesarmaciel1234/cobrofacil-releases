@@ -78,42 +78,5 @@ def productos_con_alarma_reposicion() -> list[dict]:
             "precio": float(r.get("precio") or 0.0),
             "motivo": motivo,
         })
-    try:
-        from src.proveedor_global.frontend.formula.motores.bulto_pedido import agrupar
-        alarma = agrupar(db_manager, alarma)
-    except Exception:
-        logger.exception("La fórmula no pudo juntar el pedido.")
     logger.info("Inventario: %s productos con alarma de reposición.", len(alarma))
     return alarma
-
-
-def _es_cajon(nombre) -> bool:
-    try:
-        from src.proveedor_global.frontend.formula.motores.verdad import es_formula
-        return es_formula(nombre)
-    except Exception:
-        return False
-
-
-def _sumar_cajon(alarma) -> None:
-    """Un solo renglón. El pedido pregunta a la fórmula cuántos cajones quedan."""
-    try:
-        from src.proveedor_global.frontend.formula.motores.verdad import leer
-        dato = leer(db_manager, "Huevo")
-    except Exception:
-        return
-    cajones = float(dato.get("cajones") or 0)
-    if cajones > 0:
-        return
-    alarma.append({
-        "id": "formula:Huevo",
-        "codigo": "",
-        "nombre": "Cajón de huevo",
-        "departamento": "Huevo",
-        "stock": cajones,
-        "stock_minimo": 0.0,
-        "stock_maximo": 0.0,
-        "costo": float(dato.get("costo") or 0),
-        "precio": 0.0,
-        "motivo": "critico",
-    })

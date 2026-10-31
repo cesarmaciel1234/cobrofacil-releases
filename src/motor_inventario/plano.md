@@ -2,6 +2,14 @@
 
 El catálogo, los departamentos y la alarma de reposición viven acá. Otras ramas preguntan. No leen la grilla.
 
+## La raíz ya está
+
+Esta rama es la raíz del stock. Ya funciona. **No se toca** para meterle la cuenta de un módulo nuevo.
+
+Un módulo nuevo (fórmula, reposición, proveedor, predictiva) **pide datos y envía datos**, acorde a lo que ya hay: un producto, su stock y su precio de costo. Si Suprema tiene fórmula, eso se calcula en la fórmula. Al inventario le llega «Suprema, este stock, este costo». No le importa por qué ni para qué. No recibe `formula:Pollo`. No cambia la ficha, ni el id, ni la regla de alarma.
+
+La puerta `puerta/` es ese pedido y ese envío. Si no contesta, el otro módulo sigue.
+
 ## Frente
 El operador lo ve en Admin → Inventario: grilla de productos, pie «Stock crítico» cuando la existencia es cero, y el piso `stock_minimo` / techo `stock_maximo` en la ficha. Esta rama no pinta Pedidos Faltantes. Esa pantalla lee `planilla_reposicion`.
 
@@ -15,7 +23,7 @@ El operador lo ve en Admin → Inventario: grilla de productos, pie «Stock crí
 El stock no sabe de pedidos. `planilla/MotorPlanilla` lee el stock ya guardado y reescribe `planilla_reposicion` en su hilo. `MotorPlanilla.avisar()` solo despierta ese hilo: lo llaman el conteo de auditoría, el ingreso de recepción y `piso/guardar_piso_techo` después de grabar. `guardar_piso_techo` es el único que escribe `stock_minimo` y `stock_maximo`, y lo hace desde `HiloGuardarPiso`, nunca desde la venta. Pedidos solo llama a `MotorPlanilla.leer()`.
 
 ## Qué no romper
-La venta no llama a la planilla. La recepción suma al stock actual y después llama a `avisar()`. La ficha y la auditoría fijan el stock, copian ese número a las ofertas del corte y también llaman a `avisar()`. La planilla no escribe `productos`. Pedidos no llama a `actualizar()` ni a `avisar()`. No cambiar la regla de alarma desde abastecimiento. No tocar el cajero para que salte un pedido.
+La raíz no se reescribe porque un módulo nuevo haga muchas cuentas. Fórmula, reposición y proveedor pueden calcular lo que necesiten: al inventario solo mandan stock y costo por producto, o le preguntan stock y costo. La venta no llama a la planilla. La recepción suma al stock actual y después llama a `avisar()`. La ficha y la auditoría fijan el stock, copian ese número a las ofertas del corte y también llaman a `avisar()`. La planilla no escribe `productos`. Pedidos no llama a `actualizar()` ni a `avisar()`. No cambiar la regla de alarma desde abastecimiento. No tocar el cajero para que salte un pedido.
 
 ## Crítico, probado, no se toca
 `tests/test_inventario_critico.py` corre el alta, el stock y el borrado en una base aparte. No escribe la tienda.

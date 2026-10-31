@@ -27,6 +27,18 @@ class CerebroNexus:
         }
 
     @staticmethod
+    def max_id_ventas_hoy():
+        """Último id de venta del día. El frente de Nexus solo pide este número."""
+        hoy = datetime.now().strftime("%Y-%m-%d")
+        try:
+            max_id = db_manager.execute_scalar(
+                "SELECT MAX(id) FROM ventas WHERE DATE(fecha) = ?", (hoy,)
+            )
+            return max_id if max_id is not None else 0
+        except Exception:
+            return 0
+
+    @staticmethod
     def obtener_nuevas_ventas(last_id):
         hoy = datetime.now().strftime("%Y-%m-%d")
         params = [hoy]

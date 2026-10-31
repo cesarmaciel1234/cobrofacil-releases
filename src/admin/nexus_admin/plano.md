@@ -16,7 +16,7 @@ El cierre Z no se hace adentro de Nexus. El botón abre el cierre global. Una or
 
 ## Fondo
 
-Las métricas, las ventas en vivo y los eventos se piden al cerebro. Prohibido `db_manager.execute_...` en las vistas y en el controlador.
+Las métricas, las ventas en vivo y los eventos se piden al cerebro (`CerebroNexus.max_id_ventas_hoy`, `obtener_nuevas_ventas`). Prohibido `db_manager.execute_...` en las vistas y en el controlador.
 
 El efectivo esperado de Nexus es el del turno abierto, el mismo que la caja espera en el cajón. No es la suma de todo el día si ya hubo otros turnos.
 

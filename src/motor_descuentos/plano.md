@@ -25,3 +25,5 @@ Tema claro (`#F8FAFC` / blancos). No usa `styles.qss` del cajero. Tablas: letras
 - Costo / stock: Inventario
 
 No romper el aislamiento entre tarjetas del hub ni mezclar impresión con edición de promo.
+
+Ecosistema: pide productos y precios al catálogo; envía reglas de promo. No escribe stock. Mayoreo vive en su motor y lo leen Inventario y Promedios; no se copian fichas entre perfiles.

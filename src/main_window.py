@@ -422,13 +422,13 @@ class MainWindow(QMainWindow):
             None,    # 18 â€” NexusExtremeControl      (lazy)
             None,    # 19 â€” Jefe0Dashboard           (lazy)
             None,    # 20 â€” JefeReportes             (lazy)
-            None,    # 21 â€” CarteleriaMain           (lazy)
-            None,    # 21 â€” CarteleriaMain           (lazy)
-            None,    # 23 â€” JefeIAProactiva          (lazy)
-            None,    # 24 â€” PromediosMain            (lazy)
-            None,    # 25
-            None,    # 26 -> JefeProveedores
-            None,    # 27 -> CarteleriaProveedores
+            None,    # 21 — CarteleriaMain (TV)
+            None,    # 22 — CarteleriaDashboard
+            None,    # 23 — JefeIAProactiva
+            None,    # 24 — PromediosMain
+            None,    # 25 — AuditoriaMain
+            None,    # 26 — VistaProveedor jefe
+            None,    # 27 — VistaProveedor carteleria
         ]
 
         # FÃ¡bricas: callable que crea el widget cuando se necesita
@@ -860,8 +860,9 @@ class MainWindow(QMainWindow):
         if role == 'jefe' and index == 0 and not escalando:
             index = 19
 
-        # Guard: slots libres â€” redirigir al home del rol activo
-        if index in (12, 15, 16):
+        # Guard: slots libres — redirigir al home del rol activo.
+        # 15 es Admin15Carteleria (config TV), no un hueco.
+        if index in (12, 16):
             index = 19 if role == 'jefe' else 0
 
         # No forzar carga del cajero al abrir admin/jefe: si fallÃ³ (DLL/_ssl),

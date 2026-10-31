@@ -108,12 +108,16 @@ Los índices del **QStackedWidget** están definidos en `src/navigation/screen_i
 | `CONTABILIDAD` (9) | Contabilidad Jefe |
 | `MERCADO_PAGO`, `PROVEEDORES` (10–11) | Mercado Pago, Proveedores |
 | `HARDWARE`, `VENTAS_DIGITALES` (13–14) | Hardware, Ventas digitales |
+| `CARTELERIA_CONFIG` (15) | Config TV (no es slot libre) |
 | `CLIENTES` (17) | Fiado / Clientes |
 | `NEXUS` (18) | Nexus Pro |
 | `JEFE_DASHBOARD`, `JEFE_REPORTES` (19–20) | Dashboard y reportes Jefe |
-| `CARTELERIA`, `CARTELERIA_CONFIG` (21–22) | Monitor secundario y su config |
-| `IA_BOSS` (23) | Mentor estratégico (AI Boss) |
-| `FREE` (12, 15, 16) | Slots reservados — no navegar |
+| `CARTELERIA`, `CARTELERIA_DASHBOARD` (21–22) | TV y hub de cartelería |
+| `IA_BOSS` (23) | IA proactiva del jefe |
+| `PROMEDIOS` (24) | Promedios jefe |
+| `AUDITORIA` (25) | Auditoría de inventario (admin) |
+| `PROVEEDORES_JEFE`, `PROVEEDORES_CARTELERIA` (26–27) | Proveedores por perfil |
+| `FREE` (12, 16) | Slots reservados — no navegar |
 
 ---
 

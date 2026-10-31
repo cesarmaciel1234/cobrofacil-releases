@@ -1,7 +1,6 @@
 # filtros_inventario.py - Barra de busqueda, categoria y modo de urgencia.
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QComboBox, QCheckBox
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-from src.config import config
 
 
 class FiltrosInventario(QFrame):
@@ -56,7 +55,9 @@ class FiltrosInventario(QFrame):
             "border: 1px solid #CBD5E1; border-radius: 8px; background: white; }"
             "QCheckBox::indicator { width: 20px; height: 20px; }"
         )
-        self.chk_urgencia.setChecked(not bool(config.get("opt_stock_negativo", True)))
+        from src.motor_inventario.unidad_medida import bloquear_venta_sin_stock
+
+        self.chk_urgencia.setChecked(bloquear_venta_sin_stock())
         self.chk_urgencia.toggled.connect(self.urgencia_toggled.emit)
         layout.addWidget(self.chk_urgencia)
 

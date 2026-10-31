@@ -1,6 +1,8 @@
 # Puerta del inventario
 
-Los otros módulos preguntan acá. No escriben `productos`. Si esta puerta no contesta, el módulo sigue: una lectura vacía o un falso.
+Los otros módulos preguntan acá. No escriben `productos` por su cuenta. Si esta puerta no contesta, el módulo sigue: una lectura vacía o un falso.
+
+La raíz del inventario ya está. Un módulo nuevo pide stock o costo, o envía stock y costo de un producto que ya existe (Suprema, un id, un código). No manda una fórmula. No explica el cálculo. El inventario no pregunta para qué.
 
 ## Qué función, con el nombre real
 
@@ -22,4 +24,4 @@ Vacío o falso. No hay excepción hacia el módulo que preguntó.
 
 ## Qué no debe cambiar una mejora futura
 
-La venta y el remito no pasan por `sumar`: van en la misma transacción del ticket. No mover ese `UPDATE` acá. No tocar el cajero.
+La venta y el remito no pasan por `sumar`: van en la misma transacción del ticket. No mover ese `UPDATE` acá. No tocar el cajero. No ensanchar esta puerta para que entienda recetas: la receta se queda en su módulo.

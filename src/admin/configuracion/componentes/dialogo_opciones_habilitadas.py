@@ -69,7 +69,9 @@ class DialogoOpcionesHabilitadas(QDialog):
 
             chk = QCheckBox()
             if key == "opt_stock_negativo":
-                chk.setChecked(not bool(config.get(key, True)))
+                from src.motor_inventario.unidad_medida import bloquear_venta_sin_stock
+
+                chk.setChecked(bloquear_venta_sin_stock())
             else:
                 chk.setChecked(config.get(key, default))
             chk.setStyleSheet("""
@@ -99,7 +101,9 @@ class DialogoOpcionesHabilitadas(QDialog):
         for key, _, _ in self.opciones:
             marcado = self.checkboxes[key].isChecked()
             if key == "opt_stock_negativo":
-                config.set(key, not marcado)
+                from src.motor_inventario.unidad_medida import guardar_bloqueo_venta_sin_stock
+
+                guardar_bloqueo_venta_sin_stock(marcado)
             else:
                 config.set(key, marcado)
 

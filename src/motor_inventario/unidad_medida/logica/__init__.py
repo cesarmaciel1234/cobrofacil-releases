@@ -1,7 +1,16 @@
 from src.motor_inventario.unidad_medida.logica.formatear import etiqueta_unidad, formatear_stock
 from src.motor_inventario.unidad_medida.logica.politica import (
     alcanza_stock,
+    bloquear_venta_sin_stock,
+    guardar_bloqueo_venta_sin_stock,
     permitir_cobro_sin_stock,
 )
 
-__all__ = ["etiqueta_unidad", "formatear_stock", "permitir_cobro_sin_stock", "alcanza_stock"]
+__all__ = [
+    "etiqueta_unidad",
+    "formatear_stock",
+    "permitir_cobro_sin_stock",
+    "bloquear_venta_sin_stock",
+    "guardar_bloqueo_venta_sin_stock",
+    "alcanza_stock",
+]

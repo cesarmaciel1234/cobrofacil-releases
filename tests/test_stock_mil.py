@@ -76,9 +76,15 @@ def _usar_esta_base(monkeypatch, conn):
         conn.commit()
         return True
 
+    def execute_many(sql, params):
+        conn.executemany(sql, params)
+        conn.commit()
+        return True
+
     monkeypatch.setattr(consulta_alarma.db_manager, "execute_query", execute_query)
     monkeypatch.setattr(repo.db_manager, "execute_query", execute_query)
     monkeypatch.setattr(repo.db_manager, "execute_non_query", execute_non_query)
+    monkeypatch.setattr(repo.db_manager, "execute_many", execute_many)
     monkeypatch.setattr(repo, "_es_maria", lambda: False)
     return MotorPlanilla.actualizar
 
@@ -109,6 +115,10 @@ def _mapeos():
             }
         )
     return mapas
+
+
+def _catalogo(filas):
+    return [r for r in filas or [] if not str(r.get("id") or "").startswith("formula:")]
 
 
 def _stock(conn, producto_id):
@@ -147,7 +157,7 @@ def test_mil_productos_bajan_y_suben(monkeypatch, capsys):
     assert rechazados_sanos == 0
     assert _stock(conn, 1) == STOCK_INICIAL - VENTA_SANA
     volcar()
-    assert calculador_quiebre.obtener_productos_bajo_minimo() == []
+    assert _catalogo(calculador_quiebre.obtener_productos_bajo_minimo()) == []
 
     inicio = time.perf_counter()
     rechazados_quiebre = _bajar(conn, VENTA_QUE_QUIEBRA)
@@ -158,7 +168,7 @@ def test_mil_productos_bajan_y_suben(monkeypatch, capsys):
 
     inicio = time.perf_counter()
     volcar()
-    faltantes = calculador_quiebre.obtener_productos_bajo_minimo()
+    faltantes = _catalogo(calculador_quiebre.obtener_productos_bajo_minimo())
     ms_detector = (time.perf_counter() - inicio) * 1000
     assert len(faltantes) == CANTIDAD
     assert faltantes[0]["cantidad_a_pedir"] == 32.0
@@ -189,7 +199,7 @@ def test_mil_productos_bajan_y_suben(monkeypatch, capsys):
     ms_suba = (time.perf_counter() - inicio) * 1000
     assert _stock(conn, 1) == STOCK_MAXIMO
     volcar()
-    assert calculador_quiebre.obtener_productos_bajo_minimo() == []
+    assert _catalogo(calculador_quiebre.obtener_productos_bajo_minimo()) == []
 
     _bajar(conn, 1)
     _subir(conn, 1)

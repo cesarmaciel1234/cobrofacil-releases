@@ -7,6 +7,8 @@ Pantalla admin de catálogo: productos, precios, stock, departamentos y categor�
 Pinta: listado con filtros, alta/edición de producto (precio, costo, stock, mayoreo), columna Código con el código de barras, columnas de oferta en lectura (cant/precio/relámpago), deptos/categorías, Excel, urgencia. Al volver a abrir la ficha se ve el código, el nombre, el precio y el stock que se guardaron.
 
 No pinta: edición de promo (Ofertas). Impresión de carteles (Imprenta). Terminal cajero.
+
+Ecosistema: la grilla pide y guarda productos por `InventarioService` / `motor_inventario`. Fórmula y reposición no se mezclan acá. Un corte (Suprema) es un id real: stock y costo. No entra `formula:Pollo`.
 ## Fondo
 
 1. `vistas/inventario_main.py` → `Admin1Inventario`: pestañas (catálogo, deptos, categorías) y permisos.

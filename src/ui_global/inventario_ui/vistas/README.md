@@ -21,4 +21,4 @@ Mensaje `QMessageBox`; el service devuelve `(ok, msg)`.
 
 ## Qué no debe cambiar
 
-No mezclar con Ofertas/Imprenta. Mantener tema claro. No tocar el cajero.
+No mezclar con Ofertas/Imprenta. No escribir ids de fórmula en `productos`. Mantener tema claro. No tocar el cajero.
