@@ -174,21 +174,14 @@ class PanelMixtoCobro(QFrame):
         keep = {clave_activa}
         if redondear_dinero(self._valores.get("efectivo") or 0) > 0.009:
             keep.add("efectivo")
-        # Solo cambiar visibilidad si es necesario para evitar recálculos de layout
-        updates = []
-        for clave, (lbl, caja, marca) in self._filas.items():
-            visible = clave in keep
-            if lbl.isVisible() != visible:
-                updates.append((lbl, visible))
-            if caja.isVisible() != visible:
-                updates.append((caja, visible))
-            if marca.isVisible() != visible:
-                updates.append((marca, visible))
-        # Aplicar cambios en lote para minimizar recálculos
-        if updates:
-            self.setUpdatesEnabled(False)
-            for widget, visible in updates:
-                widget.setVisible(visible)
+        self.setUpdatesEnabled(False)
+        try:
+            for clave, (lbl, caja, marca) in self._filas.items():
+                visible = clave in keep
+                lbl.setVisible(visible)
+                caja.setVisible(visible)
+                marca.setVisible(visible)
+        finally:
             self.setUpdatesEnabled(True)
 
     def marcar_hecho(self, clave):

@@ -6,7 +6,7 @@ Se ve en la misma hoja del monto, solo cuando el medio es Mixto. No abre un cuad
 
 El teclado de la derecha escribe en el casillero con foco. F1 imprime. Enter registra. Esos botones no viven acá.
 
-Enter, con el total cubierto, cierra el reparto y cobra solo. Lo más rápido primero: Point, palomita en tarjeta, y si hay efectivo abre el cajón. Después queda en escucha de transferencia o muestra el QR, o pide el cliente. Ese paso no cambia el medio a Fiado. Esc un paso atrás: grilla de medios y mixto vacío. Volver a Mixto no trae el reparto ni las palomitas. Con la luz en rojo, Enter guarda el reparto escrito, si `cubre()` y no es solo cliente.
+Enter, con el total cubierto, cierra el reparto y cobra solo. Lo más rápido primero: Point, palomita en tarjeta, y si hay efectivo abre el cajón. Después queda en escucha de transferencia o muestra el QR, o pide el cliente. `enfocar` deja el efectivo ya cargado y el medio digital vivo; oculta el resto para que el total no se recorte. El cartel del Point se apoya en ese mixto compacto. Esc un paso atrás: grilla de medios y mixto vacío. Volver a Mixto no trae el reparto ni las palomitas. Con la luz en rojo, Enter guarda el reparto escrito, si `cubre()` y no es solo cliente.
 
 F11 cubierto con parte de tarjeta entra al mismo flujo que Enter.
 

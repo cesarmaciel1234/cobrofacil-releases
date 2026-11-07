@@ -261,6 +261,9 @@ class EsperaPoint(QFrame):
         while cobro is not None and not hasattr(cobro, "panel_tarjeta"):
             cobro = cobro.parentWidget()
         caja = getattr(cobro, "panel_tarjeta", None) if cobro else None
+        mixto = getattr(cobro, "panel_mixto", None) if cobro else None
+        if mixto is not None and mixto.isVisible() and mixto.width() > 40:
+            caja = mixto
         if caja is not None and caja.isVisible() and caja.width() > 40:
             self.setMinimumSize(0, 0)
             self.setMaximumSize(16777215, 16777215)

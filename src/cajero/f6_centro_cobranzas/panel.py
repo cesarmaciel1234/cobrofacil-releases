@@ -102,7 +102,7 @@ class CentroCobranzasPanel(QWidget):
         self.btn_imprimir_resumen = self.panel_estado.btn_imprimir_resumen
         self.btn_iniciar_pago = self.panel_estado.btn_iniciar_pago
         self.btn_iniciar_pago.clicked.connect(self._mostrar_controles_pago)
-        self.btn_imprimir_resumen.clicked.connect(self._imprimir_estado_cuenta)
+        self.btn_imprimir_resumen.clicked.connect(self._abrir_historial_cliente)
         self.instruccion = self.panel_estado.instruccion
         self.cont_botones = self.panel_selector.cont_botones
         self.cont_lienzos = self.panel_selector.cont_lienzos
@@ -290,18 +290,25 @@ class CentroCobranzasPanel(QWidget):
             except (TypeError, ValueError):
                 pass
 
-    def _imprimir_estado_cuenta(self):
+    def _abrir_historial_cliente(self):
+        """Abre el historial crudo: ver ticket/cobro e imprimir desde esa ventana."""
+        if not self._cliente_id:
+            return
+        from src.utils.qt_compat import qt_exec
+        from src.admin.clientes.componentes.dialogo_historial_cliente import DialogoHistorialCliente
+
+        dlg = DialogoHistorialCliente(int(self._cliente_id), self)
+        qt_exec(dlg)
+        # Por si abonó / borró / editó desde el historial
         try:
-            from src.hardware.printer import printer_manager
-            printer_manager.imprimir_saldo_fiado(self._cliente_nombre, self._deuda_actual, 0.0, self._deuda_actual)
-            
-            from src.notificaciones.motor.estado import publicar
-            publicar("cobro_ok", f"??? Estado de cuenta impreso: {self._cliente_nombre}", segundos=5)
-        except Exception as e:
-            import logging
-            logging.getLogger("PunPro").error(f"Error imprimiendo resumen: {e}")
-            from src.notificaciones.motor.estado import publicar
-            publicar("error", f"Error imprimiendo resumen: {e}", segundos=5)
+            from src.clientes_fiado.cerebro.cerebro import cerebro
+
+            ficha = cerebro.obtener(self._cliente_id) or {}
+            self._cliente_nombre = str(ficha.get("nombre") or self._cliente_nombre)
+            self._deuda_actual = float(ficha.get("deuda_actual") or 0)
+            self._mostrar_ficha()
+        except Exception:
+            pass
 
     def _iniciar_cobranza(self, metodo="Efectivo"):
         texto = self.txt_monto_abono.text().replace('.', '').replace(',', '.')

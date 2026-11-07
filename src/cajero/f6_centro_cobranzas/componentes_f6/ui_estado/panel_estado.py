@@ -50,7 +50,8 @@ class PanelEstadoCredito(QWidget):
         lay_botones_accion = QHBoxLayout()
         lay_botones_accion.setSpacing(15)
         
-        self.btn_imprimir_resumen = QPushButton("⎙️ Imprimir Resumen")
+        self.btn_imprimir_resumen = QPushButton("Ver / Imprimir")
+        self.btn_imprimir_resumen.setToolTip("Historial: ver movimientos e imprimir")
         self.btn_imprimir_resumen.setFixedHeight(50)
         self.btn_imprimir_resumen.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_imprimir_resumen.setStyleSheet(
