@@ -23,7 +23,7 @@ class DialogoTerminalTPV(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Terminales TPV de Cobro")
-        self.setFixedSize(950, 850)
+        self.setFixedSize(1300, 850)
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
         self.progress_timer = None
         self.progress_value = 0

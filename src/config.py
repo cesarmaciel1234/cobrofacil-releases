@@ -52,6 +52,8 @@ class Config:
         "carteleria_performance_mode": False,
         "carteleria_is_slave": False,
         "auto_start_store_server": True,
+        "fiado_mantenimiento_pct": 3.0,
+        "fiado_apalancamiento_pct": 5.0,
     }
 
     _instance = None

@@ -15,6 +15,7 @@ Funciones principales:
 - `imprimir_movimiento_caja(...)`: Imprime comprobante de ingreso/egreso
 - `imprimir_ticket_saldos_compra(...)`: Ticket de cuenta corriente
 - `imprimir_saldo_fiado(...)`: Ticket de saldo de fiado
+- `imprimir_historial_cuenta(...)`: Historial cargos/abonos con totales (Admin → ficha)
 - `abrir_cajon(...)`: Apertura del cajón de dinero
 - `cortar_papel(...)`: Corte de papel
 - `pitido(...)`: Sonido de la impresora

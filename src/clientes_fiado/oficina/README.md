@@ -5,6 +5,7 @@ Acá se llevan los créditos. El paso 5 ya vendió y el paso 6 ya registró el m
 ```
 oficina/
   cuenta/               MotorCuenta — libro clientes y cuenta_corriente
+  barrial/              aging, suspendido, promesa (modo barrio)
   consulta_historial/   lector para admin y F6
   ticket/               MotorTicket — desglose de venta
   cobradas/             abonos / planilla

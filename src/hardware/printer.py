@@ -527,6 +527,105 @@ class PosPrinter:
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
         return result
 
+    def imprimir_historial_cuenta(self, cliente, movimientos, totales):
+        """Historial de cargos y abonos con totales. Lo usa Admin → ficha del cliente."""
+        from src.config import config
+
+        config._load_config()
+        ancho_mm = config.get("printer_paper_width_mm", 58)
+        columnas = 48 if ancho_mm == 80 else 32
+        ficha = dict(cliente or {})
+        nombre = str(ficha.get("nombre") or "Cliente").strip() or "Cliente"
+        dni = str(ficha.get("dni") or "").strip() or "—"
+        try:
+            deuda = float(ficha.get("deuda_actual") or 0)
+        except (TypeError, ValueError):
+            deuda = 0.0
+        try:
+            limite = float(ficha.get("limite_credito") or 0)
+        except (TypeError, ValueError):
+            limite = 0.0
+        tot = dict(totales or {})
+
+        def linea(etiqueta, valor):
+            monto = f"${float(valor or 0):,.2f}"
+            hueco = columnas - len(etiqueta) - len(monto)
+            if hueco < 1:
+                return f"{etiqueta}\n{monto}\n"
+            return f"{etiqueta}{' ' * hueco}{monto}\n"
+
+        def fecha_corta(fecha):
+            f = str(fecha or "").split(".")[0]
+            if len(f) >= 16 and f[4] == "-" and f[7] == "-":
+                return f"{f[8:10]}/{f[5:7]} {f[11:16]}"
+            return f[:16]
+
+        def recortar(texto, max_len):
+            t = " ".join(str(texto or "").split())
+            if len(t) <= max_len:
+                return t
+            return t[: max(0, max_len - 1)] + "."
+
+        data = bytearray()
+        data.extend(ESC + b"\x40")
+        data.extend(ALIGN_CENTER)
+        data.extend(BOLD_ON)
+        data.extend(f"{self.header_empresa}\n".encode("cp850", errors="replace"))
+        data.extend(b"HISTORIAL DE CUENTA\n")
+        data.extend(BOLD_OFF)
+        data.extend(f"{datetime.now().strftime('%d/%m/%Y %H:%M')}\n".encode("cp850", errors="replace"))
+        data.extend((b"-" * columnas) + b"\n")
+        data.extend(ALIGN_LEFT)
+        data.extend(f"Cliente: {recortar(nombre, columnas - 9)}\n".encode("cp850", errors="replace"))
+        data.extend(f"DNI: {dni}\n".encode("cp850", errors="replace"))
+        data.extend(linea("Limite", limite).encode("cp850", errors="replace"))
+        data.extend(BOLD_ON)
+        data.extend(linea("Deuda actual", deuda).encode("cp850", errors="replace"))
+        data.extend(BOLD_OFF)
+        data.extend((b"-" * columnas) + b"\n")
+        data.extend(b"FECHA      TIPO        MONTO\n")
+        data.extend((b"-" * columnas) + b"\n")
+
+        for mov in movimientos or []:
+            tipo = str(mov.get("etiqueta") or mov.get("tipo") or "").strip().upper()
+            if tipo.startswith("CARGO"):
+                marca = "CARGO"
+            elif tipo.startswith("ABONO"):
+                marca = "ABONO"
+            elif "ANUL" in tipo:
+                marca = "ANULA"
+            else:
+                marca = recortar(tipo, 5) or "MOV"
+            try:
+                monto = float(mov.get("monto") or 0)
+            except (TypeError, ValueError):
+                monto = 0.0
+            ref = str(mov.get("referencia") or mov.get("venta_id") or "").strip()
+            if ref and not ref.startswith("#") and not ref.upper().startswith("COB"):
+                ref = f"#{ref}"
+            linea1 = f"{fecha_corta(mov.get('fecha')):<11}{marca:<7}${monto:>10,.2f}"
+            data.extend((linea1[:columnas] + "\n").encode("cp850", errors="replace"))
+            if ref:
+                data.extend(f"  {recortar(ref, columnas - 2)}\n".encode("cp850", errors="replace"))
+
+        data.extend((b"-" * columnas) + b"\n")
+        data.extend(BOLD_ON)
+        data.extend(linea("Total fiado", tot.get("cargos", 0)).encode("cp850", errors="replace"))
+        data.extend(linea("Total abonado", tot.get("abonos", 0)).encode("cp850", errors="replace"))
+        if float(tot.get("borrados") or 0) > 0.009:
+            data.extend(linea("Borrados", tot.get("borrados", 0)).encode("cp850", errors="replace"))
+        if float(tot.get("cancelados") or 0) > 0.009:
+            data.extend(linea("Cancelados F3", tot.get("cancelados", 0)).encode("cp850", errors="replace"))
+        data.extend(linea("SALDO ACTUAL", deuda).encode("cp850", errors="replace"))
+        data.extend(BOLD_OFF)
+        data.extend((b"-" * columnas) + b"\n")
+        data.extend(ALIGN_CENTER)
+        data.extend(b"Gracias\n\n\n\n")
+        data.extend(CUT_PAPER)
+
+        p_principal = _impresora_cajero_activo()
+        return self._send_raw_data(bytes(data), printer_name_override=p_principal)
+
     def imprimir_ticket_z(self, usuario, fisico, dif, datos_z):
         """Imprime el ticket de cierre de caja (Reporte Z) usando el módulo especializado.
 

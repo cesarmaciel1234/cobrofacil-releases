@@ -532,7 +532,8 @@ class OfflineSync:
             # 3. Clientes y límites de crédito
             clis = db_manager.execute_query("""
                 SELECT id, nombre, telefono, dni, direccion, limite_credito, deuda_actual,
-                       tipo_cliente, plazo_dias, uid, origen_pc, creado_por, creado_en, actualizado_en
+                       tipo_cliente, plazo_dias, estado_cuenta, promesa_fecha, promesa_nota,
+                       uid, origen_pc, creado_por, creado_en, actualizado_en
                 FROM clientes
             """)
             if clis:
@@ -552,7 +553,10 @@ class OfflineSync:
                         creado_por TEXT,
                         creado_en TEXT,
                         actualizado_en TEXT,
-                        plazo_dias INTEGER DEFAULT 0
+                        plazo_dias INTEGER DEFAULT 0,
+                        estado_cuenta TEXT DEFAULT 'activo',
+                        promesa_fecha TEXT,
+                        promesa_nota TEXT
                     )
                 """)
                 c_loc.execute("DELETE FROM clientes")
@@ -561,15 +565,17 @@ class OfflineSync:
                      c.get('deuda_actual', 0), c.get('creado_en') or '', c.get('dni'),
                      c.get('tipo_cliente', 'regular'), c.get('direccion'), c.get('uid'),
                      c.get('origen_pc'), c.get('creado_por'), c.get('creado_en'),
-                     c.get('actualizado_en'), c.get('plazo_dias', 0))
+                     c.get('actualizado_en'), c.get('plazo_dias', 0),
+                     c.get('estado_cuenta') or 'activo', c.get('promesa_fecha'),
+                     c.get('promesa_nota'))
                     for c in clis
                 ]
                 c_loc.executemany("""
                     INSERT INTO clientes (
                         id, nombre, telefono, limite_credito, deuda_actual, fecha_registro,
                         dni, tipo_cliente, direccion, uid, origen_pc, creado_por, creado_en,
-                        actualizado_en, plazo_dias
-                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        actualizado_en, plazo_dias, estado_cuenta, promesa_fecha, promesa_nota
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """, reg_clis)
 
             # 4. Ventas y Detalles de los últimos 30 días (para auditoría en la notebook)

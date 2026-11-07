@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
 from src.utils.qt_compat import qt_exec
 from src.admin.clientes.theme import _CLI
 from src.clientes_fiado.cerebro.cerebro import cerebro
+from src.logger import logger
 
 
 class DialogoCuadre(QDialog):
@@ -16,9 +17,22 @@ class DialogoCuadre(QDialog):
         self.setWindowTitle("Cuadre de crédito")
         self.resize(860, 520)
         self.setStyleSheet(f"QDialog {{ background: {_CLI['bg']}; }}")
-        self._filas = cerebro.ventas_sin_cargo()
+        self._filas = []
+        self._error_consulta = False
+        self._consultar_pendientes()
         self._hubo_cambios = False
         self._armar()
+
+    def _consultar_pendientes(self):
+        try:
+            self._filas = cerebro.ventas_sin_cargo()
+            self._error_consulta = False
+            return True
+        except Exception:
+            logger.exception("[Cuadre clientes] No se pudieron consultar ventas pendientes")
+            self._filas = []
+            self._error_consulta = True
+            return False
 
     def _armar(self):
         lay = QVBoxLayout(self)
@@ -30,6 +44,11 @@ class DialogoCuadre(QDialog):
             f"color: {_CLI['text']}; font-size: 20px; font-weight: 900; background: transparent;"
         )
         lay.addWidget(titulo)
+
+        self.lbl_estado = QLabel("")
+        self.lbl_estado.setWordWrap(True)
+        self.lbl_estado.setStyleSheet("color: #991B1B; font-size: 13px; font-weight: 900;")
+        lay.addWidget(self.lbl_estado)
 
         nota = QLabel(
             "Estos tickets están cobrados como Fiado o Clientes y no tienen cargo en la cuenta. "
@@ -49,8 +68,6 @@ class DialogoCuadre(QDialog):
         )
         lay.addWidget(self.tabla)
 
-        self._pintar()
-
         barra = QHBoxLayout()
         volver = QPushButton("VOLVER")
         volver.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -59,6 +76,9 @@ class DialogoCuadre(QDialog):
             "padding: 10px 16px; border: 1px solid #E2E8F0;"
         )
         volver.clicked.connect(self._cerrar)
+        self.btn_reintentar = QPushButton("REINTENTAR CONSULTA")
+        self.btn_reintentar.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_reintentar.clicked.connect(self._reintentar)
         self.btn_cargar = QPushButton("CARGAR EN LA CUENTA")
         self.btn_cargar.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_cargar.setStyleSheet(
@@ -69,9 +89,14 @@ class DialogoCuadre(QDialog):
         self.btn_cargar.clicked.connect(self._cargar)
         barra.addWidget(volver)
         barra.addStretch()
+        barra.addWidget(self.btn_reintentar)
         barra.addWidget(self.btn_cargar)
         lay.addLayout(barra)
-        self._actualizar_boton()
+        self._pintar()
+
+    def _reintentar(self):
+        if self._consultar_pendientes():
+            self._pintar()
 
     def _cerrar(self):
         if self._hubo_cambios:
@@ -81,7 +106,8 @@ class DialogoCuadre(QDialog):
 
     def _actualizar_boton(self):
         listos = [fila for fila in self._filas if fila.get("cliente_id")]
-        self.btn_cargar.setEnabled(bool(listos))
+        self.btn_cargar.setEnabled(bool(listos) and not self._error_consulta)
+        self.btn_reintentar.setVisible(self._error_consulta)
         if listos:
             self.btn_cargar.setText(f"CARGAR EN LA CUENTA ({len(listos)})")
         else:
@@ -89,6 +115,12 @@ class DialogoCuadre(QDialog):
 
     def _pintar(self):
         self.tabla.setRowCount(0)
+        if self._error_consulta:
+            self.lbl_estado.setText(
+                "ERROR: no se pudo consultar la lista. No se puede asumir que no haya ventas pendientes."
+            )
+        else:
+            self.lbl_estado.setText("")
         for fila in self._filas:
             row = self.tabla.rowCount()
             self.tabla.insertRow(row)
@@ -116,8 +148,23 @@ class DialogoCuadre(QDialog):
         if qt_exec(caja) != QMessageBox.StandardButton.Yes:
             return
         ids = [fila.get("venta_id") for fila in listos]
-        hechos, pendientes = cerebro.anotar_faltantes(ids)
+        try:
+            hechos, pendientes = cerebro.anotar_faltantes(ids)
+        except Exception:
+            logger.exception("[Cuadre clientes] Falló la carga por lote; se verificará el resultado")
+            verificado = self._consultar_pendientes()
+            self._pintar()
+            mensaje = (
+                "La operación pudo cargar parte del lote. La lista se volvió a consultar; "
+                "revisa los pendientes antes de intentar otra vez."
+                if verificado
+                else "La operación pudo cargar parte del lote y no se pudo verificar el resultado. "
+                "No repitas la carga hasta restablecer la consulta."
+            )
+            QMessageBox.warning(self, "Cuadre", mensaje)
+            return
         self._filas = pendientes
+        self._error_consulta = False
         self._hubo_cambios = self._hubo_cambios or hechos > 0
         self._pintar()
         if not self._filas:

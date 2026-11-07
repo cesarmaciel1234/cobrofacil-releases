@@ -12,6 +12,8 @@ Interfaz empresarial: columnas Estado / Tarifa, chip de políticas, tuerca ⚙ a
 
 Si hay ventas Fiado o Clientes completadas sin cargo, aparece una franja ámbar. CUADRAR abre la lista. **Cargar en la cuenta** usa `cerebro.anotar_faltantes` y refresca pendientes; no deja la grilla vieja tras el primer éxito.
 
+El cuadre informa errores de consulta en vez de mostrarlos como “sin pendientes”. Cada ticket se vuelve a validar al cargar y su cargo no se duplica ante una segunda caja. El mantenimiento automático vuelve a leer el saldo dentro de la transacción y avisa si no pudo verificar o aplicar.
+
 Tras un abono ok, el cartel usa el mismo texto del mensajero de cobro (`COBRO EXITOSO` con nombre, pago y saldo).
 
 El guardado no está en esta carpeta. Entra por `src/clientes_fiado`, objeto `cerebro` (`hallar_duplicado`, `alta_regular`, `actualizar_existente`, …). El plano de esta pantalla es `plano.md`. El crédito: `src/clientes_fiado/plano.md`.

@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.utils.medio_pago import etiqueta_pago
+from src.admin.clientes.consulta.hilo import iniciar_hilo_seguro
 
 
 class _CargarTicket(QThread):
@@ -160,11 +161,11 @@ class PanelDetalleTicket(QFrame):
         self.origen.setText("")
         self.total.setText("")
         self.tabla.setRowCount(0)
-        hilo = _CargarTicket(ticket, self)
+        hilo = _CargarTicket(ticket)
         self._carga = hilo
         hilo.listo.connect(self._mostrar)
         hilo.finished.connect(self._al_terminar)
-        hilo.start()
+        iniciar_hilo_seguro(hilo)
 
     def _cancelar(self):
         hilo = self._carga
@@ -175,28 +176,11 @@ class PanelDetalleTicket(QFrame):
             hilo.listo.disconnect(self._mostrar)
         except (TypeError, RuntimeError):
             pass
-        try:
-            hilo.finished.disconnect(self._al_terminar)
-        except (TypeError, RuntimeError):
-            pass
-        try:
-            if hilo.isRunning():
-                hilo.finished.connect(hilo.deleteLater)
-            else:
-                hilo.deleteLater()
-        except RuntimeError:
-            pass
 
     def _al_terminar(self):
         hilo = self.sender()
         if self._carga is hilo:
             self._carga = None
-        if hilo is None:
-            return
-        try:
-            hilo.deleteLater()
-        except RuntimeError:
-            pass
 
     @staticmethod
     def _monto(valor) -> float:

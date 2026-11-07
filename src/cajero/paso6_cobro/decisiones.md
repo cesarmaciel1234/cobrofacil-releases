@@ -71,11 +71,16 @@ Prueba con el mismo device y el mismo `POST /v1/orders`:
 
 La caja usa el token de Cristina, el mismo que publicó la maestra en `192.168.0.7`. `enviar_monto` ya no trata un 201 como «ya está en la terminal»: espera `at_terminal` y, si sigue en `created`, cancela y avisa `otra_cuenta`.
 
-Al corregir `src/cajero/paso6_cobro/tarjeta_en_cobro/envio.py`:
+**Validación implementada** (líneas 1-3 de la lista original):
 
-1. `enviar_monto` no devuelve `ok` solo porque el POST dio 201. El cobro llegó al Point cuando `status` es `at_terminal`.
-2. Si la orden sigue en `created`, cancelarla con `POST /v1/orders/{id}/cancel` y devolver `motivo: "otra_cuenta"`.
-3. Antes de crear la orden, `GET /point/integration-api/devices` con ese token. Si `mp_device_id` no está, `sin_terminal`. Si `operating_mode` no es `PDV`, `standalone` y no enviar: en STANDALONE el equipo no recibe el monto.
-4. `point_service._avisar_motivo` y `PanelTarjetaCobro._pintar` tienen que decir, para `otra_cuenta`, que el Point está abierto con otro usuario de Mercado Pago que el token de la caja.
-5. No hardcodear un usuario. El token que manda el cobro es el de la cuenta logueada en el Point.
-6. `sync_tienda/mp_token/tienda.py` `traer()` pisa el token local con el de la maestra. Si la maestra tiene la otra cuenta, el monto deja de aparecer. La corrección no puede volver a guardar un token cuyo device no está en PDV.
+1. `enviar_monto` no devuelve `ok` solo porque el POST dio 201. El cobro llegó al Point cuando `status` es `at_terminal`. ✅ Ya implementado
+2. Si la orden sigue en `created`, cancelarla con `POST /v1/orders/{id}/cancel` y devolver `motivo: "otra_cuenta"`. ✅ Ya implementado
+3. Antes de crear la orden, `GET /terminals/v1/list` con ese token (Orders API). Si `mp_device_id` no está, `sin_terminal`. Si `operating_mode` no es `PDV`, `standalone` y no enviar: en STANDALONE el equipo no recibe el monto. ✅ Implementado en `terminal_validator.py`
+4. `point_service._avisar_motivo` y `PanelTarjetaCobro._pintar` tienen que decir, para `otra_cuenta`, que el Point está abierto con otro usuario de Mercado Pago que el token de la caja. ✅ Ya implementado
+5. No hardcodear un usuario. El token que manda el cobro es el de la cuenta logueada en el Point. ✅ Ya implementado
+6. `sync_tienda/mp_token/tienda.py` `traer()` pisa el token local con el de la maestra. Si la maestra tiene la otra cuenta, el monto deja de aparecer. La corrección no puede volver a guardar un token cuyo device no está en PDV. ❌ Pendiente
+
+Mensajes de validación en `point_service.py`:
+- Device ID no pertenece a la cuenta: "El terminal Point no está vinculado a esta cuenta de Mercado Pago. Verificá el Device ID en Admin → Terminales TPV."
+- Terminal en STANDALONE: "El terminal Point está en modo STANDALONE. Cambialo a modo PDV desde Mercado Pago para que reciba montos."
+- Error de red: "No se pudo conectar con Mercado Pago para validar el terminal. Verificá tu conexión a internet."

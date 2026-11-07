@@ -233,6 +233,14 @@ class DialogoClienteExpressPaso1(_FiadoExpressBase):
             self.frame.setStyleSheet(self._FRAME_ERR)
             return
 
+        if cerebro.esta_suspendido(cliente):
+            sonar_alarma_limite_fiado()
+            self.lbl_cliente.clear()
+            self.lbl_err.setText(
+                "Cuenta suspendida. Reactivá en cartera o pedí PIN de admin en la hoja de cobro."
+            )
+            self.frame.setStyleSheet(self._FRAME_ERR)
+            return
         disp = cerebro.credito_disponible(cliente)
         if cerebro.limite_excedido(cliente, self.monto_total):
             limite = float(dict(cliente).get("limite_credito", 0))

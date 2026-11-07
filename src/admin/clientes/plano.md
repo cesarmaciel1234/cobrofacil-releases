@@ -31,6 +31,8 @@ El historial lo pide `consulta/hilo.py` (`HiloMovimientosAdmin`) a `src/clientes
 
 Alta: `cerebro.hallar_duplicado(nombre, dni)` decide si ya existe; la UI pregunta y llama `actualizar_existente` o `alta_regular`. Cuadre: `cerebro.anotar_faltantes` carga el lote y refresca pendientes en el diálogo.
 
+Las consultas de historial y ticket usan hilos sin padre Qt, retenidos hasta finalizar y esperados al cerrar la aplicación. Cerrar una ficha no destruye una consulta que sigue activa. Si no se puede consultar el cuadre, la pantalla muestra error y no lo presenta como una lista vacía. La carga por lote revalida el ticket y evita duplicar el cargo dentro de una transacción.
+
 El lector busca la venta en la base activa, la copia portable y la SQLite local pendiente. Solo consulta. Si no encuentra la venta, el panel lo informa; nunca altera el registro de deuda.
 
 ## Qué no cambiar

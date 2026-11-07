@@ -1,4 +1,4 @@
-﻿# Centro de cobranza
+# Centro de cobranza
 
 La oficina de los créditos. La venta no se decide acá: el paso 5 vende, el paso 6 cobra, y este módulo es el garante que le dice al cobro si esa venta a cuenta puede registrarse.
 
@@ -14,6 +14,7 @@ clientes_fiado/
   oficina/                 fichas, deudas, abonos, saldos
     ticket/                lectura del desglose de ventas asociadas a cargos
     cuenta/                MotorCuenta
+    barrial/               aging 30/60/90, suspendido, promesa (modo barrio)
     por_cobrar/            quién debe
     cobradas/              el abono
     saldos/                cupo y disponible
@@ -35,7 +36,7 @@ La pantalla pintada de admin sigue en `src/admin/clientes`. El tema claro no se 
 
 ## Frente
 
-En el cobro, Fiado y Cuenta corriente usan la hoja del cobro. Fiado solo toma el DNI, en números. Si el cupo no alcanza, el cartel del cobro pide el PIN de 4 dígitos de un admin. Si coincide, esa venta pasa y el cargo dice excepción. Si no, la venta no se carga. Al confirmar, el hueco de arriba dice «Hola» y el nombre, o «Sin datos» si admin todavía no lo cargó. `oficina/cartel/` arma ese texto. Si un dato no carga, el cobro sigue. Cuenta corriente, al escribir, lista los nombres parecidos y debajo el DNI. El primer Enter, si está bien, muestra saldo y disponible, limpia el campo y pide confirmar. El segundo Enter registra. El cartel no repite el monto ni trae Cancelar. Esc vuelve a los medios. Si el DNI ya está cargado, Fiado cruza con ese cliente. El Express nuevo solo se crea si no existe.
+En el cobro, Fiado y Cuenta corriente usan la hoja del cobro. Fiado solo toma el DNI, en números. Si la cuenta está **suspendida** (modo barrial) o el cupo no alcanza, el cartel pide el PIN de 4 dígitos de un admin. Si coincide, esa venta pasa y el cargo dice excepción. Si no, la venta no se carga. Suspender / reactivar y la promesa de pago se manejan en admin cartera; el aging 30+/60+/90+ es solo filtro (no escribe mora). Al confirmar, el hueco de arriba dice «Hola» y el nombre, o «Sin datos» si admin todavía no lo cargó. `oficina/cartel/` arma ese texto. Si un dato no carga, el cobro sigue. Cuenta corriente, al escribir, lista los nombres parecidos y debajo el DNI. El primer Enter, si está bien, muestra saldo y disponible, limpia el campo y pide confirmar. El segundo Enter registra. El cartel no repite el monto ni trae Cancelar. Esc vuelve a los medios. Si el DNI ya está cargado, Fiado cruza con ese cliente. El Express nuevo solo se crea si no existe.
 
 En el historial, la auditoría y el reporte del jefe, esa venta aparece como un medio más: el campo `metodo_pago` dice `Fiado` o `Clientes`. El jefe no tiene una lista aparte.
 
@@ -57,7 +58,13 @@ El detalle de una venta enlazada a un cargo se lee por `oficina/ticket/motor.py`
 
 `abonar` lee la deuda y anota el `ABONO` en la misma transacción, con `medio_pago`, `perfil` y `registrado_por`. Si el movimiento no queda escrito, la deuda no cambia y devuelve `(False, 0.0, "")`. `abonar_caja` arma la descripción `Cajero Nombre (Efectivo)`. El efectivo se anota en `movimientos_caja` como `Pago de clientes`. Si ese ingreso no entra, el admin avisa que la cuenta sí bajó y la caja no. El corte lo muestra aparte, dentro del efectivo esperado.
 
+Las escrituras de cuenta con efecto en saldo usan una sola transacción: SQLite comienza con `BEGIN IMMEDIATE` y MariaDB bloquea la ficha con `SELECT ... FOR UPDATE`. Si no se guarda el movimiento, también se revierte el cambio del saldo. El mantenimiento automático vuelve a leer deuda y fechas dentro del bloqueo, y comprueba la ventana antes de escribir; no usa el saldo que recibió la pantalla como fuente de verdad.
+
+Modo barrial empresarial (`oficina/barrial/`): columnas `estado_cuenta`, `promesa_fecha`, `promesa_nota`. Puertas: suspender/reactivar/promesa/aging + `tarifar_mantenimiento` / `aplicar_mantenimiento` / `guardar_politicas_credito`. Tarifa: 3% base + 5% apalancamiento si >30 días sin movimiento (config). El chequeo y cargo automático quedan protegidos en la misma transacción para evitar duplicados concurrentes. `autorizar` rechaza suspendidos salvo PIN. Sin mora diaria ni cuotas.
+
 `oficina/cuenta/cuadre.py` lista las ventas `COMPLETADA` de Fiado o Clientes que no tienen `CARGO`. En admin, la franja ámbar abre esa lista. Cargar escribe el cargo en el cliente cuyo nombre coincide con uno solo. Si la venta quedó guardada como `Express` y el DNI, la carga en la ficha que ya tiene ese DNI. Cancelar el ticket llama `_anular_cargo` en la misma transacción: baja la deuda y deja una fila `ANULACION`. El cupo se vuelve a mirar dentro de la venta, con la ficha bloqueada. Si otra caja ya usó el cupo, la venta no se guarda. Una excepción de PIN o un ticket que ya se vendió (`ya_vendido`) no frena ese control.
+
+El cuadre vuelve a leer y bloquear la venta antes de cargarla, y verifica que siga completada, sea crédito y no tenga ya un cargo. Si no se puede consultar la lista, Admin informa el error en vez de mostrarlo como “sin pendientes”.
 
 El historial de cuenta lo arma `oficina/consulta_historial`. Admin y F6 tienen cada uno un hilo que pregunta ahí. Si un hilo se cae, el otro perfil sigue. El desglose de un ticket es `oficina/ticket/motor.py`. `borrar_cargo` marca `BORRADO` y cancela el ticket de venta. Cancelar en F3 marca `CANCELADO` y deja `TICKET CANCELADO` con el mismo número. Ninguna de las dos borra la fila de cuenta.
 

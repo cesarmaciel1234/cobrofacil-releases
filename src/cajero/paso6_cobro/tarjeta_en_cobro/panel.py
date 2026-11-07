@@ -193,7 +193,7 @@ class PanelTarjetaCobro(QFrame):
         elif motivo == "sin_terminal":
             self._fallo("Falta el token o la terminal Point en la configuración.")
         elif motivo == "otra_cuenta":
-            self._fallo("El Point está abierto con otra cuenta. El monto no salió.")
+            self._fallo("El Point está abierto con otra cuenta de Mercado Pago. Logueá la misma cuenta en el terminal o actualizá el token en Admin.")
         else:
             self._fallo("La terminal no tomó el monto. Enter registra la venta.")
 

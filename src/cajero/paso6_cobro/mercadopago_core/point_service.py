@@ -24,6 +24,20 @@ class PointService:
             self._avisar("Falta el token o la terminal Point en la configuración del TPV.")
             return False
 
+        # Validar que el terminal esté en modo PDV y pertenezca a esta cuenta
+        from src.cajero.paso6_cobro.mercadopago_core.terminal_validator import validar_terminal_point
+        valido, motivo = validar_terminal_point(token, device_id)
+        if not valido:
+            if motivo == "sin_terminal":
+                self._avisar("El terminal Point no está vinculado a esta cuenta de Mercado Pago. Verificá el Device ID en Admin → Terminales TPV.")
+            elif motivo == "standalone":
+                self._avisar("El terminal Point está en modo STANDALONE. Cambialo a modo PDV desde Mercado Pago para que reciba montos.")
+            elif motivo == "red":
+                self._avisar("No se pudo conectar con Mercado Pago para validar el terminal. Verificá tu conexión a internet.")
+            else:
+                self._avisar("Error al validar el terminal Point.")
+            return None
+
         if self.parent.current_metodo not in ["Tarjeta", "Mixto"]:
             self.parent.set_metodo("Tarjeta")
 
@@ -73,7 +87,7 @@ class PointService:
         elif motivo == "sin_terminal":
             self._avisar("Falta el token o la terminal Point en la configuración del TPV.")
         elif motivo == "otra_cuenta":
-            self._avisar("El Point está abierto con otra cuenta. El monto no salió.")
+            self._avisar("El Point está abierto con otra cuenta de Mercado Pago que el token de la caja. Logueá la misma cuenta en el terminal o actualizá el token en Admin -> Terminales TPV.")
         elif motivo == "cancelo":
             self._avisar("La terminal canceló el cobro. Enter registra la venta.")
         elif motivo:

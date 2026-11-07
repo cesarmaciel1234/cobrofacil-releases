@@ -20,4 +20,6 @@ Esta carpeta contiene los diálogos de la pantalla de cartera.
 
 `dialogo_ticket.py` es el panel de lectura. Consulta en un `QThread` a `src/clientes_fiado/oficina/ticket/motor.py`. Si falla, informa; no cambia ni el ticket ni la deuda. Al cambiar de ticket cancela la señal del hilo anterior sin tocar un C++ ya borrado (`RuntimeError` / `deleteLater`).
 
+El historial y el ticket inician sus consultas con `consulta/hilo.py` (`iniciar_hilo_seguro`): los hilos no son hijos de los diálogos, quedan retenidos hasta terminar y se esperan durante el cierre de la aplicación. Esto evita destruir un `QThread` que todavía trabaja al cerrar una ventana.
+
 No mover la lectura de base de datos al hilo de interfaz ni conectar el diálogo a los motores que guardan ventas o deuda.

@@ -75,7 +75,7 @@ class ClienteRepository:
         if not dni:
             return None
         rows = ClienteRepository._get_db().execute_query(
-            "SELECT id, nombre, limite_credito, deuda_actual, dni, tipo_cliente "
+            "SELECT id, nombre, limite_credito, deuda_actual, dni, tipo_cliente, estado_cuenta "
             "FROM clientes WHERE dni = ?",
             (dni,),
         )
@@ -127,7 +127,7 @@ class ClienteRepository:
         if not nombre:
             return None
         rows = ClienteRepository._get_db().execute_query(
-            "SELECT id, nombre, limite_credito, deuda_actual, dni, tipo_cliente "
+            "SELECT id, nombre, limite_credito, deuda_actual, dni, tipo_cliente, estado_cuenta "
             "FROM clientes WHERE LOWER(nombre) = LOWER(?)",
             (nombre,),
         )

@@ -1,5 +1,6 @@
 from src.utils.qt_compat import qt_exec
 from datetime import datetime
+from src.logger import logger
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QPushButton, QTableWidget, QTableWidgetItem,
@@ -559,34 +560,55 @@ class AdminClientes(QWidget):
             self._pintar_tabla(refrescar_extras=False)
             return
 
-        clientes = cerebro.buscar(busqueda)
-        self._cache_todas = [dict(c) for c in clientes]
+        try:
+            clientes = cerebro.buscar(busqueda)
+            cache_todas = [dict(c) for c in clientes]
+            deudores_ids = [
+                ficha["id"]
+                for ficha in cache_todas
+                if float(ficha.get("deuda_actual") or 0) > 0
+            ]
+            cache_fechas = cerebro.ultimos_cargos(deudores_ids)
+            cache_pagos = cerebro.ultimos_abonos(deudores_ids)
+            cache_movs = cerebro.ultimos_movimientos(deudores_ids)
+            cache_todas = self._fusionar_deudas_locales(cache_todas)
+        except Exception:
+            logger.exception("[Admin clientes] No se pudo actualizar la cartera")
+            self.lbl_estado.setText(
+                "ERROR al actualizar · se conserva la última cartera disponible"
+            )
+            self.lbl_estado.setStyleSheet(
+                "color: #B91C1C; font-size: 12px; font-weight: 900; border: none; padding-left: 8px;"
+            )
+            return
+
+        self._cache_todas = cache_todas
         self._cache_query = busqueda
-        self._fusionar_deudas_locales()
-        deudores_ids = [
-            ficha["id"]
-            for ficha in self._cache_todas
-            if float(ficha.get("deuda_actual") or 0) > 0
-        ]
-        self._cache_fechas = cerebro.ultimos_cargos(deudores_ids)
-        self._cache_pagos = cerebro.ultimos_abonos(deudores_ids)
-        self._cache_movs = cerebro.ultimos_movimientos(deudores_ids)
+        self._cache_fechas = cache_fechas
+        self._cache_pagos = cache_pagos
+        self._cache_movs = cache_movs
+        self.lbl_estado.setText("")
+        self.lbl_estado.setStyleSheet(
+            f"color: {_CLI['text_sec']}; font-size: 12px; font-weight: 700; border: none; padding-left: 8px;"
+        )
         self._correr_mantenimiento_auto()
         self._pintar_tabla(refrescar_extras=True)
 
-    def _fusionar_deudas_locales(self):
+    def _fusionar_deudas_locales(self, fichas=None):
         """En esclava offline el listado viene del espejo; trae deuda/estado/promesa locales."""
         from src.clientes_fiado.cerebro.cerebro import cerebro
         from src.clientes_fiado.oficina.barrial.mantenimiento import aplicar_overlay_local
 
-        ids = [f.get("id") for f in (self._cache_todas or []) if f.get("id") is not None]
+        destino = self._cache_todas if fichas is None else fichas
+        ids = [f.get("id") for f in (destino or []) if f.get("id") is not None]
         if not ids:
-            return
+            return destino
         locales = cerebro.fichas_locales(ids)
         if not locales:
-            return
-        for i, ficha in enumerate(self._cache_todas or []):
-            self._cache_todas[i] = aplicar_overlay_local(ficha, locales)
+            return destino
+        for i, ficha in enumerate(destino or []):
+            destino[i] = aplicar_overlay_local(ficha, locales)
+        return destino
 
     def _correr_mantenimiento_auto(self):
         """Aplica 3% (o 3%+5% si >30d) sin pedirlo. Saltea si ya cobró en 30 días."""
@@ -602,10 +624,27 @@ class AdminClientes(QWidget):
             items.append((ficha.get("id"), deuda, dias))
         if not items:
             return
-        res = cerebro.aplicar_mantenimientos_auto(items)
-        aplicados = int(res.get("aplicados") or 0)
-        if aplicados <= 0:
+        try:
+            res = cerebro.aplicar_mantenimientos_auto(items)
+        except Exception:
+            logger.exception("[Admin clientes] Falló el mantenimiento automático")
+            self.lbl_estado.setText(
+                "Mantenimiento auto: error al verificar/aplicar · revisar antes de operar"
+            )
+            self.lbl_estado.setStyleSheet(
+                "color: #B91C1C; font-size: 12px; font-weight: 900; border: none; padding-left: 8px;"
+            )
             return
+        if not isinstance(res, dict):
+            logger.error("[Admin clientes] El mantenimiento automático devolvió una respuesta inválida")
+            self.lbl_estado.setText(
+                "Mantenimiento auto: respuesta inválida · revisar antes de operar"
+            )
+            self.lbl_estado.setStyleSheet(
+                "color: #B91C1C; font-size: 12px; font-weight: 900; border: none; padding-left: 8px;"
+            )
+            return
+        aplicados = int(res.get("aplicados") or 0)
         # No releer con buscar(): en esclava offline lee el espejo y tapa el cargo local.
         # No tocar _cache_fechas/_cache_movs: el mantenimiento no reinicia aging ni Críticos.
         por_id = {}
@@ -622,9 +661,24 @@ class AdminClientes(QWidget):
             if cid in por_id:
                 ficha["deuda_actual"] = por_id[cid]
         monto = float(res.get("monto_total") or 0)
-        self.lbl_estado.setText(
-            f"Mantenimiento auto: {aplicados} cuentas · ${monto:,.2f}"
-        )
+        fallos = int(res.get("fallos") or 0)
+        if fallos:
+            logger.error(
+                "[Admin clientes] Mantenimiento parcial: %s aplicados, %s fallaron: %s",
+                aplicados,
+                fallos,
+                res.get("errores") or [],
+            )
+            self.lbl_estado.setText(
+                f"Mantenimiento auto: {aplicados} aplicados, {fallos} fallaron · revisar saldos"
+            )
+            self.lbl_estado.setStyleSheet(
+                "color: #B91C1C; font-size: 12px; font-weight: 900; border: none; padding-left: 8px;"
+            )
+        elif aplicados:
+            self.lbl_estado.setText(
+                f"Mantenimiento auto: {aplicados} cuentas · ${monto:,.2f}"
+            )
 
     def _pintar_tabla(self, refrescar_extras=True):
         from src.clientes_fiado.cerebro.cerebro import cerebro
@@ -928,7 +982,26 @@ class AdminClientes(QWidget):
 
             huecos = cerebro.ventas_sin_cargo()
         except Exception:
-            huecos = []
+            logger.exception("[Admin clientes] No se pudieron verificar ventas sin cargo")
+            self.lbl_cuadre.setText(
+                "No se pudieron verificar ventas a crédito pendientes. No significa que estén cuadradas."
+            )
+            self.btn_cuadre.setText("REINTENTAR")
+            self.aviso_cuadre.setStyleSheet(
+                "background: #FEE2E2; border: 1px solid #FCA5A5; border-radius: 12px;"
+            )
+            self.lbl_cuadre.setStyleSheet(
+                "color: #991B1B; font-weight: 900; font-size: 13px; background: transparent; border: none;"
+            )
+            self.aviso_cuadre.show()
+            return
+        self.btn_cuadre.setText("CUADRAR")
+        self.aviso_cuadre.setStyleSheet(
+            "background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 12px;"
+        )
+        self.lbl_cuadre.setStyleSheet(
+            "color: #92400E; font-weight: 800; font-size: 13px; background: transparent; border: none;"
+        )
         if not huecos:
             self.aviso_cuadre.hide()
             return

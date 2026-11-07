@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QFrame,
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor, QCursor, QBrush
 from src.clientes_fiado.cerebro.cerebro import cerebro
-from src.admin.clientes.consulta.hilo import HiloMovimientosAdmin
+from src.admin.clientes.consulta.hilo import HiloMovimientosAdmin, iniciar_hilo_seguro
 from src.admin.clientes.componentes.dialogo_editar_cliente import DialogoEditarCliente, FIADO_EXPRESS_LIMITE_DEFAULT
 from src.admin.clientes.componentes.dialogo_ticket import PanelDetalleTicket
 from src.utils.letra import vestir_id, vestir_nombre, vestir_numero
@@ -267,12 +267,11 @@ class DialogoHistorialCliente(QDialog):
         if self._hilo_mov is not None:
             try:
                 self._hilo_mov.listo.disconnect(self._guardar_movimientos)
-            except TypeError:
+            except (TypeError, RuntimeError):
                 pass
-        self._hilo_mov = HiloMovimientosAdmin(self.cliente_id, self)
+        self._hilo_mov = HiloMovimientosAdmin(self.cliente_id)
         self._hilo_mov.listo.connect(self._guardar_movimientos)
-        self._hilo_mov.finished.connect(self._hilo_mov.deleteLater)
-        self._hilo_mov.start()
+        iniciar_hilo_seguro(self._hilo_mov)
 
     def _guardar_movimientos(self, movs, error: str):
         if error:
@@ -618,4 +617,3 @@ class DialogoHistorialCliente(QDialog):
             )
         else:
             self.panel_ticket.mensaje(f"Cargo BORRADO · deuda ${nuevo_saldo:,.2f}")
-

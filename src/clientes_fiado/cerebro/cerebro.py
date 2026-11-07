@@ -19,13 +19,34 @@ class CerebroClientesFiado:
         return self.cuenta.normalizar_dni(dni)
 
     def identificar_dni(self, dni):
-        return self.fiado.identificar(dni)
+        cliente, estado, msg = self.fiado.identificar(dni)
+        if cliente:
+            cliente = self._overlay_local(cliente)
+        return cliente, estado, msg
 
     def identificar_nombre(self, nombre):
-        return self.cliente.identificar(nombre)
+        cliente, estado, msg = self.cliente.identificar(nombre)
+        if cliente:
+            cliente = self._overlay_local(cliente)
+        return cliente, estado, msg
 
     def obtener(self, cliente_id):
-        return self.cuenta.obtener(cliente_id)
+        return self._overlay_local(self.cuenta.obtener(cliente_id))
+
+    def _overlay_local(self, ficha):
+        """En esclava offline mezcla deuda/estado/promesa de la base escribible."""
+        if not ficha:
+            return ficha
+        from src.clientes_fiado.oficina.barrial.mantenimiento import (
+            aplicar_overlay_local,
+            fichas_escribibles,
+        )
+
+        try:
+            cid = int(ficha.get("id") if hasattr(ficha, "get") else None)
+        except (TypeError, ValueError):
+            return ficha
+        return aplicar_overlay_local(ficha, fichas_escribibles([cid]))
 
     def credito_disponible(self, cliente):
         return self.cuenta.credito_disponible(cliente)
@@ -39,8 +60,28 @@ class CerebroClientesFiado:
     def buscar_por_nombre(self, nombre):
         return self.cuenta.buscar_por_nombre(nombre)
 
+    def hallar_duplicado(self, nombre, dni=""):
+        """Una sola regla de duplicado para el alta desde cartera."""
+        dni_raw = str(dni or "").strip()
+        candidatos = []
+        if dni_raw:
+            candidatos.append(dni_raw)
+            dni_limpio = self.normalizar_dni(dni_raw)
+            if dni_limpio and dni_limpio not in candidatos:
+                candidatos.append(dni_limpio)
+        for candidato in candidatos:
+            por_dni = self.buscar_por_dni(candidato)
+            if por_dni:
+                return por_dni
+        nombre_limpio = str(nombre or "").strip()
+        if nombre_limpio:
+            return self.buscar_por_nombre(nombre_limpio)
+        return None
+
     def sugerir(self, texto):
-        return self.cuenta.sugerir_nombres(texto)
+        from src.clientes_fiado.oficina.barrial.mantenimiento import overlay_lista
+
+        return overlay_lista(self.cuenta.sugerir_nombres(texto))
 
     def buscar(self, texto):
         return self.cuenta.buscar(texto)
@@ -57,6 +98,22 @@ class CerebroClientesFiado:
     def ultimos_cargos(self, cliente_ids):
         return self.cuenta.ultimos_cargos(cliente_ids)
 
+    def ultimos_abonos(self, cliente_ids):
+        return self.cuenta.ultimos_abonos(cliente_ids)
+
+    def ultimos_movimientos(self, cliente_ids):
+        return self.cuenta.ultimos_movimientos(cliente_ids)
+
+    def aging_etiqueta(self, dias):
+        from src.clientes_fiado.oficina.barrial.aging import etiqueta
+
+        return etiqueta(dias)
+
+    def aging_color(self, dias):
+        from src.clientes_fiado.oficina.barrial.aging import color_etiqueta
+
+        return color_etiqueta(dias)
+
     def movimientos(self, cliente_id):
         return self.cuenta.movimientos(cliente_id)
 
@@ -71,6 +128,95 @@ class CerebroClientesFiado:
 
     def fijar_limite(self, cliente_id, limite):
         return self.cuenta.fijar_limite(cliente_id, limite)
+
+    def esta_suspendido(self, cliente):
+        from src.clientes_fiado.oficina.barrial.estado import esta_suspendido
+
+        return esta_suspendido(cliente)
+
+    def suspender(self, cliente_id):
+        from src.clientes_fiado.oficina.barrial.estado import suspender
+
+        return suspender(cliente_id)
+
+    def reactivar(self, cliente_id):
+        from src.clientes_fiado.oficina.barrial.estado import reactivar
+
+        return reactivar(cliente_id)
+
+    def fijar_promesa(self, cliente_id, fecha, nota=""):
+        from src.clientes_fiado.oficina.barrial.promesa import fijar
+
+        return fijar(cliente_id, fecha, nota)
+
+    def limpiar_promesa(self, cliente_id):
+        from src.clientes_fiado.oficina.barrial.promesa import limpiar
+
+        return limpiar(cliente_id)
+
+    def promesa_vencida(self, cliente):
+        from src.clientes_fiado.oficina.barrial.promesa import vencida
+
+        return vencida(cliente)
+
+    def aging_bucket(self, dias):
+        from src.clientes_fiado.oficina.barrial.aging import bucket
+
+        return bucket(dias)
+
+    def aging_cumple(self, dias, clave):
+        from src.clientes_fiado.oficina.barrial.aging import cumple_filtro
+
+        return cumple_filtro(dias, clave)
+
+    def mantenimiento_pct(self):
+        from src.clientes_fiado.oficina.barrial.mantenimiento import porcentaje_base
+
+        return porcentaje_base()
+
+    def apalancamiento_pct(self):
+        from src.clientes_fiado.oficina.barrial.mantenimiento import porcentaje_apalancamiento
+
+        return porcentaje_apalancamiento()
+
+    def tarifar_mantenimiento(self, deuda, dias=None):
+        from src.clientes_fiado.oficina.barrial.mantenimiento import tarifar
+
+        return tarifar(deuda, dias)
+
+    def calcular_mantenimiento(self, deuda, dias=None, pct=None):
+        from src.clientes_fiado.oficina.barrial.mantenimiento import calcular
+
+        return calcular(deuda, dias=dias, pct=pct)
+
+    def aplicar_mantenimiento(self, cliente_id, deuda=None, dias=None, pct=None):
+        """Cargo de gestión (base + apal si >30d)."""
+        from src.clientes_fiado.oficina.barrial.mantenimiento import aplicar
+
+        return aplicar(cliente_id, deuda=deuda, dias=dias, pct=pct)
+
+    def aplicar_mantenimientos_auto(self, items):
+        """Lote automático: [(cliente_id, deuda, dias), ...]. Respeta ventana 30d."""
+        from src.clientes_fiado.oficina.barrial.mantenimiento import aplicar_automatico
+
+        return aplicar_automatico(items)
+
+    def deudas_locales(self, cliente_ids):
+        """Deudas desde la base escribible (esclava offline ≠ espejo)."""
+        from src.clientes_fiado.oficina.barrial.mantenimiento import deudas_escribibles
+
+        return deudas_escribibles(cliente_ids)
+
+    def fichas_locales(self, cliente_ids):
+        """Deuda + estado + promesa desde la base escribible (no el espejo)."""
+        from src.clientes_fiado.oficina.barrial.mantenimiento import fichas_escribibles
+
+        return fichas_escribibles(cliente_ids)
+
+    def guardar_politicas_credito(self, base_pct, apal_pct):
+        from src.clientes_fiado.oficina.barrial.mantenimiento import guardar_politicas
+
+        return guardar_politicas(base_pct, apal_pct)
 
     def abonar(self, cliente_id, monto, descripcion, medio="", perfil="", quien=""):
         return self.cuenta.abonar(cliente_id, monto, descripcion, medio, perfil, quien)
@@ -104,8 +250,14 @@ class CerebroClientesFiado:
     def total_cobros(self):
         return self.cuenta.total_cobros()
 
+    def total_cobros_mes(self):
+        return self.cuenta.total_cobros_mes()
+
     def listar_cobros(self):
         return self.cuenta.listar_cobros()
+
+    def listar_cargos(self):
+        return self.cuenta.listar_cargos()
 
     def cargar_manual(self, cliente_id, monto, descripcion):
         return self.cuenta.cargar_manual(cliente_id, monto, descripcion)
@@ -118,6 +270,9 @@ class CerebroClientesFiado:
 
     def anotar_faltante(self, venta_id):
         return self.cuenta.anotar_faltante(venta_id)
+
+    def anotar_faltantes(self, venta_ids):
+        return self.cuenta.anotar_faltantes(venta_ids)
 
     def cartel(self, cliente):
         try:
@@ -171,6 +326,15 @@ class CerebroClientesFiado:
                     cliente=cliente,
                     excepcion=quien,
                 )
+        cliente = self.cuenta.obtener(cliente_id) if cliente_id else None
+        if cliente and self.esta_suspendido(cliente):
+            return OrdenCobro(
+                False,
+                nombre,
+                cliente_id=dict(cliente).get("id"),
+                cliente=cliente,
+                motivo="Cuenta suspendida. Pedí PIN de admin o reactivá en cartera.",
+            )
         if nombre == "Fiado":
             return self.fiado.autorizar(cliente_id, monto)
         return self.cliente.autorizar(cliente_id, monto)

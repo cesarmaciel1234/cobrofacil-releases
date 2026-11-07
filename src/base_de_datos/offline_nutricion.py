@@ -664,7 +664,8 @@ class OfflineNutricionManager:
 
                 if not existente:
                     CAMPOS = ("nombre", "telefono", "dni", "direccion", "email", "limite_credito",
-                              "deuda_actual", "tipo_cliente", "plazo_dias", "uid", "origen_pc",
+                              "deuda_actual", "tipo_cliente", "plazo_dias", "estado_cuenta",
+                              "promesa_fecha", "promesa_nota", "uid", "origen_pc",
                               "creado_por", "creado_en", "actualizado_en")
                     filtro = {k: v for k, v in datos.items() if k in CAMPOS}
                     cols = list(filtro.keys())

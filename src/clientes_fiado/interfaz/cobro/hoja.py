@@ -452,16 +452,28 @@ class HojaCuentaCobro(QFrame):
         if estado == "error" or not cliente:
             self._fallo(msg or "No se pudo identificar al cliente.")
             return
+        if cerebro.esta_suspendido(cliente):
+            self._avisar_suspendido(cliente, ref)
+            return
         if cerebro.limite_excedido(cliente, self._monto):
             self._avisar_cupo(cliente, ref)
             return
         self._pasar(cliente, ref)
 
     def _tomar_lista(self, cliente):
-        if cerebro.limite_excedido(cliente, self._monto):
-            self._avisar_cupo(cliente, str(cliente.get("nombre") or ""))
+        ficha = dict(cliente) if not isinstance(cliente, dict) else dict(cliente)
+        cid = ficha.get("id")
+        if cid is not None:
+            fresco = cerebro.obtener(cid)
+            if fresco:
+                ficha = dict(fresco) if not isinstance(fresco, dict) else fresco
+        if cerebro.esta_suspendido(ficha):
+            self._avisar_suspendido(ficha, str(ficha.get("nombre") or ""))
             return
-        self._pasar(cliente, str(cliente.get("nombre") or ""))
+        if cerebro.limite_excedido(ficha, self._monto):
+            self._avisar_cupo(ficha, str(ficha.get("nombre") or ""))
+            return
+        self._pasar(ficha, str(ficha.get("nombre") or ""))
 
     def _aviso(self):
         nodo = self.parentWidget()
@@ -477,6 +489,7 @@ class HojaCuentaCobro(QFrame):
         self._ref = ref
         self._pin = ""
         self._pidiendo_pin = True
+        self._frase_pin = "Límite superado. PIN de admin"
         limite = float(dict(cliente).get("limite_credito", 0))
         disp = cerebro.credito_disponible(cliente)
         exceso = max(0.0, float(self._monto or 0) - disp)
@@ -490,14 +503,35 @@ class HojaCuentaCobro(QFrame):
         )
         aviso = self._aviso()
         if aviso is not None:
-            aviso.pin("Límite superado. PIN de admin")
+            aviso.pin(self._frase_pin)
         self.ubicar()
         self.caja.setFocus()
 
-    def _pintar_pin(self, frase="Límite superado. PIN de admin"):
+    def _avisar_suspendido(self, cliente, ref):
+        self._cliente = cliente
+        self._ref = ref
+        self._pin = ""
+        self._pidiendo_pin = True
+        self._frase_pin = "Cuenta suspendida. PIN de admin"
+        nombre = str(dict(cliente).get("nombre") or "").strip() or "Cliente"
+        sonar_alarma_limite_fiado()
+        self.aviso.setTextFormat(Qt.TextFormat.RichText)
+        self.aviso.setStyleSheet("font-size: 18px; font-weight: 800; background: transparent; border: none;")
+        self.aviso.setText(
+            "<span style='color:#7C2D12;'>Cuenta suspendida</span><br>"
+            f"<span style='color:#334155;'>{nombre}</span><br>"
+            "<span style='color:#B45309;'>PIN de admin para vender igual</span>"
+        )
         aviso = self._aviso()
         if aviso is not None:
-            aviso.pin(frase, len(self._pin))
+            aviso.pin(self._frase_pin)
+        self.ubicar()
+        self.caja.setFocus()
+
+    def _pintar_pin(self, frase=None):
+        aviso = self._aviso()
+        if aviso is not None:
+            aviso.pin(frase or getattr(self, "_frase_pin", "PIN de admin"), len(self._pin))
 
     def _cerrar_pin(self):
         quien = quien_autoriza(self._pin)

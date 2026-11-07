@@ -1,7 +1,9 @@
 """Ventas a crédito que no tienen cargo en la cuenta."""
+import sqlite3
 import unicodedata
 
 from src.base_de_datos.database import db_manager
+from src.logger import logger
 
 
 def _plegar(texto):
@@ -94,6 +96,8 @@ def anotar(venta_id):
     conn = None
     try:
         conn = db_manager.get_connection()
+        if isinstance(conn, sqlite3.Connection):
+            conn.execute("BEGIN IMMEDIATE")
         cursor = conn.cursor()
         bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
         cursor.execute(
@@ -137,15 +141,26 @@ def anotar(venta_id):
         conn.commit()
         return True, elegido.get("nombre") or ""
     except Exception:
+        logger.exception("[Cuadre clientes] No se pudo cargar la venta %s", venta_id)
         if conn:
             try:
                 conn.rollback()
             except Exception:
-                pass
+                logger.exception("[Cuadre clientes] Falló rollback para venta %s", venta_id)
         return False, "No se pudo cargar"
     finally:
         if conn:
             try:
                 conn.close()
             except Exception:
-                pass
+                logger.exception("[Cuadre clientes] Falló el cierre de conexión")
+
+
+def anotar_varios(venta_ids):
+    """Carga varios tickets. Devuelve (hechos, pendientes_tras_intento)."""
+    hechos = 0
+    for venta_id in venta_ids or []:
+        ok, _mensaje = anotar(venta_id)
+        if ok:
+            hechos += 1
+    return hechos, ventas_sin_cargo()

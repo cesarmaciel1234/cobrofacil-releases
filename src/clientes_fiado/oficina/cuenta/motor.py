@@ -1,4 +1,6 @@
 import unicodedata
+import math
+import sqlite3
 
 from src.base_de_datos.database import db_manager
 from src.repositories.cliente_repository import ClienteRepository
@@ -12,6 +14,13 @@ def _plegar(texto):
 
 MARCA_BORRADO = "BORRADO · "
 MARCA_CANCELADO = "CANCELADO · "
+
+
+def _marca_mantenimiento() -> str:
+    """Evita ciclo de import: barrial.mantenimiento usa MotorCuenta."""
+    from src.clientes_fiado.oficina.barrial.reglas import MARCA_MANTENIMIENTO
+
+    return MARCA_MANTENIMIENTO
 
 
 def _ficha(fila):
@@ -60,11 +69,13 @@ def _id_insertado(cursor):
         return 0
 
 
-def _confirmar(trabajo, fallo):
+def _confirmar(trabajo, fallo, operacion="cuenta corriente"):
     """Una sola transacción. Si el movimiento no queda escrito, la deuda no cambia."""
     conn = None
     try:
         conn = db_manager.get_connection()
+        if isinstance(conn, sqlite3.Connection):
+            conn.execute("BEGIN IMMEDIATE")
         resultado = trabajo(conn.cursor())
         if not resultado or not resultado[0]:
             conn.rollback()
@@ -72,18 +83,29 @@ def _confirmar(trabajo, fallo):
         conn.commit()
         return resultado
     except Exception:
+        from src.logger import logger
+
+        logger.exception("[Cuenta corriente] Falló operación: %s", operacion)
         if conn:
             try:
                 conn.rollback()
             except Exception:
-                pass
+                logger.exception(
+                    "[Cuenta corriente] Falló rollback de operación: %s",
+                    operacion,
+                )
         return fallo
     finally:
         if conn:
             try:
                 conn.close()
             except Exception:
-                pass
+                from src.logger import logger
+
+                logger.exception(
+                    "[Cuenta corriente] Falló cierre de conexión: %s",
+                    operacion,
+                )
 
 
 class _DbWrapper:
@@ -159,8 +181,10 @@ class MotorCuenta:
         busqueda = _plegar(texto)
         if len(busqueda) < 2:
             return []
+        # estado_cuenta: la hoja bloquea suspendidos al elegir de la lista
         filas = _get_read_db().execute_query(
-            "SELECT id, nombre, dni, limite_credito, deuda_actual FROM clientes ORDER BY nombre ASC"
+            "SELECT id, nombre, dni, limite_credito, deuda_actual, estado_cuenta "
+            "FROM clientes ORDER BY nombre ASC"
         ) or []
         salida = []
         for fila in filas:
@@ -200,16 +224,8 @@ class MotorCuenta:
             return fila[0]
         return None
 
-    def ultimo_cargo(self, cliente_id):
-        return _get_read_db().execute_scalar(
-            "SELECT fecha FROM cuenta_corriente WHERE cliente_id = ? AND tipo = 'CARGO' "
-            "AND (descripcion IS NULL OR (descripcion NOT LIKE ? AND descripcion NOT LIKE ?)) "
-            "ORDER BY fecha DESC LIMIT 1",
-            (cliente_id, f"{MARCA_BORRADO}%", f"{MARCA_CANCELADO}%"),
-        )
-
-    def ultimos_cargos(self, cliente_ids):
-        """Última fecha de cargo para varias fichas, en una consulta por bloque."""
+    def ultimos_abonos(self, cliente_ids):
+        """Última fecha de ABONO (pago) por ficha — base del apalancamiento."""
         ids = list(dict.fromkeys(cliente_id for cliente_id in cliente_ids if cliente_id is not None))
         fechas = {}
         for inicio in range(0, len(ids), 500):
@@ -219,12 +235,83 @@ class MotorCuenta:
                 f"""
                 SELECT cliente_id, MAX(fecha) AS fecha
                 FROM cuenta_corriente
-                WHERE tipo = 'CARGO'
-                  AND (descripcion IS NULL OR (descripcion NOT LIKE ? AND descripcion NOT LIKE ?))
+                WHERE tipo = 'ABONO'
                   AND cliente_id IN ({placeholders})
                 GROUP BY cliente_id
                 """,
-                (f"{MARCA_BORRADO}%", f"{MARCA_CANCELADO}%") + tuple(bloque),
+                tuple(bloque),
+            ) or []
+            for fila in filas:
+                if hasattr(fila, "get"):
+                    cliente_id, fecha = fila.get("cliente_id"), fila.get("fecha")
+                else:
+                    cliente_id, fecha = fila[0], fila[1]
+                if cliente_id is not None and fecha is not None:
+                    fechas[cliente_id] = fecha
+        return fechas
+
+    def ultimo_cargo(self, cliente_id):
+        # Aging / días: no cuentan borrados, cancelados ni mantenimiento (recargo de sistema).
+        marca_mant = _marca_mantenimiento()
+        return _get_read_db().execute_scalar(
+            "SELECT fecha FROM cuenta_corriente WHERE cliente_id = ? AND tipo = 'CARGO' "
+            "AND (descripcion IS NULL OR ("
+            "descripcion NOT LIKE ? AND descripcion NOT LIKE ? AND descripcion NOT LIKE ?"
+            ")) "
+            "ORDER BY fecha DESC LIMIT 1",
+            (
+                cliente_id,
+                f"{MARCA_BORRADO}%",
+                f"{MARCA_CANCELADO}%",
+                f"{marca_mant}%",
+            ),
+        )
+
+    def ultimos_cargos(self, cliente_ids):
+        """Última fecha de cargo real (sin borrado/cancelado/mantenimiento) por ficha."""
+        ids = list(dict.fromkeys(cliente_id for cliente_id in cliente_ids if cliente_id is not None))
+        fechas = {}
+        marca_mant = _marca_mantenimiento()
+        for inicio in range(0, len(ids), 500):
+            bloque = ids[inicio:inicio + 500]
+            placeholders = ", ".join("?" for _ in bloque)
+            filas = _get_read_db().execute_query(
+                f"""
+                SELECT cliente_id, MAX(fecha) AS fecha
+                FROM cuenta_corriente
+                WHERE tipo = 'CARGO'
+                  AND (descripcion IS NULL OR (
+                    descripcion NOT LIKE ? AND descripcion NOT LIKE ? AND descripcion NOT LIKE ?
+                  ))
+                  AND cliente_id IN ({placeholders})
+                GROUP BY cliente_id
+                """,
+                (f"{MARCA_BORRADO}%", f"{MARCA_CANCELADO}%", f"{marca_mant}%") + tuple(bloque),
+            ) or []
+            for fila in filas:
+                if hasattr(fila, "get"):
+                    cliente_id, fecha = fila.get("cliente_id"), fila.get("fecha")
+                else:
+                    cliente_id, fecha = fila[0], fila[1]
+                if cliente_id is not None and fecha is not None:
+                    fechas[cliente_id] = fecha
+        return fechas
+
+    def ultimos_movimientos(self, cliente_ids):
+        """Última fecha de cualquier movimiento (cargo o abono) por ficha."""
+        ids = list(dict.fromkeys(cliente_id for cliente_id in cliente_ids if cliente_id is not None))
+        fechas = {}
+        for inicio in range(0, len(ids), 500):
+            bloque = ids[inicio:inicio + 500]
+            placeholders = ", ".join("?" for _ in bloque)
+            filas = _get_read_db().execute_query(
+                f"""
+                SELECT cliente_id, MAX(fecha) AS fecha
+                FROM cuenta_corriente
+                WHERE cliente_id IN ({placeholders})
+                GROUP BY cliente_id
+                """,
+                tuple(bloque),
             ) or []
             for fila in filas:
                 if hasattr(fila, "get"):
@@ -280,7 +367,11 @@ class MotorCuenta:
     def abonar(self, cliente_id, monto, descripcion, medio="", perfil="", quien=""):
         from src.clientes_fiado.oficina.huella import tabla
         from src.clientes_fiado.oficina.huella.eventos import movimiento_en
+        from src.utils.dinero import redondear_dinero
 
+        monto = redondear_dinero(monto)
+        if not math.isfinite(monto) or monto <= 0:
+            return False, 0.0, ""
         tabla.asegurar()
 
         def trabajo(cursor):
@@ -330,13 +421,30 @@ class MotorCuenta:
             )
             return True, nuevo_saldo, nombre
 
-        return _confirmar(trabajo, (False, 0.0, ""))
+        return _confirmar(trabajo, (False, 0.0, ""), "abono")
 
     def total_cobros(self):
         try:
             return float(
                 _get_read_db().execute_scalar(
                     "SELECT SUM(monto) FROM cuenta_corriente WHERE tipo = 'ABONO'"
+                )
+                or 0.0
+            )
+        except Exception:
+            return 0.0
+
+    def total_cobros_mes(self):
+        """Suma de ABONOS del mes calendario en curso."""
+        from datetime import datetime
+
+        inicio = datetime.now().strftime("%Y-%m-01 00:00:00")
+        try:
+            return float(
+                _get_read_db().execute_scalar(
+                    "SELECT SUM(monto) FROM cuenta_corriente "
+                    "WHERE tipo = 'ABONO' AND fecha >= ?",
+                    (inicio,),
                 )
                 or 0.0
             )
@@ -361,6 +469,17 @@ class MotorCuenta:
                 "LEFT JOIN clientes c ON c.id = cc.cliente_id "
                 "WHERE cc.tipo = 'ABONO' ORDER BY cc.fecha DESC, cc.id DESC"
             ) or []
+        return [armar(fila) for fila in filas]
+
+    def listar_cargos(self):
+        from src.clientes_fiado.oficina.cargos.lista import armar
+
+        filas = _get_read_db().execute_query(
+            "SELECT cc.id, cc.fecha, cc.monto, cc.saldo_resultante, cc.descripcion, "
+            "cc.venta_id, c.nombre, c.dni "
+            "FROM cuenta_corriente cc LEFT JOIN clientes c ON c.id = cc.cliente_id "
+            "WHERE cc.tipo = 'CARGO' ORDER BY cc.fecha DESC, cc.id DESC"
+        ) or []
         return [armar(fila) for fila in filas]
 
     def pagos_del_dia(self):
@@ -391,8 +510,10 @@ class MotorCuenta:
             return 0.0
 
     def cargar_manual(self, cliente_id, monto, descripcion):
-        monto = float(monto or 0)
-        if monto <= 0:
+        from src.utils.dinero import redondear_dinero
+
+        monto = redondear_dinero(monto)
+        if not math.isfinite(monto) or monto <= 0:
             return False, 0.0, ""
         from src.clientes_fiado.oficina.huella import tabla
         from src.clientes_fiado.oficina.huella.eventos import movimiento_en
@@ -431,7 +552,125 @@ class MotorCuenta:
             )
             return True, nuevo_saldo, nombre
 
-        return _confirmar(trabajo, (False, 0.0, ""))
+        return _confirmar(trabajo, (False, 0.0, ""), "cargo manual")
+
+    def aplicar_mantenimiento_automatico(self, cliente_id, ahora=None):
+        """Comprueba la ventana y carga el mantenimiento bajo el mismo bloqueo."""
+        from datetime import datetime
+
+        from src.clientes_fiado.oficina.barrial.mantenimiento import (
+            _parse_fecha_mov,
+            corresponde_auto,
+            descripcion,
+            tarifar,
+        )
+        from src.clientes_fiado.oficina.barrial.reglas import (
+            MARCA_MANTENIMIENTO,
+        )
+        from src.clientes_fiado.oficina.huella import tabla
+        from src.clientes_fiado.oficina.huella.eventos import movimiento_en
+
+        tabla.asegurar()
+        ahora = ahora or datetime.now()
+
+        def trabajo(cursor):
+            bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
+            cursor.execute(
+                f"SELECT deuda_actual, nombre FROM clientes WHERE id = ?{bloqueo}",
+                (cliente_id,),
+            )
+            fila = cursor.fetchone()
+            if not fila:
+                return False, "no_cliente", 0.0, "", 0.0
+            ficha = _ficha(fila)
+            try:
+                deuda = float(
+                    ficha.get("deuda_actual")
+                    if "deuda_actual" in ficha
+                    else fila[0] or 0
+                )
+            except (TypeError, ValueError, KeyError, IndexError):
+                return False, "deuda_invalida", 0.0, "", 0.0
+            if not math.isfinite(deuda):
+                return False, "deuda_invalida", 0.0, "", 0.0
+            nombre = ficha.get("nombre") if isinstance(ficha, dict) else fila[1]
+            nombre = str(nombre or "")
+
+            cursor.execute(
+                "SELECT fecha FROM cuenta_corriente WHERE cliente_id = ? AND tipo = 'CARGO' "
+                "AND descripcion LIKE ? ORDER BY fecha DESC LIMIT 1",
+                (cliente_id, f"{MARCA_MANTENIMIENTO}%"),
+            )
+            fila_mantenimiento = cursor.fetchone()
+            if fila_mantenimiento:
+                fecha_mantenimiento = _celda(fila_mantenimiento, "fecha", 0)
+                if _parse_fecha_mov(fecha_mantenimiento) is None:
+                    return False, "fecha_mantenimiento_invalida", deuda, nombre, 0.0
+                if not corresponde_auto(fecha_mantenimiento, ahora):
+                    return True, "omitido", deuda, nombre, 0.0
+
+            cursor.execute(
+                "SELECT fecha FROM cuenta_corriente WHERE cliente_id = ? AND tipo = 'ABONO' "
+                "ORDER BY fecha DESC LIMIT 1",
+                (cliente_id,),
+            )
+            fila_pago = cursor.fetchone()
+            fecha_referencia = _celda(fila_pago, "fecha", 0) if fila_pago else None
+            if fecha_referencia is None:
+                cursor.execute(
+                    "SELECT fecha FROM cuenta_corriente WHERE cliente_id = ? AND tipo = 'CARGO' "
+                    "AND (descripcion IS NULL OR (descripcion NOT LIKE ? "
+                    "AND descripcion NOT LIKE ? AND descripcion NOT LIKE ?)) "
+                    "ORDER BY fecha DESC LIMIT 1",
+                    (
+                        cliente_id,
+                        f"{MARCA_BORRADO}%",
+                        f"{MARCA_CANCELADO}%",
+                        f"{MARCA_MANTENIMIENTO}%",
+                    ),
+                )
+                fila_cargo = cursor.fetchone()
+                fecha_referencia = _celda(fila_cargo, "fecha", 0) if fila_cargo else None
+
+            dias = None
+            fecha_dt = _parse_fecha_mov(fecha_referencia)
+            if fecha_dt is not None:
+                dias = max(0, (ahora - fecha_dt).days)
+            tarifa = tarifar(deuda, dias)
+            monto = float(tarifa.get("monto_total") or 0)
+            if not math.isfinite(monto) or monto <= 0:
+                return True, "sin_deuda", deuda, nombre, 0.0
+
+            nuevo_saldo = deuda + monto
+            nota = descripcion(tarifa)
+            cursor.execute(
+                "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
+                (nuevo_saldo, cliente_id),
+            )
+            cursor.execute(
+                "INSERT INTO cuenta_corriente "
+                "(cliente_id, tipo, monto, saldo_resultante, descripcion) "
+                "VALUES (?, 'CARGO', ?, ?, ?)",
+                (cliente_id, monto, nuevo_saldo, nota),
+            )
+            cargo_id = _id_insertado(cursor)
+            movimiento_en(
+                cursor, "CARGO", cliente_id, monto, nota,
+                extra={"cargo_id": cargo_id},
+            )
+            return True, "aplicado", nuevo_saldo, nombre, monto
+
+        resultado = _confirmar(
+            trabajo,
+            (False, "fallo", 0.0, "", 0.0),
+            "mantenimiento automático",
+        )
+        return {
+            "estado": resultado[1],
+            "saldo": float(resultado[2] or 0),
+            "nombre": str(resultado[3] or ""),
+            "monto": float(resultado[4] or 0),
+        }
 
     def ventas_sin_cargo(self):
         from src.clientes_fiado.oficina.cuenta.cuadre import ventas_sin_cargo
@@ -443,6 +682,11 @@ class MotorCuenta:
 
         return anotar(venta_id)
 
+    def anotar_faltantes(self, venta_ids):
+        from src.clientes_fiado.oficina.cuenta.cuadre import anotar_varios
+
+        return anotar_varios(venta_ids)
+
     def borrar_cargo(self, movimiento_id, cliente_id):
         """Marca el CARGO como BORRADO. No borra la fila ni el ticket. Resta la deuda una sola vez."""
         from src.clientes_fiado.oficina.huella import tabla
@@ -451,9 +695,10 @@ class MotorCuenta:
         tabla.asegurar()
 
         def trabajo(cursor):
+            bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
             cursor.execute(
                 "SELECT id, cliente_id, tipo, monto, descripcion, venta_id "
-                "FROM cuenta_corriente WHERE id = ?",
+                f"FROM cuenta_corriente WHERE id = ?{bloqueo}",
                 (movimiento_id,),
             )
             fila = cursor.fetchone()
@@ -556,4 +801,6 @@ class MotorCuenta:
                     )
             return True, nuevo_saldo, nombre
 
-        return _confirmar(trabajo, (False, 0.0, "No se pudo marcar el cargo."))
+        return _confirmar(
+            trabajo, (False, 0.0, "No se pudo marcar el cargo."), "borrado de cargo"
+        )
