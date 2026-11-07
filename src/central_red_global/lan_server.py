@@ -5,7 +5,7 @@ import os
 import hashlib
 import uuid
 from decimal import Decimal
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from src.logger import logger
 from src.base_de_datos.database import db_manager
 from src.config import config
@@ -65,6 +65,39 @@ UDP_PORT = 37020
 
 lan_exit_event = threading.Event()
 _http_server_instance = None
+_http_thread = None
+_udp_thread = None
+_lifecycle_lock = threading.Lock()
+_HTTP_WORKERS = 32
+_RETRY_SECONDS = 5
+
+
+class _BoundedThreadingHTTPServer(ThreadingHTTPServer):
+    """Atiende solicitudes en paralelo sin permitir hilos ilimitados."""
+
+    daemon_threads = True
+    block_on_close = False
+
+    def __init__(self, server_address, request_handler):
+        self._request_slots = threading.BoundedSemaphore(_HTTP_WORKERS)
+        super().__init__(server_address, request_handler)
+
+    def process_request(self, request, client_address):
+        if not self._request_slots.acquire(blocking=False):
+            logger.warning("Servidor API LAN ocupado; se rechazó una conexión por límite de concurrencia.")
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except Exception:
+            self._request_slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._request_slots.release()
 
 
 def _store_id_local() -> str:
@@ -385,79 +418,106 @@ class LANRequestHandler(BaseHTTPRequestHandler):
 
 def start_http_server():
     global _http_server_instance
-    try:
-        server = HTTPServer(('0.0.0.0', API_PORT), LANRequestHandler)
-        _http_server_instance = server
-        logger.info(f"Servidor API LAN iniciado en puerto {API_PORT}")
-        server.serve_forever()
-    except Exception as e:
-        logger.error(f"Error al iniciar servidor API HTTP: {e}")
+    while not lan_exit_event.is_set():
+        server = None
+        try:
+            server = _BoundedThreadingHTTPServer(('0.0.0.0', API_PORT), LANRequestHandler)
+            _http_server_instance = server
+            logger.info(
+                "Servidor API LAN escuchando en puerto %s (máximo %s solicitudes simultáneas).",
+                API_PORT,
+                _HTTP_WORKERS,
+            )
+            server.serve_forever(poll_interval=0.5)
+        except OSError as e:
+            if not lan_exit_event.is_set():
+                logger.error("No se pudo iniciar el servidor API LAN: %s", e)
+        except Exception as e:
+            if not lan_exit_event.is_set():
+                logger.exception("El servidor API LAN se interrumpió: %s", e)
+        finally:
+            if _http_server_instance is server:
+                _http_server_instance = None
+            if server is not None:
+                server.server_close()
+        if not lan_exit_event.is_set():
+            lan_exit_event.wait(_RETRY_SECONDS)
 
 def start_udp_discovery_server():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    while not lan_exit_event.is_set():
+        sock = None
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.bind(('0.0.0.0', UDP_PORT))
+            sock.settimeout(2.0)
+            logger.info("Servidor UDP Discovery LAN escuchando en puerto %s", UDP_PORT)
 
-    try:
-        sock.bind(('0.0.0.0', UDP_PORT))
-        sock.settimeout(2.0)
-        logger.info(f"Servidor UDP Discovery LAN iniciado en puerto {UDP_PORT}")
+            while not lan_exit_event.is_set():
+                try:
+                    data, addr = sock.recvfrom(1024)
+                except socket.timeout:
+                    continue
+                except OSError as e:
+                    if not lan_exit_event.is_set():
+                        logger.error("Error recibiendo descubrimiento UDP: %s", e)
+                    break
 
-        while not lan_exit_event.is_set():
-            try:
-                data, addr = sock.recvfrom(1024)
-            except socket.timeout:
-                continue
-            except Exception as e:
-                logger.error(f"Error procesando peticion UDP Discovery: {e}")
-                continue
+                try:
+                    if data == b"PUNPRO_DISCOVER":
+                        if not _esta_pc_anuncia_tienda():
+                            continue
+                        db_engine = getattr(db_manager, "db_engine_type", "sqlite")
+                        try:
+                            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                            s.connect(("8.8.8.8", 80))
+                            local_ip = s.getsockname()[0]
+                            s.close()
+                        except OSError:
+                            local_ip = socket.gethostbyname(socket.gethostname())
 
-            try:
-                if data == b"PUNPRO_DISCOVER":
-                    if not _esta_pc_anuncia_tienda():
-                        continue
-                    db_engine = getattr(db_manager, "db_engine_type", "sqlite")
-                    try:
-                        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        s.connect(("8.8.8.8", 80))
-                        local_ip = s.getsockname()[0]
-                        s.close()
-                    except Exception:
-                        local_ip = socket.gethostbyname(socket.gethostname())
-
-                    pass_hash = hashlib.sha256(config.get("server_password", "1234").encode()).hexdigest()
-                    response = {
-                        "hostname": socket.gethostname(),
-                        "server_ip": local_ip,
-                        "store_id": _store_id_local(),
-                        "db_path": getattr(db_manager, "db_path", ""),
-                        "pass_hash": pass_hash,
-                        "mode": "MAESTRA",
-                        "servicio": "tienda",
-                        "db_engine": db_engine,
-                        "api_url": f"http://{local_ip}:{API_PORT}",
-                    }
-                    sock.sendto(json.dumps(response).encode("utf-8"), addr)
-            except Exception as e:
-                logger.error(f"Error parseando peticion UDP: {e}")
-    except Exception as e:
-        logger.error(f"Error en servidor UDP Discovery: {e}")
-    finally:
-        sock.close()
-
-_http_server_started = False
-_udp_server_started = False
+                        pass_hash = hashlib.sha256(config.get("server_password", "1234").encode()).hexdigest()
+                        response = {
+                            "hostname": socket.gethostname(),
+                            "server_ip": local_ip,
+                            "store_id": _store_id_local(),
+                            "db_path": getattr(db_manager, "db_path", ""),
+                            "pass_hash": pass_hash,
+                            "mode": "MAESTRA",
+                            "servicio": "tienda",
+                            "db_engine": db_engine,
+                            "api_url": f"http://{local_ip}:{API_PORT}",
+                        }
+                        sock.sendto(json.dumps(response).encode("utf-8"), addr)
+                except Exception as e:
+                    logger.exception("Error procesando petición UDP de descubrimiento: %s", e)
+        except OSError as e:
+            if not lan_exit_event.is_set():
+                logger.error("No se pudo iniciar el descubrimiento UDP: %s", e)
+        finally:
+            if sock is not None:
+                sock.close()
+        if not lan_exit_event.is_set():
+            lan_exit_event.wait(_RETRY_SECONDS)
 
 def init_lan_server():
     """Inicia los servidores LAN (API HTTP y UDP Discovery) en segundo plano si no están iniciados."""
-    global _http_server_started, _udp_server_started
-
-    if not _http_server_started:
-        t_http = threading.Thread(target=start_http_server, daemon=True)
-        t_http.start()
-        _http_server_started = True
-
-    if not _udp_server_started:
-        t_udp = threading.Thread(target=start_udp_discovery_server, daemon=True)
-        t_udp.start()
-        _udp_server_started = True
+    global _http_thread, _udp_thread
+    with _lifecycle_lock:
+        if lan_exit_event.is_set():
+            lan_exit_event.clear()
+        if _http_thread is None or not _http_thread.is_alive():
+            _http_thread = threading.Thread(
+                target=start_http_server,
+                name="servidor-api-lan",
+                daemon=True,
+            )
+            _http_thread.start()
+        if _udp_thread is None or not _udp_thread.is_alive():
+            _udp_thread = threading.Thread(
+                target=start_udp_discovery_server,
+                name="servidor-discovery-udp",
+                daemon=True,
+            )
+            _udp_thread.start()
