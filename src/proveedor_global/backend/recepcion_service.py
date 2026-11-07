@@ -1,11 +1,15 @@
 from datetime import datetime
+import json
+import time
+import uuid
 from src.base_de_datos.database import db_manager
 from src.utils.barcode_parser import BarcodeParser
 from src.logger import logger
 
 
-def _avisar_formula(cursor, items):
+def _avisar_formula(cursor, items, db=None):
     """La recepción no parte el huevo. Le dice a la fórmula cuántos cajones entraron."""
+    db = db or db_manager
     aviso = None
     for it in items or []:
         if not it.get("desde_formula"):
@@ -40,7 +44,7 @@ def _avisar_formula(cursor, items):
             if it.get("extension") or not it.get("kilos"):
                 continue
             cortes.append((it.get("nombre") or "", it.get("kilos")))
-        entrar_carne(cursor, db_manager, formula, bultos, precio, cortes or None)
+        entrar_carne(cursor, db, formula, bultos, precio, cortes or None)
         try:
             from src.proveedor_global.frontend.formula.motores.extension import escribir
             escribir(cursor, items)
@@ -316,10 +320,41 @@ class RecepcionService:
             prov_clean, items, total_bultos, total_monto, condicion_pago
         )
 
+        sync_id = str(uuid.uuid4())
+        sync_timestamp = time.time()
+        registro_offline = {
+            "sync_id": sync_id,
+            "proveedor": prov_clean,
+            "items": items,
+            "total_bultos": total_bultos,
+            "total_monto": total_monto,
+            "condicion_pago": condicion_pago,
+            "perfil": perfil,
+            "timestamp": sync_timestamp,
+            "fecha": fecha_hoy,
+        }
         conn = None
         try:
             conn = db_manager.get_connection()
             cursor = conn.cursor()
+            offline = (
+                getattr(db_manager, "db_engine_type", "") != "mariadb"
+                or getattr(db_manager, "_forced_local_offline", False)
+            )
+            if offline:
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS offline_recepciones (
+                        sync_id TEXT PRIMARY KEY,
+                        payload TEXT NOT NULL,
+                        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    )
+                    """
+                )
+                cursor.execute(
+                    "INSERT INTO offline_recepciones (sync_id, payload) VALUES (?, ?)",
+                    (sync_id, json.dumps(registro_offline, ensure_ascii=False)),
+                )
             cursor.execute(
                 """
                 INSERT INTO romaneos (fecha, proveedor, tropa, tipo_carne, precio_unitario, total_kilos, monto_total, estado_pago, registrado_por)
@@ -368,19 +403,33 @@ class RecepcionService:
                 "total_bultos": total_bultos,
                 "total_monto": total_monto,
                 "articulos_count": len(items),
-                "whatsapp_texto": wa_texto
+                "whatsapp_texto": wa_texto,
+                "sync_id": sync_id,
             }
 
             logger.info(f"Recepción de mercadería completada: {len(items)} productos ingresados a stock para {prov_clean}.")
-            if getattr(db_manager, "db_engine_type", "") != "mariadb" or not db_manager.is_connected() or getattr(db_manager, "_forced_local_offline", False):
+            outbox_ok = True
+            if offline:
                 try:
                     from src.base_de_datos.offline_nutricion import offline_nutricion_manager
-                    offline_nutricion_manager.encolar_recepcion(
+                    outbox_ok = offline_nutricion_manager.encolar_recepcion(
                         prov_clean, items, total_bultos, total_monto, condicion_pago, perfil,
                         fecha=fecha_hoy,
+                        sync_id=sync_id,
+                        timestamp=sync_timestamp,
                     )
                 except Exception as e_enc:
-                    logger.warning(f"No se pudo encolar recepción offline: {e_enc}")
+                    outbox_ok = False
+                    logger.exception("No se pudo encolar recepción offline: %s", e_enc)
+            sync_error = ""
+            if offline and not outbox_ok:
+                aviso = (
+                    "El ingreso quedó guardado en esta PC, pero no se pudo guardar su envío "
+                    "a la maestra. No repitas el ingreso; avisá al responsable para recuperar "
+                    "la sincronización."
+                )
+                sync_error = aviso
+                logger.error("Recepción local %s quedó sin confirmación en el outbox.", sync_id)
 
             try:
                 from src.motor_inventario.planilla.orquestador import MotorPlanilla
@@ -388,6 +437,9 @@ class RecepcionService:
                 MotorPlanilla.avisar()
             except Exception as aviso:
                 logger.warning("El ingreso quedó y la planilla se entera en su próximo pase: %s", aviso)
+            if sync_error:
+                resumen["sync_error"] = sync_error
+                return True, sync_error, resumen
             return True, "Ingreso a stock y compra registrados con éxito.", resumen
 
         except Exception as e:

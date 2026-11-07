@@ -267,6 +267,21 @@ def filas_cambios(tope: int = 40) -> tuple[int, list[tuple[str, str, str, str, s
                 ),
             )
         )
+    for registro in cola.get("auditorias") or []:
+        if not isinstance(registro, dict):
+            continue
+        ordenados.append(
+            (
+                registro.get("timestamp") or 0,
+                (
+                    _hora(registro.get("fecha") or registro.get("timestamp")),
+                    "auditoría",
+                    str(registro.get("nombre_producto") or "—"),
+                    f"{_cant(registro.get('stock_sistema'))} → {_cant(registro.get('stock_fisico'))}",
+                    "EN COLA",
+                ),
+            )
+        )
     ordenados.sort(key=lambda par: par[0] or 0, reverse=True)
     return len(ordenados), [fila for _, fila in ordenados[:tope]]
 
@@ -424,6 +439,17 @@ def foto_cambios(tope: int = 8) -> tuple[int, list[str]]:
                 f"{_hora(registro.get('fecha') or registro.get('timestamp'))}  "
                 f"cliente  {registro.get('accion') or ''}  "
                 f"{datos.get('nombre') or datos.get('razon_social') or '—'}",
+            )
+        )
+    for registro in cola.get("auditorias") or []:
+        if not isinstance(registro, dict):
+            continue
+        filas.append(
+            (
+                registro.get("timestamp") or 0,
+                f"{_hora(registro.get('fecha') or registro.get('timestamp'))}  "
+                f"auditoría  {registro.get('nombre_producto') or '—'}  "
+                f"{_cant(registro.get('stock_sistema'))} → {_cant(registro.get('stock_fisico'))}",
             )
         )
     filas.sort(key=lambda par: par[0] or 0, reverse=True)

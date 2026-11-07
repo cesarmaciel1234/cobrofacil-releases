@@ -40,6 +40,7 @@ class Config:
         "facturacion_afip_global": False,
         "db_engine": "mariadb",
         "db_host": "",
+        "store_id": "",
         "cierre_auto_hora": "00:00",
         "cierre_auto_activo": True,
         "stock_alerta_activa": True,

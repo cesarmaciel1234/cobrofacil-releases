@@ -3,6 +3,7 @@ import threading
 import socket
 import os
 import hashlib
+import uuid
 from decimal import Decimal
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from src.logger import logger
@@ -64,6 +65,16 @@ UDP_PORT = 37020
 
 lan_exit_event = threading.Event()
 _http_server_instance = None
+
+
+def _store_id_local() -> str:
+    """Identidad estable de esta tienda; la IP solo indica dónde encontrarla."""
+    store_id = str(config.get("store_id", "") or "").strip()
+    if store_id:
+        return store_id
+    store_id = uuid.uuid4().hex
+    config.set("store_id", store_id)
+    return store_id
 
 
 def stop_lan_server():
@@ -418,6 +429,7 @@ def start_udp_discovery_server():
                     response = {
                         "hostname": socket.gethostname(),
                         "server_ip": local_ip,
+                        "store_id": _store_id_local(),
                         "db_path": getattr(db_manager, "db_path", ""),
                         "pass_hash": pass_hash,
                         "mode": "MAESTRA",

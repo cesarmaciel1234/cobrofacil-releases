@@ -12,6 +12,10 @@ En una esclava, si `db_engine_type` es mariadb y hay `mariadb_engine`, guarda en
 
 `sync_venta_to_master` sale enseguida con `False` si `_forced_local_offline` está prendido o no hay motor MariaDB. Así la cola no se borra creyendo que la venta ya está en la maestra. `get_connection(caer_si_maestra_caida=False)` en esa sync no cambia el motor.
 
+### Reconexión con la tienda
+
+`red.py`, `RedRepoMixin.asegurar_lectura_tienda`, mantiene la caja en SQLite local cuando la maestra no responde y busca la IP nueva en un hilo de fondo. `pareja/buscar.py` verifica que el anuncio tenga el mismo `store_id` y que la MariaDB contenga la tienda antes de cambiar la dirección. El motor activo se vuelve a crear con la IP nueva; las ventas offline permanecen en la cola hasta ser aceptadas.
+
 `_buscar_por_request` hace `SELECT id FROM ventas WHERE request_id = ?`. Si encuentra fila, `guardar_venta_completa` devuelve ese id y no inserta de nuevo.
 
 El insert nuevo incluye `request_id`. Si la columna no existe, el except cae al insert anterior, sin esa columna, para no frenar la caja. `_es_duplicado` reconoce unique, duplicate e `idx_ventas_request_id`.

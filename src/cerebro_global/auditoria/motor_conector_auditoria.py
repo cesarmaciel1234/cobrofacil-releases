@@ -158,13 +158,22 @@ class MotorConectorAuditoria:
         if not MotorAuditoria.aplicar_ajuste_stock(db, pid, float(stock_nuevo)):
             return False, "No se pudo actualizar el stock"
 
-        MotorAuditoria.registrar_ajuste(db, ajuste, usuario, motivo)
+        auditoria_ok = MotorAuditoria.registrar_ajuste(db, ajuste, usuario, motivo)
         self.invalidar_cache()
         try:
             from src.cerebro_global.motor_global import invalidar_catalogo
             invalidar_catalogo()
         except Exception:
             pass
+        if not auditoria_ok:
+            logger.error(
+                "Stock ajustado para producto %s, pero el registro de auditoría no quedó confirmado.",
+                pid,
+            )
+            return False, (
+                "El stock ya se ajustó, pero no se pudo confirmar el registro de auditoría "
+                "para sincronizarlo. Avisá al responsable antes de repetir el conteo."
+            )
         if avisar:
             self._avisar_planilla()
         return True, "Ajuste aplicado correctamente"

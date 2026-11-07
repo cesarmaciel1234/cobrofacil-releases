@@ -67,6 +67,14 @@ class RedRepoMixin:
         if not host:
             return getattr(self, "db_engine_type", "sqlite") == "mariadb"
         if getattr(self, "db_engine_type", "sqlite") == "mariadb" and getattr(self, "mariadb_engine", None):
+            engine_host = str(getattr(self.mariadb_engine, "host", "") or "").strip()
+            if engine_host != host:
+                try:
+                    self.reconectar_local()
+                except Exception as e:
+                    logger.error("Esclava: no se pudo aislar el motor MariaDB anterior: %s", e)
+                self._buscar_maestra_en_fondo(host)
+                return False
             if self._puerto_maestra_vivo(host):
                 return True
             logger.warning(
@@ -76,9 +84,9 @@ class RedRepoMixin:
                 self.reconectar_local()
             except Exception as e:
                 logger.error(f"Esclava: no se pudo abrir el SQLite local ({e})")
+            self._buscar_maestra_en_fondo(host)
             return False
         import time
-        import threading
         ahora = time.monotonic()
         
         # Evitar reintentos seguidos o hilos simultaneos
@@ -88,21 +96,59 @@ class RedRepoMixin:
             return False
             
         self._last_master_try = ahora
-        
-        def tarea_reconexion():
-            self._is_reconnecting_mariadb = True
+        self._buscar_maestra_en_fondo(host)
+        return False
+
+    def _buscar_maestra_en_fondo(self, host_anterior: str) -> None:
+        """Descubre una nueva IP sin frenar la pantalla ni cambiar la tienda enlazada."""
+        import threading
+        import time
+
+        candado = getattr(self, "_red_reconnect_lock", None)
+        if candado is None:
+            candado = threading.Lock()
+            self._red_reconnect_lock = candado
+        if not candado.acquire(blocking=False):
+            return
+        ahora = time.monotonic()
+        if ahora - float(getattr(self, "_last_discovery_try", 0) or 0) < 10:
+            candado.release()
+            return
+        self._last_discovery_try = ahora
+        self._is_reconnecting_mariadb = True
+
+        def tarea():
             try:
-                self.reconectar_mariadb(host)
+                from src.central_red_global.servidor.pareja.buscar import buscar
+
+                destino = buscar()
+                if not destino:
+                    logger.info("Esclava: no se encontró una maestra enlazada en la red.")
+                    return
+                self.reconectar_mariadb(destino)
                 self.is_master = False
-                logger.info(f"Esclava: lectura otra vez desde la maestra {host}")
+                logger.info(
+                    "Esclava: se enlazó de nuevo con la tienda en %s (antes %s)",
+                    destino,
+                    host_anterior,
+                )
             except Exception as e:
-                logger.warning(f"Esclava: maestra {host} no disponible ({e})")
+                logger.warning("Esclava: no se pudo descubrir/reconectar la tienda: %s", e)
             finally:
                 self._is_reconnecting_mariadb = False
-                
-        t = threading.Thread(target=tarea_reconexion, daemon=True)
-        t.start()
-        return False
+                candado.release()
+
+        hilo = threading.Thread(
+            target=tarea,
+            daemon=True,
+            name="red-descubrir-maestra",
+        )
+        try:
+            hilo.start()
+        except Exception:
+            self._is_reconnecting_mariadb = False
+            candado.release()
+            raise
 
     def registrar_heartbeat(self, caja_id, hostname):
         """ Registra el estado activo de este terminal. (OPTIMIZADO: AHORA SE MANEJA EN MEMORIA UDP) """
@@ -114,4 +160,3 @@ class RedRepoMixin:
         limite = (datetime.now() - timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
         res = self.execute_scalar("SELECT COUNT(*) FROM terminales_activos WHERE last_seen >= ?", (limite,))
         return int(res) if res is not None else 1
-

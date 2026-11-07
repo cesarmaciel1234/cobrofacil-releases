@@ -6,7 +6,7 @@ Fondo del conteo físico. Esta carpeta no pinta la pantalla. La pantalla está e
 
 Clase `MotorAuditoria`. Todo es estático y habla con la base que le pasan.
 
-`asegurar_tabla_auditorias` crea `auditorias_inventario` si no existe: id, fecha, producto_id, nombre_producto, stock_sistema, stock_fisico, diferencia, responsable, motivo. Si la tabla vieja no tiene `motivo`, intenta un `ALTER` y ignora el error si la columna ya está.
+`asegurar_tabla_auditorias` crea `auditorias_inventario` si no existe: id, fecha, producto_id, nombre_producto, stock_sistema, stock_fisico, diferencia, responsable, motivo y `sync_id`. En tablas anteriores agrega las columnas faltantes y asegura un índice único para `sync_id`; las filas antiguas conservan `NULL`.
 
 `obtener_inventario` lee `productos`: id, codigo, nombre, departamento, precio, stock, unidad, es_pesable. Orden: departamento, nombre. Si falla, devuelve lista vacía.
 
@@ -14,7 +14,7 @@ Clase `MotorAuditoria`. Todo es estático y habla con la base que le pasan.
 
 `aplicar_ajuste_stock` le pide a `puerta.fijar` que deje el stock en el número contado. No resta. Si la puerta no contesta, devuelve falso.
 
-`registrar_ajuste` solo inserta en `auditorias_inventario`. No toca `productos`. Campos: producto_id, nombre_producto, stock_sistema, stock_fisico, diferencia, responsable, motivo.
+`registrar_ajuste` solo registra el evento, no toca `productos`. En una esclava offline primero guarda el evento en `offline_cambios.json` y después en la auditoría local. Al sincronizar, la maestra usa `sync_id` para deduplicar y el evento permanece en la cola hasta confirmar su registro. Campos: sync_id, producto_id, nombre_producto, stock_sistema, stock_fisico, diferencia, responsable, motivo.
 
 `procesar_auditoria` recorre la lista y, por cada ítem, primero aplica el stock y después registra. Devuelve falso si alguno falla. No llamarla después de que el conector ya aplicó el stock.
 
@@ -43,7 +43,7 @@ La caché dura 15 segundos (`_cache_duration`). `invalidar_cache` la vacía. `_v
 7. Invalida esta caché y llama `invalidar_catalogo` del motor global. Si eso falla, el ajuste igual ya quedó.
 8. `MotorPlanilla.avisar()`. No reescribe la planilla desde acá. Si el aviso falla, el `SET` de stock ya quedó.
 
-La consola del servidor no recibe un aviso aparte. Lee `auditorias_inventario` en solo lectura.
+La consola del servidor no recibe un aviso aparte. Lee `auditorias_inventario` en solo lectura; cuando el espejo se refresca, también contiene las auditorías sincronizadas.
 
 `aplicar_lote_ajustes` llama `solicitar_ajuste_stock` por cada ítem con `avisar=False`. El motivo, si no viene, es «Ajuste de auditoría. Diferencia: …». Junta los errores con el nombre del producto. Al final invalida la caché otra vez y, si algún ítem sí escribió stock, avisa una sola vez. Devuelve `(True, [])` solo si no hubo errores. Un «Sin cambio» no avisa.
 

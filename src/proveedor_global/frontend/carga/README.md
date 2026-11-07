@@ -12,7 +12,7 @@ Entra la mercadería del proveedor. Hay dos formas, separadas.
 1. La tarjeta Cargar pedido muestra dos subtarjetas: escáner y carga por peso. Ninguna muestra el histórico; ese alto lo usa la tabla de ítems.
 2. El escáner confirma y emite `compra_guardada`.
 3. La carga por peso arma cada línea como cajas × kilos × precio y llama a `MotorProveedor.save_proveedor`.
-4. Sin tienda, esa compra queda en esta PC.
+4. Sin tienda, esa compra queda en esta PC y su recepción se encola con un `sync_id` para subirla una sola vez cuando vuelva la maestra. Si se guarda el remito local pero no se puede guardar el outbox, la pantalla avisa que no se debe repetir la operación.
 
 ## Qué devuelve cuando falla
 El escáner avisa y no deja el remito a medias. La carga por peso muestra el error y no vacía la grilla si no se guardó.

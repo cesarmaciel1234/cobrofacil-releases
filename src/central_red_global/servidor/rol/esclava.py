@@ -22,6 +22,15 @@ def convertir_en_esclava(logger, ip_maestra):
             "En esta PC dejá el modo MAESTRA o usá la IP de la caja servidor."
         )
 
+    from src.central_red_global.servidor.pareja.buscar import identidad_para_ip
+
+    if not identidad_para_ip(ip_maestra):
+        return False, (
+            "No se pudo confirmar que esa IP sea la misma tienda enlazada.\n\n"
+            "Verificá que la maestra esté encendida, en la misma red y con "
+            "el descubrimiento UDP 37020 habilitado."
+        )
+
     now = time.time()
     last_fail = _last_slave_fail_at.get(ip_maestra, 0)
     remaining = SLAVE_FAIL_COOLDOWN_SEC - (now - last_fail)

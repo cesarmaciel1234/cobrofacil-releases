@@ -58,6 +58,15 @@ def _promover() -> bool:
     if not existe():
         logger.warning("pareja  no hay espejo para promover")
         return False
+    try:
+        from src.config import config
+
+        if not str(config.get("store_id", "") or "").strip():
+            logger.error("pareja  no se promueve: falta la identidad persistente de la tienda")
+            return False
+    except Exception as e:
+        logger.error("pareja  no se promueve: no se pudo leer la identidad de tienda: %s", e)
+        return False
     if _titular_vive():
         logger.info("pareja  la titular contesto, no me promuevo")
         return False

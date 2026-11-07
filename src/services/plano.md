@@ -1,11 +1,13 @@
 # Plano - Servicios del Servidor de Tienda
 
 ## Frente
-El usuario no interactúa visualmente de forma directa con la mayoría de estos archivos, ya que son procesos que operan de fondo como servicios o demonios (conexión a la base, cola de email, impresiones, cartelería, MercadoPago, onedrive, etc.). 
+El usuario no interactï¿½a visualmente de forma directa con la mayorï¿½a de estos archivos, ya que son procesos que operan de fondo como servicios o demonios (conexiï¿½n a la base, cola de email, impresiones, cartelerï¿½a, MercadoPago, onedrive, etc.).
 
 ## Fondo
 
+`db_network_service.py`: punto de entrada de compatibilidad para descubrimiento de tienda por UDP. La ruta activa de conexiÃ³n verifica desde `base_de_datos/core/connection.py`; `store_id` impide enlazar otra tienda y la reconexiÃ³n conserva las colas offline.
+
 mariadb_controller.py: Administra el ciclo de vida del proceso de MariaDB (mysqld.exe).
 - Asegura reglas de firewall (_ensure_firewall).
-- start_server(): Lanza MariaDB. Si el motor falla en arrancar por puertos ocupados o corrupción, realiza chequeos en el .err de la carpeta data. Si detecta un tablespace dañado, elimina los archivos e intenta un start_server() limpio para auto-repararse.
-- **Importante (Evitar bucles infinitos):** Si la base está irremediablemente corrupta al extraer un backup, la rutina de auto-reparación tiene un límite de reintentos (_repair_attempt) interno. Tras 3 intentos fallidos, reporta error y aborta en lugar de quedarse en un ciclo infinito de borrado-reinicio.
+- start_server(): Lanza MariaDB. Si el motor falla en arrancar por puertos ocupados o corrupciï¿½n, realiza chequeos en el .err de la carpeta data. Si detecta un tablespace daï¿½ado, elimina los archivos e intenta un start_server() limpio para auto-repararse.
+- **Importante (Evitar bucles infinitos):** Si la base estï¿½ irremediablemente corrupta al extraer un backup, la rutina de auto-reparaciï¿½n tiene un lï¿½mite de reintentos (_repair_attempt) interno. Tras 3 intentos fallidos, reporta error y aborta en lugar de quedarse en un ciclo infinito de borrado-reinicio.

@@ -16,7 +16,9 @@ Si el puerto parecía abierto y el conector tira red caída (`error_indica_maest
 
 `_puerto_maestra_vivo(host)` usa `puerto_mariadb_abierto` con 0,8 s. Si responde, lo recuerda 12 s. Un solo fallo no cambia a SQLite: hace falta el segundo seguido (`_corte_confirmado`). El circuit breaker es un freno de esta PC; si el puerto sigue abierto se limpia y se reintenta, no se abandona la maestra.
 
-`reconectar_mariadb(host)` solo pisa el motor si el ping funciona.
+`reconectar_mariadb(host)` solo pisa el motor si el ping funciona. Si la IP configurada cambia mientras el programa está abierto, `asegurar_lectura_tienda()` detecta que el motor apunta a otra dirección y lo vuelve a enlazar en un hilo de fondo.
+
+Al perder la maestra, el hilo busca por UDP 37020 y verifica el `store_id` persistente de la tienda antes de guardar una IP distinta o cambiar el motor. La cola offline se conserva y se nutre después de reconectar. No se adopta una base sin identidad coincidente.
 
 ## executor.py
 

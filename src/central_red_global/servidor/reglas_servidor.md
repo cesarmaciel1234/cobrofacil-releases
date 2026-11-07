@@ -30,4 +30,4 @@ El puesto vive en `config.json`. El proceso `--server` arranca en los dos. El of
 
 Cualquier perfil en PC esclava lee y graba en la maestra. SQLite local solo si `3306` no responde; al volver la tienda, se reengancha. Ver `src/base_de_datos/reglas.md`.
 
-La maestra contesta `PUNPRO_DISCOVER` (UDP 37020) con su IP desde `lan_server.start_udp_discovery_server`. Con eso una esclava encuentra la maestra si cambió de IP, pero solo al arrancar. Qué pasa con los datos: `src/base_de_datos/reglas.md`, sección «Si la maestra cambia de IP».
+La maestra contesta `PUNPRO_DISCOVER` (UDP 37020) con su IP y `store_id` desde `lan_server.start_udp_discovery_server`. La esclava conserva la identidad y solo se enlaza automáticamente a otra IP que presente la misma tienda y una MariaDB válida. La reconexión en una sesión abierta corre en segundo plano y no requiere reiniciar la caja. Qué pasa con los datos: `src/base_de_datos/reglas.md`, sección «Si la maestra cambia de IP».

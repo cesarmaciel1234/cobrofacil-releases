@@ -112,10 +112,13 @@ def _contestar() -> None:
                 continue
             if data != b"PUNPRO_DISCOVER" or not soy():
                 continue
+            from src.config import config
+
             aviso = {
                 "hostname": socket.gethostname(),
                 "server_ip": _ip_propia(),
                 "titular_ip": _titular(),
+                "store_id": str(config.get("store_id", "") or "").strip(),
                 "mode": "MAESTRA",
                 "reserva": True,
                 "db_engine": "espejo",
@@ -141,6 +144,9 @@ def prender() -> None:
         time.sleep(25)
         while True:
             try:
+                from src.central_red_global.servidor.pareja.buscar import buscar
+
+                buscar()
                 if soy() and not _avisado:
                     logger.info("pareja  esta pc es la reserva")
                     _avisado = True

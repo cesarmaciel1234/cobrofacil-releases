@@ -1,4 +1,6 @@
 import logging
+import uuid
+from datetime import datetime
 
 logger = logging.getLogger("MotorAuditoria")
 
@@ -10,12 +12,18 @@ class MotorAuditoria:
     """
 
     @staticmethod
-    def asegurar_tabla_auditorias(db_admin):
+    def asegurar_tabla_auditorias(db_admin) -> bool:
         if not db_admin:
-            return
+            return False
+        es_mariadb = getattr(db_admin, "db_engine_type", "sqlite") == "mariadb"
+        id_sql = (
+            "INT NOT NULL AUTO_INCREMENT PRIMARY KEY"
+            if es_mariadb
+            else "INTEGER PRIMARY KEY AUTOINCREMENT"
+        )
         query = """
         CREATE TABLE IF NOT EXISTS auditorias_inventario (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {id_sql},
             fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
             producto_id INTEGER,
             nombre_producto TEXT,
@@ -23,19 +31,74 @@ class MotorAuditoria:
             stock_fisico REAL,
             diferencia REAL,
             responsable TEXT,
-            motivo TEXT
+            motivo TEXT,
+            sync_id VARCHAR(36)
         )
-        """
-        try:
-            db_admin.execute_non_query(query)
-        except Exception as e:
-            logger.error(f"Error al asegurar tabla auditorias_inventario: {e}")
-        try:
-            db_admin.execute_non_query(
-                "ALTER TABLE auditorias_inventario ADD COLUMN motivo TEXT"
+        """.format(id_sql=id_sql)
+        if not db_admin.execute_non_query(query):
+            logger.error("No se pudo asegurar auditorias_inventario.")
+            return False
+
+        columnas = db_admin.execute_query(
+            "SHOW COLUMNS FROM auditorias_inventario"
+            if es_mariadb
+            else "PRAGMA table_info(auditorias_inventario)"
+        ) or []
+        if not columnas:
+            logger.error("No se pudo leer el esquema de auditorias_inventario.")
+            return False
+
+        def campo(fila, nombre, default=None):
+            try:
+                return fila.get(nombre, default)
+            except AttributeError:
+                try:
+                    return fila[nombre]
+                except (KeyError, IndexError, TypeError):
+                    return default
+
+        nombres = {
+            str(
+                (campo(columna, "Field") or campo(columna, "field"))
+                if es_mariadb
+                else (campo(columna, "name") or "")
+            ).lower()
+            for columna in columnas
+        }
+        for nombre, tipo in (("motivo", "TEXT"), ("sync_id", "VARCHAR(36)")):
+            if nombre not in nombres and not db_admin.execute_non_query(
+                f"ALTER TABLE auditorias_inventario ADD COLUMN {nombre} {tipo}"
+            ):
+                logger.error("No se pudo agregar %s a auditorias_inventario.", nombre)
+                return False
+
+        if es_mariadb:
+            indices = db_admin.execute_query("SHOW INDEX FROM auditorias_inventario") or []
+            indexado = any(
+                str((campo(fila, "Column_name") or campo(fila, "column_name") or "")).lower() == "sync_id"
+                and int(campo(fila, "Non_unique", campo(fila, "non_unique", 1))) == 0
+                for fila in indices
             )
-        except Exception:
-            pass
+        else:
+            indices = db_admin.execute_query("PRAGMA index_list(auditorias_inventario)") or []
+            indexado = False
+            for indice in indices:
+                if not campo(indice, "unique"):
+                    continue
+                nombre_indice = campo(indice, "name")
+                detalle = db_admin.execute_query(f'PRAGMA index_info("{nombre_indice}")') or []
+                if any(
+                    campo(columna, "name") == "sync_id"
+                    for columna in detalle
+                ):
+                    indexado = True
+                    break
+        if not indexado and not db_admin.execute_non_query(
+            "CREATE UNIQUE INDEX idx_auditorias_sync_id ON auditorias_inventario (sync_id)"
+        ):
+            logger.error("No se pudo asegurar la idempotencia de auditorias_inventario.")
+            return False
+        return True
 
     @staticmethod
     def obtener_inventario(db_admin):
@@ -56,24 +119,61 @@ class MotorAuditoria:
         """Solo INSERT en el log. Nunca toca productos.stock."""
         if not db_admin:
             return False
-        MotorAuditoria.asegurar_tabla_auditorias(db_admin)
+        if not MotorAuditoria.asegurar_tabla_auditorias(db_admin):
+            return False
+        sync_id = str(item.get("sync_id") or uuid.uuid4())
+        registro = {
+            "sync_id": sync_id,
+            "fecha": item.get("fecha") or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "producto_id": item.get("id"),
+            "nombre_producto": item.get("nombre", ""),
+            "stock_sistema": item.get("stock_sistema", 0.0),
+            "stock_fisico": item.get("stock_fisico", 0.0),
+            "diferencia": item.get("diferencia", 0.0),
+            "responsable": responsable or "",
+            "motivo": motivo or "",
+        }
+        offline = bool(
+            getattr(db_admin, "_forced_local_offline", False)
+            or (
+                getattr(db_admin, "db_engine_type", "sqlite") != "mariadb"
+                and not getattr(db_admin, "is_master", True)
+            )
+        )
+        encolado = True
+        if offline:
+            try:
+                from src.base_de_datos.offline_nutricion import offline_nutricion_manager
+
+                encolado = offline_nutricion_manager.encolar_auditoria(registro)
+            except Exception as e:
+                encolado = False
+                logger.error("No se pudo encolar auditoría para la maestra: %s", e)
         try:
-            db_admin.execute_non_query(
+            existente = db_admin.execute_query(
+                "SELECT id FROM auditorias_inventario WHERE sync_id = ? LIMIT 1",
+                (sync_id,),
+            ) or []
+            if existente:
+                return encolado
+            insertado = db_admin.execute_non_query(
                 """INSERT INTO auditorias_inventario
-                   (producto_id, nombre_producto, stock_sistema, stock_fisico,
-                    diferencia, responsable, motivo)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                   (sync_id, fecha, producto_id, nombre_producto, stock_sistema,
+                    stock_fisico, diferencia, responsable, motivo)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
-                    item.get("id"),
-                    item.get("nombre", ""),
-                    item.get("stock_sistema", 0.0),
-                    item.get("stock_fisico", 0.0),
-                    item.get("diferencia", 0.0),
-                    responsable,
-                    motivo or "",
+                    registro["sync_id"],
+                    registro["fecha"],
+                    registro["producto_id"],
+                    registro["nombre_producto"],
+                    registro["stock_sistema"],
+                    registro["stock_fisico"],
+                    registro["diferencia"],
+                    registro["responsable"],
+                    registro["motivo"],
                 ),
             )
-            return True
+            return (bool(insertado) or (offline and encolado)) and encolado
         except Exception as e:
             logger.error(f"Error registrando ajuste: {e}")
             return False

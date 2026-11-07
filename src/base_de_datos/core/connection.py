@@ -2,6 +2,7 @@ from typing import List, Tuple, Any, Optional
 import sqlite3
 import os
 import sys
+import threading
 from src.utils.qt_compat import qt_exec
 from src.logger import logger
 from src.base_de_datos.core.db_path import normalize_db_path
@@ -16,6 +17,7 @@ class ConnectionMixin:
             cls._instance = super().__new__(cls)
             # Si la maestra cae, nos quedamos en SQLite local hasta reconectar_mariadb()
             cls._instance._forced_local_offline = False
+            cls._instance._red_reconnect_lock = threading.Lock()
             cls._instance._init_db()
         return cls._instance
 
@@ -587,6 +589,12 @@ class ConnectionMixin:
 
         def _luego():
             try:
+                from src.central_red_global.servidor.pareja.buscar import buscar
+
+                buscar()
+            except Exception as e:
+                logger.debug("Identidad/red de tienda al conectar: %s", e)
+            try:
                 from src.base_de_datos.offline_sync import offline_sync_manager
 
                 offline_sync_manager.nutrir_ya()
@@ -717,5 +725,3 @@ class ConnectionMixin:
         except sqlite3.Error as e:
             logger.error(f"Error connecting to database: {e}")
             raise
-
-

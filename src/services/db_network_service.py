@@ -1,8 +1,6 @@
 import sys
 import socket
-import json as _json
 from src.logger import logger
-from src.base_de_datos.core.mariadb_probe import puerto_mariadb_abierto
 
 class NetworkDBService:
     @staticmethod
@@ -55,76 +53,38 @@ class NetworkDBService:
                 except Exception as e_cb:
                     logger.warning(f"Esclava CerebroBackup: {e_cb}")
 
-        # 2. Esclava Offline: Auto-descubrimiento y Reintentos
-        if getattr(db_manager, "_forced_local_offline", False):
-            master_ok = False
-            logger.info("NetworkDBService: Intentando auto-descubrir maestra en la red...")
-            try:
-                sock_scan = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                sock_scan.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-                sock_scan.settimeout(2.0)
-                sock_scan.sendto(b"PUNPRO_DISCOVER", ("255.255.255.255", 37020))
-                data, addr = sock_scan.recvfrom(1024)
-                sock_scan.close()
-                info = _json.loads(data.decode("utf-8"))
-                from src.central_red_global.lan_server import es_anuncio_tienda
+        # 2. Esclava: enlazar identidad y redescubrir la tienda fuera del hilo de UI.
+        if not getattr(db_manager, "is_master", True):
+            esta_offline = bool(getattr(db_manager, "_forced_local_offline", False))
+            if esta_offline:
+                logger.info("NetworkDBService: Buscando en la red la tienda ya enlazada...")
 
-                if es_anuncio_tienda(info):
-                    discovered_host = info.get("server_ip", addr[0])
-                    try:
-                        s_self = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        s_self.connect(("8.8.8.8", 80))
-                        mi_ip = s_self.getsockname()[0]
-                        s_self.close()
-                    except Exception:
-                        mi_ip = ""
-
-                    from src.config import config
-                    old_host = config.get("db_host", "")
-                    if discovered_host and discovered_host not in (mi_ip, "127.0.0.1", "localhost", old_host):
-                        logger.info(f"Nueva Maestra auto-descubierta en {discovered_host}.")
-                        config.set("db_host", discovered_host)
-                        config.set("is_master", False)
-                        config.set("api_url", f"http://{discovered_host}:8000")
-                        config.save()
-
-                        from src.db_engines.mariadb_engine import MariaDBEngine
-                        new_engine = MariaDBEngine(host=discovered_host)
-                        try:
-                            conn = new_engine.get_connection()
-                            conn._conn.ping()
-                            master_ok = True
-
-                            db_manager.db_path = "mariadb://" + discovered_host
-                            db_manager.db_engine_type = "mariadb"
-                            db_manager._forced_local_offline = False
-                            db_manager.is_master = False
-                            db_manager.mariadb_engine = new_engine
-                        except Exception:
-                            master_ok = False
-                    else:
-                        logger.warning(f"Discovery no usable ({discovered_host}); offline local.")
-            except Exception as e:
-                logger.info(f"Auto-descubrimiento falló: {e}")
-
-            if not master_ok:
+            def _descubrir_y_conectar():
                 try:
-                    from PyQt6.QtCore import QTimer
-                    from src.config import config
-                    host_to_retry = config.get("db_host", "")
-                    if not host_to_retry:
-                        # Fallback for host
-                        host_to_retry = getattr(db_manager, "db_path", "").replace("mariadb://", "")
+                    from src.central_red_global.servidor.pareja.buscar import buscar
 
-                    if host_to_retry:
-                        def _retry_mariadb_connection():
-                            try:
-                                if puerto_mariadb_abierto(host_to_retry, 2.0):
-                                    logger.info(f"Servidor MariaDB en {host_to_retry} ahora disponible, reconectando...")
-                                    db_manager.reconectar_mariadb(host_to_retry)
-                            except Exception as retry_e:
-                                logger.debug(f"Reintento conexión falló: {retry_e}")
+                    discovered_host = buscar()
+                    if not discovered_host:
+                        logger.info("NetworkDBService: no respondió una maestra enlazada.")
+                        return
+                    engine = getattr(db_manager, "mariadb_engine", None)
+                    host_actual = str(getattr(engine, "host", "") or "")
+                    if (
+                        getattr(db_manager, "_forced_local_offline", False)
+                        or getattr(db_manager, "db_engine_type", "") != "mariadb"
+                        or host_actual != discovered_host
+                    ):
+                        db_manager.reconectar_mariadb(discovered_host)
+                except Exception as e:
+                    logger.info("NetworkDBService: descubrimiento/reconexión pendiente: %s", e)
 
-                        QTimer.singleShot(30000, _retry_mariadb_connection)
-                except Exception as timer_e:
-                    logger.warning(f"No se pudo programar reintento: {timer_e}")
+            try:
+                import threading
+
+                threading.Thread(
+                    target=_descubrir_y_conectar,
+                    name="red-descubrir-arranque",
+                    daemon=True,
+                ).start()
+            except Exception as e:
+                logger.warning("NetworkDBService: no se pudo iniciar descubrimiento: %s", e)

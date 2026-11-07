@@ -233,3 +233,28 @@ def test_cuadre_muestra_error_si_no_puede_consultar(monkeypatch):
     assert "no se pudo consultar" in dialogo.lbl_estado.text().lower()
     dialogo.close()
     app.processEvents()
+
+
+def test_hilo_consulta_se_conserva_hasta_terminar():
+    import time
+
+    from PyQt6.QtCore import QThread
+    from PyQt6.QtWidgets import QApplication
+
+    from src.admin.clientes.consulta.hilo import (
+        _HILOS_ACTIVOS,
+        iniciar_hilo_seguro,
+    )
+
+    app = QApplication.instance() or QApplication([])
+
+    class HiloPrueba(QThread):
+        def run(self):
+            time.sleep(0.05)
+
+    hilo = HiloPrueba()
+    iniciar_hilo_seguro(hilo)
+    assert hilo in _HILOS_ACTIVOS
+    assert hilo.wait(1000)
+    app.processEvents()
+    assert hilo not in _HILOS_ACTIVOS

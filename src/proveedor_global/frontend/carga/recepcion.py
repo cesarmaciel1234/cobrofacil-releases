@@ -941,9 +941,9 @@ class PanelRecepcionRapida(QWidget):
                 pass
             self._avisar_servidor()
             self._whatsapp_texto_ultimo = resumen.get("whatsapp_texto", "")
-            QMessageBox.information(
-                self, "✅ Ingreso a Stock y Remito Confirmado", 
-                f"¡Mercadería ingresada y actualizada con éxito!\n\n"
+            mensaje_sync = resumen.get("sync_error")
+            contenido = (
+                f"{msg}\n\n"
                 f"• Proveedor: {resumen.get('proveedor')}\n"
                 f"• Artículos actualizados: {resumen.get('articulos_count')}\n"
                 f"• Total bultos ingresados: {resumen.get('total_bultos')}\n"
@@ -952,6 +952,10 @@ class PanelRecepcionRapida(QWidget):
                 f"• Condición de pago: {cond_pago}\n\n"
                 f"El remito quedó en Historial (módulos de Proveedores)."
             )
+            if mensaje_sync:
+                QMessageBox.warning(self, "Ingreso local con sincronización pendiente", contenido)
+            else:
+                QMessageBox.information(self, "✅ Ingreso a Stock y Remito Confirmado", contenido)
             self._items = []
             self._renderizar_tabla()
             self.compra_guardada.emit()

@@ -35,14 +35,20 @@ No devolver `9999999`. No borrar `request_id` del cobro ni del motor. No ignorar
 src/base_de_datos/repos/red.py (asegurar_lectura_tienda)
 Cuando una caja esclava pierde red, entra en SQLite local. Los intentos de reconexion al MariaDB de la Maestra (reconectar_mariadb) se realizan en un hilo asincrono (threading.Thread). Esto evita colgar la UI (2 a 5 segundos de timeout) cada vez que el cajero escanea o cobra mientras la red esta caida.
 
-`offline_nutricion.py` tambi�n sube, al oler el WiFi, los proveedores, los enlaces y las ediciones de producto armadas en casa. `encolar_producto` guarda la ficha por id. `productos_pendientes` es lo que el cat�logo pinta encima de la copia. El id del proveedor no se inventa en la notebook: nace con `AUTO_INCREMENT` en la maestra y el v�nculo se reescribe con ese id. `quitar_vinculo` anota la baja: al reconectar se borra el enlace y no se vuelve a subir.
+Si la IP cambia mientras el programa está abierto, la caja descubre la tienda por UDP 37020, comprueba el `store_id` que quedó enlazado y reemplaza el host del motor sin reiniciar. Una identidad distinta o ausente no se adopta. La cola offline sigue su flujo de idempotencia existente.
+
+`offline_nutricion.py` tambi�n sube, al oler el WiFi, los proveedores, los enlaces y las ediciones de producto armadas en casa. `encolar_producto` guarda la ficha por id. `productos_pendientes` es lo que el cat�logo pinta encima de la copia. El id del proveedor no se inventa en la notebook: nace con `AUTO_INCREMENT` en la maestra y el v�nculo se reescribe con ese id. `quitar_vinculo` anota la baja: al reconectar se borra el enlace y no se vuelve a subir.
+
+Los ajustes de stock offline guardan el producto y el evento de auditoría en `offline_cambios.json`. `encolar_auditoria` conserva el `sync_id` hasta que la maestra confirma el evento; un reintento con el mismo id no crea otra auditoría. La réplica copia `auditorias_inventario` completa para que el historial llegue al espejo.
+
+Las recepciones offline se guardan en la misma transacción SQLite que el remito, los ítems, el stock/costo y el gasto, dentro del journal `offline_recepciones`. Al reconectar, el journal reconstruye `offline_cambios.json` si el proceso se cortó antes de guardarlo. La maestra aplica la recepción con una transacción SQL y un índice único sobre `romaneos.sync_id`; un reintento ya confirmado no vuelve a sumar stock. El journal solo se limpia después de guardar localmente el acuse de la maestra.
 
 ## Autoblindaje de Base de Datos
 
 La rama es `src/base_de_datos/autoblindaje/` (README). La puerta `autoblindaje_db.py` solo importa `AutoBlindajeDB`.
 
-El reloj de un minuto es `src/cerebro_global/backup_cerebro/`. La copia SQLite que lee el jefe sin red es `src/jefe/nodo_portable/espejo/`, tambi�n cada minuto. No se reemplazan.
+El reloj de un minuto es `src/cerebro_global/backup_cerebro/`. La copia SQLite que lee el jefe sin red es `src/jefe/nodo_portable/espejo/`, tambi�n cada minuto. No se reemplazan.
 
 - `quien/maestra.py` `host_vivo`: esta PC si es maestra; si no, la que contesta `PUNPRO_DISCOVER` en el UDP 37020. Sin IP guardada. Si nadie contesta, no se graba.
-- `grabar/diario.py` `_backup_mariadb`: el `.sql` tiene que pesar m�s de 500 bytes. El zip de la carpeta de datos solo si el host es esta PC y el volcado fall�.
+- `grabar/diario.py` `_backup_mariadb`: el `.sql` tiene que pesar m�s de 500 bytes. El zip de la carpeta de datos solo si el host es esta PC y el volcado fall�.
 - `sanar/integridad.py` `_aplicar_archivo_restore`: un `.zip` o `.sql` de MariaDB no pisa el SQLite de una caja.
