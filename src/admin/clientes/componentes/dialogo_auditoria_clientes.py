@@ -24,7 +24,7 @@ _TONO = {
     "Alta": "#047857",
     "Cargo": "#B91C1C",
     "Abono": "#1D4ED8",
-    "Borrado": "#64748B",
+    "Borrado": "#475569",
     "Anulación": "#475569",
     "Unido": "#B45309",
 }
@@ -66,7 +66,7 @@ class DialogoAuditoriaClientes(QDialog):
             "Lo hecho sin red dice si ya llegó a la tienda."
         )
         sub.setWordWrap(True)
-        sub.setStyleSheet("color: #64748B; font-size: 13px; background: transparent;")
+        sub.setStyleSheet(f"color: {_CLI['text_sec']}; font-size: 13px; background: transparent;")
         lay.addWidget(sub)
 
         chips = QHBoxLayout()
@@ -174,7 +174,7 @@ class DialogoAuditoriaClientes(QDialog):
                 if col == 9 and str(texto).startswith("Pendiente"):
                     item.setForeground(QColor("#B45309"))
                 if borrado:
-                    item.setForeground(QColor("#64748B"))
+                    item.setForeground(QColor("#475569"))
                     item.setBackground(QBrush(QColor("#F8FAFC")))
                 self.tabla.setItem(i, col, item)
         self.lbl_total.setText(f"{len(filas)} eventos" + (" (últimos 500)" if len(filas) >= 500 else ""))

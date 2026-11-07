@@ -17,6 +17,7 @@ class DialogoCuadre(QDialog):
         self.resize(860, 520)
         self.setStyleSheet(f"QDialog {{ background: {_CLI['bg']}; }}")
         self._filas = cerebro.ventas_sin_cargo()
+        self._hubo_cambios = False
         self._armar()
 
     def _armar(self):
@@ -57,20 +58,34 @@ class DialogoCuadre(QDialog):
             "background: white; color: #0F172A; font-weight: 800; border-radius: 8px; "
             "padding: 10px 16px; border: 1px solid #E2E8F0;"
         )
-        volver.clicked.connect(self.reject)
-        cargar = QPushButton("CARGAR EN LA CUENTA")
-        cargar.setCursor(Qt.CursorShape.PointingHandCursor)
-        listos = [fila for fila in self._filas if fila.get("cliente_id")]
-        cargar.setEnabled(bool(listos))
-        cargar.setStyleSheet(
-            "background: #059669; color: white; font-weight: 900; border-radius: 8px; "
-            "padding: 10px 16px; border: none;"
+        volver.clicked.connect(self._cerrar)
+        self.btn_cargar = QPushButton("CARGAR EN LA CUENTA")
+        self.btn_cargar.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_cargar.setStyleSheet(
+            "QPushButton { background: #059669; color: white; font-weight: 900; border-radius: 8px; "
+            "padding: 10px 16px; border: none; }"
+            "QPushButton:disabled { background: #CBD5E1; color: #475569; }"
         )
-        cargar.clicked.connect(self._cargar)
+        self.btn_cargar.clicked.connect(self._cargar)
         barra.addWidget(volver)
         barra.addStretch()
-        barra.addWidget(cargar)
+        barra.addWidget(self.btn_cargar)
         lay.addLayout(barra)
+        self._actualizar_boton()
+
+    def _cerrar(self):
+        if self._hubo_cambios:
+            self.accept()
+        else:
+            self.reject()
+
+    def _actualizar_boton(self):
+        listos = [fila for fila in self._filas if fila.get("cliente_id")]
+        self.btn_cargar.setEnabled(bool(listos))
+        if listos:
+            self.btn_cargar.setText(f"CARGAR EN LA CUENTA ({len(listos)})")
+        else:
+            self.btn_cargar.setText("CARGAR EN LA CUENTA")
 
     def _pintar(self):
         self.tabla.setRowCount(0)
@@ -84,6 +99,7 @@ class DialogoCuadre(QDialog):
             self.tabla.setItem(row, 2, QTableWidgetItem(str(fila.get("metodo") or "")))
             self.tabla.setItem(row, 3, QTableWidgetItem(f"${float(fila.get('total') or 0):,.2f}"))
             self.tabla.setItem(row, 4, QTableWidgetItem(cliente))
+        self._actualizar_boton()
 
     def _cargar(self):
         listos = [fila for fila in self._filas if fila.get("cliente_id")]
@@ -99,12 +115,20 @@ class DialogoCuadre(QDialog):
         caja.button(QMessageBox.StandardButton.No).setText("Volver")
         if qt_exec(caja) != QMessageBox.StandardButton.Yes:
             return
-        hechos = 0
-        for fila in listos:
-            ok, _mensaje = cerebro.anotar_faltante(fila.get("venta_id"))
-            if ok:
-                hechos += 1
+        ids = [fila.get("venta_id") for fila in listos]
+        hechos, pendientes = cerebro.anotar_faltantes(ids)
+        self._filas = pendientes
+        self._hubo_cambios = self._hubo_cambios or hechos > 0
+        self._pintar()
+        if not self._filas:
+            QMessageBox.information(
+                self, "Cuadre", f"Quedaron en la cuenta {hechos} ticket(s)."
+            )
+            self.accept()
+            return
         QMessageBox.information(
-            self, "Cuadre", f"Quedaron en la cuenta {hechos} de {len(listos)}."
+            self,
+            "Cuadre",
+            f"Quedaron en la cuenta {hechos} de {len(ids)}.\n"
+            f"Siguen sin cargo: {len(self._filas)} (nombre sin match único u otro motivo).",
         )
-        self.accept()

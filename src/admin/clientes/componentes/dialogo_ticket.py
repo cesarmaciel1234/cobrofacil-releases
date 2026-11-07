@@ -5,7 +5,6 @@ from __future__ import annotations
 from src.utils.qt_compat import qt_exec
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
-    QApplication,
     QDialog,
     QFrame,
     QHBoxLayout,
@@ -50,16 +49,16 @@ class PanelDetalleTicket(QFrame):
         self.setObjectName("panelTicket")
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 14, 16, 14)
-        layout.setSpacing(8)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(4)
 
         self.titulo = QLabel("TICKET")
-        self.titulo.setStyleSheet("font-size: 14px; font-weight: 900; color: #1E293B; border: none;")
+        self.titulo.setStyleSheet("font-size: 12px; font-weight: 900; color: #1E293B; border: none;")
         layout.addWidget(self.titulo)
 
-        self.resumen = QLabel("Pulse el número de ticket para ver los artículos aquí.")
+        self.resumen = QLabel("Clic en una fila para ver ticket o cobro")
         self.resumen.setWordWrap(True)
-        self.resumen.setStyleSheet("font-size: 12px; color: #64748B; border: none;")
+        self.resumen.setStyleSheet("font-size: 11px; color: #1E293B; border: none;")
         layout.addWidget(self.resumen)
 
         self.tabla = QTableWidget(0, 4)
@@ -72,7 +71,7 @@ class PanelDetalleTicket(QFrame):
         self.tabla.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.tabla.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.tabla.setAlternatingRowColors(True)
-        self.tabla.setMinimumHeight(140)
+        self.tabla.setMinimumHeight(100)
         self.tabla.setStyleSheet(
             "QTableWidget { background: white; alternate-background-color: #F8FAFC; "
             "border: 1px solid #CBD5E1; font-size: 12px; }"
@@ -83,7 +82,7 @@ class PanelDetalleTicket(QFrame):
 
         pie = QHBoxLayout()
         self.origen = QLabel("")
-        self.origen.setStyleSheet("font-size: 11px; color: #64748B; border: none;")
+        self.origen.setStyleSheet("font-size: 11px; color: #1E293B; border: none;")
         pie.addWidget(self.origen, stretch=1)
         self.total = QLabel("")
         self.total.setStyleSheet("font-size: 15px; font-weight: 900; color: #1E40AF; border: none;")
@@ -92,12 +91,66 @@ class PanelDetalleTicket(QFrame):
 
     def mensaje(self, texto: str):
         self._cancelar()
-        self.titulo.setText("TICKET")
+        self.titulo.setText("DETALLE")
         self.resumen.setText(texto)
         self.resumen.setToolTip("")
         self.origen.setText("")
         self.total.setText("")
         self.tabla.setRowCount(0)
+
+    def mostrar_cobro(self, dato: dict):
+        """Detalle de un ABONO (COB) en el panel inferior."""
+        self._cancelar()
+        ref = str((dato or {}).get("referencia") or "COB").strip() or "COB"
+        fecha = str((dato or {}).get("fecha") or "").split(".")[0] or "—"
+        monto = self._monto((dato or {}).get("monto"))
+        saldo = self._monto((dato or {}).get("saldo_resultante"))
+        desc = str((dato or {}).get("descripcion") or "Abono").strip()
+        self.titulo.setText(f"COBRO  {ref}")
+        self.resumen.setText(f"{fecha}  ·  {desc}")
+        self.resumen.setToolTip("")
+        self.origen.setText("Movimiento de cuenta corriente (abono)")
+        self.total.setText(f"Abonado: ${monto:,.2f}")
+        self.tabla.setRowCount(2)
+        filas = (
+            ("1", "Cobro recibido", f"${monto:,.2f}", f"${monto:,.2f}"),
+            ("—", "Saldo resultante", "", f"${saldo:,.2f}"),
+        )
+        for i, valores in enumerate(filas):
+            for col, texto in enumerate(valores):
+                celda = QTableWidgetItem(texto)
+                if col in (0, 2, 3):
+                    celda.setTextAlignment(
+                        Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                    )
+                self.tabla.setItem(i, col, celda)
+
+    def mostrar_cargo(self, dato: dict):
+        """Cargo sin ticket de venta (manual / mantenimiento)."""
+        self._cancelar()
+        etiqueta = str((dato or {}).get("etiqueta") or (dato or {}).get("tipo") or "CARGO")
+        fecha = str((dato or {}).get("fecha") or "").split(".")[0] or "—"
+        monto = self._monto((dato or {}).get("monto"))
+        saldo = self._monto((dato or {}).get("saldo_resultante"))
+        desc = str((dato or {}).get("descripcion") or "Cargo").strip()
+        self.titulo.setText(etiqueta)
+        self.resumen.setText(f"{fecha}  ·  {desc}")
+        self.resumen.setToolTip("")
+        self.origen.setText("Sin ticket de venta asociado")
+        self.total.setText(f"Monto: ${monto:,.2f}")
+        self.tabla.setRowCount(2)
+        filas = (
+            ("1", desc[:80] or "Cargo", f"${monto:,.2f}", f"${monto:,.2f}"),
+            ("—", "Saldo resultante", "", f"${saldo:,.2f}"),
+        )
+        for i, valores in enumerate(filas):
+            for col, texto in enumerate(valores):
+                celda = QTableWidgetItem(texto)
+                if col in (0, 2, 3):
+                    celda.setTextAlignment(
+                        Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                    )
+                self.tabla.setItem(i, col, celda)
 
     def cargar(self, ticket: str):
         self._cancelar()
@@ -107,19 +160,43 @@ class PanelDetalleTicket(QFrame):
         self.origen.setText("")
         self.total.setText("")
         self.tabla.setRowCount(0)
-        app = QApplication.instance()
-        self._carga = _CargarTicket(ticket, app)
-        self._carga.listo.connect(self._mostrar)
-        self._carga.finished.connect(self._carga.deleteLater)
-        self._carga.start()
+        hilo = _CargarTicket(ticket, self)
+        self._carga = hilo
+        hilo.listo.connect(self._mostrar)
+        hilo.finished.connect(self._al_terminar)
+        hilo.start()
 
     def _cancelar(self):
-        if self._carga is not None:
-            try:
-                self._carga.listo.disconnect(self._mostrar)
-            except TypeError:
-                pass
+        hilo = self._carga
+        self._carga = None
+        if hilo is None:
+            return
+        try:
+            hilo.listo.disconnect(self._mostrar)
+        except (TypeError, RuntimeError):
+            pass
+        try:
+            hilo.finished.disconnect(self._al_terminar)
+        except (TypeError, RuntimeError):
+            pass
+        try:
+            if hilo.isRunning():
+                hilo.finished.connect(hilo.deleteLater)
+            else:
+                hilo.deleteLater()
+        except RuntimeError:
+            pass
+
+    def _al_terminar(self):
+        hilo = self.sender()
+        if self._carga is hilo:
             self._carga = None
+        if hilo is None:
+            return
+        try:
+            hilo.deleteLater()
+        except RuntimeError:
+            pass
 
     @staticmethod
     def _monto(valor) -> float:
@@ -129,6 +206,9 @@ class PanelDetalleTicket(QFrame):
             return 0.0
 
     def _mostrar(self, detalle, error: str):
+        # Ignora resultados de un hilo que ya se canceló al abrir otro ticket.
+        if self.sender() is not None and self.sender() is not self._carga:
+            return
         if error:
             self.resumen.setText("No se pudo consultar el ticket. La cuenta del cliente no fue modificada.")
             self.resumen.setToolTip(error)

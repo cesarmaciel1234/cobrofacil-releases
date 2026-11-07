@@ -1,15 +1,20 @@
 """Planilla de los abonos. El medio es el que se eligió al cobrar."""
 from collections import Counter
-from datetime import datetime
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QBrush
 from PyQt6.QtWidgets import (
-    QButtonGroup, QComboBox, QDialog, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+    QComboBox, QDialog, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
     QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout,
 )
 
 from src.admin.clientes.theme import _CLI
+from src.admin.clientes.componentes.filtro_periodo import (
+    filtrar_por_rango,
+    montar_chips,
+    pintar_chips,
+    resolver_ui,
+)
 from src.clientes_fiado.cerebro.cerebro import cerebro
 
 _COLUMNAS = (
@@ -17,39 +22,6 @@ _COLUMNAS = (
     "Id de pago", "Perfil", "Registró", "Saldo",
 )
 _MEDIOS = ("Todos", "Efectivo", "Transferencia", "Tarjeta", "QR", "Mixto")
-_PERIODOS = ("Hoy", "Semana", "Mes", "Año", "Todos")
-_CHIP = """
-    QPushButton {{
-        background: white; color: #334155; border: 1px solid #E2E8F0;
-        border-radius: 16px; padding: 8px 14px; font-weight: 800; font-size: 12px;
-    }}
-    QPushButton:hover {{ border-color: #3B82F6; }}
-    QPushButton:checked {{ background: #3B82F6; color: white; border-color: #3B82F6; }}
-"""
-
-
-def _en_periodo(fecha_raw, clave):
-    if clave == "Todos":
-        return True
-    bruto = str(fecha_raw or "")[:19]
-    try:
-        dt = datetime.strptime(bruto[:19], "%Y-%m-%d %H:%M:%S")
-    except ValueError:
-        try:
-            dt = datetime.strptime(bruto[:10], "%Y-%m-%d")
-        except ValueError:
-            return True
-    hoy = datetime.now().date()
-    dia = dt.date()
-    if clave == "Hoy":
-        return dia == hoy
-    if clave == "Semana":
-        return (hoy - dia).days < 7 and dia <= hoy
-    if clave == "Mes":
-        return dia.year == hoy.year and dia.month == hoy.month
-    if clave == "Año":
-        return dia.year == hoy.year
-    return True
 
 
 class DialogoCobros(QDialog):
@@ -61,6 +33,11 @@ class DialogoCobros(QDialog):
         self.setStyleSheet(f"QDialog {{ background: {_CLI['bg']}; }}")
         self._filas = cerebro.listar_cobros()
         self._periodo = "Mes"
+        self._rango = resolver_ui("Mes", self)
+        self._timer_filtro = QTimer(self)
+        self._timer_filtro.setSingleShot(True)
+        self._timer_filtro.setInterval(220)
+        self._timer_filtro.timeout.connect(self._pintar)
         self._armar()
         self._pintar()
 
@@ -80,24 +57,12 @@ class DialogoCobros(QDialog):
             "Efectivo queda como Caja. Un COB no es un ticket de venta."
         )
         sub.setWordWrap(True)
-        sub.setStyleSheet("color: #64748B; font-size: 13px; background: transparent;")
+        sub.setStyleSheet(f"color: {_CLI['text_sec']}; font-size: 13px; background: transparent;")
         lay.addWidget(sub)
 
-        chips = QHBoxLayout()
-        chips.setSpacing(8)
-        self._grupo = QButtonGroup(self)
-        self._grupo.setExclusive(True)
-        for clave in _PERIODOS:
-            chip = QPushButton(clave)
-            chip.setCheckable(True)
-            chip.setCursor(Qt.CursorShape.PointingHandCursor)
-            chip.setStyleSheet(_CHIP)
-            chip.clicked.connect(lambda _=False, c=clave: self._elegir(c))
-            self._grupo.addButton(chip)
-            chips.addWidget(chip)
-            if clave == "Mes":
-                chip.setChecked(True)
-        chips.addStretch()
+        chips, self._chips_periodo, _g = montar_chips(
+            self, self._elegir, activo="Mes", color_activo="#3B82F6"
+        )
         lay.addLayout(chips)
 
         barra = QHBoxLayout()
@@ -109,7 +74,7 @@ class DialogoCobros(QDialog):
             f"QLineEdit {{ padding: 12px 16px; border: 1px solid {_CLI['border']}; "
             f"border-radius: 12px; background: white; color: {_CLI['text']}; font-size: 15px; }}"
         )
-        self.buscar.textChanged.connect(self._pintar)
+        self.buscar.textChanged.connect(lambda _=None: self._timer_filtro.start())
         self.medio = QComboBox()
         self.medio.addItems(_MEDIOS)
         self.medio.setMinimumHeight(48)
@@ -169,16 +134,39 @@ class DialogoCobros(QDialog):
         lay.addLayout(pie)
 
     def _elegir(self, clave):
+        if clave == self._periodo and clave != "Período":
+            self._periodo = ""
+            self._rango = None
+            pintar_chips(self._chips_periodo, "", color_activo="#3B82F6")
+            self._pintar()
+            return
+        rango = resolver_ui(clave, self)
+        if rango is None:
+            pintar_chips(
+                self._chips_periodo,
+                self._periodo,
+                (self._rango[2] if self._rango else ""),
+                color_activo="#3B82F6",
+            )
+            return
         self._periodo = clave
+        self._rango = rango
+        pintar_chips(
+            self._chips_periodo, clave,
+            rango[2] if clave == "Período" else "",
+            color_activo="#3B82F6",
+        )
         self._pintar()
 
     def _visibles(self):
         texto = self.buscar.text().strip().lower()
         medio = self.medio.currentText()
+        if self._rango:
+            base = filtrar_por_rango(self._filas, self._rango[0], self._rango[1])
+        else:
+            base = list(self._filas)
         salida = []
-        for fila in self._filas:
-            if not _en_periodo(fila.get("fecha_raw") or fila.get("fecha"), self._periodo):
-                continue
+        for fila in base:
             if medio != "Todos" and fila.get("medio") != medio:
                 continue
             blanco = (

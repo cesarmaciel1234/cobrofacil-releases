@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QFrame,
                              QAbstractItemView)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor, QCursor, QBrush
-from src.base_de_datos.database import db_manager
 from src.clientes_fiado.cerebro.cerebro import cerebro
 from src.admin.clientes.consulta.hilo import HiloMovimientosAdmin
 from src.admin.clientes.componentes.dialogo_editar_cliente import DialogoEditarCliente, FIADO_EXPRESS_LIMITE_DEFAULT
@@ -15,16 +14,22 @@ from src.utils.letra import vestir_id, vestir_nombre, vestir_numero
 
 from src.admin.clientes.theme import _CLI
 
+
 class DialogoHistorialCliente(QDialog):
-    """Historial de cuenta corriente del cliente (cargos fiado + abonos)."""
+    """Historial crudo completo del cliente (cargos fiado + abonos). Sin filtros de período."""
 
     def __init__(self, cliente_id, parent=None):
         super().__init__(parent)
         self.cliente_id = cliente_id
-        self.db = db_manager
         self.cliente = cerebro.obtener(cliente_id) or {}
         self._datos_editados = False
         self._hilo_mov = None
+        self._todos_movs = []
+        self._movimientos = []
+        self._totales = {
+            "cargos": 0.0, "abonos": 0.0, "borrados": 0.0,
+            "cancelados": 0.0, "anulaciones": 0.0,
+        }
         self.setWindowTitle("Historial del cliente")
         self.setMinimumSize(980, 720)
         self.resize(1080, 780)
@@ -34,62 +39,58 @@ class DialogoHistorialCliente(QDialog):
 
     def _build(self):
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(32, 28, 32, 24)
-        lay.setSpacing(16)
+        lay.setContentsMargins(20, 16, 20, 14)
+        lay.setSpacing(10)
 
         panel = QFrame()
         panel.setStyleSheet(
-            f"QFrame {{ background: {_CLI['card']}; border: 1px solid {_CLI['border']}; border-radius: 18px; }}"
+            f"QFrame {{ background: {_CLI['card']}; border: 1px solid {_CLI['border']}; border-radius: 14px; }}"
         )
         p_lay = QVBoxLayout(panel)
-        p_lay.setContentsMargins(28, 24, 28, 24)
-        p_lay.setSpacing(12)
+        p_lay.setContentsMargins(18, 14, 18, 14)
+        p_lay.setSpacing(8)
 
         tit_row = QHBoxLayout()
+        tit_row.setSpacing(8)
         self.lbl_tit = QLabel()
-        self.lbl_tit.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E293B; border: none;")
+        self.lbl_tit.setStyleSheet("font-size: 16px; font-weight: 900; color: #1E293B; border: none;")
         tit_row.addWidget(self.lbl_tit, stretch=1)
 
-        btn_edit = QPushButton("✏️")
-        btn_edit.setFixedSize(44, 44)
+        btn_edit = QPushButton("Editar")
+        btn_edit.setFixedHeight(34)
+        btn_edit.setMinimumWidth(72)
         btn_edit.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_edit.setToolTip("Editar nombre, teléfono, dirección y perfil")
+        btn_edit.setToolTip("Editar ficha (nombre, DNI, teléfono, dirección)")
         btn_edit.setStyleSheet(
-            "QPushButton { background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 10px; "
-            "font-size: 18px; }"
+            "QPushButton { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; "
+            "border-radius: 8px; font-size: 12px; font-weight: 900; padding: 0 12px; }"
             "QPushButton:hover { background: #FDE68A; border-color: #F59E0B; }"
         )
         btn_edit.clicked.connect(self._editar_cliente)
         tit_row.addWidget(btn_edit)
 
-        btn_saldo = QPushButton("✏️")
-        btn_saldo.setFixedSize(44, 44)
+        btn_saldo = QPushButton("Saldo +")
+        btn_saldo.setFixedHeight(34)
+        btn_saldo.setMinimumWidth(78)
         btn_saldo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_saldo.setToolTip("Cargar saldo manual")
+        btn_saldo.setToolTip("Cargar saldo / cargo manual")
         btn_saldo.setStyleSheet(
-            "QPushButton { background: #ECFDF5; border: 1px solid #6EE7B7; border-radius: 10px; "
-            "font-size: 18px; }"
+            "QPushButton { background: #ECFDF5; color: #065F46; border: 1px solid #6EE7B7; "
+            "border-radius: 8px; font-size: 12px; font-weight: 900; padding: 0 12px; }"
             "QPushButton:hover { background: #D1FAE5; border-color: #10B981; }"
         )
         btn_saldo.clicked.connect(self._cargar_saldo)
         tit_row.addWidget(btn_saldo)
         p_lay.addLayout(tit_row)
 
+        # Una sola línea: números + contacto si hay
         self.lbl_meta = QLabel()
-        self.lbl_meta.setWordWrap(True)
-        self.lbl_meta.setStyleSheet("font-size: 13px; color: #64748B; border: none;")
+        self.lbl_meta.setWordWrap(False)
+        self.lbl_meta.setStyleSheet(
+            f"font-size: 12px; font-weight: 700; color: {_CLI['text_sec']}; border: none;"
+        )
         p_lay.addWidget(self.lbl_meta)
-
-        self.lbl_contacto = QLabel()
-        self.lbl_contacto.setWordWrap(True)
-        self.lbl_contacto.setStyleSheet("font-size: 12px; color: #94A3B8; border: none;")
-        p_lay.addWidget(self.lbl_contacto)
-
         self._actualizar_cabecera()
-
-        sub = QLabel("Movimientos de cuenta corriente (fiados y abonos), del más reciente al más antiguo.")
-        sub.setStyleSheet("font-size: 12px; color: #94A3B8; border: none;")
-        p_lay.addWidget(sub)
 
         self.tabla = QTableWidget(0, 6)
         self.tabla.setHorizontalHeaderLabels([
@@ -100,14 +101,14 @@ class DialogoHistorialCliente(QDialog):
         self.tabla.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.tabla.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self.tabla.verticalHeader().setVisible(False)
-        self.tabla.verticalHeader().setDefaultSectionSize(48)
-        self.tabla.horizontalHeader().setMinimumHeight(44)
+        self.tabla.verticalHeader().setDefaultSectionSize(40)
+        self.tabla.horizontalHeader().setMinimumHeight(36)
         self.tabla.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tabla.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tabla.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tabla.setAlternatingRowColors(True)
-        self.tabla.cellClicked.connect(self._abrir_ticket)
-        self.tabla.currentCellChanged.connect(lambda *_: self._actualizar_borrar())
+        self.tabla.cellClicked.connect(self._abrir_detalle)
+        self.tabla.currentCellChanged.connect(self._on_fila_cambiada)
         self.tabla.setStyleSheet("""
             QTableWidget {
                 border: 1px solid #E2E8F0; border-radius: 10px;
@@ -132,32 +133,48 @@ class DialogoHistorialCliente(QDialog):
         p_lay.addWidget(split, stretch=1)
 
         self.lbl_resumen = QLabel("")
-        self.lbl_resumen.setStyleSheet("font-size: 13px; font-weight: 700; color: #475569; border: none;")
+        self.lbl_resumen.setStyleSheet(
+            f"font-size: 12px; font-weight: 800; color: {_CLI['text_sec']}; border: none;"
+        )
         p_lay.addWidget(self.lbl_resumen)
 
         lay.addWidget(panel)
 
         foot = QHBoxLayout()
-        self.btn_borrar = QPushButton("ELIMINAR TICKET / DEUDA")
+        foot.setSpacing(8)
+        self.btn_borrar = QPushButton("ELIMINAR")
         self.btn_borrar.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_borrar.setEnabled(True)
+        self.btn_borrar.setEnabled(False)
         self.btn_borrar.setToolTip(
-            "Elegí un cargo de fiado (no un abono). Marca BORRADO y resta la deuda. El renglón queda tachado."
+            "Marca el cargo vivo como BORRADO y resta la deuda."
         )
         self.btn_borrar.setStyleSheet(
             "QPushButton { background: #FEE2E2; color: #991B1B; font-weight: 900; "
-            "padding: 12px 20px; border-radius: 8px; border: 1px solid #FECACA; font-size: 12px; }"
+            "padding: 10px 16px; border-radius: 8px; border: 1px solid #FECACA; font-size: 12px; }"
             "QPushButton:hover { background: #FECACA; }"
-            "QPushButton:disabled { background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0; }"
+            "QPushButton:disabled { background: #F1F5F9; color: #475569; border-color: #E2E8F0; }"
         )
         self.btn_borrar.clicked.connect(self._borrar_seleccion)
         foot.addWidget(self.btn_borrar)
+
+        self.btn_imprimir = QPushButton("🖨 IMPRIMIR")
+        self.btn_imprimir.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_imprimir.setEnabled(False)
+        self.btn_imprimir.setToolTip("Imprime el historial completo en la tiketera")
+        self.btn_imprimir.setStyleSheet(
+            "QPushButton { background: white; color: #0F172A; font-weight: 900; "
+            "padding: 10px 16px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 12px; }"
+            "QPushButton:hover { background: #F1F5F9; border-color: #94A3B8; }"
+            "QPushButton:disabled { background: #F1F5F9; color: #475569; border-color: #E2E8F0; }"
+        )
+        self.btn_imprimir.clicked.connect(self._imprimir_historial)
+        foot.addWidget(self.btn_imprimir)
         foot.addStretch()
         btn_cerrar = QPushButton("CERRAR")
         btn_cerrar.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_cerrar.setStyleSheet(
             "QPushButton { background: #3B82F6; color: white; font-weight: 900; "
-            "padding: 12px 28px; border-radius: 8px; border: none; font-size: 13px; }"
+            "padding: 10px 22px; border-radius: 8px; border: none; font-size: 12px; }"
             "QPushButton:hover { background: #2563EB; }"
         )
         btn_cerrar.clicked.connect(self.accept)
@@ -166,28 +183,41 @@ class DialogoHistorialCliente(QDialog):
 
     def _actualizar_cabecera(self):
         nombre = dict(self.cliente).get("nombre", "—")
-        dni = (dict(self.cliente).get("dni") or "").strip() or "—"
+        dni = (dict(self.cliente).get("dni") or "").strip()
         tipo = (dict(self.cliente).get("tipo_cliente") or "regular").lower()
-        tipo_txt = "⚡ Express" if tipo == "express" else "Regular"
+        tipo_txt = "Express" if tipo == "express" else "Regular"
         limite = float(dict(self.cliente).get("limite_credito") or 0)
         deuda = float(dict(self.cliente).get("deuda_actual") or 0)
         if tipo == "express" and limite <= 0:
             limite = FIADO_EXPRESS_LIMITE_DEFAULT
-        disponible = cerebro.credito_disponible(self.cliente)
+        disponible = float(cerebro.credito_disponible(self.cliente) or 0)
         telefono = (dict(self.cliente).get("telefono") or "").strip()
-        direccion = (dict(self.cliente).get("direccion") or "").strip()
 
-        self.lbl_tit.setText(f"📋  HISTORIAL — {nombre.upper()}")
-        self.lbl_meta.setText(
-            f"DNI: {dni}  ·  Tipo: {tipo_txt}  ·  "
-            f"Límite: ${limite:,.2f}  ·  Deuda: ${deuda:,.2f}  ·  Disponible: ${disponible:,.2f}"
+        if disponible < -0.009:
+            disp_txt = f"Excedido ${abs(disponible):,.2f}"
+        else:
+            disp_txt = f"Disp ${disponible:,.2f}"
+
+        dni_html = (
+            f"DNI {dni}"
+            if dni
+            else "<span style='color:#64748B;'>Sin DNI</span>"
         )
-        partes = []
+        partes = [
+            dni_html,
+            tipo_txt,
+            f"Lím ${limite:,.2f}",
+            f"Deuda ${deuda:,.2f}",
+            disp_txt,
+        ]
         if telefono:
-            partes.append(f"📞 {telefono}")
-        if direccion:
-            partes.append(f"📍 {direccion}")
-        self.lbl_contacto.setText("  ·  ".join(partes) if partes else "Sin teléfono ni dirección — use ✏️ para completar")
+            partes.append(telefono)
+        self.lbl_tit.setText(f"HISTORIAL — {nombre.upper()}")
+        self.lbl_meta.setTextFormat(Qt.TextFormat.RichText)
+        self.lbl_meta.setText("  ·  ".join(partes))
+        self.lbl_meta.setToolTip(
+            "Editar completa DNI, teléfono y dirección" if not dni or not telefono else ""
+        )
 
     def _editar_cliente(self):
         dlg = DialogoEditarCliente(self.cliente_id, self)
@@ -236,21 +266,37 @@ class DialogoHistorialCliente(QDialog):
         self._actualizar_borrar()
         if self._hilo_mov is not None:
             try:
-                self._hilo_mov.listo.disconnect(self._pintar_movimientos)
+                self._hilo_mov.listo.disconnect(self._guardar_movimientos)
             except TypeError:
                 pass
         self._hilo_mov = HiloMovimientosAdmin(self.cliente_id, self)
-        self._hilo_mov.listo.connect(self._pintar_movimientos)
+        self._hilo_mov.listo.connect(self._guardar_movimientos)
         self._hilo_mov.finished.connect(self._hilo_mov.deleteLater)
         self._hilo_mov.start()
 
-    def _pintar_movimientos(self, movs, error: str):
-        self.tabla.setRowCount(0)
+    def _guardar_movimientos(self, movs, error: str):
         if error:
+            self._todos_movs = []
+            self.tabla.setRowCount(0)
+            self._movimientos = []
+            self.btn_imprimir.setEnabled(False)
             self.lbl_resumen.setText("No se pudo leer el historial. El cargo y el ticket no se modificaron.")
             return
+        self._todos_movs = list(movs or [])
+        self._pintar_movimientos(self._todos_movs)
+
+    def _pintar_movimientos(self, movs):
+        self.tabla.setRowCount(0)
+        self._movimientos = []
+        self._totales = {
+            "cargos": 0.0, "abonos": 0.0, "borrados": 0.0,
+            "cancelados": 0.0, "anulaciones": 0.0,
+        }
+        self.btn_imprimir.setEnabled(False)
         if not movs:
-            self.lbl_resumen.setText("Sin movimientos registrados para este cliente.")
+            self.lbl_resumen.setText("Sin movimientos.")
+            self.panel_ticket.mensaje("Sin movimientos en la cuenta")
+            self._actualizar_borrar()
             return
 
         total_cargos = 0.0
@@ -292,24 +338,24 @@ class DialogoHistorialCliente(QDialog):
 
             it_tipo = vestir_nombre(QTableWidgetItem(etiqueta))
             if tipo == "CARGO" and inactivo:
-                it_tipo.setForeground(QColor("#64748B"))
+                it_tipo.setForeground(QColor(_CLI["muted_row"]))
             elif tipo == "CARGO":
                 it_tipo.setForeground(QColor("#DC2626"))
             elif tipo == "ABONO":
                 it_tipo.setForeground(QColor("#059669"))
             elif tipo == "ANULACION":
-                it_tipo.setForeground(QColor("#475569"))
+                it_tipo.setForeground(QColor("#334155"))
             self.tabla.setItem(row, 1, it_tipo)
 
             it_monto = vestir_numero(QTableWidgetItem(f"${monto:,.2f}"))
             if tipo == "CARGO" and inactivo:
-                it_monto.setForeground(QColor("#64748B"))
+                it_monto.setForeground(QColor(_CLI["muted_row"]))
             elif tipo == "CARGO":
                 it_monto.setForeground(QColor("#DC2626"))
             elif tipo == "ABONO":
                 it_monto.setForeground(QColor("#059669"))
             elif tipo == "ANULACION":
-                it_monto.setForeground(QColor("#475569"))
+                it_monto.setForeground(QColor("#334155"))
             self.tabla.setItem(row, 2, it_monto)
 
             self.tabla.setItem(row, 3, vestir_numero(QTableWidgetItem(f"${saldo:,.2f}")))
@@ -329,7 +375,7 @@ class DialogoHistorialCliente(QDialog):
             if inactivo:
                 tachado = QFont()
                 tachado.setStrikeOut(True)
-                gris = QColor("#94A3B8")
+                gris = QColor(_CLI["muted_row"])
                 for col in range(6):
                     celda = self.tabla.item(row, col)
                     if not celda:
@@ -342,6 +388,15 @@ class DialogoHistorialCliente(QDialog):
                 else:
                     it_tipo.setToolTip("Quedó en el historial marcado como BORRADO. El ticket no se elimina.")
 
+        self._movimientos = list(movs)
+        self._totales = {
+            "cargos": total_cargos,
+            "abonos": total_abonos,
+            "borrados": total_borrados,
+            "cancelados": total_cancelados,
+            "anulaciones": total_anulaciones,
+        }
+        self.btn_imprimir.setEnabled(True)
         resumen = (
             f"{len(movs)} movimiento(s)  ·  "
             f"Total fiado: ${total_cargos:,.2f}  ·  "
@@ -366,6 +421,29 @@ class DialogoHistorialCliente(QDialog):
             self.tabla.selectRow(0)
             self.tabla.setCurrentCell(0, 0)
         self._actualizar_borrar()
+        self._mostrar_detalle_fila(self._fila_elegida())
+
+    def _imprimir_historial(self):
+        if not self._movimientos:
+            QMessageBox.information(self, "Imprimir", "No hay movimientos para imprimir.")
+            return
+        try:
+            from src.hardware.printer import printer_manager
+
+            ok = printer_manager.imprimir_historial_cuenta(
+                self.cliente, self._movimientos, self._totales
+            )
+        except Exception as error:
+            QMessageBox.warning(self, "Imprimir", f"No se pudo imprimir el historial.\n{error}")
+            return
+        if ok:
+            QMessageBox.information(self, "Imprimir", "Historial enviado a la tiketera.")
+        else:
+            QMessageBox.warning(
+                self,
+                "Imprimir",
+                "No se pudo enviar a la impresora. Revisá la tiketera en Configuración.",
+            )
 
     def _dato_fila(self, fila):
         if fila is None or fila < 0:
@@ -396,15 +474,27 @@ class DialogoHistorialCliente(QDialog):
 
     def _actualizar_borrar(self):
         dato = self._dato_fila(self._fila_elegida())
-        if self._puede_borrar(dato):
+        puede = self._puede_borrar(dato)
+        self.btn_borrar.setEnabled(puede)
+        if puede:
             self.btn_borrar.setText("ELIMINAR TICKET / DEUDA")
-            self.btn_borrar.setToolTip("Marca el cargo como BORRADO y resta la deuda. El renglón queda en el historial.")
+            self.btn_borrar.setToolTip(
+                "Marca el cargo como BORRADO y resta la deuda. El renglón queda en el historial."
+            )
         else:
             self.btn_borrar.setText("ELIMINAR TICKET / DEUDA")
-            self.btn_borrar.setToolTip("Elegí un cargo de fiado vivo. Un abono, una anulación o un BORRADO no se vuelven a eliminar.")
+            self.btn_borrar.setToolTip(
+                "Elegí un cargo de fiado vivo. Un abono, una anulación o un BORRADO no se vuelven a eliminar."
+            )
+
+    def _on_fila_cambiada(self, fila_actual, _col_act, _fila_prev, _col_prev):
+        self._actualizar_borrar()
+        if fila_actual is not None and fila_actual >= 0:
+            self._mostrar_detalle_fila(fila_actual)
 
     def _mostrar_ticket(self, ticket):
-        self.panel_ticket.cargar(str(ticket))
+        if hasattr(self, "panel_ticket"):
+            self.panel_ticket.cargar(str(ticket))
 
     def _abrir_ticket(self, fila, columna):
         item = self.tabla.item(fila, 0)
@@ -418,7 +508,10 @@ class DialogoHistorialCliente(QDialog):
         if columna != 5 and not ticket and not dato.get("manual"):
             return
         if ticket:
-            self._mostrar_ticket(str(ticket))
+            if hasattr(self, "_mostrar_ticket"):
+                self._mostrar_ticket(str(ticket))
+            elif hasattr(self, "panel_ticket"):
+                self.panel_ticket.cargar(str(ticket))
             return
         if not hasattr(self, "panel_ticket"):
             return
@@ -432,6 +525,29 @@ class DialogoHistorialCliente(QDialog):
             self.panel_ticket.mensaje(
                 "Este renglón es un cobro (COB). Los artículos están en el ticket de venta del cargo."
             )
+
+    def _abrir_detalle(self, fila, _columna):
+        self._mostrar_detalle_fila(fila)
+
+    def _mostrar_detalle_fila(self, fila):
+        if not hasattr(self, "panel_ticket"):
+            return
+        dato = self._dato_fila(fila)
+        if not dato:
+            self.panel_ticket.mensaje("Clic en una fila para ver el detalle")
+            return
+        ticket = str(dato.get("venta_id") or "").strip()
+        tipo = str(dato.get("tipo") or "")
+        if ticket and tipo in ("CARGO", "ANULACION"):
+            self.panel_ticket.cargar(ticket)
+            return
+        if tipo == "ABONO":
+            self.panel_ticket.mostrar_cobro(dato)
+            return
+        if dato.get("manual") or not ticket:
+            self.panel_ticket.mostrar_cargo(dato)
+            return
+        self.panel_ticket.mensaje(str(dato.get("descripcion") or "Movimiento"))
 
     def _borrar_seleccion(self):
         dato = self._dato_fila(self._fila_elegida())
@@ -498,11 +614,8 @@ class DialogoHistorialCliente(QDialog):
             parent.cargar_clientes()
         if dato.get("venta_id"):
             self.panel_ticket.mensaje(
-                f"Ticket #{dato.get('venta_id')} BORRADO en la cuenta y CANCELADO en ventas. "
-                f"Nueva deuda: ${nuevo_saldo:,.2f}"
+                f"#{dato.get('venta_id')} BORRADO · deuda ${nuevo_saldo:,.2f}"
             )
         else:
-            self.panel_ticket.mensaje(
-                f"Cargo manual marcado BORRADO. Sigue visible. Nueva deuda: ${nuevo_saldo:,.2f}"
-            )
+            self.panel_ticket.mensaje(f"Cargo BORRADO · deuda ${nuevo_saldo:,.2f}")
 
