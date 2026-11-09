@@ -6,7 +6,7 @@ import threading
 from src.utils.qt_compat import qt_exec
 from src.logger import logger
 from src.base_de_datos.core.db_path import normalize_db_path
-from src.base_de_datos.core.red_rol import leer_rol_red_desde_config
+from src.base_de_datos.core.red_rol import host_es_remoto, leer_rol_red_desde_config
 from src.base_de_datos.core.mariadb_probe import es_freno_local as _es_freno_local, puerto_mariadb_abierto
 
 class ConnectionMixin:
@@ -169,7 +169,7 @@ class ConnectionMixin:
                 else:
                     host = custom_ip if custom_ip else "127.0.0.1"
                     import socket
-                    if host in ("localhost", "127.0.0.1", socket.gethostname().lower()) or not custom_ip:
+                    if not host_es_remoto(host):
                         self.is_master = True
                         host = "127.0.0.1"
                         logger.info("MariaDB configurado en modo MAESTRO.")
@@ -626,7 +626,7 @@ class ConnectionMixin:
             self.db_path = "mariadb://" + host
             self.db_engine_type = "mariadb"
             self._forced_local_offline = False
-            remoto = str(host or "").lower() not in ("localhost", "127.0.0.1", "")
+            remoto = host_es_remoto(host)
             self.is_master = bool(config.get("is_master", not remoto)) and not remoto
             self.mariadb_engine = engine
             self._fallos_puerto = 0

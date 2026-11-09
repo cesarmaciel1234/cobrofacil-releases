@@ -1,8 +1,16 @@
 from __future__ import annotations
 
 from src.config import config
-from src.central_red_global.servidor.rol.ip import probe_mariadb
+from src.central_red_global.servidor.rol.ip import es_ip_de_esta_pc, probe_mariadb
 from src.central_red_global.servidor.rol.mariadb_local import intentar_arrancar_mariadb_local
+
+
+def puede_corregir_rol_a_maestra_local() -> bool:
+    """Permite reparar una config esclava solo si apunta a esta PC y su MariaDB responde."""
+    host = str(config.get("db_host", "") or "").strip()
+    if not host or host.lower() in ("localhost", "127.0.0.1"):
+        return False
+    return es_ip_de_esta_pc(host) and probe_mariadb("127.0.0.1")
 
 
 def convertir_en_maestra(logger):
@@ -97,6 +105,28 @@ def convertir_en_maestra(logger):
             set_os_autostart(True)
         except Exception:
             pass
+
+        def _retomar():
+            import time
+
+            time.sleep(0.5)
+            try:
+                from src.central_red_global.servidor.oficio.agente import retomar_oficio
+
+                retomar_oficio()
+            except Exception as e:
+                logger.warning(
+                    "MAESTRA quedó configurada, pero no se pudo retomar el servidor: %s",
+                    e,
+                )
+
+        import threading
+
+        threading.Thread(
+            target=_retomar,
+            name="retomar-oficio-maestra",
+            daemon=True,
+        ).start()
 
         return True, "Configurado exitosamente como MAESTRA (Servidor MariaDB Local)."
     except Exception as e:

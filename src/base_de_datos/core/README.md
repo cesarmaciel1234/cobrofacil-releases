@@ -36,7 +36,7 @@ Con la maestra caída (`_forced_local_offline`), `execute_query` y `execute_scal
 
 ## red_rol.py
 
-`leer_rol_red_desde_config(config_data)` devuelve `(es_esclava, host_remoto)`. Esclava si `is_master` es false, si `carteleria_is_slave` trae IP, o si `db_host` / `preferred_master_ip` / `carteleria_master_ip` apuntan a otra PC.
+`leer_rol_red_desde_config(config_data)` devuelve `(es_esclava, host_remoto)`. Esclava si `is_master` es false, si `carteleria_is_slave` trae IP remota, o si `db_host` / `preferred_master_ip` / `carteleria_master_ip` apuntan a otra PC. `host_es_remoto()` descarta las IP propias, que se normalizan a una conexión local y no se usan como maestra remota.
 
 ## db_path.py
 

@@ -18,9 +18,12 @@ def es_pc_maestra_local() -> bool:
         from src.config import config
 
         host = str(config.get("db_host", "") or "").strip().lower()
-        # Apuntando a otra IP = esclava
+        # Una IP LAN propia equivale a localhost; no es una maestra remota.
         if host and host not in ("localhost", "127.0.0.1"):
-            return False
+            from src.central_red_global.servidor.rol.ip import es_ip_de_esta_pc
+
+            if not es_ip_de_esta_pc(host):
+                return False
         if config.get("is_master") is False:
             return False
         if config.get("carteleria_is_slave"):

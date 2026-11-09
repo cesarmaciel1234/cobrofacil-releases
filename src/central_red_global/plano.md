@@ -1,9 +1,9 @@
 # Plano - Red Global (LAN y Sync)
 
-La identidad se fija cuando la caja se enlaza por primera vez mientras la maestra está disponible. Si una instalación antigua ya perdió esa conexión antes de guardar su `store_id`, se mantiene en modo offline y necesita recuperar/enlazar explícitamente la identidad correcta; no debe adivinar entre tiendas.
+La identidad se fija cuando la caja se enlaza por primera vez mientras la maestra está disponible. Si una instalación antigua ya perdió esa conexión antes de guardar su `store_id`, se mantiene en modo offline y necesita recuperar/enlazar explícitamente la identidad correcta; no debe adivinar entre tiendas. Si `db_host` apunta a una IP propia, sigue siendo una conexión local; el cambio explícito a MAESTRA normaliza el host a `localhost` y reinicia el oficio.
 
 ## Frente
-El sistema coordina la presencia de la tienda en red. La PC Maestra act�a como servidor. Los clientes LAN (Cajas esclavas, impresoras de red) detectan al servidor de manera autom�tica por UDP (puerto 37020) y luego consumen su API REST (puerto 8000) o MariaDB (3306).
+El sistema coordina la presencia de la tienda en red. La PC Maestra act�a como servidor. Los clientes LAN (Cajas esclavas, impresoras de red) detectan al servidor de manera autom�tica por UDP (puerto 37020) y luego consumen su API REST (puerto 8000) o MariaDB (3306). Una IP LAN configurada que pertenece a esta PC no se trata como una maestra remota.
 
 El proceso `--server` abre una ventana en los dos puestos. El t�tulo es �Servidor Cobro F�cil�. En la esclava la pastilla dice �ESCLAVA�. La consola es una base en tablas, cada una en su panel: `punpro.db`, la r�plica `espejo_tienda.db`, `cola_tickets`, `cola_cambios`, la bit�cora y la auditor�a de stock. Esa auditor�a lee `auditorias_inventario`; no va en la cola de cambios. Arriba de las tablas, una pastilla dice si la maestra est� en l�nea o desconectada, y al lado el nombre de las PCs conectadas. El cuadrado de la barra estira la ventana. Cuenta filas en solo lectura. No reenv�a la cola ni abre MariaDB. No se esconde al arrancar. �Ocultar en bandeja� la manda al icono azul E, junto al reloj. �Apagar servidor� pide la clave; por defecto es 1234 (`servidor_clave` en la config). La cara est� en `servidor/ventana/`.
 
@@ -11,7 +11,7 @@ El proceso `--server` abre una ventana en los dos puestos. El t�tulo es �Ser
 
 `offline_cambios.json` también conserva los eventos de auditoría de inventario hechos offline. Cada evento usa `sync_id`, y solo sale de la cola después de confirmarse en la maestra. El espejo copia completa `auditorias_inventario`.
 
-`network_engine.py` lanza los servicios de red seg�n el perfil. `lan_server.py` es la API LAN. `master_presence.py` dice si esta PC es la maestra.
+`network_engine.py` lanza los servicios de red seg�n el perfil. `lan_server.py` es la API LAN. `master_presence.py` dice si esta PC es la maestra. La conversi�n explícita valida MariaDB local, normaliza `db_host` a `localhost` y reinicia el oficio para que el servidor adopte el perfil nuevo.
 
 La API HTTP de la maestra atiende solicitudes en paralelo con un límite de 32 conexiones activas; las conexiones que exceden el límite se rechazan para contener recursos. Los supervisores HTTP y UDP registran fallos de enlace/servicio y vuelven a intentar cada cinco segundos. `init_lan_server()` evita iniciar supervisores duplicados. Esto mejora la concurrencia y la recuperación local, pero no sustituye alta disponibilidad ni pruebas bajo carga con MariaDB real.
 

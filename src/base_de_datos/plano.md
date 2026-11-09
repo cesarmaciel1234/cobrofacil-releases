@@ -2,7 +2,7 @@
 
 ## Frente
 
-La pantalla de cobro, `src/cajero/paso6_cobro/paso6_cobro.py`, crea un `request_id` al abrir el cobro. Si la red corta y el cajero reintenta, viaja el mismo id. No se inventa el ticket `9999999`. Si la maestra no contesta, la esclava cobra igual en el SQLite local y el ticket sale con el id de esa base. Si la maestra está en línea y la API LAN falla, el cobro se cancela. No se simula éxito.
+La pantalla de cobro, `src/cajero/paso6_cobro/paso6_cobro.py`, crea un `request_id` al abrir el cobro. Si la red corta y el cajero reintenta, viaja el mismo id. No se inventa el ticket `9999999`. Si la maestra no contesta, la esclava cobra igual en el SQLite local y el ticket sale con el id de esa base. Si la maestra está en línea y la API LAN falla, el cobro se cancela. No se simula éxito. Una IP LAN que pertenece a esta PC no cuenta como destino remoto.
 
 ## Fondo
 
@@ -36,6 +36,8 @@ src/base_de_datos/repos/red.py (asegurar_lectura_tienda)
 Cuando una caja esclava pierde red, entra en SQLite local. Los intentos de reconexion al MariaDB de la Maestra (reconectar_mariadb) se realizan en un hilo asincrono (threading.Thread). Esto evita colgar la UI (2 a 5 segundos de timeout) cada vez que el cajero escanea o cobra mientras la red esta caida.
 
 Si la IP cambia mientras el programa está abierto, la caja descubre la tienda por UDP 37020, comprueba el `store_id` que quedó enlazado y reemplaza el host del motor sin reiniciar. Una identidad distinta o ausente no se adopta. La cola offline sigue su flujo de idempotencia existente.
+
+`core/red_rol.py` y `core/connection.py` detectan si el host configurado pertenece a esta PC; en ese caso normalizan la conexión MariaDB como local y no anuncian el rol de esclava.
 
 `offline_nutricion.py` tambi�n sube, al oler el WiFi, los proveedores, los enlaces y las ediciones de producto armadas en casa. `encolar_producto` guarda la ficha por id. `productos_pendientes` es lo que el cat�logo pinta encima de la copia. El id del proveedor no se inventa en la notebook: nace con `AUTO_INCREMENT` en la maestra y el v�nculo se reescribe con ese id. `quitar_vinculo` anota la baja: al reconectar se borra el enlace y no se vuelve a subir.
 

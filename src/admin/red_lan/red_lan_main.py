@@ -50,7 +50,7 @@ class Admin6RedLan(QWidget):
         h.addWidget(btn_back)
 
         title = QLabel("🌐 Servidor LAN / Multicaja")
-        title.setStyleSheet("font-size: 22px; font-weight: bold; color: #0F172A; border: none;")
+        title.setStyleSheet("font-size: 22px; font-weight: 900; color: #0F172A; border: none;")
         h.addWidget(title)
         h.addStretch()
         root.addWidget(header)
@@ -118,7 +118,7 @@ class Admin6RedLan(QWidget):
         # Título del modo
         row_modo = QHBoxLayout()
         lbl_modo_titulo = QLabel("Modo actual:")
-        lbl_modo_titulo.setStyleSheet("font-size: 15px; font-weight: bold; color: #374151; border: none;")
+        lbl_modo_titulo.setStyleSheet("font-size: 15px; font-weight: 900; color: #1E293B; border: none;")
 
         self.lbl_modo_badge = QLabel()
         row_modo.addWidget(lbl_modo_titulo)
@@ -185,7 +185,7 @@ class Admin6RedLan(QWidget):
         lay.setSpacing(16)
 
         titulo = QLabel("🔁  Cambiar modo de esta PC")
-        titulo.setStyleSheet("font-size: 16px; font-weight: bold; color: #0F172A; border: none;")
+        titulo.setStyleSheet("font-size: 16px; font-weight: 900; color: #0F172A; border: none;")
         lay.addWidget(titulo)
 
         # Fila de los dos modos
@@ -202,7 +202,7 @@ class Admin6RedLan(QWidget):
         lay_m.setSpacing(8)
 
         QLabel_m = QLabel("🖥️  PC MAESTRA")
-        QLabel_m.setStyleSheet("font-size: 15px; font-weight: bold; color: #166534; border: none;")
+        QLabel_m.setStyleSheet("font-size: 15px; font-weight: 900; color: #166534; border: none;")
         lay_m.addWidget(QLabel_m)
 
         desc_m = QLabel(
@@ -235,7 +235,7 @@ class Admin6RedLan(QWidget):
         lay_e.setSpacing(8)
 
         QLabel_e = QLabel("📡  PC ESCLAVA  (terminal LAN)")
-        QLabel_e.setStyleSheet("font-size: 15px; font-weight: bold; color: #1E3A8A; border: none;")
+        QLabel_e.setStyleSheet("font-size: 15px; font-weight: 900; color: #1E3A8A; border: none;")
         lay_e.addWidget(QLabel_e)
 
         desc_e = QLabel(
@@ -316,21 +316,32 @@ class Admin6RedLan(QWidget):
     # ACCIONES
     # ──────────────────────────────────────────────────────────────────────────
     def _actualizar_botones(self):
-        """Deshabilita el botón del modo ya activo / bloquea MAESTRA en esclavas."""
+        """Permite reparar un rol esclavo solo si la IP configurada es esta PC."""
         motor = MotorRed()
         is_master = motor.obtener_estado_red()["is_master"]
         es_esclava_fija = False
+        puede_reparar_maestra = False
         try:
             from src.config import config
             es_esclava_fija = bool(config.get("carteleria_is_slave")) or (
                 config.get("is_master") is False
             )
+            from src.central_red_global.servidor.rol.maestra import (
+                puede_corregir_rol_a_maestra_local,
+            )
+
+            puede_reparar_maestra = puede_corregir_rol_a_maestra_local()
         except Exception:
             es_esclava_fija = not is_master
 
         if is_master and not es_esclava_fija:
             self.btn_hacer_maestra.setEnabled(False)
             self.btn_hacer_maestra.setText("✅ MAESTRA  (activo)")
+            self.btn_hacer_esclava.setEnabled(True)
+            self.btn_hacer_esclava.setText("🔗 Convertir en ESCLAVA")
+        elif puede_reparar_maestra:
+            self.btn_hacer_maestra.setEnabled(True)
+            self.btn_hacer_maestra.setText("✅ Corregir rol a MAESTRA")
             self.btn_hacer_esclava.setEnabled(True)
             self.btn_hacer_esclava.setText("🔗 Convertir en ESCLAVA")
         else:
@@ -344,15 +355,20 @@ class Admin6RedLan(QWidget):
         try:
             from src.config import config
             if bool(config.get("carteleria_is_slave")) or config.get("is_master") is False:
-                QMessageBox.information(
-                    self,
-                    "Esta PC es ESCLAVA",
-                    "Esta cartelería/caja debe seguir como ESCLAVA.\n\n"
-                    "Usá «Reconectar ESCLAVA» con la IP de la Maestra.\n"
-                    "«Convertir en MAESTRA» solo se usa en la PC servidor.",
+                from src.central_red_global.servidor.rol.maestra import (
+                    puede_corregir_rol_a_maestra_local,
                 )
-                self._actualizar_botones()
-                return
+
+                if not puede_corregir_rol_a_maestra_local():
+                    QMessageBox.information(
+                        self,
+                        "Esta PC es ESCLAVA",
+                        "La IP de la Maestra debe pertenecer a otra PC. "
+                        "Solo podés corregir el rol aquí si la IP configurada es "
+                        "esta misma PC y su MariaDB local responde.",
+                    )
+                    self._actualizar_botones()
+                    return
         except Exception:
             pass
 
@@ -361,6 +377,8 @@ class Admin6RedLan(QWidget):
             "¿Convertir esta PC en MAESTRA?\n\n"
             "Requiere MariaDB / Servidor de Tienda CORRIENDO en ESTA PC "
             "(localhost:3306).\n\n"
+            "La conexión se cambiará a localhost y se reiniciará el oficio del servidor. "
+            "Asegurate de que esta base sea la titular de la tienda.\n\n"
             "Si falla, se mantiene el modo actual.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,

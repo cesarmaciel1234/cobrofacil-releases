@@ -15,7 +15,7 @@
 
 ## Cómo funciona
 
-La maestra expone su API en TCP 8000 y escucha descubrimientos en UDP 37020. Las solicitudes HTTP se sirven con hilos limitados para que una conexión lenta no bloquee a todas las cajas y para no crear un número ilimitado de hilos. Si no puede abrir un puerto o el bucle del servidor se detiene, el supervisor conserva el proceso y reintenta. La esclava no debe iniciar estos servicios como si fuera titular.
+La maestra expone su API en TCP 8000 y escucha descubrimientos en UDP 37020. Las solicitudes HTTP se sirven con hilos limitados para que una conexión lenta no bloquee a todas las cajas y para no crear un número ilimitado de hilos. Si no puede abrir un puerto o el bucle del servidor se detiene, el supervisor conserva el proceso y reintenta. Una IP configurada que pertenece a esta misma PC no cuenta como maestra remota. La esclava no debe iniciar estos servicios como si fuera titular; la conversión explícita a MAESTRA valida MariaDB local, normaliza el host y relanza el proceso con el oficio correcto.
 
 El límite de concurrencia no reemplaza MariaDB ni una prueba de carga. Antes de una actualización de producción, probar con varias cajas y con MariaDB real.
 
