@@ -204,8 +204,8 @@ class CentroCobranzasPanel(QWidget):
             self._deuda_actual = self._capital_base
             self._interes_estimado = 0.0
 
-        self._monto_sugerido_externo = self._deuda_actual if self._deuda_actual > 0.009 else None
-        self._ir_a_pago = bool(ir_a_pago) or monto_sugerido is not None
+        self._monto_sugerido_externo = monto_sugerido
+        self._ir_a_pago = bool(ir_a_pago)
         self._mostrar_ficha()
 
     def _mostrar_ficha(self):
@@ -251,12 +251,12 @@ class CentroCobranzasPanel(QWidget):
         self.btn_imprimir_resumen.show()
         self.btn_iniciar_pago.show()
         
-        if getattr(self, "_ir_a_pago", False) or getattr(self, "_monto_sugerido_externo", None):
+        self.stack.setCurrentWidget(self.vista_cobranza)
+        if getattr(self, "_ir_a_pago", False):
             self._mostrar_controles_pago()
         else:
             self._modo = "vista_cliente"
-        self.stack.setCurrentWidget(self.vista_cobranza)
-        self.setFocus()
+            self.btn_iniciar_pago.setFocus()
 
     def _pedir_historial(self):
         # El historial se consulta a demanda mediante el botón [Ver / Imprimir]
@@ -523,7 +523,13 @@ class CentroCobranzasPanel(QWidget):
     def procesar_enter(self):
         if self._modo == "buscando":
             self.panel_buscador.aceptar_actual()
-        elif self._modo == "cobranza" and getattr(self, "_cliente_id", None):
+        elif self._modo == "vista_cliente":
+            focused = self.focusWidget()
+            if focused == self.btn_imprimir_resumen:
+                self._abrir_historial_cliente()
+            else:
+                self._mostrar_controles_pago()
+        elif self._modo in ("preparando_pago", "cobranza") and getattr(self, "_cliente_id", None):
             self._iniciar_cobranza("Efectivo")
         elif self._modo == "cobrando_lienzo":
             actual = self.cont_lienzos.currentWidget()
