@@ -168,9 +168,13 @@ def test_historial_adapta_cabecera_y_espacio_de_descripciones(monkeypatch):
     assert "\n" in dialogo.lbl_meta.text()
     assert (
         dialogo.tabla.horizontalHeader().sectionResizeMode(4)
+        == QHeaderView.ResizeMode.ResizeToContents
+    )
+    assert (
+        dialogo.tabla.horizontalHeader().sectionResizeMode(5)
         == QHeaderView.ResizeMode.Stretch
     )
-    assert dialogo.tabla.item(0, 4).toolTip() == "Descripción completa del cargo de prueba"
+    assert dialogo.tabla.item(0, 5).toolTip() == "Descripción completa del cargo de prueba"
     dialogo.tabla.setRowCount(251)
     dialogo._pintar_fila(250, {
         "id": 251,
@@ -222,3 +226,103 @@ def test_mantenimiento_muestra_descripcion_corta_y_conserva_auditoria():
     assert panel.tabla.item(0, 1).text() == "MANTENIMIENTO · 3% gestión de cuenta"
     assert panel.tabla.item(0, 1).toolTip() == descripcion
     panel.close()
+
+
+def test_orden_columnas_historial_y_descripcion_armoniosa(monkeypatch):
+    from PyQt6.QtWidgets import QApplication, QHeaderView
+    from src.admin.clientes.componentes import dialogo_historial_cliente as historial
+
+    app = QApplication.instance() or QApplication([])
+    monkeypatch.setattr(
+        historial.cerebro,
+        "obtener",
+        lambda _cid: {
+            "nombre": "Ruben",
+            "dni": "12345678",
+            "tipo_cliente": "regular",
+            "limite_credito": 500000,
+            "deuda_actual": 277715.50,
+            "telefono": "555-0100",
+        },
+    )
+    monkeypatch.setattr(historial.cerebro, "credito_disponible", lambda _c: 222284.50)
+    monkeypatch.setattr(historial, "iniciar_hilo_seguro", lambda _h: None)
+
+    dialogo = historial.DialogoHistorialCliente(1)
+    
+    # 1. Cabeceras en orden exacto: Ticket antes de Descripción
+    headers = [dialogo.tabla.horizontalHeaderItem(i).text() for i in range(8)]
+    assert headers == [
+        "Fecha", "Tipo", "Monto", "Saldo", "Ticket / cobro", "Descripción",
+        "Días", "Mantenimiento",
+    ]
+    
+    # 2. Modos de redimensionamiento
+    assert dialogo.tabla.horizontalHeader().sectionResizeMode(4) == QHeaderView.ResizeMode.ResizeToContents
+    assert dialogo.tabla.horizontalHeader().sectionResizeMode(5) == QHeaderView.ResizeMode.Stretch
+    
+    # 3. Renglones: venta con excepción admin, venta normal, cobro con transferencia manual, cargo manual
+    movs = [
+        {
+            "id": 1,
+            "tipo": "CARGO",
+            "venta_id": "1091372",
+            "referencia": "#1091372",
+            "fecha": "2026-10-17 16:41:52",
+            "monto": 78555.00,
+            "saldo_resultante": 142492.50,
+            "descripcion": "Venta a crédito #1091372 (excepción admin)",
+        },
+        {
+            "id": 2,
+            "tipo": "CARGO",
+            "venta_id": "1092895",
+            "referencia": "#1092895",
+            "fecha": "2026-11-08 11:19:26",
+            "monto": 84728.00,
+            "saldo_resultante": 283132.48,
+            "descripcion": "Venta a crédito #1092895",
+        },
+        {
+            "id": 3,
+            "tipo": "ABONO",
+            "referencia": "COB-180",
+            "fecha": "2026-09-30 18:54:33",
+            "monto": 307838.50,
+            "saldo_resultante": 0.00,
+            "descripcion": "Cobro a cuenta (Transferencia: F9 MANUAL)",
+        },
+        {
+            "id": 4,
+            "tipo": "CARGO",
+            "referencia": "—",
+            "fecha": "2026-09-28 18:35:50",
+            "monto": 284833.00,
+            "saldo_resultante": 307838.50,
+            "descripcion": "Cargo manual desde panel Admin",
+        },
+    ]
+    
+    dialogo.tabla.setRowCount(4)
+    for idx, m in enumerate(movs):
+        dialogo._pintar_fila(idx, m)
+    
+    # Fila 0: Venta con excepción: col 4 es ticket, col 5 es descripción limpia sin emoji ni alerta chillona
+    assert dialogo.tabla.item(0, 4).text() == "#1091372"
+    assert dialogo.tabla.item(0, 5).text() == "Excepción admin"
+    assert "⚠️" not in dialogo.tabla.item(0, 5).text()
+    
+    # Fila 1: Venta normal sin excepción: col 4 es ticket, col 5 es guión limpio
+    assert dialogo.tabla.item(1, 4).text() == "#1092895"
+    assert dialogo.tabla.item(1, 5).text() == "—"
+    
+    # Fila 2: Cobro: col 4 es COB-180, col 5 es Transferencia limpia (sin 'F9 MANUAL' ni signos raros)
+    assert dialogo.tabla.item(2, 4).text() == "COB-180"
+    assert dialogo.tabla.item(2, 5).text() == "Transferencia"
+    assert "F9 MANUAL" not in dialogo.tabla.item(2, 5).text()
+    
+    # Fila 3: Cargo manual: col 4 es —, col 5 es Cargo manual desde panel Admin
+    assert dialogo.tabla.item(3, 4).text() == "—"
+    assert dialogo.tabla.item(3, 5).text() == "Cargo manual desde panel Admin"
+
+    dialogo.close()

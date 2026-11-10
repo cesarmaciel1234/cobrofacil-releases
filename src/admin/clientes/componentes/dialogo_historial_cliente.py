@@ -95,7 +95,7 @@ class DialogoHistorialCliente(QDialog):
 
         self.tabla = QTableWidget(0, 8)
         self.tabla.setHorizontalHeaderLabels([
-            "Fecha", "Tipo", "Monto", "Saldo", "Descripción", "Ticket / cobro",
+            "Fecha", "Tipo", "Monto", "Saldo", "Ticket / cobro", "Descripción",
             "Días", "Mantenimiento",
         ])
         self.tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -103,8 +103,8 @@ class DialogoHistorialCliente(QDialog):
         self.tabla.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.tabla.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.tabla.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.tabla.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)
-        self.tabla.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(5, QHeaderView.Stretch)
         self.tabla.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
         self.tabla.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
         self.tabla.verticalHeader().setVisible(False)
@@ -574,61 +574,7 @@ class DialogoHistorialCliente(QDialog):
 
         it_saldo = vestir_numero(QTableWidgetItem(f"${saldo:,.2f}"))
         self.tabla.setItem(row, 3, it_saldo)
-        # Limpieza visual de Descripción: no cargar descripciones repetitivas que ensucien la vista
-        desc_lower = desc.lower()
-        es_ticket = bool(venta_id) or (ticket and str(ticket).strip().startswith("#"))
-
-        if es_ticket:
-            # Si es ticket de venta, el número de ticket ya se muestra al lado en 'Ticket / cobro'
-            # Solo mostrar descripción si hubo alguna alarma / excepción (ej: excepción admin, PIN, etc.)
-            tiene_alarma = (
-                "excepci" in desc_lower
-                or "pin" in desc_lower
-                or "alerta" in desc_lower
-                or "autoriz" in desc_lower
-            )
-            if tiene_alarma:
-                m_exc = re.search(r'\((excepci[oó]n[^)]*)\)', desc, re.IGNORECASE)
-                if m_exc:
-                    txt_raw = m_exc.group(1).strip()
-                    txt_alerta = f"⚠️ {txt_raw[0].upper()}{txt_raw[1:]}"
-                elif "pin" in desc_lower:
-                    txt_alerta = "⚠️ Excepción PIN"
-                elif "excepci" in desc_lower:
-                    txt_alerta = "⚠️ Excepción admin"
-                else:
-                    txt_alerta = f"⚠️ {desc}"
-                it_desc = vestir_nombre(QTableWidgetItem(txt_alerta))
-                it_desc.setForeground(QColor("#D97706"))  # Ámbar advertencia visible
-                fuente = it_desc.font()
-                fuente.setBold(True)
-                it_desc.setFont(fuente)
-                it_desc.setToolTip(f"Alarma / Excepción: {desc}")
-            else:
-                # Ticket normal sin alarma: guion limpio para que la tabla no se mezcle ni sature
-                it_desc = vestir_nombre(QTableWidgetItem("—"))
-                it_desc.setForeground(QColor("#94A3B8"))
-                it_desc.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                it_desc.setToolTip(f"Venta a crédito normal ({ticket})")
-        elif tipo == "ABONO":
-            # Extraer método limpio (ej. Tarjeta: ..., Transferencia: ..., Efectivo)
-            m_metodo = re.search(r'\(([^)]+)\)', desc)
-            txt_abono = m_metodo.group(1).strip() if m_metodo else (desc or "Abono a cuenta")
-            it_desc = vestir_nombre(QTableWidgetItem(txt_abono))
-            it_desc.setForeground(QColor("#059669"))
-            it_desc.setToolTip(desc)
-        elif tipo == "ANULACION":
-            it_desc = vestir_nombre(QTableWidgetItem(desc))
-            it_desc.setForeground(QColor("#64748B"))
-            it_desc.setToolTip(desc)
-        else:
-            # Cargo manual desde admin u otro concepto
-            desc_vis = descripcion_cargo_visible(desc)
-            it_desc = vestir_nombre(QTableWidgetItem(desc_vis))
-            it_desc.setForeground(QColor("#334155"))
-            it_desc.setToolTip(desc)
-
-        self.tabla.setItem(row, 4, it_desc)
+        # Columna 4: Ticket / cobro
         it_ticket = vestir_id(QTableWidgetItem(ticket))
         if venta_id and tipo in ("CARGO", "ANULACION"):
             it_ticket.setForeground(QColor("#2563EB"))
@@ -639,7 +585,62 @@ class DialogoHistorialCliente(QDialog):
             it_ticket.setData(Qt.ItemDataRole.UserRole, str(venta_id))
         elif tipo == "ABONO" and str(ticket).startswith("COB-"):
             it_ticket.setToolTip("Ticket de cobro. Es el mismo COB de la planilla, no una venta.")
-        self.tabla.setItem(row, 5, it_ticket)
+        self.tabla.setItem(row, 4, it_ticket)
+
+        # Columna 5: Descripción limpia, simple y armoniosa (sin alertas estridentes ni emojis)
+        desc_lower = desc.lower()
+        es_ticket = bool(venta_id) or (ticket and str(ticket).strip().startswith("#"))
+
+        if es_ticket:
+            tiene_alarma = (
+                "excepci" in desc_lower
+                or "pin" in desc_lower
+                or "alerta" in desc_lower
+                or "autoriz" in desc_lower
+            )
+            if tiene_alarma:
+                m_exc = re.search(r'\((excepci[oó]n[^)]*)\)', desc, re.IGNORECASE)
+                if m_exc:
+                    txt_raw = m_exc.group(1).strip()
+                    txt_alerta = f"{txt_raw[0].upper()}{txt_raw[1:]}"
+                elif "pin" in desc_lower:
+                    txt_alerta = "Excepción PIN"
+                elif "excepci" in desc_lower:
+                    txt_alerta = "Excepción admin"
+                elif "autoriz" in desc_lower:
+                    txt_alerta = "Autorización admin"
+                else:
+                    txt_alerta = desc
+                it_desc = vestir_nombre(QTableWidgetItem(txt_alerta))
+                it_desc.setForeground(QColor("#64748B"))  # Slate neutral sobrio y armonioso
+                it_desc.setToolTip(f"Autorización / Excepción: {desc}")
+            else:
+                it_desc = vestir_nombre(QTableWidgetItem("—"))
+                it_desc.setForeground(QColor("#94A3B8"))
+                it_desc.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                it_desc.setToolTip(f"Venta a crédito normal ({ticket})")
+        elif tipo == "ABONO":
+            m_metodo = re.search(r'\(([^)]+)\)', desc)
+            txt_abono = m_metodo.group(1).strip() if m_metodo else (desc or "Abono a cuenta")
+            # Quitar marcas técnicas internas
+            txt_abono = re.sub(r':\s*F9\s*MANUAL', '', txt_abono, flags=re.IGNORECASE)
+            txt_abono = re.sub(r'F9\s*MANUAL', 'Manual', txt_abono, flags=re.IGNORECASE).strip()
+            if not txt_abono:
+                txt_abono = "Abono a cuenta"
+            it_desc = vestir_nombre(QTableWidgetItem(txt_abono))
+            it_desc.setForeground(QColor("#475569"))  # Texto neutro legible y armonioso
+            it_desc.setToolTip(desc)
+        elif tipo == "ANULACION":
+            it_desc = vestir_nombre(QTableWidgetItem(desc))
+            it_desc.setForeground(QColor("#64748B"))
+            it_desc.setToolTip(desc)
+        else:
+            desc_vis = descripcion_cargo_visible(desc)
+            it_desc = vestir_nombre(QTableWidgetItem(desc_vis))
+            it_desc.setForeground(QColor("#475569"))
+            it_desc.setToolTip(desc)
+
+        self.tabla.setItem(row, 5, it_desc)
 
         it_dias = vestir_numero(QTableWidgetItem("—"))
         it_dias.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -676,9 +677,11 @@ class DialogoHistorialCliente(QDialog):
         if tipo == "ABONO":
             verde_cobro = QColor("#047857")
             bg_cobro = QBrush(QColor("#ECFDF5"))
-            for item in (it_fecha, it_tipo, it_monto, it_saldo, it_desc, it_ticket, it_dias, it_interes):
-                item.setForeground(verde_cobro)
-                item.setBackground(bg_cobro)
+            for item in (it_fecha, it_tipo, it_monto, it_saldo, it_ticket, it_desc, it_dias, it_interes):
+                if item:
+                    item.setBackground(bg_cobro)
+            it_tipo.setForeground(verde_cobro)
+            it_monto.setForeground(verde_cobro)
 
         if inactivo:
             tachado = QFont()
@@ -696,11 +699,11 @@ class DialogoHistorialCliente(QDialog):
                 it_tipo.setToolTip("Quedó en el historial marcado como BORRADO. El ticket no se elimina.")
 
     def _finalizar_pintado(self, movs):
-        for columna in (0, 1, 2, 3, 5, 6, 7):
+        for columna in (0, 1, 2, 3, 4, 6, 7):
             self.tabla.horizontalHeader().setSectionResizeMode(
                 columna, QHeaderView.ResizeToContents
             )
-        self.tabla.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)
+        self.tabla.horizontalHeader().setSectionResizeMode(5, QHeaderView.Stretch)
         self.tabla.setEnabled(True)
         self._movimientos = list(movs)
         self.btn_imprimir.setEnabled(True)
@@ -912,10 +915,10 @@ class DialogoHistorialCliente(QDialog):
         if not isinstance(dato, dict):
             dato = {}
         ticket = str(dato.get("venta_id") or "").strip()
-        item_ticket = self.tabla.item(fila, 5)
+        item_ticket = self.tabla.item(fila, 4) or self.tabla.item(fila, 5)
         if not ticket and item_ticket:
             ticket = str(item_ticket.data(Qt.ItemDataRole.UserRole) or "").strip()
-        if columna != 5 and not ticket and not dato.get("manual"):
+        if columna not in (4, 5) and not ticket and not dato.get("manual"):
             return
         if ticket:
             if hasattr(self, "_mostrar_ticket"):
