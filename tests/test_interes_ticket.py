@@ -150,3 +150,38 @@ def test_cargo_manual_sin_ticket_genera_interes():
     assert cargo_calc["dias"] == 15
     assert cargo_calc["interes_acumulado"] == 30.0
     assert resultado["interes_acumulado"] == 30.0
+
+
+def test_abono_sin_cargo_interes_mensual_y_reinicio_conteo_diario():
+    """Un abono reduce directo el capital y el saldo remanente arranca su conteo diario."""
+    activacion = datetime(2026, 1, 1)
+    venta = _mov(1, "2026-01-01 10:00:00", "CARGO", 1000, 7)
+    abono = _mov(2, "2026-01-20 10:00:00", "ABONO", 400)
+
+    # 1. Al día del abono (2026-01-20), el capital restante es 600 y los días e interés arrancan en 0
+    res_abono = proyectar_interes(
+        [venta, abono],
+        activacion,
+        datetime(2026, 1, 20, 10, 0, 0),
+        tasa_base=Decimal("0.03"),
+        tasa_apal=Decimal("0.05"),
+        dias_plazo=30,
+    )
+    t_abono = res_abono["tickets"]["V:7"]
+    assert t_abono["capital_pendiente"] == 600.0
+    assert t_abono["dias"] == 0
+    assert t_abono["interes_acumulado"] == 0.0
+
+    # 2. 10 días después del abono (2026-01-30), corre el conteo diario sobre el saldo vivo ($600 * 0.1% * 10 = $6.00)
+    res_10d = proyectar_interes(
+        [venta, abono],
+        activacion,
+        datetime(2026, 1, 30, 10, 0, 0),
+        tasa_base=Decimal("0.03"),
+        tasa_apal=Decimal("0.05"),
+        dias_plazo=30,
+    )
+    t_10d = res_10d["tickets"]["V:7"]
+    assert t_10d["capital_pendiente"] == 600.0
+    assert t_10d["dias"] == 10
+    assert t_10d["interes_acumulado"] == 6.0

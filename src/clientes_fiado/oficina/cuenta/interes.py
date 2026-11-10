@@ -332,6 +332,13 @@ def proyectar_interes(
                 restante = pagar_cargos(
                     restante, [cargo for cargo in otros if not cargo["ticket"]]
                 )
+                # Al pagar, el saldo remanente arranca su conteo diario desde la fecha del abono
+                for ticket in orden_tickets:
+                    estado = tickets[ticket]
+                    if estado["capital"] > Decimal("0.009"):
+                        estado["no_facturado"] = Decimal("0")
+                        estado["ultima_fecha"] = max(estado["ultima_fecha"], fecha)
+                        estado["inicio"] = max(estado["inicio"], fecha)
             continue
 
         if tipo == "ANULACION":
