@@ -278,7 +278,7 @@ class PerfilPantalla(QDialog):
         QTimer.singleShot(8000, self._auto_ensure_server_if_offline)
         # Si el proceso se escondió y murió, la pastilla no puede quedarse en «activo».
         self._timer_servidor = QTimer(self)
-        self._timer_servidor.setInterval(15000)
+        self._timer_servidor.setInterval(10000)
         self._timer_servidor.timeout.connect(self._auto_ensure_server_if_offline)
         self._timer_servidor.start()
 

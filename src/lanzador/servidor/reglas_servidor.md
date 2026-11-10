@@ -2,12 +2,15 @@
 
 ```
 lanzador/servidor/
-  pulso.py            al abrir el hub: despertar si es maestra
+  pulso.py            al abrir el hub: asegurar autoarranque Windows y levantar proceso si está caído
   barra/
     badge.py          ONLINE / ESCLAVA / OFFLINE. El clic trae la ventana del servidor.
     interruptor.py    Win/Auto (respaldo corte / Linux)
 ```
 
-El hub (`vistas/hub_main.py`) solo monta badge + interruptor. La lógica está acá.
+El hub (`vistas/hub_main.py`) monta badge + interruptor y ejecuta el watchdog (`_timer_servidor`) cada 10s. La lógica está acá.
+
+- **Autoarranque en segundo plano:** `auto_start_store_server` está fijado en `true` para vivir permanentemente con Windows (`Startup/CobroFacil_ServidorTienda.lnk`).
+- **Watchdog / Autorecuperación:** Si el proceso del servidor se cae, el temporizador del lanzador lo detecta inmediatamente mediante `pulso.asegurar_servidor()` y lo revive en segundo plano vía `ensure_store_server_process()`.
 
 **Esclava:** el hub no levanta MariaDB; los perfiles que abre leen `db_host`. Ver `src/base_de_datos/reglas.md`.
