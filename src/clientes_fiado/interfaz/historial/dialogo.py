@@ -338,22 +338,32 @@ class DialogoHistorialCliente(QDialog):
             it_fecha.setData(Qt.ItemDataRole.UserRole, dato)
             self.tabla.setItem(row, 0, it_fecha)
 
+            es_venta = bool(venta_id and str(venta_id) not in ("0", "None", ""))
+            es_manual = (tipo == "CARGO" and not es_venta)
+
             it_tipo = vestir_nombre(QTableWidgetItem(etiqueta))
-            if tipo == "CARGO" and inactivo:
+            if inactivo:
                 it_tipo.setForeground(QColor(_CLI["muted_row"]))
-            elif tipo == "CARGO":
-                it_tipo.setForeground(QColor("#DC2626"))
+            elif es_venta:
+                it_tipo.setForeground(QColor("#DC2626"))  # Venta fiada
+            elif es_manual:
+                it_tipo.setForeground(QColor("#7C3AED"))  # Cargo manual a mano
+                fuente_tipo = it_tipo.font()
+                fuente_tipo.setBold(True)
+                it_tipo.setFont(fuente_tipo)
             elif tipo == "ABONO":
-                it_tipo.setForeground(QColor("#059669"))
+                it_tipo.setForeground(QColor("#059669"))  # Cobro
             elif tipo == "ANULACION":
                 it_tipo.setForeground(QColor("#334155"))
             self.tabla.setItem(row, 1, it_tipo)
 
             it_monto = vestir_numero(QTableWidgetItem(f"${monto:,.2f}"))
-            if tipo == "CARGO" and inactivo:
+            if inactivo:
                 it_monto.setForeground(QColor(_CLI["muted_row"]))
-            elif tipo == "CARGO":
+            elif es_venta:
                 it_monto.setForeground(QColor("#DC2626"))
+            elif es_manual:
+                it_monto.setForeground(QColor("#7C3AED"))
             elif tipo == "ABONO":
                 it_monto.setForeground(QColor("#059669"))
             elif tipo == "ANULACION":
@@ -373,6 +383,15 @@ class DialogoHistorialCliente(QDialog):
             elif tipo == "ABONO" and str(ticket).startswith("COB-"):
                 it_ticket.setToolTip("Ticket de cobro. Es el mismo COB de la planilla, no una venta.")
             self.tabla.setItem(row, 5, it_ticket)
+
+            if tipo == "ABONO":
+                verde_cobro = QColor("#047857")
+                bg_cobro = QBrush(QColor("#ECFDF5"))
+                for col in range(6):
+                    celda = self.tabla.item(row, col)
+                    if celda:
+                        celda.setForeground(verde_cobro)
+                        celda.setBackground(bg_cobro)
 
             if inactivo:
                 tachado = QFont()

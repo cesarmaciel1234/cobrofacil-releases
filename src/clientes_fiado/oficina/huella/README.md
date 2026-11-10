@@ -9,7 +9,7 @@ Cada cliente nace con un `uid` que dice dónde y cuándo: `NOMBREPC-XXXX-AAAAMMD
 - `eventos.py`:
   - `alta(campos, via)`: INSERT con huella + evento `ALTA`. La usan `ClienteRepository` (fiado express, cuenta corriente) y `MotorCuenta.alta_regular` (cartera).
   - `editar(id, cambios, accion)`: UPDATE + `actualizado_en` + evento con `antes` / `despues` de lo que cambió. Nunca toca `deuda_actual`.
-  - `movimiento_en(cursor, 'CARGO'|'ABONO'|'ANULACION'|'BORRADO', ..., extra=)`: dentro de la transacción, con SAVEPOINT. `extra` lleva `cobro_id`, `cargo_id` o `venta_id` para cuadrar con la planilla. Si el libro falla, el movimiento igual entra.
+- `movimiento_en(cursor, 'CARGO'|'ABONO'|'ANULACION'|'BORRADO', ..., extra=)`: dentro de la transacción, con SAVEPOINT. `extra` lleva `cobro_id`, `cargo_id` o `venta_id`; los tickets también sellan `request_id` para sobrevivir al cambio de ID al subir ventas offline.
 - `absorber.py`: la tienda aplica eventos hechos sin red (`base = 'LOCAL'`).
 - `consulta.py`: `listar(texto)` y `huella_texto(cliente)` para la cartera. Solo lee.
 
@@ -29,11 +29,13 @@ Una transacción por evento: primero entra la fila en `clientes_auditoria` (clav
 
 - `ALTA`: si el `uid` no existe, busca gemelo (mismo DNI, o sin DNI y mismo nombre). Si hay, anota `FUSION` y los eventos de ese `uid` van a ese cliente. Si no, crea el cliente con deuda 0 y la huella de origen.
 - `EDICION` / `LIMITE`: aplica `despues` solo si la tienda no editó la ficha después (`actualizado_en`). Si no, queda `llego_via = 'NODO:TIENDA_MAS_NUEVA'`.
-- `CARGO` / `ABONO`: mueve la deuda y escribe `cuenta_corriente` con «cargado en PC por usuario el fecha». El abono no baja de cero.
+- `CARGO` / `ABONO`: mueve la deuda y escribe `cuenta_corriente` con «cargado en PC por usuario el fecha». El abono no baja de cero. El interés conserva su detalle completo y traduce cada ticket por `request_id` antes de guardarlo en la tienda.
+- `ANULACION` de ticket: traduce el ticket por `request_id`, revierte el libro con el importe y el detalle original, y marca cancelado el cargo base. Si F3 sigue pendiente en `offline_cancelaciones`, la huella espera: una transacción maestra aplica juntos el reverso, el estado del ticket, la devolución de stock y los movimientos de caja. La cola solo se limpia después de confirmar.
 - Cliente que todavía no llegó: `pendiente`, no se marca, se reintenta.
 
 ## Qué no cambiar
 
 - No copiar fichas ni saldos de afuera: solo eventos. La deuda de una venta fiada sin red viaja con la venta (cola offline); si el absorbedor la copiara, se contaría dos veces.
+- El ticket cancelado se sube primero como venta y sus eventos de cuenta se aplican antes de reproducir la cancelación física. No aplicar el reverso sin resolver el ticket remoto.
 - El nodo se lee con `sqlite3`, no con `db_manager`.
 - Sin las columnas (`asegurar` en False), el alta de clientes sigue funcionando sin huella.

@@ -588,10 +588,12 @@ class PosPrinter:
 
         for mov in movimientos or []:
             tipo = str(mov.get("etiqueta") or mov.get("tipo") or "").strip().upper()
-            if tipo.startswith("CARGO"):
+            if tipo.startswith("VENTA"):
+                marca = "VENTA"
+            elif tipo.startswith("CARGO"):
                 marca = "CARGO"
-            elif tipo.startswith("ABONO"):
-                marca = "ABONO"
+            elif tipo.startswith("COBRO") or tipo.startswith("ABONO"):
+                marca = "COBRO"
             elif "ANUL" in tipo:
                 marca = "ANULA"
             else:

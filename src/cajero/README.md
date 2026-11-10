@@ -33,6 +33,8 @@ Mismo motor de abono (`MotorCobranzaMedios`) y mismos medios. Distinta entrada. 
 
 **CRÉDITO** (botón azul del paso 6) no es cobranza: carga el ticket a la cuenta. Admin Abonar usa F6, no el paso 6. El F5 del paso 5 saca efectivo; el F5 del cobro se retiró.
 
+En F6, la ficha muestra saldo actual + interés nuevo por ticket = total estimado. La tasa es 3% mensual simple, prorrateada por días sobre el capital pendiente; el cargo real y su prioridad sobre el capital se recalculan transaccionalmente al registrar el abono.
+
 Detalle: `paso6_cobro/decisiones.md`, `paso6_cobro/rutas_de_cobro/fiado_piramidal/plano.md`, `f6_centro_cobranzas/punta del piramide.md`.
 
 `cajero_activo.py` guarda la estación (cajero 1 o 2). No es una pantalla. **Una sola terminal por PC**: el candado `perfil_cajero.lock` y el lanzador no abren un segundo `--role cajero`. El auxiliar (F8) es el mismo proceso, otro cajón/impresora.

@@ -201,6 +201,25 @@ class MigratorMixin:
             """)
         except Exception as e:
             logger.warning(f"No se pudo crear auditoria_cancelaciones: {e}")
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS offline_cancelaciones (
+                    local_venta_id BIGINT NOT NULL PRIMARY KEY,
+                    request_id VARCHAR(64),
+                    cancelado_por VARCHAR(100),
+                    fecha_cancel VARCHAR(19),
+                    perfil_cancel VARCHAR(100),
+                    caja_cancel INTEGER,
+                    cuenta_monto REAL DEFAULT 0,
+                    cuenta_descripcion TEXT,
+                    movimientos_caja_json TEXT
+                )
+            """)
+        except Exception as e:
+            logger.warning(f"No se pudo crear offline_cancelaciones: {e}")
+        add_column_if_not_exists('offline_cancelaciones', 'cuenta_monto', 'REAL DEFAULT 0')
+        add_column_if_not_exists('offline_cancelaciones', 'cuenta_descripcion', 'TEXT')
+        add_column_if_not_exists('offline_cancelaciones', 'movimientos_caja_json', 'TEXT')
         add_column_if_not_exists('movimientos_caja', 'caja_id', 'INTEGER DEFAULT 1')
         self._ampliar_tipo_movimiento_caja(cursor)
         add_column_if_not_exists('usuarios', 'pin', 'TEXT DEFAULT \'1234\'')
@@ -308,6 +327,26 @@ class MigratorMixin:
                     valor TEXT
                 )
             """)
+            cursor.execute(
+                "SELECT valor FROM configuracion WHERE clave = ?",
+                ("interes_ticket_activado_en",),
+            )
+            if not cursor.fetchone():
+                cursor.execute("SELECT CURRENT_TIMESTAMP")
+                fila_activacion = cursor.fetchone()
+                if isinstance(fila_activacion, dict):
+                    activacion = next(iter(fila_activacion.values()), None)
+                else:
+                    activacion = fila_activacion[0] if fila_activacion else None
+                if not activacion:
+                    raise RuntimeError("No se pudo leer la hora para activar el interés por ticket")
+                cursor.execute(
+                    "INSERT INTO configuracion (clave, valor) VALUES (?, ?)",
+                    (
+                        "interes_ticket_activado_en",
+                        str(activacion),
+                    ),
+                )
             # Sincronizar claves básicas desde config.json al iniciar
             import json
             from src.utils.paths import get_base_path
@@ -776,4 +815,3 @@ class MigratorMixin:
                 conn.close()
         except Exception as e:
             logger.error(f"Error en _ensure_test_users: {e}")
-

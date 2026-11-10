@@ -7,24 +7,29 @@ class MariaDBCursorWrapper:
     def __init__(self, cursor):
         self._cursor = cursor
 
-    def _translate_query(self, query):
+    def _translate_query(self, query, params=None):
+        import re
         # Tipos de datos
         query = query.replace("AUTOINCREMENT", "AUTO_INCREMENT")
-        # Placeholders
-        query = query.replace("?", "%s")
+        # Si la query viene en dialecto SQLite con '?' y tiene parámetros,
+        # escapar % literales antes de convertir '?' a '%s' (para no romper '%%s')
+        if "?" in query:
+            if params is not None:
+                query = query.replace("%", "%%")
+            query = query.replace("?", "%s")
         # Sintaxis SQLite-only → equivalentes MariaDB/MySQL
         query = query.replace("INSERT OR IGNORE INTO", "INSERT IGNORE INTO")
         query = query.replace("INSERT OR REPLACE INTO", "REPLACE INTO")
         # CAST tipos
-        import re
         query = re.sub(r'CAST\s*\((.+?)\s+AS\s+TEXT\)',
                        r'CAST(\1 AS CHAR)', query, flags=re.IGNORECASE)
         return query
 
     def execute(self, query, params=None):
         try:
-            mq = self._translate_query(query)
-            if params:
+            has_params = bool(params and len(params) > 0)
+            mq = self._translate_query(query, params if has_params else None)
+            if has_params:
                 return self._cursor.execute(mq, params)
             return self._cursor.execute(mq)
         except Exception as e:
@@ -32,7 +37,8 @@ class MariaDBCursorWrapper:
             raise
 
     def executemany(self, query, params_list):
-        mq = self._translate_query(query)
+        has_params = bool(params_list and len(params_list) > 0)
+        mq = self._translate_query(query, params_list if has_params else None)
         return self._cursor.executemany(mq, params_list)
 
     def fetchone(self):

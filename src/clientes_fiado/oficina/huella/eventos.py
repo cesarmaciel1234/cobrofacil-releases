@@ -177,7 +177,28 @@ def movimiento_en(cursor, accion: str, cliente_id, monto: float, descripcion: st
         return False
     detalle = {"monto": float(monto or 0), "descripcion": descripcion, "medio": medio or ""}
     if extra:
-        for clave, valor in dict(extra).items():
+        extra = dict(extra)
+        tickets_interes = extra.get("interes_tickets")
+        referencias = {}
+        venta_ids = set()
+        if extra.get("venta_id") not in (None, "", 0, "0"):
+            venta_ids.add(str(extra["venta_id"]).strip())
+        if isinstance(tickets_interes, dict):
+            for ticket in tickets_interes:
+                texto = str(ticket)
+                if texto.startswith("V:"):
+                    venta_ids.add(texto[2:])
+        for venta_id in venta_ids:
+            cursor.execute("SELECT request_id FROM ventas WHERE id = ?", (venta_id,))
+            fila = _dic(cursor.fetchone(), ("request_id",))
+            request_id = str(fila.get("request_id") or "").strip()
+            if request_id:
+                referencias[f"V:{venta_id}"] = request_id
+        if extra.get("venta_id") not in (None, "", 0, "0"):
+            extra["venta_request_id"] = referencias.get(f"V:{str(extra['venta_id']).strip()}")
+        if referencias and isinstance(tickets_interes, dict):
+            extra["interes_tickets_request_ids"] = referencias
+        for clave, valor in extra.items():
             if valor not in (None, ""):
                 detalle[clave] = valor
     fila = fila_evento(

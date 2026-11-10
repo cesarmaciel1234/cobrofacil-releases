@@ -15,6 +15,7 @@ from src.clientes_fiado.oficina.barrial.reglas import (
     MANTENIMIENTO_PCT_MIN,
     MANTENIMIENTO_VENTANA_DIAS,
     MARCA_MANTENIMIENTO,
+    PLAZO_DIAS_DEFAULT,
 )
 
 
@@ -57,13 +58,28 @@ def porcentaje() -> float:
     return porcentaje_base()
 
 
-def guardar_politicas(base_pct, apal_pct) -> bool:
-    """Persiste ambos % en config.json."""
+def plazo_dias_defecto() -> int:
+    try:
+        from src.config import config
+
+        bruto = config.get("fiado_plazo_dias", PLAZO_DIAS_DEFAULT)
+        return max(1, int(bruto))
+    except Exception:
+        return PLAZO_DIAS_DEFAULT
+
+
+def guardar_politicas(base_pct, apal_pct, plazo_dias=None) -> bool:
+    """Persiste ambos % y días de plazo en config.json."""
     try:
         from src.config import config
 
         config.set("fiado_mantenimiento_pct", _clamp_pct(base_pct, MANTENIMIENTO_PCT_DEFAULT))
         config.set("fiado_apalancamiento_pct", _clamp_pct(apal_pct, APALANCAMIENTO_PCT_DEFAULT))
+        if plazo_dias is not None:
+            try:
+                config.set("fiado_plazo_dias", max(1, int(plazo_dias)))
+            except (TypeError, ValueError):
+                pass
         return True
     except Exception:
         return False
@@ -71,9 +87,9 @@ def guardar_politicas(base_pct, apal_pct) -> bool:
 
 def tarifar(deuda, dias=None) -> dict:
     """
-    Calcula desglose de mantenimiento.
+    Calcula desglose de mantenimiento / tarifa.
     deuda <= 0 → monto 0 (cuenta en cero no aplica).
-    `dias` = días desde el último pago (ABONO). Si > 30 → base + apalancamiento.
+    `dias` = días desde el último pago (ABONO). Si > plazo_dias → base + apalancamiento.
     Si dias es None, solo base.
     """
     from src.utils.dinero import redondear_dinero
@@ -88,7 +104,8 @@ def tarifar(deuda, dias=None) -> dict:
         n_dias = int(dias) if dias is not None else None
     except (TypeError, ValueError):
         n_dias = None
-    aplica_apal = n_dias is not None and n_dias > AGING_30
+    limite_dias = plazo_dias_defecto()
+    aplica_apal = n_dias is not None and n_dias > limite_dias
     pct_apal = pct_apal_cfg if aplica_apal else 0.0
     pct_total = round(pct_base + pct_apal, 2)
     if saldo <= 0.009 or pct_total <= 0:
@@ -318,10 +335,7 @@ def aplicar_automatico(items):
             )
             resultado = {"estado": "fallo", "error": str(error)}
         estado = resultado.get("estado")
-        if estado == "omitido":
-            omitidos += 1
-            continue
-        if estado == "sin_deuda":
+        if estado in ("omitido", "sin_deuda", "desactivado"):
             omitidos += 1
             continue
         if estado == "aplicado":

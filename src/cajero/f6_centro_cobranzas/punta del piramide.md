@@ -20,16 +20,19 @@ f6_centro_cobranzas/
 
 ## Frente
 
-Buscador por DNI o nombre (tope 5). Ficha: hola, deuda o a favor, o al día. PAGAR / ABONAR aunque no haya deuda: el excedente queda a favor, sin cartel. Paso 1 monto a la cuenta. Paso 2 medio. Efectivo pregunta los billetes; si falta no cobra.
+Buscador por DNI o nombre (tope 5). Ficha: hola, deuda total estimada o a favor, o al día. PAGAR / ABONAR aunque no haya deuda: el excedente queda a favor, sin cartel. Paso 1 monto a la cuenta (prellenado con el total estimado). Paso 2 medio. Efectivo pregunta los billetes; si falta no cobra.
 
-Admin Abonar abre el mismo diálogo con `perfil=Admin`, va directo al monto y al medio, PIN apagado. El cobro se asienta una sola vez.
+Con deuda, la ficha presenta de forma directa e instantánea el Total Estimado como Deuda Actual. Interfaz limpia: sin recuadros ni listas de tickets que ensucien la pantalla de cobranza. Si el cliente o cajero requiere revisar el detalle, `[ Ver / Imprimir ]` abre el historial completo.
+
+Admin Abonar abre el mismo diálogo con `perfil=Admin`, va directo al monto y al medio con el total estimado precargado, PIN apagado. El cobro se asienta una sola vez.
 
 No pinta alta de cliente. Las flechas no saltan a F2.
 
 ## Fondo
 
 1. `consulta.buscar_cuentas` — tabla `clientes`. No crea filas.
-2. Hilo `consulta_historial/hilo.py` pregunta a `src/clientes_fiado/oficina/consulta_historial`. Si se cae, PAGAR sigue.
+2. Cálculo de total sincronizado e inmediato al seleccionar el cliente (o provisto por Admin). Si se desea inspección cruda, `Ver / Imprimir` abre el historial.
+   El motor común calcula interés simple del 3% mensual por ticket sobre capital pendiente. La cifra de pantalla es una vista previa; `MotorCuenta.abonar` repite el cálculo dentro de la transacción y lo asienta junto al abono, sin movimientos diarios ni capitalización.
 3. QR / tarjeta / transferencia: el lienzo espera el importe y, si llega, llama `finalizar` solo. **F9** asocia (otro monto) o cierra a mano. **Enter no asocia**: espera el exacto.
 4. Mixto: solo dos medios. Point / tarjeta primero, después transferencia, después QR. Esc vacía el lienzo. Recién después `MotorCobranzaMedios.finalizar` → `asentar` una vez (`COB-{id}`). No es el mixto del paso 6 (ahí puede ir un resto a cliente).
 5. Admin Abonar abre esta misma hoja (`perfil=Admin`). No vuelve a asentar.

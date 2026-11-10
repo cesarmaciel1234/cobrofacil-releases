@@ -5,6 +5,11 @@ from __future__ import annotations
 from src.clientes_fiado.oficina.cuenta.motor import (
     MARCA_BORRADO, MARCA_CANCELADO, cargo_borrado, cargo_cancelado, _ficha, _celda,
 )
+from src.clientes_fiado.oficina.cuenta.interes import (
+    MARCA_INTERES,
+    clave_ticket,
+)
+from src.logger import logger
 
 
 def _fila_cruda(fila) -> dict:
@@ -50,10 +55,25 @@ def armar_fila(fila) -> dict:
     venta_id = dato.get("venta_id")
     if venta_id is None:
         venta_id = _celda(fila, "venta_id", 6)
-    if tipo == "CARGO" and cancelado:
-        etiqueta = "CARGO · CANCELADO"
-    elif tipo == "CARGO" and borrado:
-        etiqueta = "CARGO · BORRADO"
+    es_venta = bool(venta_id and str(venta_id) not in ("0", "None", ""))
+    es_manual = (tipo == "CARGO" and not es_venta)
+
+    if tipo == "CARGO" and es_venta:
+        if cancelado:
+            etiqueta = "VENTA · CANCELADA"
+        elif borrado:
+            etiqueta = "VENTA · BORRADA"
+        else:
+            etiqueta = "VENTA"
+    elif tipo == "CARGO" and es_manual:
+        if cancelado:
+            etiqueta = "CARGO MANUAL · CANCELADO"
+        elif borrado:
+            etiqueta = "CARGO MANUAL · BORRADO"
+        else:
+            etiqueta = "CARGO MANUAL"
+    elif tipo == "ABONO":
+        etiqueta = "COBRO"
     elif tipo == "ANULACION" and "cancelado" in desc.lower():
         etiqueta = "TICKET CANCELADO"
     elif tipo == "ANULACION":
@@ -61,6 +81,7 @@ def armar_fila(fila) -> dict:
     else:
         etiqueta = tipo or "—"
     ref = _referencia(tipo, venta_id, mov_id)
+    ticket = clave_ticket(dato)
     return {
         "id": mov_id,
         "fecha": str(dato.get("fecha") or ""),
@@ -72,6 +93,11 @@ def armar_fila(fila) -> dict:
         "borrado": borrado,
         "cancelado": cancelado,
         "manual": tipo == "CARGO" and not venta_id,
+        "es_interes": tipo == "CARGO" and desc.startswith(MARCA_INTERES),
+        "ticket_key": ticket,
+        "interes_acumulado": 0.0,
+        "interes_en_saldo": 0.0,
+        "dias_interes": 0,
         "referencia": ref,
         "etiqueta": etiqueta,
         "linea": (
@@ -95,12 +121,59 @@ class MotorConsultaHistorial:
 
             crudas = MotorCuenta().movimientos(cliente_id) or []
         except Exception:
+            logger.exception(
+                "[Historial clientes] No se pudieron leer movimientos del cliente %s",
+                cliente_id,
+            )
             return []
+        try:
+            proyeccion = MotorCuenta().proyeccion_interes(crudas)
+            tickets = proyeccion["tickets"]
+            error_interes = ""
+        except Exception as error:
+            logger.exception(
+                "[Historial clientes] No se pudo calcular interés del cliente %s",
+                cliente_id,
+            )
+            tickets = {}
+            error_interes = str(error)
         salida = []
+        try:
+            from src.clientes_fiado.oficina.barrial.mantenimiento import _deuda_escribible
+            deuda_real = _deuda_escribible(cliente_id)
+            if deuda_real is None:
+                from src.clientes_fiado.cerebro.cerebro import cerebro
+                deuda_real = float((cerebro.obtener(cliente_id) or {}).get("deuda_actual") or 0)
+        except Exception:
+            deuda_real = 0.0
+
         for fila in crudas:
             try:
-                salida.append(armar_fila(fila))
+                dato = armar_fila(fila)
+                if "MANTENIMIENTO" in (dato.get("descripcion") or "").upper():
+                    continue
+                # Si el cliente ya pagó el total o tiene saldo a favor, no acumula interés
+                if dato["ticket_key"] in tickets and deuda_real > 0.009:
+                    interes = tickets[dato["ticket_key"]]
+                    dato["interes_acumulado"] = interes["interes_acumulado"]
+                    dato["interes_en_saldo"] = interes["interes_en_saldo"]
+                    dato["dias_interes"] = interes["dias"]
+                    if dato["tipo"] == "CARGO" and interes["interes_acumulado"] > 0:
+                        dato["linea"] += (
+                            f"  · interés nuevo ${interes['interes_acumulado']:,.2f}"
+                            f" · {interes['dias']} d"
+                        )
+                else:
+                    dato["interes_acumulado"] = 0.0
+                    dato["interes_en_saldo"] = 0.0
+                    dato["dias_interes"] = 0
+                dato["error_interes"] = error_interes
+                salida.append(dato)
             except Exception:
+                logger.exception(
+                    "[Historial clientes] No se pudo preparar un movimiento del cliente %s",
+                    cliente_id,
+                )
                 continue
         return salida
 

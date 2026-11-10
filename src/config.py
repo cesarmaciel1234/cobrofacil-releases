@@ -55,6 +55,7 @@ class Config:
         "auto_start_store_server": True,
         "fiado_mantenimiento_pct": 3.0,
         "fiado_apalancamiento_pct": 5.0,
+        "fiado_plazo_dias": 30,
     }
 
     _instance = None

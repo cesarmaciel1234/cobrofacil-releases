@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 import threading
 import time
@@ -57,6 +58,53 @@ def leer_eventos(path: str, solo_pc: str | None = None) -> list[dict]:
         return []
     finally:
         conn.close()
+
+
+def filtrar_cancelaciones_pendientes(eventos: list[dict], path: str) -> list[dict]:
+    if not eventos or not path or not os.path.isfile(path):
+        return eventos
+
+    def es_cancelacion_f3(evento):
+        if str(evento.get("accion") or "").upper() != "ANULACION":
+            return False
+        try:
+            detalle = json.loads(evento.get("detalle") or "{}")
+        except (TypeError, json.JSONDecodeError):
+            return False
+        return bool(detalle.get("cancelacion_f3"))
+
+    try:
+        with sqlite3.connect(Path(path).as_uri() + "?mode=ro", uri=True, timeout=5) as conn:
+            filas = conn.execute(
+                "SELECT local_venta_id, request_id FROM offline_cancelaciones"
+            ).fetchall()
+    except sqlite3.OperationalError as error:
+        if "no such table" in str(error).lower():
+            return eventos
+        _logger().warning("No se pudieron leer cancelaciones pendientes de huella: %s", error)
+        return [evento for evento in eventos if not es_cancelacion_f3(evento)]
+    except sqlite3.Error as error:
+        _logger().warning("No se pudieron leer cancelaciones pendientes de huella: %s", error)
+        return [evento for evento in eventos if not es_cancelacion_f3(evento)]
+    venta_ids = {str(fila[0]) for fila in filas}
+    request_ids = {str(fila[1]) for fila in filas if fila[1]}
+    salida = []
+    for evento in eventos:
+        if str(evento.get("accion") or "").upper() != "ANULACION":
+            salida.append(evento)
+            continue
+        try:
+            detalle = json.loads(evento.get("detalle") or "{}")
+        except (TypeError, json.JSONDecodeError):
+            detalle = {}
+        if not detalle.get("cancelacion_f3"):
+            salida.append(evento)
+            continue
+        venta_local = str(detalle.get("venta_id") or "")
+        request_id = str(detalle.get("venta_request_id") or "")
+        if venta_local not in venta_ids and request_id not in request_ids:
+            salida.append(evento)
+    return salida
 
 
 # ── Aplicar en la tienda ──────────────────────────────────────────────────────
@@ -129,20 +177,150 @@ def _firma(ev: dict) -> str:
     return f"cargado en {ev.get('pc')} por {ev.get('usuario')} el {ev.get('fecha')}"
 
 
+def _venta_remota(cur, venta_local, request_id=None) -> int:
+    if request_id:
+        fila = _uno(cur, "SELECT id FROM ventas WHERE request_id = ?", (request_id,))
+    else:
+        fila = _uno(cur, "SELECT id FROM ventas WHERE id = ?", (venta_local,))
+    venta = _dic(fila, ("id",)).get("id") if fila else None
+    if venta is None:
+        raise ValueError(f"No llegó a la tienda el ticket offline {venta_local}")
+    return int(venta)
+
+
+def _remapear_reverso(descripcion: str, referencias: dict[str, str]) -> str:
+    from src.clientes_fiado.oficina.cuenta.interes import MARCA_REVERSO
+
+    inicio = descripcion.find(MARCA_REVERSO)
+    if inicio < 0:
+        return descripcion
+    prefijo = descripcion[:inicio]
+    reverso = json.loads(descripcion[inicio + len(MARCA_REVERSO):])
+    ticket_local = str(reverso.get("ticket") or "")
+    ticket_remoto = referencias.get(ticket_local)
+    if not ticket_remoto:
+        raise ValueError("No se pudo asociar la reversión de interés con el ticket remoto")
+    numero_local = ticket_local[2:]
+    numero_remoto = ticket_remoto[2:]
+    prefijo = prefijo.replace(f"#{numero_local}", f"#{numero_remoto}")
+    prefijo = re.sub(
+        rf"(?i)(ticket\s+){re.escape(numero_local)}\b",
+        rf"\g<1>{numero_remoto}",
+        prefijo,
+    )
+    reverso["ticket"] = ticket_remoto
+    return prefijo + MARCA_REVERSO + json.dumps(
+        reverso, ensure_ascii=True, separators=(",", ":"), sort_keys=True
+    )
+
+
 def _movimiento(cur, ev: dict, cid: int, det: dict) -> None:
     monto = float(det.get("monto") or 0)
     if monto <= 0:
         return
     deuda = _deuda(cur, cid)
-    if ev["accion"] == "CARGO":
+    accion = str(ev.get("accion") or "").upper()
+    venta_id = None
+    descripcion = str(det.get("descripcion") or accion.title())
+    fecha = ev.get("fecha")
+    if not fecha:
+        raise ValueError(f"El evento offline {ev.get('evento')} no tiene fecha")
+    if accion == "CARGO":
         tipo, saldo = "CARGO", deuda + monto
+        interes_tickets = det.get("interes_tickets")
+        if isinstance(interes_tickets, dict) and interes_tickets:
+            from decimal import Decimal
+
+            from src.clientes_fiado.oficina.cuenta.interes import descripcion_interes
+
+            request_ids = det.get("interes_tickets_request_ids") or {}
+            remapeo = {}
+            detalle = {}
+            for ticket, interes in interes_tickets.items():
+                ticket = str(ticket)
+                if not ticket.startswith("V:"):
+                    raise ValueError("Clave de ticket inválida en evento offline")
+                venta_local = ticket[2:]
+                venta_id_remoto = _venta_remota(
+                    cur,
+                    venta_local,
+                    request_ids.get(ticket),
+                )
+                ticket_remoto = f"V:{venta_id_remoto}"
+                if ticket_remoto in detalle:
+                    raise ValueError("Tickets duplicados al sincronizar el interés offline")
+                remapeo[ticket] = ticket_remoto
+                detalle[ticket_remoto] = Decimal(str(interes))
+            descripcion = descripcion_interes(detalle)
+            det["interes_tickets"] = {
+                ticket: str(monto) for ticket, monto in detalle.items()
+            }
+            det["descripcion"] = descripcion
+            det["interes_tickets_request_ids"] = {
+                ticket: request_ids.get(ticket_local)
+                for ticket_local, ticket in remapeo.items()
+                if request_ids.get(ticket_local)
+            }
+    elif accion == "ANULACION":
+        tipo, saldo = "ANULACION", deuda - monto
+        venta_local = det.get("venta_id")
+        if venta_local not in (None, "", 0, "0"):
+            venta_id = _venta_remota(
+                cur,
+                str(venta_local),
+                det.get("venta_request_id"),
+            )
+            referencia = {f"V:{venta_local}": f"V:{venta_id}"}
+            descripcion = _remapear_reverso(descripcion, referencia)
+            det["venta_id"] = venta_id
+            det["descripcion"] = descripcion
+            if det.get("venta_request_id"):
+                det["venta_request_id"] = str(det["venta_request_id"])
+            cur.execute(
+                "SELECT estado FROM ventas WHERE id = ?",
+                (venta_id,),
+            )
+            estado_venta = str(_dic(cur.fetchone(), ("estado",)).get("estado") or "").upper()
+            if estado_venta in ("CANCELADA", "CANCELADO", "ANULADA", "ANULADO"):
+                cur.execute(
+                    "SELECT id FROM cuenta_corriente WHERE tipo = 'ANULACION' "
+                    "AND venta_id IN (?, ?) LIMIT 1",
+                    (venta_id, str(venta_id)),
+                )
+                if cur.fetchone():
+                    return
+            cur.execute(
+                "SELECT id, descripcion FROM cuenta_corriente "
+                "WHERE venta_id IN (?, ?) AND tipo = 'CARGO' ORDER BY id DESC LIMIT 1",
+                (venta_id, str(venta_id)),
+            )
+            cargo = cur.fetchone()
+            if cargo:
+                fila_cargo = _dic(cargo, ("id", "descripcion"))
+                actual = str(fila_cargo.get("descripcion") or "")
+                if not actual.startswith(("CANCELADO · ", "BORRADO · ")):
+                    cur.execute(
+                        "UPDATE cuenta_corriente SET descripcion = ? WHERE id = ?",
+                        (f"CANCELADO · {actual or f'Ticket #{venta_id}'}", fila_cargo.get("id")),
+                    )
     else:
         tipo, saldo = "ABONO", max(0.0, deuda - monto)
     cur.execute("UPDATE clientes SET deuda_actual = ? WHERE id = ?", (saldo, cid))
-    desc = limpio(f"{det.get('descripcion') or tipo.title()} · {_firma(ev)}", 250)
     cur.execute(
-        "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion) VALUES (?, ?, ?, ?, ?)",
-        (cid, tipo, monto, saldo, desc),
+        "INSERT INTO cuenta_corriente "
+        "(cliente_id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (
+            cid,
+            fecha,
+            tipo,
+            monto,
+            saldo,
+            descripcion if tipo in ("CARGO", "ANULACION") and (
+                descripcion.startswith("INTERÉS MENSUAL") or tipo == "ANULACION"
+            ) else limpio(f"{descripcion} · {_firma(ev)}", 250),
+            venta_id,
+        ),
     )
 
 
@@ -218,8 +396,13 @@ def aplicar_evento(ev: dict, via: str, db=None) -> str:
                     cambios["actualizado_en"] = ev.get("fecha")
                     sets = ", ".join(f"{k} = ?" for k in cambios)
                     cur.execute(f"UPDATE clientes SET {sets} WHERE id = ?", tuple(cambios.values()) + (cid,))
-        elif accion in ("CARGO", "ABONO"):
+        elif accion in ("CARGO", "ABONO", "ANULACION"):
             _movimiento(cur, ev, cid, det)
+            if accion in ("CARGO", "ANULACION"):
+                cur.execute(
+                    "UPDATE clientes_auditoria SET detalle = ? WHERE evento = ?",
+                    (json.dumps(det, ensure_ascii=True, separators=(",", ":"), default=str), ev["evento"]),
+                )
         cur.execute(
             "UPDATE clientes_auditoria SET cliente_id = ?, llego_via = ? WHERE evento = ?",
             (cid, f"{via}:{nota}" if nota else via, ev["evento"]),
@@ -323,7 +506,12 @@ def turno() -> dict:
             res["error"] = "sin columnas de huella en la tienda"
             return res
         tabla.completar_uids(db)
-        res["local"] = aplicar(leer_eventos(_punpro_local(), solo_pc=huella_pc.pc_id()), "LOCAL", db)
+        path_local = _punpro_local()
+        eventos_locales = filtrar_cancelaciones_pendientes(
+            leer_eventos(path_local, solo_pc=huella_pc.pc_id()),
+            path_local,
+        )
+        res["local"] = aplicar(eventos_locales, "LOCAL", db)
         nodo = _nodo_db()
         if nodo:
             res["nodo"] = aplicar(leer_eventos(nodo), "NODO", db)

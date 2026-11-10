@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QDialog,
     QFrame,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QPushButton,
     QTableWidget,
@@ -17,6 +18,19 @@ from PyQt6.QtWidgets import (
 
 from src.utils.medio_pago import etiqueta_pago
 from src.admin.clientes.consulta.hilo import iniciar_hilo_seguro
+from src.clientes_fiado.oficina.cuenta.interes import MARCA_INTERES
+
+
+def descripcion_cargo_visible(descripcion: str) -> str:
+    texto = str(descripcion or "").strip()
+    if texto.startswith(MARCA_INTERES):
+        return MARCA_INTERES
+    if not texto.upper().startswith("MANTENIMIENTO"):
+        return texto
+    indice_auditoria = texto.lower().find(" · cargado en ")
+    if indice_auditoria > 0:
+        return texto[:indice_auditoria]
+    return texto
 
 
 class _CargarTicket(QThread):
@@ -64,7 +78,10 @@ class PanelDetalleTicket(QFrame):
 
         self.tabla = QTableWidget(0, 4)
         self.tabla.setHorizontalHeaderLabels(["Cant.", "Descripción", "Precio", "Importe"])
-        self.tabla.horizontalHeader().setStretchLastSection(True)
+        self.tabla.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.tabla.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.tabla.setColumnWidth(0, 70)
         self.tabla.setColumnWidth(2, 110)
         self.tabla.setColumnWidth(3, 120)
@@ -134,19 +151,22 @@ class PanelDetalleTicket(QFrame):
         monto = self._monto((dato or {}).get("monto"))
         saldo = self._monto((dato or {}).get("saldo_resultante"))
         desc = str((dato or {}).get("descripcion") or "Cargo").strip()
+        desc_visible = descripcion_cargo_visible(desc)
         self.titulo.setText(etiqueta)
-        self.resumen.setText(f"{fecha}  ·  {desc}")
-        self.resumen.setToolTip("")
+        self.resumen.setText(f"{fecha}  ·  {desc_visible}")
+        self.resumen.setToolTip(desc if desc_visible != desc else "")
         self.origen.setText("Sin ticket de venta asociado")
         self.total.setText(f"Monto: ${monto:,.2f}")
         self.tabla.setRowCount(2)
         filas = (
-            ("1", desc[:80] or "Cargo", f"${monto:,.2f}", f"${monto:,.2f}"),
+            ("1", desc_visible[:80] or "Cargo", f"${monto:,.2f}", f"${monto:,.2f}"),
             ("—", "Saldo resultante", "", f"${saldo:,.2f}"),
         )
         for i, valores in enumerate(filas):
             for col, texto in enumerate(valores):
                 celda = QTableWidgetItem(texto)
+                if col == 1 and desc_visible != desc:
+                    celda.setToolTip(desc)
                 if col in (0, 2, 3):
                     celda.setTextAlignment(
                         Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
@@ -223,6 +243,7 @@ class PanelDetalleTicket(QFrame):
             )
             for columna, texto in enumerate(valores):
                 celda = QTableWidgetItem(texto)
+                celda.setToolTip(texto)
                 if columna in (0, 2, 3):
                     celda.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 self.tabla.setItem(fila, columna, celda)
@@ -232,26 +253,99 @@ class PanelDetalleTicket(QFrame):
 
 
 class DialogoDetalleTicket(QDialog):
-    """Resguardo: el historial ya no abre esta ventana."""
+    """Ventana emergente limpia para visualizar el desglose del ticket, cobro o cargo."""
 
-    def __init__(self, ticket: str, parent=None):
+    def __init__(self, dato_o_ticket, parent=None):
         super().__init__(parent)
-        self.ticket = ticket
-        self.setWindowTitle(f"Detalle del ticket #{ticket}")
-        self.setMinimumSize(650, 430)
-        self.resize(760, 520)
+        self.setModal(True)
+        self.setMinimumSize(720, 480)
+        self.resize(800, 520)
+        self.setStyleSheet("""
+            QDialog { background: #F8FAFC; }
+        """)
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
+
         self.panel = PanelDetalleTicket(self)
-        layout.addWidget(self.panel)
+        layout.addWidget(self.panel, stretch=1)
+
         botones = QHBoxLayout()
+        botones.setSpacing(8)
+
+        self.ticket_id = ""
+        self.btn_imprimir = QPushButton("🖨 IMPRIMIR COPIA TICKET")
+        self.btn_imprimir.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_imprimir.setStyleSheet(
+            "QPushButton { background: white; color: #0F172A; font-weight: 800; "
+            "padding: 10px 18px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 12px; }"
+            "QPushButton:hover { background: #F1F5F9; border-color: #94A3B8; }"
+        )
+        self.btn_imprimir.clicked.connect(self._imprimir_copia)
+        self.btn_imprimir.setVisible(False)
+        botones.addWidget(self.btn_imprimir)
+
         botones.addStretch()
+
         cerrar = QPushButton("CERRAR")
+        cerrar.setCursor(Qt.CursorShape.PointingHandCursor)
+        cerrar.setDefault(True)
+        cerrar.setStyleSheet(
+            "QPushButton { background: #2563EB; color: white; font-weight: 900; "
+            "padding: 10px 24px; border-radius: 8px; border: none; font-size: 13px; }"
+            "QPushButton:hover { background: #1D4ED8; }"
+        )
         cerrar.clicked.connect(self.accept)
         botones.addWidget(cerrar)
         layout.addLayout(botones)
-        self.panel.cargar(ticket)
+
+        self._cargar_contenido(dato_o_ticket)
+
+    def _cargar_contenido(self, dato_o_ticket):
+        if isinstance(dato_o_ticket, dict):
+            dato = dato_o_ticket
+            ticket = str(dato.get("venta_id") or "").strip()
+            tipo = str(dato.get("tipo") or "").upper()
+            if ticket and tipo in ("CARGO", "ANULACION"):
+                self.ticket_id = ticket
+                self.setWindowTitle(f"Detalle del ticket #{ticket}")
+                self.btn_imprimir.setVisible(True)
+                self.panel.cargar(ticket)
+            elif tipo == "ABONO":
+                cob = dato.get("referencia") or f"COB-{dato.get('id')}"
+                self.setWindowTitle(f"Detalle del cobro {cob}")
+                self.panel.mostrar_cobro(dato)
+            elif dato.get("manual") or not ticket:
+                self.setWindowTitle(f"Detalle del cargo #{dato.get('id') or ''}")
+                self.panel.mostrar_cargo(dato)
+            else:
+                self.panel.mensaje(str(dato.get("descripcion") or "Movimiento"))
+        else:
+            ticket = str(dato_o_ticket or "").strip()
+            if ticket:
+                self.ticket_id = ticket
+                self.setWindowTitle(f"Detalle del ticket #{ticket}")
+                self.btn_imprimir.setVisible(True)
+                self.panel.cargar(ticket)
+            else:
+                self.panel.mensaje("Sin datos para mostrar")
+
+    def _imprimir_copia(self):
+        if not self.ticket_id:
+            return
+        try:
+            from src.hardware.printer import printer_manager
+            from PyQt6.QtWidgets import QMessageBox
+            ok = printer_manager.imprimir_ticket_venta(int(self.ticket_id))
+            if ok:
+                QMessageBox.information(self, "Imprimir", f"Ticket #{self.ticket_id} enviado a la tiketera.")
+            else:
+                QMessageBox.warning(self, "Imprimir", "No se pudo enviar el ticket a la tiketera.")
+        except Exception as error:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Imprimir", f"No se pudo imprimir:\n{error}")
 
 
-def abrir_detalle_ticket(ticket: str, parent=None):
-    dialogo = DialogoDetalleTicket(ticket, parent)
+def abrir_detalle_ticket(dato_o_ticket, parent=None):
+    dialogo = DialogoDetalleTicket(dato_o_ticket, parent)
     qt_exec(dialogo)

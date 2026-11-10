@@ -1,9 +1,20 @@
+from src.logger import logger
 import unicodedata
 import math
 import sqlite3
+from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 
 from src.base_de_datos.database import db_manager
 from src.repositories.cliente_repository import ClienteRepository
+from src.clientes_fiado.oficina.cuenta.interes import (
+    INICIO_ACTIVACION,
+    MARCA_INTERES,
+    clave_ticket,
+    descripcion_interes,
+    descripcion_reverso,
+    proyectar_interes,
+)
 
 
 def _plegar(texto):
@@ -106,6 +117,86 @@ def _confirmar(trabajo, fallo, operacion="cuenta corriente"):
                     "[Cuenta corriente] Falló cierre de conexión: %s",
                     operacion,
                 )
+
+
+def movimientos_cursor(cursor, cliente_id):
+    cursor.execute(
+        "SELECT id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id "
+        "FROM cuenta_corriente WHERE cliente_id = ? "
+        "ORDER BY fecha ASC, id ASC",
+        (cliente_id,),
+    )
+    filas = [_ficha(fila) for fila in (cursor.fetchall() or [])]
+    return [
+        f for f in filas
+        if "MANTENIMIENTO" not in str(f.get("descripcion") or "").upper()
+    ]
+
+
+def fecha_activacion_cursor(cursor, ahora=None, crear=False):
+    cursor.execute(
+        "SELECT valor FROM configuracion WHERE clave = ?",
+        (INICIO_ACTIVACION,),
+    )
+    fila = cursor.fetchone()
+    valor = _celda(fila, "valor", 0) if fila else None
+    if valor:
+        return valor
+    if not crear:
+        raise RuntimeError("Falta la fecha de activación del interés por ticket")
+    valor = (ahora or datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
+    cursor.execute(
+        "INSERT INTO configuracion (clave, valor) VALUES (?, ?)",
+        (INICIO_ACTIVACION, valor),
+    )
+    return valor
+
+
+def fecha_db_cursor(cursor):
+    cursor.execute("SELECT CURRENT_TIMESTAMP")
+    fila = cursor.fetchone()
+    valor = _celda(fila, "CURRENT_TIMESTAMP", 0)
+    if not valor:
+        raise RuntimeError("No se pudo leer la hora de la base de datos")
+    return valor
+
+
+def fecha_activacion_db(db=None):
+    db = db or db_manager
+    try:
+        filas = db.execute_query(
+            "SELECT valor FROM configuracion WHERE clave = ?",
+            (INICIO_ACTIVACION,),
+        ) or []
+        if filas:
+            valor = _celda(filas[0], "valor", 0)
+            if valor:
+                return valor
+    except Exception:
+        pass
+
+    inicio_defecto = "2026-01-01 00:00:00"
+    try:
+        db.execute_query(
+            "INSERT INTO configuracion (clave, valor) VALUES (?, ?)",
+            (INICIO_ACTIVACION, inicio_defecto),
+        )
+        return inicio_defecto
+    except Exception:
+        return inicio_defecto
+
+
+def fecha_db(db=None):
+    db = db or db_manager
+    filas = db.execute_query("SELECT CURRENT_TIMESTAMP") or []
+    if not filas:
+        error = str(getattr(db, "last_error", "") or "")
+        detalle = f": {error}" if error else ""
+        raise RuntimeError("No se pudo leer la hora de la base de datos" + detalle)
+    valor = _celda(filas[0], "CURRENT_TIMESTAMP", 0)
+    if not valor:
+        raise RuntimeError("La hora de la base de datos está vacía")
+    return valor
 
 
 class _DbWrapper:
@@ -251,12 +342,13 @@ class MotorCuenta:
         return fechas
 
     def ultimo_cargo(self, cliente_id):
-        # Aging / días: no cuentan borrados, cancelados ni mantenimiento (recargo de sistema).
+        # Aging / días: no cuentan anulaciones ni cargos de interés del sistema.
         marca_mant = _marca_mantenimiento()
         return _get_read_db().execute_scalar(
             "SELECT fecha FROM cuenta_corriente WHERE cliente_id = ? AND tipo = 'CARGO' "
             "AND (descripcion IS NULL OR ("
-            "descripcion NOT LIKE ? AND descripcion NOT LIKE ? AND descripcion NOT LIKE ?"
+            "descripcion NOT LIKE ? AND descripcion NOT LIKE ? AND descripcion NOT LIKE ? "
+            "AND descripcion NOT LIKE ?"
             ")) "
             "ORDER BY fecha DESC LIMIT 1",
             (
@@ -264,11 +356,12 @@ class MotorCuenta:
                 f"{MARCA_BORRADO}%",
                 f"{MARCA_CANCELADO}%",
                 f"{marca_mant}%",
+                f"{MARCA_INTERES}%",
             ),
         )
 
     def ultimos_cargos(self, cliente_ids):
-        """Última fecha de cargo real (sin borrado/cancelado/mantenimiento) por ficha."""
+        """Última fecha de venta a crédito (sin anulaciones ni interés asentado) por ficha."""
         ids = list(dict.fromkeys(cliente_id for cliente_id in cliente_ids if cliente_id is not None))
         fechas = {}
         marca_mant = _marca_mantenimiento()
@@ -282,11 +375,17 @@ class MotorCuenta:
                 WHERE tipo = 'CARGO'
                   AND (descripcion IS NULL OR (
                     descripcion NOT LIKE ? AND descripcion NOT LIKE ? AND descripcion NOT LIKE ?
+                    AND descripcion NOT LIKE ?
                   ))
                   AND cliente_id IN ({placeholders})
                 GROUP BY cliente_id
                 """,
-                (f"{MARCA_BORRADO}%", f"{MARCA_CANCELADO}%", f"{marca_mant}%") + tuple(bloque),
+                (
+                    f"{MARCA_BORRADO}%",
+                    f"{MARCA_CANCELADO}%",
+                    f"{marca_mant}%",
+                    f"{MARCA_INTERES}%",
+                ) + tuple(bloque),
             ) or []
             for fila in filas:
                 if hasattr(fila, "get"):
@@ -323,11 +422,113 @@ class MotorCuenta:
         return fechas
 
     def movimientos(self, cliente_id):
-        return _get_read_db().execute_query(
+        filas = _get_read_db().execute_query(
             "SELECT id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id "
-            "FROM cuenta_corriente WHERE cliente_id = ? ORDER BY fecha DESC, id DESC",
+            "FROM cuenta_corriente WHERE cliente_id = ? "
+            "AND (descripcion IS NULL OR (descripcion NOT LIKE '%MANTENIMIENTO%' AND descripcion NOT LIKE '%mantenimiento%')) "
+            "ORDER BY fecha DESC, id DESC",
             (cliente_id,),
         ) or []
+
+        # En esclava offline, fusionar movimientos locales de la base escribible (punpro.db)
+        try:
+            from src.clientes_fiado.oficina.barrial.mantenimiento import _consulta_escribible
+            locales = _consulta_escribible(
+                "SELECT id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id "
+                "FROM cuenta_corriente WHERE cliente_id = ? "
+                "AND (descripcion IS NULL OR (descripcion NOT LIKE '%MANTENIMIENTO%' AND descripcion NOT LIKE '%mantenimiento%')) "
+                "ORDER BY fecha DESC, id DESC",
+                (cliente_id,),
+            ) or []
+            if locales:
+                vistos_id = {f.get("id") if isinstance(f, dict) else f[0] for f in filas}
+                resultado = list(filas)
+                for loc in locales:
+                    d = dict(loc) if hasattr(loc, "keys") else {
+                        "id": loc[0], "fecha": loc[1], "tipo": loc[2], "monto": loc[3],
+                        "saldo_resultante": loc[4], "descripcion": loc[5], "venta_id": loc[6]
+                    }
+                    if d["id"] not in vistos_id:
+                        vistos_id.add(d["id"])
+                        resultado.append(d)
+                filas = sorted(
+                    resultado,
+                    key=lambda x: (str(x.get("fecha") if isinstance(x, dict) else x[1]) or "", int(x.get("id") if isinstance(x, dict) else x[0]) or 0),
+                    reverse=True,
+                )
+        except Exception:
+            pass
+
+        return [
+            f for f in filas
+            if "MANTENIMIENTO" not in str(f.get("descripcion") if isinstance(f, dict) else (f[5] if len(f) > 5 else "") or "").upper()
+        ]
+
+    def proyeccion_interes(self, movimientos, ahora=None):
+        return proyectar_interes(
+            movimientos,
+            fecha_activacion_db(),
+            ahora=ahora or fecha_db(),
+        )
+
+    def intereses_acumulados(self, cliente_ids, ahora=None):
+        if not cliente_ids:
+            return {}
+        ids = [int(cid) for cid in cliente_ids if cid]
+        if not ids:
+            return {}
+
+        # Consultar deudas reales actualizadas desde la base escribible
+        from src.clientes_fiado.oficina.barrial.mantenimiento import deudas_escribibles, _consulta_escribible
+        deudas = deudas_escribibles(ids)
+
+        # Si el cliente ya pagó o tiene saldo a favor (deuda <= 0.009), su interés pendiente es estrictamente 0
+        ids_con_deuda = [cid for cid in ids if deudas.get(cid, 0.0) > 0.009]
+        salida = {cid: 0.0 for cid in ids}
+        if not ids_con_deuda:
+            return salida
+
+        activacion = fecha_activacion_db()
+        fecha_actual = ahora or fecha_db()
+        db = _get_read_db()
+        placeholders = ",".join(["?"] * len(ids_con_deuda))
+        filas = db.execute_query(
+            f"SELECT id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id, cliente_id "
+            f"FROM cuenta_corriente WHERE cliente_id IN ({placeholders}) ORDER BY fecha ASC, id ASC",
+            tuple(ids_con_deuda),
+        ) or []
+        movs_por_cliente = {}
+        for f in filas:
+            cid = f["cliente_id"]
+            movs_por_cliente.setdefault(cid, []).append(f)
+
+        # Incorporar movimientos locales escribibles para clientes con deuda
+        try:
+            locales = _consulta_escribible(
+                f"SELECT id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id, cliente_id "
+                f"FROM cuenta_corriente WHERE cliente_id IN ({placeholders}) ORDER BY fecha ASC, id ASC",
+                tuple(ids_con_deuda),
+            ) or []
+            for loc in locales:
+                d = dict(loc) if hasattr(loc, "keys") else {
+                    "id": loc[0], "fecha": loc[1], "tipo": loc[2], "monto": loc[3],
+                    "saldo_resultante": loc[4], "descripcion": loc[5], "venta_id": loc[6], "cliente_id": loc[7]
+                }
+                cid = d.get("cliente_id")
+                lista = movs_por_cliente.setdefault(cid, [])
+                if not any((x.get("id") if isinstance(x, dict) else x[0]) == d["id"] for x in lista):
+                    lista.append(d)
+        except Exception:
+            pass
+
+        for cid in ids_con_deuda:
+            movs = movs_por_cliente.get(cid, [])
+            try:
+                res = proyectar_interes(movs, activacion, ahora=fecha_actual)
+                salida[cid] = float(res.get("interes_acumulado") or 0)
+            except Exception:
+                salida[cid] = 0.0
+        return salida
 
     def alta_regular(self, nombre, telefono, limite, dni):
         from src.clientes_fiado.oficina.huella.eventos import alta
@@ -394,7 +595,60 @@ class MotorCuenta:
             except Exception:
                 nombre = ficha.get("nombre", "") if isinstance(ficha, dict) else ""
             nombre = nombre or ""
-            nuevo_saldo = deuda_actual - float(monto or 0)
+
+            interes_por_ticket = {}
+            try:
+                ahora = fecha_db_cursor(cursor)
+                movimientos = movimientos_cursor(cursor, cliente_id)
+                activacion = fecha_activacion_cursor(cursor, ahora=ahora, crear=True)
+                proyeccion = proyectar_interes(movimientos, activacion, ahora=ahora)
+                interes_por_ticket = {
+                    ticket: Decimal(str(dato["interes_acumulado"]))
+                    .quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                    for ticket, dato in proyeccion["tickets"].items()
+                    if Decimal(str(dato["interes_acumulado"])) >= Decimal("0.01")
+                }
+            except Exception:
+                logger.exception("[Abono] Falló el cálculo de interés proyectado; continuando abono sin recargo adicional.")
+                interes_por_ticket = {}
+            interes_total = sum(interes_por_ticket.values(), Decimal("0"))
+            saldo_antes_abono = deuda_actual
+            if interes_total > 0:
+                monto_interes = float(interes_total)
+                saldo_antes_abono += monto_interes
+                descripcion_interes_cargo = descripcion_interes(interes_por_ticket)
+                cursor.execute(
+                    "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
+                    (saldo_antes_abono, cliente_id),
+                )
+                cursor.execute(
+                    "INSERT INTO cuenta_corriente "
+                    "(cliente_id, tipo, monto, saldo_resultante, descripcion) "
+                    "VALUES (?, 'CARGO', ?, ?, ?)",
+                    (
+                        cliente_id,
+                        monto_interes,
+                        saldo_antes_abono,
+                        descripcion_interes_cargo,
+                    ),
+                )
+                interes_id = _id_insertado(cursor)
+                movimiento_en(
+                    cursor,
+                    "CARGO",
+                    cliente_id,
+                    monto_interes,
+                    descripcion_interes_cargo,
+                    extra={
+                        "cargo_id": interes_id,
+                        "interes_tickets": {
+                            ticket: float(monto)
+                            for ticket, monto in interes_por_ticket.items()
+                        },
+                    },
+                )
+
+            nuevo_saldo = saldo_antes_abono - float(monto or 0)
             cursor.execute(
                 "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
                 (nuevo_saldo, cliente_id),
@@ -478,9 +732,14 @@ class MotorCuenta:
             "SELECT cc.id, cc.fecha, cc.monto, cc.saldo_resultante, cc.descripcion, "
             "cc.venta_id, c.nombre, c.dni "
             "FROM cuenta_corriente cc LEFT JOIN clientes c ON c.id = cc.cliente_id "
-            "WHERE cc.tipo = 'CARGO' ORDER BY cc.fecha DESC, cc.id DESC"
+            "WHERE cc.tipo = 'CARGO' "
+            "AND (cc.descripcion IS NULL OR (cc.descripcion NOT LIKE '%MANTENIMIENTO%' AND cc.descripcion NOT LIKE '%mantenimiento%')) "
+            "ORDER BY cc.fecha DESC, cc.id DESC"
         ) or []
-        return [armar(fila) for fila in filas]
+        return [
+            armar(fila) for fila in filas
+            if "MANTENIMIENTO" not in str(fila.get("descripcion") if isinstance(fila, dict) else (fila[4] if len(fila) > 4 else "") or "").upper()
+        ]
 
     def pagos_del_dia(self):
         from datetime import datetime
@@ -554,7 +813,7 @@ class MotorCuenta:
 
         return _confirmar(trabajo, (False, 0.0, ""), "cargo manual")
 
-    def aplicar_mantenimiento_automatico(self, cliente_id, ahora=None):
+    def aplicar_mantenimiento_automatico(self, cliente_id, ahora=None, forzar=False):
         """Comprueba la ventana y carga el mantenimiento bajo el mismo bloqueo."""
         from datetime import datetime
 
@@ -574,6 +833,15 @@ class MotorCuenta:
         ahora = ahora or datetime.now()
 
         def trabajo(cursor):
+            # El recargo plano de mantenimiento fue retirado. En producción permanece desactivado.
+            cursor.execute(
+                "SELECT valor FROM configuracion WHERE clave = 'fiado_mantenimiento_plano_activo' LIMIT 1"
+            )
+            cfg_fila = cursor.fetchone()
+            val_cfg = _celda(cfg_fila, "valor", 0) if cfg_fila else None
+            if str(val_cfg or "").strip() not in ("1", "true", "True") and not forzar:
+                return True, "desactivado", 0.0, "", 0.0
+
             bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
             cursor.execute(
                 f"SELECT deuda_actual, nombre FROM clientes WHERE id = ?{bloqueo}",
@@ -714,14 +982,14 @@ class MotorCuenta:
             if tipo != "CARGO":
                 return False, 0.0, "Solo se marca un ticket o un cargo manual. El abono no se elimina acá."
             desc = str(_celda(fila, "descripcion", 4) or "")
+            if desc.startswith(MARCA_INTERES):
+                return False, 0.0, "El interés se revierte al cancelar el ticket asociado."
             if cargo_inactivo(desc):
                 return False, 0.0, "Ese cargo ya está cancelado o marcado como BORRADO."
             try:
                 monto = float(_celda(fila, "monto", 3) or 0)
             except (TypeError, ValueError):
                 monto = 0.0
-            if monto <= 0:
-                return False, 0.0, "El cargo no tiene un monto para restar."
             venta_id = _celda(fila, "venta_id", 5)
 
             ya_anulado = False
@@ -753,25 +1021,47 @@ class MotorCuenta:
             except (TypeError, ValueError):
                 deuda_actual = 0.0
             nombre = ficha.get("nombre") or _celda(cliente, "nombre", 1) or ""
+            monto_anulacion = monto
+            nota_reverso = ""
+            if venta_id and not ya_anulado:
+                ahora = fecha_db_cursor(cursor)
+                movimientos = movimientos_cursor(cursor, cliente_id)
+                activacion = fecha_activacion_cursor(cursor, ahora=ahora, crear=True)
+                proyeccion = proyectar_interes(movimientos, activacion, ahora=ahora)
+                ticket = clave_ticket(fila)
+                estado_ticket = proyeccion["tickets"].get(ticket)
+                if estado_ticket is None:
+                    return False, 0.0, "No se pudo verificar el saldo pendiente del ticket."
+                interes_generado = Decimal(str(estado_ticket["interes_generado"]))
+                monto_anulacion = float(
+                    (Decimal(str(monto)) + interes_generado).quantize(
+                        Decimal("0.01"), rounding=ROUND_HALF_UP
+                    )
+                )
+                if interes_generado > 0:
+                    nota_reverso = " · " + descripcion_reverso(ticket, interes_generado)
+
             nuevo_saldo = deuda_actual
             if not ya_anulado:
-                nuevo_saldo = deuda_actual - monto
+                nuevo_saldo = deuda_actual - monto_anulacion
                 cursor.execute(
                     "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
                     (nuevo_saldo, cliente_id),
                 )
                 if venta_id:
-                    nota = f"Borrado Ticket #{venta_id} (cargo #{movimiento_id})"
+                    nota = f"Borrado Ticket #{venta_id} (cargo #{movimiento_id}){nota_reverso}"
                 else:
+                    if monto <= 0:
+                        return False, 0.0, "El cargo no tiene un monto para restar."
                     nota = f"Borrado cargo #{movimiento_id}"
                 cursor.execute(
                     "INSERT INTO cuenta_corriente "
                     "(cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
                     "VALUES (?, 'ANULACION', ?, ?, ?, ?)",
-                    (cliente_id, monto, nuevo_saldo, nota, venta_id),
+                    (cliente_id, monto_anulacion, nuevo_saldo, nota, venta_id),
                 )
                 movimiento_en(
-                    cursor, "ANULACION", cliente_id, monto, nota,
+                    cursor, "ANULACION", cliente_id, monto_anulacion, nota,
                     extra={"cargo_id": movimiento_id, "venta_id": venta_id},
                 )
 

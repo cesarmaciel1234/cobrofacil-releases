@@ -7,13 +7,13 @@ Cobranza de barrio sobre la cuenta revolving. No hay cuotas ni mora diaria autom
 - **Aging** (`aging.py`): clasifica días sin movimiento en `ok` / `d30` / `d60` / `d90`. `cumple_filtro` arma los chips 30+ / 60+ / 90+.
 - **Estado** (`estado.py`): `activo` | `suspendido` en `clientes.estado_cuenta`. `suspender` / `reactivar` escriben con auditoría.
 - **Promesa** (`promesa.py`): una fecha `promesa_fecha` + nota. `vencida` compara con hoy.
-- **Mantenimiento** (`mantenimiento.py`): base **3%** + apalancamiento **5%** si >30 días (`tarifar`). `aplicar_automatico` corre al cargar la cartera; no vuelve a cobrar si ya hubo `MANTENIMIENTO` en 30 días. Config vía tuerca (políticas).
+- **Mantenimiento legado** (`mantenimiento.py`): el recargo plano de mantenimiento fue retirado. La regla activa vive en `oficina/cuenta/interes.py`: interés simple por ticket prorrateado por días, con escalado configurable de apalancamiento al superar los días de plazo.
 
-La lista de pantalla solo identifica las cuentas a revisar. Antes de cobrar, `MotorCuenta` vuelve a leer saldo, antigüedad y último mantenimiento bajo bloqueo y escribe deuda y movimiento en una transacción; si falla la lectura o la escritura, el mantenimiento no se aplica. Esto evita usar saldo desactualizado y duplicar el cargo cuando dos cajas cargan la cartera a la vez.
+La tasa activa se calcula sobre el capital pendiente, no sobre cargos de mantenimiento ni sobre intereses anteriores. Se asienta una sola línea al registrar un abono. La anulación de ticket revierte su interés asociado. Los motores están estrictamente aislados de ventas.
 
 ## Cómo entra
 
-Solo por `cerebro` (`aplicar_mantenimientos_auto`, `tarifar_mantenimiento`, `guardar_politicas_credito`, …). Admin no importa esta carpeta directo.
+Solo por `cerebro` (estado, promesa, aging y compatibilidad histórica de políticas). Admin no importa esta carpeta directo.
 
 ## Qué no cambiar
 

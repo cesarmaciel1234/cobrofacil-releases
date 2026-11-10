@@ -104,6 +104,9 @@ class CerebroClientesFiado:
     def ultimos_movimientos(self, cliente_ids):
         return self.cuenta.ultimos_movimientos(cliente_ids)
 
+    def intereses_acumulados(self, cliente_ids):
+        return self.cuenta.intereses_acumulados(cliente_ids)
+
     def aging_etiqueta(self, dias):
         from src.clientes_fiado.oficina.barrial.aging import etiqueta
 
@@ -213,10 +216,15 @@ class CerebroClientesFiado:
 
         return fichas_escribibles(cliente_ids)
 
-    def guardar_politicas_credito(self, base_pct, apal_pct):
+    def guardar_politicas_credito(self, base_pct, apal_pct, plazo_dias=None):
         from src.clientes_fiado.oficina.barrial.mantenimiento import guardar_politicas
 
-        return guardar_politicas(base_pct, apal_pct)
+        return guardar_politicas(base_pct, apal_pct, plazo_dias)
+
+    def plazo_dias_politica(self):
+        from src.clientes_fiado.oficina.barrial.mantenimiento import plazo_dias_defecto
+
+        return plazo_dias_defecto()
 
     def abonar(self, cliente_id, monto, descripcion, medio="", perfil="", quien=""):
         return self.cuenta.abonar(cliente_id, monto, descripcion, medio, perfil, quien)

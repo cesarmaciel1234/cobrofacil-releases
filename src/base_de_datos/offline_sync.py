@@ -237,14 +237,112 @@ class OfflineSync:
         """Devuelve desglose completo de tickets y cambios de negocio offline pendientes."""
         from src.base_de_datos.offline_nutricion import offline_nutricion_manager
         n_ventas = self.obtener_cantidad_pendientes()
+        n_cancelaciones = self.obtener_cancelaciones_pendientes()
         resumen_nutr = offline_nutricion_manager.obtener_resumen_pendientes()
         return {
             "ventas": n_ventas,
+            "cancelaciones": n_cancelaciones,
             "productos": resumen_nutr.get("productos", 0),
             "recepciones": resumen_nutr.get("recepciones", 0),
             "clientes": resumen_nutr.get("clientes", 0),
-            "total": n_ventas + resumen_nutr.get("total", 0)
+            "total": n_ventas + n_cancelaciones + resumen_nutr.get("total", 0)
         }
+
+    def _local_db_path(self) -> str:
+        db_name = "punpro.db"
+        config_path = os.path.join(self.base_path, "config.json")
+        try:
+            with open(config_path, "r", encoding="utf-8") as archivo:
+                db_name = json.load(archivo).get("db_name", db_name) or db_name
+        except FileNotFoundError:
+            pass
+        except (OSError, ValueError, TypeError, AttributeError) as error:
+            logger.warning("No se pudo leer db_name para la sincronización offline: %s", error)
+        return os.path.join(self.base_path, db_name)
+
+    def obtener_cancelaciones_pendientes(self) -> int:
+        import sqlite3
+
+        ruta = self._local_db_path()
+        if not os.path.isfile(ruta):
+            return 0
+        try:
+            with sqlite3.connect(ruta) as conn:
+                fila = conn.execute(
+                    "SELECT COUNT(*) FROM offline_cancelaciones"
+                ).fetchone()
+            return int((fila or (0,))[0] or 0)
+        except sqlite3.OperationalError as error:
+            if "no such table" in str(error).lower():
+                return 0
+            logger.warning("No se pudo contar cancelaciones offline: %s", error)
+            return 0
+        except sqlite3.Error as error:
+            logger.warning("No se pudo contar cancelaciones offline: %s", error)
+            return 0
+
+    def sincronizar_eventos_cuenta(self, db_manager) -> dict:
+        from src.clientes_fiado.oficina.huella import absorber
+
+        ruta = self._local_db_path()
+        eventos = absorber.filtrar_cancelaciones_pendientes(
+            absorber.leer_eventos(ruta),
+            ruta,
+        )
+        if not eventos:
+            return {"aplicado": 0, "repetido": 0, "pendiente": 0, "error": 0}
+        return absorber.aplicar(eventos, "OFFLINE", db_manager)
+
+    def sync_cancelaciones_pendientes(self, db_manager) -> int:
+        import sqlite3
+
+        ruta = self._local_db_path()
+        if not os.path.isfile(ruta):
+            return 0
+        sincronizadas = 0
+        try:
+            conn_local = sqlite3.connect(ruta, timeout=10)
+            conn_local.row_factory = sqlite3.Row
+            filas = conn_local.execute(
+                "SELECT local_venta_id, request_id, cancelado_por, fecha_cancel, "
+                "perfil_cancel, caja_cancel, cuenta_monto, cuenta_descripcion, "
+                "movimientos_caja_json "
+                "FROM offline_cancelaciones "
+                "ORDER BY fecha_cancel, local_venta_id"
+            ).fetchall()
+        except sqlite3.Error as error:
+            logger.warning("No se pudieron leer cancelaciones offline: %s", error)
+            return 0
+        try:
+            from src.clientes_fiado.oficina.cuenta.cancelacion import sincronizar_f3_offline
+
+            for fila in filas:
+                if not sincronizar_f3_offline(
+                    db_manager,
+                    fila["local_venta_id"],
+                    fila["request_id"],
+                    fila["cancelado_por"],
+                    fila["fecha_cancel"],
+                    fila["perfil_cancel"],
+                    fila["caja_cancel"],
+                    fila["cuenta_monto"],
+                    fila["cuenta_descripcion"],
+                    fila["movimientos_caja_json"],
+                ):
+                    logger.warning(
+                        "La cancelación offline del ticket %s sigue pendiente.",
+                        fila["request_id"] or fila["local_venta_id"],
+                    )
+                    break
+                conn_local.execute(
+                    "DELETE FROM offline_cancelaciones WHERE local_venta_id = ?",
+                    (fila["local_venta_id"],),
+                )
+                conn_local.commit()
+                sincronizadas += 1
+            return sincronizadas
+        finally:
+            conn_local.close()
 
     def obtener_cantidad_pendientes(self) -> int:
         """Devuelve el total de tickets offline en espera."""
@@ -286,6 +384,27 @@ class OfflineSync:
             ok, _msg, stats = offline_nutricion_manager.nutrir_maestra(db_manager)
             ventas = int(self.sync_pendientes() or 0)
             stats = stats or {}
+            eventos_cuenta = self.sincronizar_eventos_cuenta(db_manager)
+            if eventos_cuenta.get("error") or eventos_cuenta.get("pendiente"):
+                logger.warning(
+                    "No se aplicaron cancelaciones offline: eventos de cuenta pendientes (%s).",
+                    eventos_cuenta,
+                )
+                return {
+                    "ok": False,
+                    "ocupado": False,
+                    "ventas": ventas,
+                    "cancelaciones": 0,
+                    "stats": stats,
+                    "eventos_cuenta": eventos_cuenta,
+                }
+            cancelaciones = self.sync_cancelaciones_pendientes(db_manager)
+            cancelaciones_pendientes = self.obtener_cancelaciones_pendientes()
+            if cancelaciones_pendientes:
+                logger.warning(
+                    "Quedan %s cancelaciones offline sin confirmar.",
+                    cancelaciones_pendientes,
+                )
             cambios = (
                 int(stats.get("productos", 0) or 0)
                 + int(stats.get("recepciones", 0) or 0)
@@ -293,15 +412,27 @@ class OfflineSync:
                 + int(stats.get("proveedores", 0) or 0)
                 + int(stats.get("vinculos", 0) or 0)
             )
-            if ventas or cambios:
-                logger.info("tickets  subidos a la maestra: %s  cambios %s", ventas, cambios)
+            if ventas or cambios or cancelaciones:
+                logger.info(
+                    "tickets subidos: %s; cancelaciones replicadas: %s; cambios: %s",
+                    ventas,
+                    cancelaciones,
+                    cambios,
+                )
                 try:
                     from src.central_red_global.sync_tienda.aviso_tv import avisar_datos_nuevos
 
                     avisar_datos_nuevos()
                 except Exception:
                     pass
-            return {"ok": bool(ok), "ocupado": False, "ventas": ventas, "stats": stats}
+            return {
+                "ok": bool(ok) and cancelaciones_pendientes == 0,
+                "ocupado": False,
+                "ventas": ventas,
+                "cancelaciones": cancelaciones,
+                "stats": stats,
+                "eventos_cuenta": eventos_cuenta,
+            }
         except Exception as e:
             logger.warning("cola  no se pudo subir: %s", e)
             return {"ok": False, "ocupado": False, "ventas": 0, "stats": {}}

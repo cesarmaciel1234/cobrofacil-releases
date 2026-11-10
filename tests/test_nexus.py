@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QTimer, Qt
-from src.admin.admin7_nexus import NexusExtremeControl
+from src.admin.nexus_admin.nexus_admin_main import NexusExtremeControl
 from src.base_de_datos.database import db_manager
 
 def simulate_activity():
@@ -62,7 +62,7 @@ def main():
     timer_sim.timeout.connect(simulate_activity)
     timer_sim.start(50) # Un ciclo de 3 eventos cada 50 ms (60 eventos por segundo!)
     
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))
 
 if __name__ == '__main__':
     main()

@@ -24,7 +24,7 @@ El insert nuevo incluye `request_id`. Si la columna no existe, el except cae al 
 
 ### Cancelar un ticket
 
-Regla de la tienda: al cancelar, al cliente se le devuelve el total **en efectivo** y se descuenta del cierre del turno. Fiado y Clientes no devuelven efectivo: `_anular_cargo` baja la deuda, marca el cargo `CANCELADO ·` y deja una fila `Ticket cancelado #N (F3)` en cuenta corriente. El ticket sigue en F3 y en el historial del cliente.
+Regla de la tienda: al cancelar, al cliente se le devuelve el total **en efectivo** y se descuenta del cierre del turno. Fiado y Clientes no devuelven efectivo. La cartera (`clientes_fiado/oficina/cuenta/cancelacion.py`) baja la deuda, revierte el interés, marca el cargo `CANCELADO ·` y deja una fila `Ticket cancelado #N (F3)`; ventas no implementa reglas de saldo.
 
 `calcular_devolucion(venta, caja_accion)` (función suelta, sin base) decide cuánto sale del cajón:
 
@@ -32,7 +32,9 @@ Regla de la tienda: al cancelar, al cliente se le devuelve el total **en efectiv
 - `retiro`: lo que no sale solo del esperado. La parte en efectivo (`pago_efectivo − cambio`) de una venta `COMPLETADA` de la misma caja ya baja el esperado porque la venta cancelada deja de sumar. El resto es retiro: la parte digital (transferencia, QR, tarjeta, lo digital del mixto) o cualquier venta de un turno ya cerrado (`CERRADA`).
 - `ingreso_origen`: si otra caja cancela una venta `COMPLETADA` con efectivo, ese efectivo sigue en la caja de origen y se le reingresa, para que su esperado no baje.
 
-`cancelar_venta_transaccional(id_venta, username)` devuelve stock, anula el fiado, marca `CANCELADA`, graba la auditoría y, en la misma transacción, inserta el `RETIRO` «Devolución ticket #N (cancelación, método)» en la caja que cancela (y el `INGRESO` de la caja de origen si hace falta). Si el ticket ya estaba cancelado, no duplica stock ni retiro; sí intenta anular un cargo de fiado que hubiera quedado vivo. `_anular_cargo` busca el CARGO por `venta_id` o por `Ticket #N` en la descripción.
+`cancelar_venta_transaccional(id_venta, username)` coordina la transacción, pero ventas solo ejecuta su parte física: devuelve stock, marca `CANCELADA`, graba la auditoría e inserta el `RETIRO` «Devolución ticket #N (cancelación, método)» en la caja que cancela (y el `INGRESO` de la caja de origen si hace falta). La lógica contable se delega a cartera.
+
+Si la caja está en SQLite offline, cartera conserva el reverso en `offline_cancelaciones`, mientras ventas guarda los movimientos exactos de caja. El sincronizador de cartera remapea el ticket por `request_id` y coordina la transacción maestra; ventas reproduce el estado, stock y movimientos de caja sin recalcular importes con datos remotos. La cola solo se elimina después de confirmar ambas partes.
 
 `plan_devolucion(id_venta)` corre la misma cuenta sin escribir, para el aviso previo del historial.
 

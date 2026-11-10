@@ -77,15 +77,22 @@ class MotorCobranzaMedios(QObject):
         res.nombre = hecho.get('nombre', 'Cliente')
             
         if hecho.get('entra_caja'):
-            from src.cajero.paso5_terminal.logica.movimientos_caja_service import MovimientosCajaService
-            MovimientosCajaService().registrar_ingreso_efectivo(
-                hecho['monto_caja'],
-                CajeroActivo.nombre,
-                hecho['motivo'],
-                config.get('caja_id', 1),
-                abrir_cajon=True,
-                imprimir=False,
-            )
+            try:
+                from src.cajero.paso5_terminal.logica.movimientos_caja_service import MovimientosCajaService
+                MovimientosCajaService().registrar_ingreso_efectivo(
+                    hecho['monto_caja'],
+                    quien or CajeroActivo.nombre or "Cajero",
+                    hecho['motivo'],
+                    config.get('caja_id', 1),
+                    abrir_cajon=True,
+                    imprimir=False,
+                )
+            except Exception as e:
+                try:
+                    from src.logger import logger
+                    logger.warning(f"[Cobranza] No se pudo asentar ingreso de efectivo en caja: {e}")
+                except Exception:
+                    pass
 
         try:
             from src.motor_cobros_digitales.veredicto.medios import clase

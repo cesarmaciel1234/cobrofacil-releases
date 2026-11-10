@@ -1,6 +1,6 @@
 import pytest
 
-from src.cerebro_global.proveedor.motor_proveedor import MotorProveedor
+from src.proveedor_global.backend.motor_proveedor import MotorProveedor
 
 
 class DbTiendaFalsa:

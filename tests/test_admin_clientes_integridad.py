@@ -15,6 +15,10 @@ def cuenta_db(tmp_path, monkeypatch):
     conn = sqlite3.connect(ruta)
     conn.executescript(
         """
+        CREATE TABLE configuracion (
+            clave TEXT PRIMARY KEY,
+            valor TEXT
+        );
         CREATE TABLE clientes (
             id INTEGER PRIMARY KEY,
             nombre TEXT NOT NULL,
@@ -48,6 +52,14 @@ def cuenta_db(tmp_path, monkeypatch):
         INSERT INTO ventas (id, fecha, total, metodo_pago, cliente_nombre, estado)
         VALUES (7, CURRENT_TIMESTAMP, 25, 'Fiado', 'Ana', 'COMPLETADA');
         """
+    )
+    conn.execute(
+        "INSERT INTO configuracion (clave, valor) VALUES (?, ?)",
+        ("interes_ticket_activado_en", datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+    )
+    conn.execute(
+        "INSERT INTO configuracion (clave, valor) VALUES (?, ?)",
+        ("fiado_mantenimiento_plano_activo", "1"),
     )
     conn.commit()
     conn.close()
@@ -98,6 +110,119 @@ def test_fallo_al_guardar_abono_revierte_el_saldo(cuenta_db):
     assert MotorCuenta().abonar(1, 25, "prueba")[0] is False
     assert _leer(cuenta_db, "SELECT deuda_actual FROM clientes WHERE id = 1") == [(100.0,)]
     assert _leer(cuenta_db, "SELECT COUNT(*) FROM cuenta_corriente") == [(0,)]
+
+
+def test_abono_asienta_interes_por_ticket_en_la_misma_transaccion(cuenta_db):
+    from src.clientes_fiado.oficina.cuenta.motor import MotorCuenta
+
+    ahora = datetime.now().replace(microsecond=0)
+    activacion = ahora - timedelta(days=30)
+    with sqlite3.connect(cuenta_db) as conn:
+        conn.execute(
+            "UPDATE configuracion SET valor = ? WHERE clave = ?",
+            (activacion.strftime("%Y-%m-%d %H:%M:%S"), "interes_ticket_activado_en"),
+        )
+        conn.execute(
+            "INSERT INTO cuenta_corriente "
+            "(cliente_id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id) "
+            "VALUES (1, ?, 'CARGO', 100, 100, 'Ticket de prueba', 7)",
+            (activacion.strftime("%Y-%m-%d %H:%M:%S"),),
+        )
+
+    resultado = MotorCuenta().abonar(1, 10, "prueba")
+
+    assert resultado == (True, 93.0, "Ana")
+    filas = _leer(
+        cuenta_db,
+        "SELECT tipo, monto, descripcion FROM cuenta_corriente ORDER BY id",
+    )
+    assert filas[1][0] == "CARGO"
+    assert filas[1][1] == 3
+    assert filas[1][2].startswith("INTERÉS MENSUAL · 3%")
+    assert filas[2][0] == "ABONO"
+    assert filas[2][1] == 10
+
+
+def test_borrar_ticket_reversa_interes_y_devuelve_abonos_previos(cuenta_db, monkeypatch):
+    from src.base_de_datos.repos import ventas
+    from src.clientes_fiado.oficina.cuenta.motor import MotorCuenta
+
+    ahora = datetime.now().replace(microsecond=0)
+    activacion = ahora - timedelta(days=30)
+    with sqlite3.connect(cuenta_db) as conn:
+        conn.execute(
+            "UPDATE configuracion SET valor = ? WHERE clave = ?",
+            (activacion.strftime("%Y-%m-%d %H:%M:%S"), "interes_ticket_activado_en"),
+        )
+        conn.execute(
+            "INSERT INTO cuenta_corriente "
+            "(cliente_id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id) "
+            "VALUES (1, ?, 'CARGO', 100, 100, 'Ticket de prueba', 7)",
+            (activacion.strftime("%Y-%m-%d %H:%M:%S"),),
+        )
+    monkeypatch.setattr(ventas, "marcar_ticket_cancelado", lambda *_a, **_kw: True)
+
+    assert MotorCuenta().abonar(1, 5, "prueba")[0] is True
+    resultado = MotorCuenta().borrar_cargo(1, 1)
+
+    assert resultado == (True, -5.0, "Ana")
+    assert _leer(cuenta_db, "SELECT deuda_actual FROM clientes WHERE id = 1") == [(-5.0,)]
+    anulacion = _leer(
+        cuenta_db,
+        "SELECT monto, descripcion FROM cuenta_corriente WHERE tipo = 'ANULACION'",
+    )[0]
+    assert anulacion[0] == 103
+    assert "TPV_INTERES_REVERSO_V1" in anulacion[1]
+
+
+def test_cancelar_ticket_f3_revierte_el_interes_asentado(cuenta_db):
+    from src.clientes_fiado.oficina.cuenta.cancelacion import anular_cargo_f3
+    from src.clientes_fiado.oficina.cuenta.motor import MotorCuenta
+
+    ahora = datetime.now().replace(microsecond=0)
+    activacion = ahora - timedelta(days=30)
+    with sqlite3.connect(cuenta_db) as conn:
+        conn.execute(
+            "UPDATE configuracion SET valor = ? WHERE clave = ?",
+            (activacion.strftime("%Y-%m-%d %H:%M:%S"), "interes_ticket_activado_en"),
+        )
+        conn.execute(
+            "INSERT INTO cuenta_corriente "
+            "(cliente_id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id) "
+            "VALUES (1, ?, 'CARGO', 100, 100, 'Ticket de prueba', 7)",
+            (activacion.strftime("%Y-%m-%d %H:%M:%S"),),
+        )
+
+    assert MotorCuenta().abonar(1, 5, "prueba")[0] is True
+    with sqlite3.connect(cuenta_db) as conn:
+        conn.row_factory = sqlite3.Row
+        anular_cargo_f3(conn.cursor(), 7)
+        conn.commit()
+
+    assert _leer(cuenta_db, "SELECT deuda_actual FROM clientes WHERE id = 1") == [(-5.0,)]
+    anulacion = _leer(
+        cuenta_db,
+        "SELECT monto, descripcion FROM cuenta_corriente WHERE tipo = 'ANULACION'",
+    )[0]
+    assert anulacion[0] == 103
+    assert "TPV_INTERES_REVERSO_V1" in anulacion[1]
+
+
+def test_interes_consolidado_no_se_puede_borrar_como_cargo_manual(cuenta_db):
+    from src.clientes_fiado.oficina.cuenta.motor import MotorCuenta
+
+    with sqlite3.connect(cuenta_db) as conn:
+        conn.execute(
+            "INSERT INTO cuenta_corriente "
+            "(cliente_id, tipo, monto, saldo_resultante, descripcion) "
+            "VALUES (1, 'CARGO', 3, 103, ?)",
+            ("INTERÉS MENSUAL · 3%\n[TPV_INTERES_TICKET_V1]{\"V:7\":\"3.00\"}",),
+        )
+
+    resultado = MotorCuenta().borrar_cargo(1, 1)
+
+    assert resultado[0] is False
+    assert _leer(cuenta_db, "SELECT deuda_actual FROM clientes WHERE id = 1") == [(100.0,)]
 
 
 def test_mantenimiento_automatico_es_atomico_idempotente_y_usa_saldo_actual(

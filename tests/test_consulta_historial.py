@@ -18,7 +18,7 @@ def test_cargo_borrado_sigue_en_el_historial():
         "venta_id": 1090093,
     })
     assert fila["borrado"] is True
-    assert fila["etiqueta"] == "CARGO · BORRADO"
+    assert fila["etiqueta"] == "VENTA · BORRADA"
     assert fila["referencia"] == "#1090093"
     assert "historial" in fila["linea"]
 
@@ -34,7 +34,7 @@ def test_ticket_cancelado_en_f3_queda_en_la_cuenta():
         "venta_id": 1090093,
     })
     assert fila["cancelado"] is True
-    assert fila["etiqueta"] == "CARGO · CANCELADO"
+    assert fila["etiqueta"] == "VENTA · CANCELADA"
     assert fila["referencia"] == "#1090093"
     anul = armar_fila({
         "id": 5,

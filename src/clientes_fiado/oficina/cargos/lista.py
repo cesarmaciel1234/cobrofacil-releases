@@ -5,6 +5,7 @@ from src.clientes_fiado.oficina.cuenta.motor import (
     cargo_borrado,
     cargo_cancelado,
 )
+from src.clientes_fiado.oficina.cuenta.interes import MARCA_INTERES
 
 
 def _ficha(fila):
@@ -30,6 +31,7 @@ def armar(fila):
         saldo = 0.0
 
     desc = str(ficha.get("descripcion") or "").strip()
+    es_interes = desc.startswith(MARCA_INTERES)
     venta_id = ficha.get("venta_id")
     venta_txt = str(venta_id).strip() if venta_id not in (None, "") else ""
     borrado = cargo_borrado(desc)
@@ -44,7 +46,10 @@ def armar(fila):
         estado = "Vivo"
         estado_clave = "vivo"
 
-    if venta_txt:
+    if es_interes:
+        ticket = "INTERÉS"
+        origen = "Interés por ticket"
+    elif venta_txt:
         ticket = f"#{venta_txt}"
         origen = "Venta"
     else:
@@ -62,6 +67,7 @@ def armar(fila):
         "dni": str(ficha.get("dni") or "").strip(),
         "monto": monto,
         "origen": origen,
+        "es_interes": es_interes,
         "estado": estado,
         "estado_clave": estado_clave,
         "descripcion": desc or "—",

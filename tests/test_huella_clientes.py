@@ -2,11 +2,13 @@
 
 import json
 import sqlite3
+from decimal import Decimal
 
 import pytest
 
 from src.clientes_fiado.oficina.huella import absorber, consulta, eventos, tabla
 from src.clientes_fiado.oficina.huella import pc as huella_pc
+from src.clientes_fiado.oficina.cuenta.interes import descripcion_reverso
 
 ESQUEMA = """
 CREATE TABLE clientes (
@@ -16,6 +18,10 @@ CREATE TABLE clientes (
 CREATE TABLE cuenta_corriente (
     id INTEGER PRIMARY KEY AUTOINCREMENT, cliente_id INTEGER, fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
     tipo TEXT, monto REAL, saldo_resultante REAL, descripcion TEXT, venta_id INTEGER
+);
+CREATE TABLE ventas (
+    id INTEGER PRIMARY KEY, request_id TEXT UNIQUE, estado TEXT, total REAL,
+    caja_id INTEGER, usuario TEXT, metodo_pago TEXT, pago_efectivo REAL, cambio REAL
 );
 """
 
@@ -150,6 +156,148 @@ def test_cliente_de_casa_llega_con_saldo_y_no_se_duplica(bases):
     assert r2["aplicado"] == 0 and r2["repetido"] == 2
     assert _uno(tienda, "SELECT deuda_actual FROM clientes WHERE uid = ?", (c["uid"],))["deuda_actual"] == 5000
     assert len(tienda.execute_query("SELECT * FROM clientes")) == 1
+
+
+def test_interes_offline_remapea_ticket_por_request_id_y_es_idempotente(bases):
+    tienda, casa, actual = bases
+    cliente = _alta_casa(actual, casa, nombre="Cliente interés", dni="30111223")
+
+    actual["db"] = tienda
+    absorber.aplicar(absorber.leer_eventos(casa.path), "NODO", tienda)
+    cliente_tienda = _uno(tienda, "SELECT * FROM clientes WHERE uid = ?", (cliente["uid"],))
+    tienda.execute_non_query(
+        "INSERT INTO ventas (id, request_id, estado, total, caja_id, usuario, metodo_pago, "
+        "pago_efectivo, cambio) VALUES (99, 'ticket-compartido', 'COMPLETADA', 100, 1, "
+        "'cesar', 'Fiado', 0, 0)"
+    )
+    tienda.execute_non_query(
+        "UPDATE clientes SET deuda_actual = 100 WHERE id = ?",
+        (cliente_tienda["id"],),
+    )
+    tienda.execute_non_query(
+        "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
+        "VALUES (?, 'CARGO', 100, 100, 'Ticket fiado', 99)",
+        (cliente_tienda["id"],),
+    )
+    actual["db"] = casa
+    casa.execute_non_query(
+        "INSERT INTO ventas (id, request_id, estado, total, caja_id, usuario, metodo_pago, "
+        "pago_efectivo, cambio) VALUES (17, 'ticket-compartido', 'COMPLETADA', 100, 1, "
+        "'cesar', 'Fiado', 0, 0)"
+    )
+    con = casa.get_connection()
+    cur = con.cursor()
+    cur.execute("UPDATE clientes SET deuda_actual = 2 WHERE id = ?", (cliente["id"],))
+    assert eventos.movimiento_en(
+        cur,
+        "CARGO",
+        cliente["id"],
+        2,
+        "INTERÉS MENSUAL · 3%",
+        extra={"interes_tickets": {"V:17": 2}},
+    )
+    con.commit()
+    con.close()
+
+    local_evento = _uno(
+        casa,
+        "SELECT detalle FROM clientes_auditoria WHERE accion = 'CARGO' ORDER BY fecha DESC",
+    )
+    assert json.loads(local_evento["detalle"])["interes_tickets_request_ids"] == {
+        "V:17": "ticket-compartido"
+    }
+
+    actual["db"] = tienda
+    resultado = absorber.aplicar(absorber.leer_eventos(casa.path), "NODO", tienda)
+    interes = _uno(
+        tienda,
+        "SELECT * FROM cuenta_corriente WHERE cliente_id = ? AND descripcion LIKE 'INTERÉS MENSUAL%'",
+        (cliente_tienda["id"],),
+    )
+    assert resultado["aplicado"] == 1
+    assert interes["monto"] == 2
+    assert interes["venta_id"] is None
+    assert "V:99" in interes["descripcion"]
+    assert "V:17" not in interes["descripcion"]
+    assert _uno(
+        tienda,
+        "SELECT deuda_actual FROM clientes WHERE id = ?",
+        (cliente_tienda["id"],),
+    )["deuda_actual"] == 102
+
+    repetido = absorber.aplicar(absorber.leer_eventos(casa.path), "NODO", tienda)
+    assert repetido["aplicado"] == 0
+    assert repetido["repetido"] == 2
+    assert _uno(
+        tienda,
+        "SELECT deuda_actual FROM clientes WHERE id = ?",
+        (cliente_tienda["id"],),
+    )["deuda_actual"] == 102
+
+
+def test_anulacion_offline_remapea_ticket_y_reversa_la_deuda_una_vez(bases):
+    tienda, casa, actual = bases
+    cliente = _alta_casa(actual, casa, nombre="Cliente anulado", dni="30111224")
+    actual["db"] = tienda
+    absorber.aplicar(absorber.leer_eventos(casa.path), "NODO", tienda)
+    cliente_tienda = _uno(tienda, "SELECT * FROM clientes WHERE uid = ?", (cliente["uid"],))
+    for db, venta_id in ((casa, 17), (tienda, 99)):
+        db.execute_non_query(
+            "INSERT INTO ventas (id, request_id, estado, total, caja_id, usuario, metodo_pago, "
+            "pago_efectivo, cambio) VALUES (?, 'ticket-anulado', 'COMPLETADA', 100, 1, "
+            "'cesar', 'Fiado', 0, 0)",
+            (venta_id,),
+        )
+    tienda.execute_non_query(
+        "UPDATE clientes SET deuda_actual = 100 WHERE id = ?",
+        (cliente_tienda["id"],),
+    )
+    tienda.execute_non_query(
+        "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
+        "VALUES (?, 'CARGO', 100, 100, 'Ticket fiado', 99)",
+        (cliente_tienda["id"],),
+    )
+    actual["db"] = casa
+    con = casa.get_connection()
+    cur = con.cursor()
+    cur.execute("UPDATE clientes SET deuda_actual = -10 WHERE id = ?", (cliente["id"],))
+    descripcion = "Ticket cancelado #17 (F3) · " + descripcion_reverso("V:17", Decimal("10"))
+    assert eventos.movimiento_en(
+        cur,
+        "ANULACION",
+        cliente["id"],
+        110,
+        descripcion,
+        extra={"venta_id": 17, "cancelacion_f3": True},
+    )
+    con.commit()
+    con.close()
+
+    actual["db"] = tienda
+    resultado = absorber.aplicar(absorber.leer_eventos(casa.path), "NODO", tienda)
+    anulacion = _uno(
+        tienda,
+        "SELECT * FROM cuenta_corriente WHERE tipo = 'ANULACION' AND venta_id = 99",
+    )
+    cargo = _uno(tienda, "SELECT descripcion FROM cuenta_corriente WHERE venta_id = 99 AND tipo = 'CARGO'")
+    assert resultado["aplicado"] == 1
+    assert anulacion["monto"] == 110
+    assert "V:99" in anulacion["descripcion"]
+    assert "V:17" not in anulacion["descripcion"]
+    assert cargo["descripcion"].startswith("CANCELADO · ")
+    assert _uno(
+        tienda,
+        "SELECT deuda_actual FROM clientes WHERE id = ?",
+        (cliente_tienda["id"],),
+    )["deuda_actual"] == -10
+
+    repetido = absorber.aplicar(absorber.leer_eventos(casa.path), "NODO", tienda)
+    assert repetido["aplicado"] == 0
+    assert _uno(
+        tienda,
+        "SELECT deuda_actual FROM clientes WHERE id = ?",
+        (cliente_tienda["id"],),
+    )["deuda_actual"] == -10
 
 
 def test_mismo_dni_se_une_y_suma_el_cargo(bases):

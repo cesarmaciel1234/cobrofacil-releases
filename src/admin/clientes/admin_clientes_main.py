@@ -20,10 +20,10 @@ from src.admin.clientes.componentes.dialogo_historial_cliente import DialogoHist
 from src.admin.clientes.componentes.dialogo_cobros import DialogoCobros
 from src.admin.clientes.componentes.dialogo_cuadre import DialogoCuadre
 
-# Columnas: ID Nombre DNI Tipo Estado Límite Deuda Disponible Días Tarifa Acciones
-_SORT_COLS = {0: "id", 1: "nombre", 6: "deuda", 7: "disponible", 8: "dias"}
+# Columnas: ID DNI Nombre Tipo Estado Deuda Mantenimiento Días Tarifa Acciones
+_SORT_COLS = {0: "id", 1: "dni", 2: "nombre", 5: "deuda", 6: "mantenimiento", 7: "dias"}
 _CRITICOS_DIAS = 30
-_COL_ACCIONES = 10
+_COL_ACCIONES = 9
 
 
 class AdminClientes(QWidget):
@@ -37,6 +37,7 @@ class AdminClientes(QWidget):
         self._cache_fechas = {}
         self._cache_pagos = {}
         self._cache_movs = {}
+        self._cache_intereses = {}
         self._mayor_id = None
         self._sort_key = "deuda"
         self._sort_asc = False
@@ -74,7 +75,7 @@ class AdminClientes(QWidget):
         lbl_titulo.setStyleSheet(
             f"{QSS_TITULO} color: {_CLI['text']}; border: none;"
         )
-        self.lbl_subtitulo = QLabel("Crédito barrial · políticas activas")
+        self.lbl_subtitulo = QLabel("Crédito barrial · interés simple por ticket")
         self.lbl_subtitulo.setStyleSheet(
             f"color: {_CLI['text_sec']}; font-size: 12px; font-weight: 700; border: none;"
         )
@@ -158,7 +159,7 @@ class AdminClientes(QWidget):
         self.btn_tuerca = QPushButton("⚙")
         self.btn_tuerca.setCursor(Qt.PointingHandCursor)
         self.btn_tuerca.setFixedSize(46, 46)
-        self.btn_tuerca.setToolTip("Políticas de crédito (mantenimiento 3% · apalancamiento +5%)")
+        self.btn_tuerca.setToolTip("Ver cómo se calcula el interés mensual por ticket")
         self.btn_tuerca.setStyleSheet("""
             QPushButton {
                 background: white; color: #3730A3; font-weight: 900; border-radius: 10px;
@@ -302,7 +303,7 @@ class AdminClientes(QWidget):
         chips_lay.addWidget(sep)
 
         _add_chip("criticos", "#7C2D12", f"Deuda y más de {_CRITICOS_DIAS} días sin pago")
-        _add_chip("d30", "#B45309", "Deuda y más de 30 días (apl. 3%+5%)")
+        _add_chip("d30", "#B45309", "Deuda y más de 30 días desde el último pago")
         _add_chip("d60", "#C2410C", "Deuda y más de 60 días")
         _add_chip("d90", "#9A3412", "Deuda y más de 90 días")
         _add_chip("promesa", "#7C3AED", "Promesa de pago vencida")
@@ -312,19 +313,20 @@ class AdminClientes(QWidget):
         pt_lay.addLayout(chips_lay)
 
         self.tabla = QTableWidget()
-        self.tabla.setColumnCount(11)
+        self.tabla.setColumnCount(10)
         self.tabla.setHorizontalHeaderLabels([
-            "ID", "Nombre", "DNI", "Tipo", "Estado", "Límite", "Deuda", "Disponible",
+            "ID", "DNI", "Nombre", "Tipo", "Estado", "Deuda", "Mantenimiento",
             "Días", "Tarifa", "Acciones",
         ])
-        self.tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tabla.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        self.tabla.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        self.tabla.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-        self.tabla.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeMode.ResizeToContents)
-        self.tabla.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeMode.ResizeToContents)
+        for c in range(10):
+            self.tabla.horizontalHeader().setSectionResizeMode(c, QHeaderView.ResizeMode.Interactive)
         self.tabla.horizontalHeader().setSectionResizeMode(_COL_ACCIONES, QHeaderView.ResizeMode.Fixed)
         self.tabla.setColumnWidth(_COL_ACCIONES, 136)
+        orig_tbl_resize = self.tabla.resizeEvent
+        def _tbl_resize(ev):
+            orig_tbl_resize(ev)
+            self._ajustar_columnas()
+        self.tabla.resizeEvent = _tbl_resize
         self.tabla.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tabla.setSelectionBehavior(QTableWidget.SelectRows)
         self.tabla.verticalHeader().setVisible(False)
@@ -382,12 +384,18 @@ class AdminClientes(QWidget):
         self._pintar_tabla(refrescar_extras=False)
 
     def _refrescar_chip_politica(self):
-        from src.clientes_fiado.cerebro.cerebro import cerebro
-
-        base = cerebro.mantenimiento_pct()
-        apal = cerebro.apalancamiento_pct()
         if hasattr(self, "lbl_politica"):
-            self.lbl_politica.setText(f"Mant. {base:g}% · Apal. +{apal:g}% (>30d)")
+            try:
+                base = float(cerebro.mantenimiento_pct())
+                apal = float(cerebro.apalancamiento_pct())
+                plazo = int(cerebro.plazo_dias_politica())
+                if apal > 0:
+                    txt = f"Interés simple · {base:g}% mensual (+{apal:g}% >{plazo}d)"
+                else:
+                    txt = f"Interés simple · {base:g}% mensual por ticket"
+                self.lbl_politica.setText(txt)
+            except Exception:
+                self.lbl_politica.setText("Interés simple por ticket")
 
     def _kpi_mayor(self):
         self._kpi_filtro("criticos")
@@ -444,7 +452,11 @@ class AdminClientes(QWidget):
         return self._dias_sin_pago(ficha)
 
     def _es_critico(self, ficha):
-        return self._dias_sin_pago(ficha) > _CRITICOS_DIAS
+        try:
+            limite = int(cerebro.plazo_dias_politica())
+        except Exception:
+            limite = _CRITICOS_DIAS
+        return self._dias_sin_pago(ficha) > limite
 
     def _promesa_vencida(self, ficha):
         from src.clientes_fiado.cerebro.cerebro import cerebro
@@ -519,16 +531,45 @@ class AdminClientes(QWidget):
             return 0
         return (datetime.now() - dt).days
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._ajustar_columnas()
+
+    def _ajustar_columnas(self):
+        if not hasattr(self, "tabla") or self.tabla.columnCount() < 10:
+            return
+        vw = self.tabla.viewport().width()
+        if vw <= 100:
+            return
+        w_acc = 136
+        disp = max(400, vw - w_acc)
+        # Proporciones visuales armónicas y equilibradas (DNI antes de Nombre, sin huecos vacíos):
+        # 0:ID (4.5%), 1:DNI (8.5%), 2:Nombre (22%), 3:Tipo (8%), 4:Estado (9%), 5:Deuda (15.5%), 6:Mantenimiento (15%), 7:Días (9%), 8:Tarifa (8.5%)
+        props = [0.045, 0.085, 0.22, 0.08, 0.09, 0.155, 0.15, 0.09, 0.085]
+        minimos = [55, 110, 180, 80, 95, 130, 125, 75, 60]
+        anchos = [max(m, int(disp * p)) for p, m in zip(props, minimos)]
+        diff = disp - sum(anchos)
+        anchos[2] = max(minimos[2], anchos[2] + diff)
+        for c in range(9):
+            self.tabla.setColumnWidth(c, anchos[c])
+        self.tabla.setColumnWidth(_COL_ACCIONES, w_acc)
+
     def _clave_orden(self, ficha):
         key = self._sort_key
         if key == "id":
             return int(ficha.get("id") or 0)
+        if key == "dni":
+            return str(ficha.get("dni") or "").casefold()
         if key == "nombre":
             return str(ficha.get("nombre") or "").casefold()
         if key == "deuda":
-            return float(ficha.get("deuda_actual") or 0)
-        if key == "disponible":
-            return self._limite_efectivo(ficha) - float(ficha.get("deuda_actual") or 0)
+            cid = ficha.get("id")
+            cap = float(ficha.get("deuda_actual") or 0)
+            inte = float((self._cache_intereses or {}).get(cid) or 0)
+            return cap + inte if cap > 0 else cap
+        if key == "mantenimiento":
+            cid = ficha.get("id")
+            return float((self._cache_intereses or {}).get(cid) or 0)
         if key == "dias":
             return self._dias_corridos(ficha)
         return 0
@@ -541,7 +582,7 @@ class AdminClientes(QWidget):
             self._sort_asc = not self._sort_asc
         else:
             self._sort_key = clave
-            self._sort_asc = clave in ("nombre", "id")
+            self._sort_asc = clave in ("nombre", "id", "dni")
         self.tabla.horizontalHeader().setSortIndicator(
             col,
             Qt.SortOrder.AscendingOrder if self._sort_asc else Qt.SortOrder.DescendingOrder,
@@ -571,6 +612,11 @@ class AdminClientes(QWidget):
             cache_fechas = cerebro.ultimos_cargos(deudores_ids)
             cache_pagos = cerebro.ultimos_abonos(deudores_ids)
             cache_movs = cerebro.ultimos_movimientos(deudores_ids)
+            try:
+                cache_intereses = cerebro.intereses_acumulados(deudores_ids)
+            except Exception:
+                logger.exception("[Admin clientes] No se pudo calcular interes en lote")
+                cache_intereses = {}
             cache_todas = self._fusionar_deudas_locales(cache_todas)
         except Exception:
             logger.exception("[Admin clientes] No se pudo actualizar la cartera")
@@ -587,11 +633,11 @@ class AdminClientes(QWidget):
         self._cache_fechas = cache_fechas
         self._cache_pagos = cache_pagos
         self._cache_movs = cache_movs
+        self._cache_intereses = cache_intereses
         self.lbl_estado.setText("")
         self.lbl_estado.setStyleSheet(
             f"color: {_CLI['text_sec']}; font-size: 12px; font-weight: 700; border: none; padding-left: 8px;"
         )
-        self._correr_mantenimiento_auto()
         self._pintar_tabla(refrescar_extras=True)
 
     def _fusionar_deudas_locales(self, fichas=None):
@@ -610,76 +656,6 @@ class AdminClientes(QWidget):
             destino[i] = aplicar_overlay_local(ficha, locales)
         return destino
 
-    def _correr_mantenimiento_auto(self):
-        """Aplica 3% (o 3%+5% si >30d) sin pedirlo. Saltea si ya cobró en 30 días."""
-        from src.clientes_fiado.cerebro.cerebro import cerebro
-
-        items = []
-        for ficha in self._cache_todas or []:
-            deuda = float(ficha.get("deuda_actual") or 0)
-            if deuda <= 0.009:
-                continue
-            # Apalancamiento = días desde último pago (parcial cuenta; en 0 no entra)
-            dias = self._dias_sin_pago(ficha)
-            items.append((ficha.get("id"), deuda, dias))
-        if not items:
-            return
-        try:
-            res = cerebro.aplicar_mantenimientos_auto(items)
-        except Exception:
-            logger.exception("[Admin clientes] Falló el mantenimiento automático")
-            self.lbl_estado.setText(
-                "Mantenimiento auto: error al verificar/aplicar · revisar antes de operar"
-            )
-            self.lbl_estado.setStyleSheet(
-                "color: #B91C1C; font-size: 12px; font-weight: 900; border: none; padding-left: 8px;"
-            )
-            return
-        if not isinstance(res, dict):
-            logger.error("[Admin clientes] El mantenimiento automático devolvió una respuesta inválida")
-            self.lbl_estado.setText(
-                "Mantenimiento auto: respuesta inválida · revisar antes de operar"
-            )
-            self.lbl_estado.setStyleSheet(
-                "color: #B91C1C; font-size: 12px; font-weight: 900; border: none; padding-left: 8px;"
-            )
-            return
-        aplicados = int(res.get("aplicados") or 0)
-        # No releer con buscar(): en esclava offline lee el espejo y tapa el cargo local.
-        # No tocar _cache_fechas/_cache_movs: el mantenimiento no reinicia aging ni Críticos.
-        por_id = {}
-        for cid, nuevo, _monto in res.get("detalle") or []:
-            try:
-                por_id[int(cid)] = float(nuevo)
-            except (TypeError, ValueError):
-                continue
-        for ficha in self._cache_todas or []:
-            try:
-                cid = int(ficha.get("id"))
-            except (TypeError, ValueError):
-                continue
-            if cid in por_id:
-                ficha["deuda_actual"] = por_id[cid]
-        monto = float(res.get("monto_total") or 0)
-        fallos = int(res.get("fallos") or 0)
-        if fallos:
-            logger.error(
-                "[Admin clientes] Mantenimiento parcial: %s aplicados, %s fallaron: %s",
-                aplicados,
-                fallos,
-                res.get("errores") or [],
-            )
-            self.lbl_estado.setText(
-                f"Mantenimiento auto: {aplicados} aplicados, {fallos} fallaron · revisar saldos"
-            )
-            self.lbl_estado.setStyleSheet(
-                "color: #B91C1C; font-size: 12px; font-weight: 900; border: none; padding-left: 8px;"
-            )
-        elif aplicados:
-            self.lbl_estado.setText(
-                f"Mantenimiento auto: {aplicados} cuentas · ${monto:,.2f}"
-            )
-
     def _pintar_tabla(self, refrescar_extras=True):
         from src.clientes_fiado.cerebro.cerebro import cerebro
         from src.clientes_fiado.oficina.huella.consulta import huella_texto
@@ -696,7 +672,10 @@ class AdminClientes(QWidget):
         mayor_id = None
         mayor_nombre = ""
         for f in todas:
-            d = float(f.get("deuda_actual") or 0)
+            cid = f.get("id")
+            cap = float(f.get("deuda_actual") or 0)
+            inte = float((self._cache_intereses or {}).get(cid) or 0)
+            d = cap + inte if cap > 0 else cap
             if d > 0:
                 total_deuda += d
                 deudores += 1
@@ -710,7 +689,11 @@ class AdminClientes(QWidget):
         self.tabla.setRowCount(0)
         try:
             for i, c in enumerate(fichas):
-                deuda = float(c.get("deuda_actual") or 0)
+                cid = c.get("id")
+                capital = float(c.get("deuda_actual") or 0)
+                # Si el cliente ya pagó o tiene saldo a favor, el mantenimiento es estrictamente 0
+                interes = float((self._cache_intereses or {}).get(cid) or 0) if capital > 0.009 else 0.0
+                deuda = capital + interes if capital > 0 else capital
                 limite = self._limite_efectivo(c)
                 disponible = limite - deuda
                 dni = (c.get("dni") or "").strip()
@@ -726,11 +709,6 @@ class AdminClientes(QWidget):
                 it_id = vestir_id(QTableWidgetItem(str(c["id"])))
                 it_id.setData(Qt.ItemDataRole.UserRole, int(c["id"]))
                 self.tabla.setItem(i, 0, it_id)
-                nombre_raw = str(c["nombre"] or "")
-                nombre_vis = nombre_raw.title() if (nombre_raw.islower() or nombre_raw.isupper()) else nombre_raw
-                it_nombre = vestir_nombre(QTableWidgetItem(nombre_vis))
-                it_nombre.setToolTip(huella_texto(c))
-                self.tabla.setItem(i, 1, it_nombre)
 
                 if dni:
                     it_dni = vestir_id(QTableWidgetItem(dni))
@@ -738,7 +716,13 @@ class AdminClientes(QWidget):
                     it_dni = vestir_nombre(QTableWidgetItem("Sin DNI"))
                     it_dni.setForeground(QColor("#64748B"))
                     it_dni.setToolTip("Completá el DNI desde Editar")
-                self.tabla.setItem(i, 2, it_dni)
+                self.tabla.setItem(i, 1, it_dni)
+
+                nombre_raw = str(c["nombre"] or "")
+                nombre_vis = nombre_raw.title() if (nombre_raw.islower() or nombre_raw.isupper()) else nombre_raw
+                it_nombre = vestir_nombre(QTableWidgetItem(nombre_vis))
+                it_nombre.setToolTip(huella_texto(c))
+                self.tabla.setItem(i, 2, it_nombre)
 
                 it_tipo = vestir_nombre(QTableWidgetItem(tipo_txt))
                 if tipo == "express":
@@ -763,11 +747,11 @@ class AdminClientes(QWidget):
                         it_est.setForeground(QColor("#CBD5E1"))
                 self.tabla.setItem(i, 4, it_est)
 
-                self.tabla.setItem(i, 5, vestir_numero(QTableWidgetItem(f"${limite:,.2f}")))
-
-                if deuda > 0.009:
+                # Columna 5: Deuda total (capital + mantenimiento acumulado)
+                if capital > 0.009:
+                    limite_critico = cerebro.plazo_dias_politica() if hasattr(cerebro, 'plazo_dias_politica') else _CRITICOS_DIAS
                     es_riesgo = (
-                        dias_pago > _CRITICOS_DIAS
+                        dias_pago > limite_critico
                         or disponible < -0.009
                         or cerebro.esta_suspendido(c)
                         or self._promesa_vencida(c)
@@ -775,33 +759,47 @@ class AdminClientes(QWidget):
                     it_deuda = vestir_numero(QTableWidgetItem(f"${deuda:,.2f}"))
                     if es_riesgo:
                         it_deuda.setForeground(QColor("#DC2626"))
-                        it_deuda.setToolTip(f"Deuda en mora o riesgo · {self._dias_txt(dias_pago)} sin pago")
+                        it_deuda.setToolTip(
+                            f"Total a cobrar: ${deuda:,.2f} (Capital: ${capital:,.2f} + Mantenimiento: ${interes:,.2f})\n"
+                            f"Estado: En riesgo ({self._dias_txt(dias_pago)} sin pago)"
+                        )
                     else:
                         it_deuda.setForeground(QColor("#059669"))
-                        it_deuda.setToolTip(f"Crédito activo al día · {self._dias_txt(dias_pago)} sin pago")
-                elif deuda < -0.009:
-                    it_deuda = vestir_numero(QTableWidgetItem(f"+${abs(deuda):,.2f} a favor"))
+                        it_deuda.setToolTip(
+                            f"Total a cobrar: ${deuda:,.2f} (Capital: ${capital:,.2f} + Mantenimiento: ${interes:,.2f})\n"
+                            f"Estado: Al día ({self._dias_txt(dias_pago)} sin pago)"
+                        )
+                elif capital < -0.009:
+                    it_deuda = vestir_numero(QTableWidgetItem(f"+${abs(capital):,.2f} a favor"))
                     it_deuda.setForeground(QColor("#2563EB"))
+                    it_deuda.setToolTip(f"Saldo a favor: ${abs(capital):,.2f}")
                 else:
                     it_deuda = vestir_numero(QTableWidgetItem("$0.00"))
                     it_deuda.setForeground(QColor("#64748B"))
-                self.tabla.setItem(i, 6, it_deuda)
+                    it_deuda.setToolTip("Cuenta sin deuda")
+                self.tabla.setItem(i, 5, it_deuda)
 
-                if disponible < -0.009:
-                    it_disp = vestir_numero(QTableWidgetItem(f"Excedido ${abs(disponible):,.2f}"))
-                    it_disp.setForeground(QColor("#DC2626"))
-                    it_disp.setToolTip(f"Deuda ${deuda:,.2f} · Límite ${limite:,.2f}")
-                elif disponible <= 0.009:
-                    it_disp = vestir_numero(QTableWidgetItem("$0.00"))
-                    it_disp.setForeground(QColor("#DC2626"))
+                # Columna 6: Mantenimiento (interés devengado proyectado por ticket/cargos)
+                if capital > 0.009 and interes > 0.009:
+                    it_mant = vestir_numero(QTableWidgetItem(f"+${interes:,.2f}"))
+                    it_mant.setForeground(QColor("#B45309"))
+                    it_mant.setToolTip(
+                        f"Mantenimiento devengado: +${interes:,.2f}\n"
+                        f"Capital: ${capital:,.2f} + Mantenimiento: ${interes:,.2f} = Total a cobrar: ${deuda:,.2f}"
+                    )
+                elif capital > 0.009:
+                    it_mant = vestir_nombre(QTableWidgetItem("—"))
+                    it_mant.setForeground(QColor("#94A3B8"))
+                    it_mant.setToolTip(f"Sin interés acumulado · Total a cobrar: ${capital:,.2f}")
                 else:
-                    it_disp = vestir_numero(QTableWidgetItem(f"${disponible:,.2f}"))
-                    if disponible < limite * 0.2:
-                        it_disp.setForeground(QColor("#F59E0B"))
-                self.tabla.setItem(i, 7, it_disp)
+                    it_mant = vestir_nombre(QTableWidgetItem("—"))
+                    it_mant.setForeground(QColor("#CBD5E1"))
+                    it_mant.setToolTip("Cuenta sin deuda activa (al día o saldo a favor)")
+                self.tabla.setItem(i, 6, it_mant)
 
+                # Columna 7: Días sin pago
                 dias_sin = dias_pago
-                if deuda > 0.009:
+                if capital > 0.009:
                     it_dias = vestir_nombre(QTableWidgetItem(self._dias_txt(max(0, dias_sin))))
                     if dias_sin > 90:
                         it_dias.setForeground(QColor("#7C2D12"))
@@ -815,16 +813,17 @@ class AdminClientes(QWidget):
                     if plazo > 0:
                         tip = f"Plazo {plazo} días · {tip}"
                     it_dias.setToolTip(tip)
-                elif deuda < -0.009:
+                elif capital < -0.009:
                     it_dias = vestir_nombre(QTableWidgetItem("—"))
                     it_dias.setForeground(QColor("#94A3B8"))
                 else:
                     it_dias = vestir_nombre(QTableWidgetItem("—"))
                     it_dias.setForeground(QColor("#CBD5E1"))
-                self.tabla.setItem(i, 8, it_dias)
+                self.tabla.setItem(i, 7, it_dias)
 
-                if deuda > 0.009:
-                    tarifa = cerebro.tarifar_mantenimiento(deuda, dias_sin)
+                # Columna 8: Tarifa %
+                if capital > 0.009:
+                    tarifa = cerebro.tarifar_mantenimiento(capital, dias_sin)
                     pct_txt = f"{float(tarifa.get('pct_total') or 0):g}%"
                     it_tar = vestir_numero(QTableWidgetItem(pct_txt))
                     if tarifa.get("aplica_apal"):
@@ -841,19 +840,24 @@ class AdminClientes(QWidget):
                     it_tar = vestir_nombre(QTableWidgetItem("—"))
                     it_tar.setForeground(QColor("#94A3B8"))
                     it_tar.setToolTip("Cuenta en 0: no aplica mantenimiento")
-                self.tabla.setItem(i, 9, it_tar)
+                self.tabla.setItem(i, 8, it_tar)
 
+                # Columna 9: Acciones (Abonar recibe total 'deuda' = capital + interes)
                 self.tabla.setCellWidget(
                     i, _COL_ACCIONES, self._celda_acciones(c, deuda, limite, dias_sin)
                 )
         finally:
             self.tabla.setUpdatesEnabled(True)
+            self._ajustar_columnas()
 
         aging_n30 = aging_n60 = aging_n90 = 0
         deuda_riesgo = 0.0
         cuentas_riesgo = 0
         for f in todas:
-            d = float(f.get("deuda_actual") or 0)
+            cid = f.get("id")
+            cap = float(f.get("deuda_actual") or 0)
+            inte = float((self._cache_intereses or {}).get(cid) or 0)
+            d = cap + inte if cap > 0 else cap
             dmov = self._dias_sin_movimiento(f)
             if d > 0.009:
                 lim = self._limite_efectivo(f)
@@ -1105,7 +1109,7 @@ class AdminClientes(QWidget):
 
         if DialogoPoliticasCredito.pedir(self):
             self._refrescar_chip_politica()
-            self._pintar_tabla(refrescar_extras=False)
+            self.cargar_clientes(forzar=True)
 
     def nuevo_cliente(self):
         dlg = DialogoNuevoCliente(self)
@@ -1170,14 +1174,14 @@ class AdminClientes(QWidget):
             "deuda_actual": deuda_actual,
         }
         try:
-            deuda = float(
-                cliente.get("deuda_actual")
-                if cliente.get("deuda_actual") is not None
-                else deuda_actual or 0
+            total_estimado = float(
+                deuda_actual
+                if deuda_actual is not None
+                else cliente.get("deuda_actual") or 0
             )
         except (TypeError, ValueError):
-            deuda = float(deuda_actual or 0)
-        sugerido = deuda if deuda > 0.009 else None
+            total_estimado = float(cliente.get("deuda_actual") or 0)
+        sugerido = total_estimado if total_estimado > 0.009 else None
         dlg = DialogoCentroCobranzas(parent=self, perfil="Admin")
         dlg.abrir_para_cliente(cliente, sugerido, ir_a_pago=True)
         if not (qt_exec(dlg) and dlg.cliente_id):

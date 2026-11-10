@@ -38,14 +38,11 @@ class PanelEstadoCredito(QWidget):
         )
         lay.addWidget(self.detalle)
 
+        self.lbl_total_estimado = QLabel("")
+        self.lbl_total_estimado.hide()
+
         self.lbl_historial = QLabel("")
-        self.lbl_historial.setWordWrap(True)
-        self.lbl_historial.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_historial.setStyleSheet(
-            "color: #64748B; font-size: 13px; font-weight: 600; background: transparent; border: none;"
-        )
         self.lbl_historial.hide()
-        lay.addWidget(self.lbl_historial)
         
         lay_botones_accion = QHBoxLayout()
         lay_botones_accion.setSpacing(15)

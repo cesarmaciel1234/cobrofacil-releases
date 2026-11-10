@@ -766,15 +766,26 @@ def test_ticket_ya_vendido_carga_aunque_supere_el_cupo():
     assert cargo and "cuadre" in cargo[0][4]
 
 
-def test_anular_baja_la_deuda_una_sola_vez():
-    from src.base_de_datos.repos.ventas import _anular_cargo
+def test_anular_baja_la_deuda_una_sola_vez(monkeypatch):
+    import src.clientes_fiado.oficina.cuenta.cancelacion as cartera
+    from src.clientes_fiado.oficina.cuenta.cancelacion import anular_cargo_f3
+
+    monkeypatch.setattr(cartera, "fecha_db_cursor", lambda _cursor: "2026-01-01 00:00:00")
+    monkeypatch.setattr(cartera, "movimientos_cursor", lambda _cursor, _cliente: [])
+    monkeypatch.setattr(cartera, "fecha_activacion_cursor", lambda _cursor, **_kwargs: "2026-01-01")
+    monkeypatch.setattr(
+        cartera,
+        "proyectar_interes",
+        lambda *_args, **_kwargs: {"tickets": {"V:12": {"interes_generado": 0}}},
+    )
+    monkeypatch.setattr(cartera, "clave_ticket", lambda _cargo: "V:12")
 
     cur = _Cur([
         {"cliente_id": 3, "monto": 100},
         None,
         {"deuda_actual": 100},
     ])
-    _anular_cargo(cur, 12)
+    anular_cargo_f3(cur, 12)
     updates = [p for q, p in cur.sql if q.startswith("UPDATE clientes")]
     assert updates == [(0.0, 3)]
     altas = [p for q, p in cur.sql if q.startswith("INSERT INTO cuenta_corriente")]
@@ -782,12 +793,23 @@ def test_anular_baja_la_deuda_una_sola_vez():
     assert "cancelado" in str(altas[0][3]).lower()
 
     otra = _Cur([{"id": 9, "cliente_id": 3, "monto": 100, "descripcion": "Venta"}, {"id": 1}])
-    _anular_cargo(otra, 12)
+    anular_cargo_f3(otra, 12)
     assert not any(q.startswith("UPDATE clientes") for q, _p in otra.sql)
 
 
-def test_anular_encuentra_cargo_por_texto_si_falta_venta_id():
-    from src.base_de_datos.repos.ventas import _anular_cargo
+def test_anular_encuentra_cargo_por_texto_si_falta_venta_id(monkeypatch):
+    import src.clientes_fiado.oficina.cuenta.cancelacion as cartera
+    from src.clientes_fiado.oficina.cuenta.cancelacion import anular_cargo_f3
+
+    monkeypatch.setattr(cartera, "fecha_db_cursor", lambda _cursor: "2026-01-01 00:00:00")
+    monkeypatch.setattr(cartera, "movimientos_cursor", lambda _cursor, _cliente: [])
+    monkeypatch.setattr(cartera, "fecha_activacion_cursor", lambda _cursor, **_kwargs: "2026-01-01")
+    monkeypatch.setattr(
+        cartera,
+        "proyectar_interes",
+        lambda *_args, **_kwargs: {"tickets": {"V:12": {"interes_generado": 0}}},
+    )
+    monkeypatch.setattr(cartera, "clave_ticket", lambda _cargo: "V:12")
 
     cur = _Cur([
         None,
@@ -795,7 +817,7 @@ def test_anular_encuentra_cargo_por_texto_si_falta_venta_id():
         None,
         {"deuda_actual": 50},
     ])
-    _anular_cargo(cur, 12)
+    anular_cargo_f3(cur, 12)
     updates = [p for q, p in cur.sql if q.startswith("UPDATE clientes")]
     assert updates == [(0.0, 3)]
 

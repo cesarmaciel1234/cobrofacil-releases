@@ -34,6 +34,9 @@ class CentroCobranzasPanel(QWidget):
         self._mixto_detalle = None
         self._hilo_hist = None
         self._hist_gen = 0
+        self._interes_estimado = 0.0
+        self._error_interes = False
+        self._monto_sugerido_base = None
         
         self.setStyleSheet("background: transparent; border: none;")
         self._build()
@@ -71,7 +74,7 @@ class CentroCobranzasPanel(QWidget):
         self.motor_cobranza = MotorCobranzaMedios(self, perfil=self._perfil)
         self.motor_cobranza.abono_registrado.connect(self.abono_registrado.emit)
         self.motor_cobranza.pago_listo.connect(lambda cid, m: self._finalizado_ok(cid, m))
-        self.motor_cobranza.error_cobranza.connect(lambda e: self._volver_de_lienzo())
+        self.motor_cobranza.error_cobranza.connect(self._al_fallar_cobranza)
         self.motor = self.motor_cobranza
 
         self._q = ""
@@ -163,22 +166,46 @@ class CentroCobranzasPanel(QWidget):
 
     def seleccionar_cliente_directo(self, ficha, monto_sugerido=None, ir_a_pago=False):
         f = dict(ficha) if hasattr(ficha, "keys") else {}
-        if f.get("id") and f.get("deuda_actual") is None and f.get("deuda") is None:
+        cid = f.get("id")
+        if cid and f.get("deuda_actual") is None and f.get("deuda") is None:
             try:
                 from src.clientes_fiado.cerebro.cerebro import cerebro
-                full = cerebro.obtener(f.get("id"))
+                full = cerebro.obtener(cid)
                 if full and hasattr(full, "keys"):
                     f = dict(full)
             except Exception:
                 pass
-        self._monto_sugerido_externo = monto_sugerido
-        self._ir_a_pago = bool(ir_a_pago) or monto_sugerido is not None
         self._cliente_id = f.get("id")
         self._cliente_nombre = str(f.get("nombre") or f.get("nombre_completo") or "")
+        self._interes_estimado = 0.0
+        self._error_interes = False
+        self._monto_sugerido_base = None
+
         try:
-            self._deuda_actual = float(f.get("deuda_actual") if f.get("deuda_actual") is not None else f.get("deuda") or 0)
+            capital_raw = float(f.get("deuda_actual") if f.get("deuda_actual") is not None else f.get("deuda") or 0)
         except (TypeError, ValueError):
-            self._deuda_actual = 0.0
+            capital_raw = 0.0
+        self._capital_base = capital_raw
+
+        # Determinar de forma inmediata el total estimado y el interés acumulado
+        if monto_sugerido is not None and float(monto_sugerido) > 0.009:
+            self._deuda_actual = float(monto_sugerido)
+            if self._capital_base > 0.009:
+                self._interes_estimado = max(0.0, round(self._deuda_actual - self._capital_base, 2))
+        elif self._capital_base > 0.009:
+            try:
+                from src.clientes_fiado.cerebro.cerebro import cerebro
+                mapa_int = cerebro.intereses_acumulados([self._cliente_id])
+                self._interes_estimado = float(mapa_int.get(self._cliente_id, 0.0) or 0.0)
+            except Exception:
+                self._interes_estimado = 0.0
+            self._deuda_actual = round(self._capital_base + self._interes_estimado, 2)
+        else:
+            self._deuda_actual = self._capital_base
+            self._interes_estimado = 0.0
+
+        self._monto_sugerido_externo = self._deuda_actual if self._deuda_actual > 0.009 else None
+        self._ir_a_pago = bool(ir_a_pago) or monto_sugerido is not None
         self._mostrar_ficha()
 
     def _mostrar_ficha(self):
@@ -195,6 +222,20 @@ class CentroCobranzasPanel(QWidget):
             self.detalle.setText("Al día · se puede cobrar y deja saldo a favor")
             self.detalle.setStyleSheet("color: #047857; font-size: 22px; font-weight: 900; background: transparent; border: none;")
             
+        if self._deuda_actual > 0.009 and self._interes_estimado > 0.009:
+            self.detalle.setToolTip(
+                f"Capital: ${self._capital_base:,.2f}  +  Interés: ${self._interes_estimado:,.2f}"
+            )
+        else:
+            self.detalle.setToolTip("")
+        estimado = getattr(self.panel_estado, "lbl_total_estimado", None)
+        if estimado:
+            estimado.hide()
+
+        lbl_hist = getattr(self.panel_estado, "lbl_historial", None)
+        if lbl_hist:
+            lbl_hist.hide()
+
         self.icono.hide()
         
         # Ocultar botones de pago por defecto
@@ -216,50 +257,16 @@ class CentroCobranzasPanel(QWidget):
             self._modo = "vista_cliente"
         self.stack.setCurrentWidget(self.vista_cobranza)
         self.setFocus()
-        self._pedir_historial()
 
     def _pedir_historial(self):
-        lbl = getattr(self.panel_estado, "lbl_historial", None)
-        if lbl is None:
-            return
-        lbl.setText("Historial…")
-        lbl.show()
-        self._hist_gen += 1
-        gen = self._hist_gen
-        if self._hilo_hist is not None:
-            try:
-                self._hilo_hist.listo.disconnect()
-            except TypeError:
-                pass
-        try:
-            from src.cajero.f6_centro_cobranzas.consulta_historial.hilo import HiloMovimientosCajero
-        except Exception:
-            lbl.hide()
-            return
-        self._hilo_hist = HiloMovimientosCajero(self._cliente_id, self)
-        self._hilo_hist.listo.connect(lambda movs, err, g=gen: self._mostrar_historial(movs, err, g))
-        self._hilo_hist.finished.connect(self._hilo_hist.deleteLater)
-        self._hilo_hist.start()
+        # El historial se consulta a demanda mediante el botón [Ver / Imprimir]
+        pass
 
     def _mostrar_historial(self, movs, error, gen):
-        if gen != self._hist_gen:
-            return
-        lbl = getattr(self.panel_estado, "lbl_historial", None)
-        if lbl is None:
-            return
-        if error:
-            lbl.hide()
-            return
-        lineas = []
-        for dato in list(movs or [])[:4]:
-            lineas.append(str(dato.get("linea") or ""))
-        if not lineas:
-            lbl.setText("Sin movimientos previos.")
-            lbl.show()
-            return
-        lbl.setText("\n".join(lineas))
-        lbl.show()
+        pass
 
+    def _actualizar_monto_sugerido(self, total_estimado):
+        pass
 
     def _mostrar_controles_pago(self):
         self._modo = "preparando_pago"
@@ -268,11 +275,17 @@ class CentroCobranzasPanel(QWidget):
         if getattr(self.panel_estado, "lbl_historial", None):
             self.panel_estado.lbl_historial.hide()
         
-        monto_sugerido = self._deuda_actual if self._deuda_actual > 0.009 else 0.0
+        monto_sugerido = (
+            self._deuda_actual
+            if self._deuda_actual > 0.009
+            else 0.0
+        )
         if monto_sugerido > 0:
             self.txt_monto_abono.setText(f"{monto_sugerido:.2f}".replace('.', ','))
+            self._monto_sugerido_base = self.txt_monto_abono.text()
         else:
             self.txt_monto_abono.clear()
+            self._monto_sugerido_base = None
             self.txt_monto_abono.setPlaceholderText("Ejemplo: 100 (queda a favor)")
         if getattr(self.panel_estado, "lbl_pregunta_monto", None):
             self.panel_estado.lbl_pregunta_monto.show()
@@ -287,6 +300,7 @@ class CentroCobranzasPanel(QWidget):
         if externo:
             try:
                 self.txt_monto_abono.setText(f"{float(externo):.2f}".replace(".", ","))
+                self._monto_sugerido_base = self.txt_monto_abono.text()
             except (TypeError, ValueError):
                 pass
 
@@ -302,11 +316,9 @@ class CentroCobranzasPanel(QWidget):
         # Por si abonó / borró / editó desde el historial
         try:
             from src.clientes_fiado.cerebro.cerebro import cerebro
-
             ficha = cerebro.obtener(self._cliente_id) or {}
-            self._cliente_nombre = str(ficha.get("nombre") or self._cliente_nombre)
-            self._deuda_actual = float(ficha.get("deuda_actual") or 0)
-            self._mostrar_ficha()
+            if ficha:
+                self.seleccionar_cliente_directo(ficha)
         except Exception:
             pass
 
@@ -432,6 +444,14 @@ class CentroCobranzasPanel(QWidget):
         self.btn_iniciar_pago.show()
         self.btn_imprimir_resumen.show()
         self.setFocus()
+
+    def _al_fallar_cobranza(self, error):
+        self._volver_de_lienzo()
+        try:
+            from src.notificaciones.motor.estado import publicar
+            publicar("cobro_error", f"⚠️ Cobranza no completada: {error}", segundos=6)
+        except Exception:
+            pass
 
     def _volver_de_lienzo(self):
         self._cola_digital = None
