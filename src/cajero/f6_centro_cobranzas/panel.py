@@ -14,6 +14,24 @@ from src.cajero.f6_centro_cobranzas.componentes_f6.ui_buscador.panel_buscador im
 from src.cajero.f6_centro_cobranzas.componentes_f6.ui_estado.panel_estado import PanelEstadoCredito
 from src.cajero.f6_centro_cobranzas.componentes_f6.ui_selector.panel_selector import PanelSelectorCobranza
 from src.utils.dinero import redondear_dinero
+from PyQt6.QtCore import QThread
+
+class HiloInteresCajero(QThread):
+    listo = pyqtSignal(int, float)
+
+    def __init__(self, cliente_id, parent=None):
+        super().__init__(parent)
+        self.cliente_id = cliente_id
+
+    def run(self):
+        try:
+            from src.clientes_fiado.cerebro.cerebro import cerebro
+            mapa = cerebro.intereses_acumulados([self.cliente_id])
+            interes = float(mapa.get(self.cliente_id, 0.0) or 0.0)
+            self.listo.emit(self.cliente_id, interes)
+        except Exception:
+            self.listo.emit(self.cliente_id, 0.0)
+
 
 class CentroCobranzasPanel(QWidget):
     """Panel F6 del paso 5: solo cobranza con medios de pago."""
@@ -192,17 +210,11 @@ class CentroCobranzasPanel(QWidget):
             self._deuda_actual = float(monto_sugerido)
             if self._capital_base > 0.009:
                 self._interes_estimado = max(0.0, round(self._deuda_actual - self._capital_base, 2))
-        elif self._capital_base > 0.009:
-            try:
-                from src.clientes_fiado.cerebro.cerebro import cerebro
-                mapa_int = cerebro.intereses_acumulados([self._cliente_id])
-                self._interes_estimado = float(mapa_int.get(self._cliente_id, 0.0) or 0.0)
-            except Exception:
-                self._interes_estimado = 0.0
-            self._deuda_actual = round(self._capital_base + self._interes_estimado, 2)
         else:
             self._deuda_actual = self._capital_base
             self._interes_estimado = 0.0
+            if self._capital_base > 0.009 and self._cliente_id:
+                self._iniciar_hilo_interes(self._cliente_id)
 
         self._monto_sugerido_externo = monto_sugerido
         self._ir_a_pago = bool(ir_a_pago)
@@ -257,6 +269,34 @@ class CentroCobranzasPanel(QWidget):
         else:
             self._modo = "vista_cliente"
             self.btn_iniciar_pago.setFocus()
+
+    def _iniciar_hilo_interes(self, cliente_id):
+        if getattr(self, "_hilo_int", None) is not None:
+            try:
+                self._hilo_int.listo.disconnect()
+            except Exception:
+                pass
+        self._hilo_int = HiloInteresCajero(cliente_id, self)
+        self._hilo_int.listo.connect(self._al_llegar_interes)
+        self._hilo_int.finished.connect(self._hilo_int.deleteLater)
+        self._hilo_int.start()
+
+    def _al_llegar_interes(self, cliente_id, interes):
+        if cliente_id != self._cliente_id or interes <= 0.009:
+            return
+        self._interes_estimado = interes
+        self._deuda_actual = round(self._capital_base + interes, 2)
+        if self._modo == "vista_cliente":
+            self.detalle.setText(f"Deuda actual: ${self._deuda_actual:,.2f}")
+            self.detalle.setToolTip(
+                f"Capital: ${self._capital_base:,.2f}  +  Interés: ${self._interes_estimado:,.2f}"
+            )
+        elif self._modo == "preparando_pago":
+            texto_base = f"{self._capital_base:.2f}".replace('.', ',')
+            if self.txt_monto_abono.text() in (texto_base, ""):
+                texto_nuevo = f"{self._deuda_actual:.2f}".replace('.', ',')
+                self.txt_monto_abono.setText(texto_nuevo)
+                self._monto_sugerido_base = texto_nuevo
 
     def _pedir_historial(self):
         # El historial se consulta a demanda mediante el botón [Ver / Imprimir]
