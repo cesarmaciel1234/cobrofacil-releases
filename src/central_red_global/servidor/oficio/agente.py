@@ -80,7 +80,16 @@ def _touch_esclava_heartbeat() -> None:
         path = _esclava_heartbeat_path()
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w', encoding='utf-8') as f:
-            f.write(str(time.time()))
+            f.write(f"{time.time():.3f}|{os.getpid()}")
+    except Exception:
+        pass
+
+def limpiar_esclava_heartbeat() -> None:
+    try:
+        import os
+        path = _esclava_heartbeat_path()
+        if os.path.isfile(path):
+            os.remove(path)
     except Exception:
         pass
 
@@ -90,6 +99,25 @@ def esclava_heartbeat_fresco(max_age_sec: float = 180.0) -> bool:
         path = _esclava_heartbeat_path()
         if not os.path.isfile(path):
             return True  # Compat si aún no escribió el primer pulso
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                raw = f.read().strip()
+        except OSError:
+            raw = ""
+        hb_pid = 0
+        if "|" in raw:
+            try:
+                hb_pid = int(raw.split("|", 1)[1].strip() or "0")
+            except ValueError:
+                hb_pid = 0
+        try:
+            from src.utils.candados import get_store_server_pid
+            running_pid = int(get_store_server_pid() or 0)
+        except Exception:
+            running_pid = 0
+        if running_pid and hb_pid != running_pid:
+            # Heartbeat pertenece a una corrida o versión previa, no al proceso vivo actual
+            return True
         age = time.time() - os.path.getmtime(path)
         return age <= max_age_sec
     except Exception:
@@ -140,6 +168,12 @@ def _paso_nodo() -> None:
         logger.info("nodo  maestra en linea, cola subida, bajo el espejo")
         _nodo_en_linea = True
     _bajar_lo_que_falta()
+    try:
+        from src.central_red_global.sync_tienda.config_tienda import sincronizar_desde_maestra
+
+        sincronizar_desde_maestra()
+    except Exception:
+        pass
 
 
 def _esperar_turno(visto: int) -> int:
@@ -151,6 +185,12 @@ def _esperar_turno(visto: int) -> int:
 
 
 def _vuelta_espejo() -> None:
+    try:
+        from src.central_red_global.sync_tienda.aviso_tv.avisar import asegurar_escucha_datos
+
+        asegurar_escucha_datos()
+    except Exception:
+        pass
     _touch_esclava_heartbeat()
     visto = 0
     time.sleep(PAUSA_PRIMERA_SEG)

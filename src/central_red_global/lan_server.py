@@ -275,12 +275,19 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 except Exception:
                     db_ok = eng == 'mariadb'
             status_code = 200 if db_ok else 503
+            try:
+                from src.central_red_global.sync_tienda.config_tienda import leer_version_local
+
+                cfg_ver = leer_version_local()
+            except Exception:
+                cfg_ver = 0
             self._send_response(status_code, {
                 'status': 'ok' if db_ok else 'degraded',
                 'mode': mode,
                 'engine': eng,
                 'db_ok': db_ok,
                 'http_ok': True,
+                'config_version': cfg_ver,
                 'uptime_sec': round(time.time() - _SERVER_START_TIME, 1),
             })
         elif self.path == '/api/ping':

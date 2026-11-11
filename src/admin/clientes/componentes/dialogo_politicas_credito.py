@@ -184,14 +184,21 @@ class DialogoPoliticasCredito(QDialog):
         self.lbl_preview.setText(texto)
 
     def _guardar(self):
+        from PyQt6.QtWidgets import QMessageBox
+
         base = self.sp_base.value()
         apal = self.sp_apal.value()
         plazo = self.sp_plazo.value()
-        if cerebro.guardar_politicas_credito(base, apal, plazo):
+        ok, msg = cerebro.guardar_politicas_credito_detalle(base, apal, plazo)
+        if ok:
             self._guardado = True
             self.accept()
         else:
-            self.reject()
+            QMessageBox.warning(
+                self,
+                "Políticas de crédito",
+                msg or "No se pudo guardar en la PC Maestra. Reintentá con conexión a la tienda.",
+            )
 
     @staticmethod
     def pedir(parent=None) -> bool:

@@ -130,7 +130,10 @@ def run_store_server_app(app, background: bool = False) -> int:
         try:
             if not vigila_mariadb():
                 try:
+                    from src.central_red_global.servidor.oficio.agente import _touch_esclava_heartbeat
+
                     cumplir_esclava()
+                    _touch_esclava_heartbeat()
                 except Exception:
                     pass
                 _wd_signals.estado.emit(*_compute_status_tuple())
@@ -178,6 +181,12 @@ def run_store_server_app(app, background: bool = False) -> int:
             return
         logger.info("Clave aceptada. Apagando el servidor.")
         if not vigila_mariadb():
+            try:
+                from src.central_red_global.servidor.oficio.agente import limpiar_esclava_heartbeat
+
+                limpiar_esclava_heartbeat()
+            except Exception:
+                pass
             release_store_server_lock()
             if tray:
                 tray.hide()

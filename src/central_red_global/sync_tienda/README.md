@@ -2,7 +2,7 @@
 
 Qué hace: copia productos, PNG y token de red hacia la PC maestra (`:8000`). La publicidad de la TV se reemplaza en las dos puntas al guardar (POST `:8000/api/carteleria/publicidad` y UDP `PUBLICIDAD`). El ranking de «lo más vendido» sale de `ranking/`: la esclava lo baja por HTTP; la maestra lo arma con sus ventas.
 
-Qué función: `enviar_png_a_maestra`, `empujar_producto_a_maestra`, `cabeceras_lan`, `pedir_a_maestra`.
+Qué función: `enviar_png_a_maestra`, `empujar_producto_a_maestra`, `cabeceras_lan`, `pedir_a_maestra`, `guardar_y_sincronizar`.
 
 Cómo funciona: `rol.py` arma Bearer + `X-LAN-Token`. Si el host de la maestra es esta misma PC, no hay POST. PNG: `png/`. Inventario: `inventario/`. Tras cada PNG o producto, `aviso_tv/` pisa el sello y la TV de la maestra recarga **datos** (no F5).
 

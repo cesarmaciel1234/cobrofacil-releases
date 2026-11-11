@@ -22,6 +22,12 @@ def manejar_get(handler, path: str) -> bool:
 
         handler._send_response(200, {"reporte": payload_reporte_global()})
         return True
+    if path == "/api/tienda/config":
+        from src.central_red_global.sync_tienda.config_tienda.tienda import leer_estado_maestra
+
+        estado = leer_estado_maestra()
+        handler._send_response(200, {"ok": True, **estado})
+        return True
     if path in ("/api/carteleria/publicidad",):
         from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
 
@@ -98,6 +104,23 @@ def manejar_post(handler, path: str) -> bool:
             handler._send_response(200, {"success": True, "publicidad": motor_publicidad.as_dict()})
         except Exception as e:
             handler._send_response(500, {"error": str(e)})
+        return True
+    if path == "/api/tienda/config":
+        try:
+            length = int(handler.headers.get("Content-Length", 0) or 0)
+            raw = handler.rfile.read(length).decode("utf-8") if length else "{}"
+            body = json.loads(raw or "{}")
+            cambios = body.get("cambios") if isinstance(body, dict) and "cambios" in body else body
+            origen = str(body.get("origen") or "") if isinstance(body, dict) else ""
+            from src.central_red_global.sync_tienda.config_tienda.tienda import aplicar_en_maestra
+
+            ok, estado, err = aplicar_en_maestra(cambios or {}, origen=origen)
+            if ok:
+                handler._send_response(200, {"ok": True, **estado})
+            else:
+                handler._send_response(400, {"ok": False, "error": err or "Cambio rechazado."})
+        except Exception as e:
+            handler._send_response(500, {"ok": False, "error": str(e)})
         return True
     return False
 

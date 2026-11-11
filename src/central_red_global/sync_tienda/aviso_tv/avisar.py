@@ -28,7 +28,16 @@ def asegurar_escucha_datos() -> None:
 
 
 def _al_udp_datos(_origen, tipo, _datos):
-    if str(tipo or "") not in ("PRECIOS_ACTUALIZADOS", "DATOS"):
+    t = str(tipo or "")
+    if t == "CONFIG_TIENDA":
+        try:
+            from src.central_red_global.sync_tienda.config_tienda import sincronizar_desde_maestra
+
+            sincronizar_desde_maestra()
+        except Exception:
+            pass
+        return
+    if t not in ("PRECIOS_ACTUALIZADOS", "DATOS"):
         return
     from src.central_red_global.sync_tienda.aviso_tv.sello import pisar_sello
 

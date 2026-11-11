@@ -1105,6 +1105,12 @@ class AdminClientes(QWidget):
             QMessageBox.warning(self, "Error", "No se pudo guardar la promesa.")
 
     def _abrir_politicas(self):
+        try:
+            from src.central_red_global.sync_tienda.config_tienda import sincronizar_desde_maestra
+
+            sincronizar_desde_maestra()
+        except Exception:
+            pass
         from src.admin.clientes.componentes.dialogo_politicas_credito import DialogoPoliticasCredito
 
         if DialogoPoliticasCredito.pedir(self):

@@ -61,6 +61,7 @@ class PanelDatosNegocio(QWidget):
             form_layout.addWidget(self.btn_save)
 
     def _load_data(self):
+        config.reload()
         self.txt_name.setText(config.get('business_name', ''))
         self.txt_addr.setText(config.get('address', ''))
         self.txt_phone.setText(config.get('phone', ''))
@@ -71,14 +72,21 @@ class PanelDatosNegocio(QWidget):
         self.datos_actualizados.emit()
 
     def guardar(self):
-        config.set('business_name', self.txt_name.text().strip())
-        config.set('address', self.txt_addr.text().strip())
-        config.set('phone', self.txt_phone.text().strip())
-        config.set('business_cuit', self.txt_cuit.text().strip())
-        config.set('footer_message', self.txt_msg.text().strip())
-        config.save()
+        cambios = {
+            'business_name': self.txt_name.text().strip(),
+            'address': self.txt_addr.text().strip(),
+            'phone': self.txt_phone.text().strip(),
+            'business_cuit': self.txt_cuit.text().strip(),
+            'footer_message': self.txt_msg.text().strip(),
+        }
+        from src.central_red_global.sync_tienda.config_tienda import guardar_y_sincronizar
 
-        QMessageBox.information(self, "Guardado", "Datos del negocio actualizados correctamente.")
+        ok, err = guardar_y_sincronizar(cambios)
+        if not ok:
+            QMessageBox.warning(self, "Sin conexión con Maestra", err or "No se pudieron guardar los datos en la PC Maestra.")
+            return
+        self._load_data()
+        QMessageBox.information(self, "Guardado", "Datos del negocio actualizados y sincronizados correctamente.")
 
     def get_data(self):
         return {

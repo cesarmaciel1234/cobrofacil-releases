@@ -55,5 +55,11 @@ def al_conectar_esclava() -> int:
     except Exception as exc:
         logger.warning("Sync token MP al conectar esclava: %s", exc)
     _traer_publicidad_maestra()
+    try:
+        from src.central_red_global.sync_tienda.config_tienda import sincronizar_desde_maestra
+
+        sincronizar_desde_maestra(forzar=True)
+    except Exception as exc:
+        logger.warning("Sync config_tienda al conectar esclava: %s", exc)
     _patear_tv()
     return n_png

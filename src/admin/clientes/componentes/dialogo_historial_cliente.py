@@ -384,23 +384,74 @@ class DialogoHistorialCliente(QDialog):
                 parent.cargar_clientes()
 
     def _cargar_saldo(self):
-        from PyQt6.QtWidgets import QInputDialog
+        from PyQt6.QtWidgets import QDoubleSpinBox, QLineEdit
 
         nombre = dict(self.cliente).get("nombre", "—")
         deuda = float(dict(self.cliente).get("deuda_actual") or 0)
-        monto, ok = QInputDialog.getDouble(
-            self,
-            "Cargar saldo",
-            f"Cliente: {nombre}\nDeuda actual: ${deuda:,.2f}\n\nMonto a cargar ($):",
-            0,
-            0,
-            99_999_999,
-            2,
-        )
-        if not ok or monto <= 0:
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Cargar saldo / ajuste manual")
+        dlg.setModal(True)
+        dlg.setMinimumWidth(460)
+        dlg.setStyleSheet(f"QDialog {{ background: white; }} QLabel {{ color: {_CLI['text']}; border: none; }}")
+        dl = QVBoxLayout(dlg)
+        dl.setContentsMargins(22, 20, 22, 20)
+        dl.setSpacing(12)
+
+        lbl_head = QLabel(f"CARGO MANUAL · {nombre}")
+        vestir_nombre(lbl_head, tam=15)
+        lbl_head.setStyleSheet(f"color: {_CLI['text']}; font-weight: 900; border: none;")
+        dl.addWidget(lbl_head)
+
+        lbl_deuda = QLabel(f"Deuda actual: ${deuda:,.2f}")
+        vestir_numero(lbl_deuda, tam=13)
+        lbl_deuda.setStyleSheet(f"color: {_CLI['text_sec']}; border: none;")
+        dl.addWidget(lbl_deuda)
+
+        lbl_m = QLabel("Monto a cargar ($):")
+        lbl_m.setStyleSheet("font-weight: 800; font-size: 13px;")
+        dl.addWidget(lbl_m)
+        sp_monto = QDoubleSpinBox()
+        sp_monto.setRange(0.01, 99_999_999.00)
+        sp_monto.setDecimals(2)
+        sp_monto.setPrefix("$ ")
+        sp_monto.setMinimumHeight(40)
+        sp_monto.setStyleSheet(f"QDoubleSpinBox {{ padding: 6px 10px; border: 1px solid {_CLI['border']}; border-radius: 8px; font-size: 15px; font-weight: 800; }}")
+        dl.addWidget(sp_monto)
+
+        lbl_n = QLabel("Motivo / nota (se ve en el historial):")
+        lbl_n.setStyleSheet("font-weight: 800; font-size: 13px;")
+        dl.addWidget(lbl_n)
+        txt_nota = QLineEdit()
+        txt_nota.setText("Cargo manual desde panel Admin")
+        txt_nota.setPlaceholderText("Ej: Ajuste por cobro duplicado COB-123")
+        txt_nota.setMinimumHeight(40)
+        txt_nota.selectAll()
+        txt_nota.setStyleSheet(f"QLineEdit {{ padding: 8px 12px; border: 1px solid {_CLI['border']}; border-radius: 8px; font-size: 13px; }}")
+        dl.addWidget(txt_nota)
+
+        btns = QHBoxLayout()
+        btns.addStretch()
+        btn_cancel = QPushButton("Cancelar")
+        btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_cancel.setStyleSheet("QPushButton { background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; border-radius: 8px; padding: 9px 18px; font-weight: 800; }")
+        btn_cancel.clicked.connect(dlg.reject)
+        btn_ok = QPushButton("Cargar saldo")
+        btn_ok.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_ok.setStyleSheet(f"QPushButton {{ background: {_CLI['accent']}; color: white; border: none; border-radius: 8px; padding: 9px 20px; font-weight: 800; }}")
+        btn_ok.clicked.connect(dlg.accept)
+        btns.addWidget(btn_cancel)
+        btns.addWidget(btn_ok)
+        dl.addLayout(btns)
+
+        if not qt_exec(dlg):
             return
+        monto = float(sp_monto.value())
+        if monto <= 0:
+            return
+        motivo = txt_nota.text().strip() or "Cargo manual desde panel Admin"
         exito, nuevo_saldo, _nombre = cerebro.cargar_manual(
-            self.cliente_id, monto, "Cargo manual desde panel Admin"
+            self.cliente_id, monto, motivo
         )
         if not exito:
             QMessageBox.warning(self, "Saldo", "No se pudo cargar el saldo.")

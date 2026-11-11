@@ -37,6 +37,7 @@ def porcentaje_base() -> float:
     try:
         from src.config import config
 
+        config.reload()
         bruto = config.get("fiado_mantenimiento_pct", MANTENIMIENTO_PCT_DEFAULT)
     except Exception:
         bruto = MANTENIMIENTO_PCT_DEFAULT
@@ -47,6 +48,7 @@ def porcentaje_apalancamiento() -> float:
     try:
         from src.config import config
 
+        config.reload()
         bruto = config.get("fiado_apalancamiento_pct", APALANCAMIENTO_PCT_DEFAULT)
     except Exception:
         bruto = APALANCAMIENTO_PCT_DEFAULT
@@ -62,27 +64,36 @@ def plazo_dias_defecto() -> int:
     try:
         from src.config import config
 
+        config.reload()
         bruto = config.get("fiado_plazo_dias", PLAZO_DIAS_DEFAULT)
         return max(1, int(bruto))
     except Exception:
         return PLAZO_DIAS_DEFAULT
 
 
-def guardar_politicas(base_pct, apal_pct, plazo_dias=None) -> bool:
-    """Persiste ambos % y días de plazo en config.json."""
+def guardar_politicas_detalle(base_pct, apal_pct, plazo_dias=None) -> tuple[bool, str]:
+    """Envía políticas a la Maestra (única fuente de verdad) y replica al config local."""
     try:
-        from src.config import config
+        from src.central_red_global.sync_tienda.config_tienda import guardar_y_sincronizar
 
-        config.set("fiado_mantenimiento_pct", _clamp_pct(base_pct, MANTENIMIENTO_PCT_DEFAULT))
-        config.set("fiado_apalancamiento_pct", _clamp_pct(apal_pct, APALANCAMIENTO_PCT_DEFAULT))
+        cambios = {
+            "fiado_mantenimiento_pct": _clamp_pct(base_pct, MANTENIMIENTO_PCT_DEFAULT),
+            "fiado_apalancamiento_pct": _clamp_pct(apal_pct, APALANCAMIENTO_PCT_DEFAULT),
+        }
         if plazo_dias is not None:
             try:
-                config.set("fiado_plazo_dias", max(1, int(plazo_dias)))
+                cambios["fiado_plazo_dias"] = max(1, int(plazo_dias))
             except (TypeError, ValueError):
                 pass
-        return True
-    except Exception:
-        return False
+        return guardar_y_sincronizar(cambios)
+    except Exception as exc:
+        return False, str(exc) or "No se pudo guardar la política."
+
+
+def guardar_politicas(base_pct, apal_pct, plazo_dias=None) -> bool:
+    """Persiste y sincroniza políticas vía Maestra."""
+    ok, _err = guardar_politicas_detalle(base_pct, apal_pct, plazo_dias)
+    return bool(ok)
 
 
 def tarifar(deuda, dias=None) -> dict:

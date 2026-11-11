@@ -217,8 +217,13 @@ class DialogoFacturacion(QDialog):
 
     def _guardar(self):
         try:
+            from src.central_red_global.sync_tienda.config_tienda import guardar_y_sincronizar
+
+            ok_cuit, err_cuit = guardar_y_sincronizar({"business_cuit": self.txt_cuit.text().strip()})
+            if not ok_cuit:
+                QMessageBox.warning(self, "Sin conexión con Maestra", err_cuit or "No se pudo sincronizar el CUIT con la PC Maestra.")
+                return
             config.set("factura_electronica_mode", self.chk_arca_enabled.isChecked())
-            config.set("business_cuit", self.txt_cuit.text().strip())
             config.set("cert_key_path", self.txt_key.text().strip())
             config.set("cert_crt_path", self.txt_crt.text().strip())
             config.set("arca_sandbox_mode", self.chk_sandbox.isChecked())

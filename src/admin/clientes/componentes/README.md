@@ -8,7 +8,7 @@ Esta carpeta contiene los diálogos de la pantalla de cartera.
 
 `dialogo_promesa.py` fija o quita `promesa_fecha` / `promesa_nota` vía `cerebro.fijar_promesa` / `limpiar_promesa`. No escribe interés.
 
-`dialogo_politicas_credito.py` configura la regla interactiva de interés simple: tasa base mensual prorrateada por día sobre el capital pendiente, tasa de apalancamiento (+% extra por mora) y días de plazo acordados con previsualización en vivo.
+`dialogo_politicas_credito.py` configura la regla interactiva de interés simple: tasa base mensual prorrateada por día sobre el capital pendiente, tasa de apalancamiento (+% extra por mora) y días de plazo acordados con previsualización en vivo; sincroniza con la PC Maestra vía `config_tienda` para mantener una única fuente de verdad en todas las cajas. `_cargar_saldo` en `dialogo_historial_cliente.py` permite ingresar monto y motivo/nota editable para ajustes manuales auditables (ej. reverso de cobro duplicado sin borrar cobros de caja).
 
 `dialogo_cobros.py` es la planilla de abonos. Mismos chips de período + buscador con debounce. **Ticket cobro** = `COB-{id}`.
 

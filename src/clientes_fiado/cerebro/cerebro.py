@@ -221,6 +221,11 @@ class CerebroClientesFiado:
 
         return guardar_politicas(base_pct, apal_pct, plazo_dias)
 
+    def guardar_politicas_credito_detalle(self, base_pct, apal_pct, plazo_dias=None):
+        from src.clientes_fiado.oficina.barrial.mantenimiento import guardar_politicas_detalle
+
+        return guardar_politicas_detalle(base_pct, apal_pct, plazo_dias)
+
     def plazo_dias_politica(self):
         from src.clientes_fiado.oficina.barrial.mantenimiento import plazo_dias_defecto
 

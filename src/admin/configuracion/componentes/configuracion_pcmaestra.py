@@ -45,6 +45,7 @@ class DialogoConfiguracionCarteleria(QDialog):
 
         form = QFormLayout()
 
+        config.reload()
         # Nombre del Negocio
         self.txt_nombre = QLineEdit()
         self.txt_nombre.setText(config.get("business_name", "Carnicería"))
@@ -98,13 +99,20 @@ class DialogoConfiguracionCarteleria(QDialog):
         layout.addLayout(btn_layout)
 
     def _guardar(self):
-        config.set("business_name", self.txt_nombre.text().strip())
-        config.set("phone", self.txt_telefono.text().strip())
+        from src.central_red_global.sync_tienda.config_tienda import guardar_y_sincronizar
+
+        ok, err = guardar_y_sincronizar({
+            "business_name": self.txt_nombre.text().strip(),
+            "phone": self.txt_telefono.text().strip(),
+        })
+        if not ok:
+            QMessageBox.warning(self, "Sin conexión con Maestra", err or "No se pudo sincronizar nombre/teléfono con la Maestra.")
+            return
         config.set("carteleria_master_ip", self.txt_ip.text().strip())
         config.set("carteleria_rotacion", self.spin_rotacion.value())
         config.set("carteleria_tiempo_sos", self.spin_sos_tiempo.value())
         config.set("carteleria_frec_sos", self.spin_sos_frec.value())
         config.save()
 
-        QMessageBox.information(self, "Guardado", "La configuración de la cartelería se ha guardado correctamente.\n(Los cambios se reflejarán instantáneamente en la pantalla).")
+        QMessageBox.information(self, "Guardado", "La configuración de la cartelería se ha guardado y sincronizado correctamente.\n(Los cambios se reflejarán instantáneamente en la pantalla).")
         self.accept()
