@@ -139,3 +139,71 @@ def test_mariadb_controller_cuarentena_no_borra_datos(tmp_path):
     assert (b / "ibdata1").read_bytes() == b"ibdata"
     assert (b / "punpro_db" / "ventas.ibd").read_bytes() == b"ventas_reales"
     assert not (data_dir / "ibdata1").exists()
+
+
+def test_lan_server_health_endpoint(monkeypatch):
+    """El endpoint /health responde 200 ok o 503 degraded según disponibilidad real de BD."""
+    import json
+    import threading
+    import urllib.error
+    import urllib.request
+    from http.server import ThreadingHTTPServer
+
+    from src.central_red_global import lan_server
+    from src.central_red_global.servidor import puerto
+
+    monkeypatch.setattr(lan_server.db_manager, "is_master", True, raising=False)
+    monkeypatch.setattr(puerto, "needs_mariadb", lambda: False)
+    monkeypatch.setattr(puerto, "mariadb_port_open", lambda timeout=0.4: False)
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), lan_server.LANRequestHandler)
+    port = httpd.server_address[1]
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2.0) as resp:
+            assert resp.status == 200
+            data = json.loads(resp.read().decode("utf-8"))
+        assert data["status"] == "ok"
+        assert data["http_ok"] is True
+        assert data["db_ok"] is True
+        assert "uptime_sec" in data
+
+        monkeypatch.setattr(puerto, "needs_mariadb", lambda: True)
+        try:
+            urllib.request.urlopen(f"http://127.0.0.1:{port}/api/health", timeout=2.0)
+            assert False, "Debió responder 503 en estado degraded"
+        except urllib.error.HTTPError as err:
+            assert err.code == 503
+            degraded = json.loads(err.read().decode("utf-8"))
+            assert degraded["status"] == "degraded"
+            assert degraded["db_ok"] is False
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+
+
+def test_autostart_windows_com_in_worker_thread():
+    """is_windows_startup_enabled funciona en hilos secundarios sin error CoInitialize y usa caché."""
+    import threading
+
+    from src.central_red_global.servidor.autostart import windows as autostart_win
+
+    resultados = []
+    errores = []
+
+    def _run():
+        try:
+            resultados.append(autostart_win.is_windows_startup_enabled())
+            resultados.append(autostart_win.is_windows_startup_enabled())
+        except Exception as exc:
+            errores.append(exc)
+
+    hilo = threading.Thread(target=_run)
+    hilo.start()
+    hilo.join(timeout=5.0)
+    assert not errores
+    assert len(resultados) == 2
+    assert isinstance(resultados[0], bool)
+    assert resultados[0] == resultados[1]
+

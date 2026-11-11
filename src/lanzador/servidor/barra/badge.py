@@ -85,7 +85,10 @@ def _launch_server_async(lbl: QLabel) -> None:
             lbl._starting_async = False
             sig = getattr(lbl, "_badge_signal", None)
             if sig is not None:
-                sig.refreshed.emit()
+                try:
+                    sig.refreshed.emit()
+                except RuntimeError:
+                    pass
 
     threading.Thread(target=_worker, name="badge-start-server", daemon=True).start()
 

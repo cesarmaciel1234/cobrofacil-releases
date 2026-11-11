@@ -39,26 +39,43 @@ def _expected_startup_signature(cmd: list[str]) -> str:
 
 
 def _read_lnk_signature(path: str) -> str | None:
-    """Lee TargetPath y Arguments reales de un .lnk sin lanzar subprocesos."""
+    """Lee TargetPath y Arguments reales de un .lnk sin lanzar subprocesos (thread-safe COM)."""
+    coinit = False
     try:
+        import pythoncom
         import win32com.client
 
+        pythoncom.CoInitialize()
+        coinit = True
         ws = win32com.client.Dispatch("WScript.Shell")
         s = ws.CreateShortcut(path)
         tgt = os.path.normcase(os.path.abspath(str(s.TargetPath or ""))) if s.TargetPath else ""
         args = str(s.Arguments or "").strip()
+        s = None
+        ws = None
         if not tgt:
             return None
         return f"{tgt}|{args}"
     except Exception:
         return None
+    finally:
+        if coinit:
+            try:
+                import pythoncom
+                pythoncom.CoUninitialize()
+            except Exception:
+                pass
 
 
 def _create_shortcut_fast_or_ps(path: str, target: str, args: str, workdir: str, desc: str) -> bool:
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    coinit = False
     try:
+        import pythoncom
         import win32com.client
 
+        pythoncom.CoInitialize()
+        coinit = True
         ws = win32com.client.Dispatch("WScript.Shell")
         s = ws.CreateShortcut(path)
         s.TargetPath = target
@@ -67,10 +84,19 @@ def _create_shortcut_fast_or_ps(path: str, target: str, args: str, workdir: str,
         s.WindowStyle = 7
         s.Description = desc
         s.Save()
+        s = None
+        ws = None
         if os.path.exists(path):
             return True
     except Exception:
         pass
+    finally:
+        if coinit:
+            try:
+                import pythoncom
+                pythoncom.CoUninitialize()
+            except Exception:
+                pass
 
     path_ps = path.replace("'", "''")
     target_ps = target.replace("'", "''")
@@ -268,22 +294,35 @@ def asegurar_nombre_aviso() -> None:
         logger.warning(f"No se pudo nombrar el aviso del espejo: {e}")
 
 
+_LNK_CACHE: dict[str, tuple[float, str, bool]] = {}
+
+
 def is_windows_startup_enabled() -> bool:
     """Verifica existencia y que el TargetPath/Arguments del .lnk correspondan a la instalación actual."""
     if sys.platform != "win32":
         return False
     path = startup_shortcut_path()
-    if not os.path.exists(path):
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        _LNK_CACHE.pop(path, None)
         return False
     expected = _expected_startup_signature(build_server_command(background=True))
+    cached = _LNK_CACHE.get(path)
+    if cached is not None and cached[0] == mtime and cached[1] == expected:
+        return cached[2]
     sig = _read_lnk_signature(path)
     if sig is not None:
-        return sig == expected
+        ok = (sig == expected)
+        _LNK_CACHE[path] = (mtime, expected, ok)
+        return ok
     try:
         stamp = _startup_stamp_path()
         if os.path.isfile(stamp):
             with open(stamp, "r", encoding="utf-8") as f:
-                return f.read().strip() == expected
+                ok = (f.read().strip() == expected)
+                _LNK_CACHE[path] = (mtime, expected, ok)
+                return ok
     except OSError:
         pass
     return True
