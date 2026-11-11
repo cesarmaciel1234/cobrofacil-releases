@@ -9,6 +9,7 @@ en subprocesos independientes sin colisionar ni cerrarse entre sí.
 import os
 import sys
 import subprocess
+import threading
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                               QFrame, QPushButton, QMessageBox)
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint, QEvent, QTimer
@@ -239,6 +240,7 @@ class ProfileCard(QFrame):
 
 class PerfilPantalla(QDialog):
     perfil_seleccionado = pyqtSignal(str)
+    _server_checked = pyqtSignal()
 
     _ROLES = ["cajero", "admin", "jefe", "carteleria", "contabilidad"]
 
@@ -250,6 +252,8 @@ class PerfilPantalla(QDialog):
         self._max_reintentos = 3
         self.selected_index = 0
         self._roles_bloqueados = set()
+        self._server_ensure_lock = threading.Lock()
+        self._server_checked.connect(self._refresh_server_badge)
 
         self.setObjectName("PerfilPantalla")
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
@@ -444,16 +448,24 @@ class PerfilPantalla(QDialog):
             self.lbl_server_badge.setText("Servidor: ?")
 
     def _auto_ensure_server_if_offline(self):
-        try:
-            from src.lanzador.servidor import asegurar_servidor_si_maestra
+        if not self._server_ensure_lock.acquire(blocking=False):
+            return
 
-            asegurar_servidor_si_maestra()
-            self._refresh_server_badge()
-        except Exception:
+        def _worker():
             try:
-                self._refresh_server_badge()
+                from src.lanzador.servidor import asegurar_servidor_si_maestra
+
+                asegurar_servidor_si_maestra()
             except Exception:
                 pass
+            finally:
+                self._server_ensure_lock.release()
+                try:
+                    self._server_checked.emit()
+                except Exception:
+                    pass
+
+        threading.Thread(target=_worker, name="hub-watchdog-servidor", daemon=True).start()
 
     def _on_server_badge_click(self):
         try:

@@ -16,10 +16,14 @@ def _python_sin_consola() -> str:
     return exe
 
 
-def build_server_command() -> list[str]:
+def build_server_command(background: bool = False) -> list[str]:
     if getattr(sys, "frozen", False):
-        return [os.path.abspath(sys.executable), "--server"]
-    main_py = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "..", "main.py")
-    )
-    return [_python_sin_consola(), main_py, "--server"]
+        cmd = [os.path.abspath(sys.executable), "--server"]
+    else:
+        main_py = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "main.py")
+        )
+        cmd = [_python_sin_consola(), main_py, "--server"]
+    if background:
+        cmd.append("--background")
+    return cmd

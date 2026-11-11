@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import sys
+import threading
 
 from src.logger import logger
 from src.central_red_global.servidor.arranque.servicios import encender_servicios_tienda
@@ -15,7 +17,8 @@ from src.utils.candados import (
 )
 
 
-def run_store_server_app(app) -> int:
+def run_store_server_app(app, background: bool = False) -> int:
+    background = bool(background) or ('--background' in sys.argv)
     # Si la última ventana se oculta, Qt cierra el proceso. La bandeja tiene que seguir.
     app.setQuitOnLastWindowClosed(False)
     try:
@@ -24,7 +27,7 @@ def run_store_server_app(app) -> int:
         asegurar_nombre_aviso()
     except Exception:
         pass
-    from PyQt6.QtCore import QTimer
+    from PyQt6.QtCore import QObject, QTimer, pyqtSignal
     from PyQt6.QtGui import QAction
     from PyQt6.QtWidgets import (
         QApplication,
@@ -101,48 +104,64 @@ def run_store_server_app(app) -> int:
         tray.activated.connect(_on_tray)
         win._tray_quit_action = act_quit
     else:
-        win.show()
+        if background:
+            win.showMinimized()
+        else:
+            win.show()
         win._tray_quit_action = None
 
-    def _refresh_status():
+    class _WatchdogSignals(QObject):
+        estado = pyqtSignal(str, str)
+
+    _wd_signals = _WatchdogSignals(win)
+    _wd_signals.estado.connect(poner_estado)
+    _wd_lock = threading.Lock()
+
+    def _compute_status_tuple() -> tuple[str, str]:
         pid = get_store_server_pid() or os.getpid()
         if oficio() == "esclava":
-            poner_estado(f"ESCLAVA  ·  PID {pid}  ·  espejo en marcha", "esclava")
-            return
+            return (f"ESCLAVA  ·  PID {pid}  ·  espejo en marcha", "esclava")
         online = mariadb_port_open() if needs_mariadb() else True
         if online:
-            poner_estado(f"ONLINE  ·  PID {pid}  ·  tienda visible en la red", "ok")
-        else:
-            poner_estado(f"DEGRADADO  ·  PID {pid}  ·  MariaDB no responde", "aviso")
+            return (f"ONLINE  ·  PID {pid}  ·  tienda visible en la red", "ok")
+        return (f"DEGRADADO  ·  PID {pid}  ·  MariaDB no responde", "aviso")
 
-    def _watchdog():
-        if not vigila_mariadb():
+    def _watchdog_worker():
+        try:
+            if not vigila_mariadb():
+                try:
+                    cumplir_esclava()
+                except Exception:
+                    pass
+                _wd_signals.estado.emit(*_compute_status_tuple())
+                return
+            if needs_mariadb() and not mariadb_port_open():
+                logger.warning("Watchdog Servidor: MariaDB caída — reintentando start_server()")
+                try:
+                    from src.services.mariadb_controller import mariadb_controller
+
+                    mariadb_controller.start_server()
+                    from src.base_de_datos.database import db
+                    if getattr(db, "db_engine_type", "sqlite") == "sqlite":
+                        db.reconectar_mariadb("127.0.0.1")
+                        db._create_tables()
+                        db._migrate_db()
+                except Exception as e:
+                    logger.error(f"Watchdog MariaDB: {e}")
             try:
-                cumplir_esclava()
+                from src.central_red_global.master_presence import ensure_master_lan_presence
+
+                ensure_master_lan_presence()
             except Exception:
                 pass
-            _refresh_status()
+            _wd_signals.estado.emit(*_compute_status_tuple())
+        finally:
+            _wd_lock.release()
+
+    def _watchdog():
+        if not _wd_lock.acquire(blocking=False):
             return
-        if needs_mariadb() and not mariadb_port_open():
-            logger.warning("Watchdog Servidor: MariaDB caída — reintentando start_server()")
-            try:
-                from src.services.mariadb_controller import mariadb_controller
-
-                mariadb_controller.start_server()
-                from src.base_de_datos.database import db
-                if getattr(db, "db_engine_type", "sqlite") == "sqlite":
-                    db.reconectar_mariadb("127.0.0.1")
-                    db._create_tables()
-                    db._migrate_db()
-            except Exception as e:
-                logger.error(f"Watchdog MariaDB: {e}")
-        try:
-            from src.central_red_global.master_presence import ensure_master_lan_presence
-
-            ensure_master_lan_presence()
-        except Exception:
-            pass
-        _refresh_status()
+        threading.Thread(target=_watchdog_worker, name="servidor-watchdog", daemon=True).start()
 
     def _shutdown_store():
         from src.central_red_global.servidor.ventana.clave import pedir_clave
@@ -266,18 +285,27 @@ def run_store_server_app(app) -> int:
     timer.start(10000)
     QTimer.singleShot(200, _watchdog)
 
-    win.show()
-    win.raise_()
-    win.activateWindow()
-    if tray:
-        tray.showMessage(
-            "Servidor Cobro Fácil",
-            "Ventana abierta. Ocultar en bandeja lo deja junto al reloj."
-            if esclava
-            else "MariaDB y red LAN en marcha. Podés minimizarlo a la bandeja.",
-            QSystemTrayIcon.MessageIcon.Information,
-            4000,
-        )
+    if background and tray:
+        try:
+            consola.pausar()
+        except Exception:
+            pass
+        win.hide()
+    elif background:
+        win.showMinimized()
+    else:
+        win.show()
+        win.raise_()
+        win.activateWindow()
+        if tray:
+            tray.showMessage(
+                "Servidor Cobro Fácil",
+                "Ventana abierta. Ocultar en bandeja lo deja junto al reloj."
+                if esclava
+                else "MariaDB y red LAN en marcha. Podés minimizarlo a la bandeja.",
+                QSystemTrayIcon.MessageIcon.Information,
+                4000,
+            )
 
     if vigila_mariadb():
         try:

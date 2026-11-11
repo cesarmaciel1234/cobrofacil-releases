@@ -305,7 +305,6 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             config.set("db_engine", "mariadb")
             config.set("carteleria_master_ip", host)
             config.set("carteleria_is_slave", True)
-            config.set("auto_start_store_server", False)
             config.data["preferred_master_ip"] = host
             config.save()
         except Exception:

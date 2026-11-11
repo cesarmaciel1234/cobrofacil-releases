@@ -69,6 +69,32 @@ def pedir_bajada() -> None:
 _nodo_en_linea: bool | None = None
 
 
+def _esclava_heartbeat_path() -> str:
+    import os
+    from src.utils.paths import get_base_path
+    return os.path.join(get_base_path(), 'locks', 'esclava_heartbeat.txt')
+
+def _touch_esclava_heartbeat() -> None:
+    try:
+        import os
+        path = _esclava_heartbeat_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(str(time.time()))
+    except Exception:
+        pass
+
+def esclava_heartbeat_fresco(max_age_sec: float = 180.0) -> bool:
+    try:
+        import os
+        path = _esclava_heartbeat_path()
+        if not os.path.isfile(path):
+            return True  # Compat si aún no escribió el primer pulso
+        age = time.time() - os.path.getmtime(path)
+        return age <= max_age_sec
+    except Exception:
+        return True
+
 def _bajar_lo_que_falta() -> None:
     """Una vuelta del espejo. Si falla, la copia queda y esta función no levanta error."""
     try:
@@ -125,10 +151,13 @@ def _esperar_turno(visto: int) -> int:
 
 
 def _vuelta_espejo() -> None:
+    _touch_esclava_heartbeat()
     visto = 0
     time.sleep(PAUSA_PRIMERA_SEG)
     while True:
+        _touch_esclava_heartbeat()
         _paso_nodo()
+        _touch_esclava_heartbeat()
         visto = _esperar_turno(visto)
 
 
@@ -191,6 +220,7 @@ def _prender(nombre: str, target, actual: threading.Thread | None) -> threading.
 def cumplir_esclava() -> None:
     """Prende el espejo, la tele y la subida de la cola. No abre MariaDB."""
     global _hilo, _hilo_carteleria, _hilo_cola
+    _touch_esclava_heartbeat()
     with _guardia:
         _hilo = _prender("oficio-esclava", _vuelta_espejo, _hilo)
         _hilo_carteleria = _prender("oficio-carteleria", _vuelta_carteleria, _hilo_carteleria)

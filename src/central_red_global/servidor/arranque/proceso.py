@@ -9,7 +9,12 @@ import time
 
 from src.logger import logger
 from src.central_red_global.servidor.comando import build_server_command
-from src.central_red_global.servidor.puerto import mariadb_port_open, needs_mariadb
+from src.central_red_global.servidor.puerto import (
+    http_health_ok,
+    lan_port_open,
+    mariadb_port_open,
+    needs_mariadb,
+)
 from src.utils.candados import (
     heal_store_server_lock_from_process,
     is_store_server_running,
@@ -19,7 +24,7 @@ from src.utils.candados import (
 )
 
 
-def ensure_store_server_process(timeout_sec: float = 45.0) -> bool:
+def ensure_store_server_process(timeout_sec: float = 45.0, *, background: bool = True) -> bool:
     try:
         from src.updater.silent_auto_updater import is_apply_guard_active
 
@@ -29,12 +34,13 @@ def ensure_store_server_process(timeout_sec: float = 45.0) -> bool:
     except Exception:
         pass
 
-    if is_store_server_running():
+    if is_store_server_online():
         return True
 
-    if heal_store_server_lock_from_process() is not None:
-        logger.info("Servidor de Tienda ya vivo — candado sanado.")
-        return True
+    if is_store_server_running() or heal_store_server_lock_from_process() is not None:
+        # Proceso vivo pero salud aún levantando; esperar brevemente antes de concluir
+        if not needs_mariadb() or (mariadb_port_open() and lan_port_open()):
+            return True
 
     if not try_acquire_store_server_spawn_guard():
         logger.info("Otro proceso ya está lanzando el Servidor — esperando…")
@@ -42,16 +48,24 @@ def ensure_store_server_process(timeout_sec: float = 45.0) -> bool:
         while time.time() < deadline:
             if is_store_server_running() or list_store_server_pids():
                 heal_store_server_lock_from_process()
-                if not needs_mariadb() or mariadb_port_open() or is_store_server_running():
+                if not needs_mariadb() or (mariadb_port_open() and lan_port_open()):
                     return True
             time.sleep(0.4)
         return is_store_server_running()
 
     try:
         if is_store_server_running() or heal_store_server_lock_from_process() is not None:
-            return True
+            if not needs_mariadb() or (mariadb_port_open() and lan_port_open()):
+                return True
+            # Si el proceso existe pero lleva tiempo sin responder, esperar un poco
+            deadline = time.time() + min(timeout_sec, 15.0)
+            while time.time() < deadline:
+                if mariadb_port_open() and lan_port_open():
+                    return True
+                time.sleep(0.4)
+            return is_store_server_running()
 
-        cmd = build_server_command()
+        cmd = build_server_command(background=background)
         logger.info(f"Arrancando Servidor de Tienda: {cmd}")
         try:
             flags = 0
@@ -89,13 +103,16 @@ def ensure_store_server_process(timeout_sec: float = 45.0) -> bool:
                 else:
                     time.sleep(0.4)
                     continue
-            if not needs_mariadb() or mariadb_port_open():
-                logger.info("Servidor de Tienda ONLINE.")
+            if not needs_mariadb():
+                logger.info("Servidor Esclava ONLINE.")
+                return True
+            if mariadb_port_open() and lan_port_open():
+                logger.info("Servidor de Tienda ONLINE (MariaDB + LAN).")
                 return True
             time.sleep(0.4)
 
         if is_store_server_running():
-            logger.warning("Servidor de Tienda vivo pero MariaDB aún no responde en 3306.")
+            logger.warning("Servidor de Tienda vivo pero MariaDB/LAN aún no responden completamente.")
             return True
         logger.error("Timeout esperando Servidor de Tienda.")
         return False
@@ -107,5 +124,13 @@ def is_store_server_online() -> bool:
     if not is_store_server_running():
         return False
     if needs_mariadb():
-        return mariadb_port_open()
-    return True
+        if not mariadb_port_open():
+            return False
+        # Readiness real: comprobar /health en HTTP :8000 o al menos puerto abierto
+        return http_health_ok() or lan_port_open()
+    try:
+        from src.central_red_global.servidor.oficio.agente import esclava_heartbeat_fresco
+
+        return bool(esclava_heartbeat_fresco())
+    except Exception:
+        return True

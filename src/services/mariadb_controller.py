@@ -1,8 +1,11 @@
 import os
+import socket
 import subprocess
 import threading
 import time
+from datetime import datetime
 from src.logger import logger
+
 
 class MariaDBController:
     """Controlador para administrar el ciclo de vida del servidor MariaDB Portable."""
@@ -14,6 +17,8 @@ class MariaDBController:
             cls._instance = super(MariaDBController, cls).__new__(cls)
             cls._instance._process = None
             cls._initialized = False
+            cls._instance._firewall_attempted = False
+            cls._instance._start_lock = threading.Lock()
         return cls._instance
 
     def _get_base_dir(self):
@@ -30,6 +35,58 @@ class MariaDBController:
         mysql_install_db_exe = os.path.join(bin_dir, "mysql_install_db.exe")
 
         return server_dir, data_dir, mysqld_exe, mysql_install_db_exe
+
+    @staticmethod
+    def _is_port_open(port: int = 3306, timeout: float = 0.8) -> bool:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(timeout)
+                return s.connect_ex(("127.0.0.1", port)) == 0
+        except Exception:
+            return False
+
+    def _find_err_file(self, data_dir: str) -> str | None:
+        if not os.path.exists(data_dir):
+            return None
+        for f in os.listdir(data_dir):
+            if f.endswith(".err"):
+                return os.path.join(data_dir, f)
+        return None
+
+    def _stop_own_zombies(self, mysqld_exe: str) -> None:
+        """Apaga solo instancias mysqld.exe pertenecientes a este directorio, primero de forma limpia."""
+        target = os.path.normcase(os.path.abspath(mysqld_exe))
+        own_procs = []
+        try:
+            import psutil
+            for proc in psutil.process_iter(["pid", "name", "exe"]):
+                try:
+                    name = (proc.info.get("name") or "").lower()
+                    if name != "mysqld.exe":
+                        continue
+                    exe_path = os.path.normcase(os.path.abspath(proc.info.get("exe") or ""))
+                    if exe_path == target:
+                        own_procs.append(proc)
+                except Exception:
+                    continue
+        except Exception:
+            own_procs = []
+
+        if not own_procs:
+            return
+
+        # Intentar apagado ordenado con mysqladmin antes de cualquier kill
+        self.stop_server()
+        for p in own_procs:
+            try:
+                if p.is_running():
+                    p.terminate()
+                    p.wait(timeout=3)
+            except Exception:
+                try:
+                    p.kill()
+                except Exception:
+                    pass
 
     def _init_database_if_needed(self):
         server_dir, data_dir, mysqld_exe, mysql_install_db_exe = self._get_server_paths()
@@ -50,7 +107,7 @@ class MariaDBController:
                     cwd=os.path.dirname(mysql_install_db_exe),
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                    check=True
+                    check=True,
                 )
                 logger.info("MariaDB inicializado correctamente.")
             except Exception as e:
@@ -59,14 +116,18 @@ class MariaDBController:
 
         return True
 
-    def _ensure_firewall(self):
-        """Asegura reglas LAN (3306/8000/37020…). Si faltan, pide UAC y espera resultado."""
+    def _ensure_firewall(self, force: bool = False):
+        """Asegura reglas LAN (3306/8000/37020…). Evita disparar UAC repetidamente en bucles watchdog."""
         try:
             from src.tools.setup_firewall import elevate_and_install, rules_installed
 
             if rules_installed():
                 logger.info("Firewall LAN: reglas TPV_CajaFacil_* OK.")
                 return True
+
+            if self._firewall_attempted and not force:
+                return False
+            self._firewall_attempted = True
 
             logger.info(
                 "Reglas de Firewall LAN no encontradas. "
@@ -86,50 +147,67 @@ class MariaDBController:
             logger.error(f"Fallo al intentar auto-configurar firewall: {e}")
             return False
 
+    def _quarantine_corrupt_files(self, server_dir: str, data_dir: str) -> str:
+        """Mueve archivos dañados de InnoDB a un respaldo con timestamp en lugar de borrarlos."""
+        import shutil
+        import stat
+
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_dir = os.path.join(server_dir, f"corrupt_backup_{ts}")
+        os.makedirs(backup_dir, exist_ok=True)
+
+        for item in ["ibdata1", "ib_logfile0", "ib_logfile1", "punpro_db"]:
+            src_path = os.path.join(data_dir, item)
+            if not os.path.exists(src_path):
+                continue
+            dst_path = os.path.join(backup_dir, item)
+            try:
+                if os.path.isfile(src_path):
+                    try:
+                        os.chmod(src_path, stat.S_IWRITE)
+                    except Exception:
+                        pass
+                shutil.move(src_path, dst_path)
+                logger.warning(f"Resguardado por cuarentena InnoDB: {src_path} -> {dst_path}")
+            except Exception as e:
+                logger.error(f"No se pudo resguardar {item} a cuarentena: {e}")
+        return backup_dir
+
     def start_server(self, _repair_attempt=0):
         """Inicia el servidor MariaDB en segundo plano si no está corriendo."""
-        self._ensure_firewall()
+        with self._start_lock:
+            return self._start_server_locked(_repair_attempt=_repair_attempt)
+
+    def _start_server_locked(self, _repair_attempt=0):
+        self._ensure_firewall(force=False)
 
         if self._process is not None and self._process.poll() is None:
             logger.info("MariaDB ya está corriendo en este proceso.")
             return True
 
         # Verificar si ya hay un servidor MariaDB local escuchando y respondiendo
-        try:
-            import pymysql
-            # Intentar conexión rápida con la contraseña '1234'
-            conn = pymysql.connect(
-                host="127.0.0.1",
-                port=3306,
-                user="root",
-                password="1234",
-                connect_timeout=2
-            )
-            conn.close()
-            logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306 (con contraseña).")
-            self._initialized = True
-            self._create_punpro_db()
-            return True
-        except Exception:
-            pass
+        for pwd, label in (("1234", "con contraseña"), ("", "sin contraseña")):
+            try:
+                import pymysql
+                conn = pymysql.connect(
+                    host="127.0.0.1",
+                    port=3306,
+                    user="root",
+                    password=pwd,
+                    connect_timeout=2,
+                )
+                conn.close()
+                logger.info(f"Servidor MariaDB ya está activo y respondiendo en el puerto 3306 ({label}).")
+                self._initialized = True
+                self._create_punpro_db()
+                return True
+            except Exception:
+                pass
 
-        try:
-            import pymysql
-            # Intentar conexión rápida sin contraseña
-            conn = pymysql.connect(
-                host="127.0.0.1",
-                port=3306,
-                user="root",
-                password="",
-                connect_timeout=2
-            )
-            conn.close()
-            logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306 (sin contraseña).")
-            self._initialized = True
-            self._create_punpro_db()
-            return True
-        except Exception:
-            pass
+        # Si el puerto 3306 ya está abierto pero PyMySQL falló (ej. recovery/carga), NO matar mysqld.exe
+        if self._is_port_open(3306, timeout=0.8):
+            logger.warning("Puerto 3306 ya está en uso o en recuperación; se omite reinicio forzoso.")
+            return False
 
         if not self._init_database_if_needed():
             return False
@@ -138,15 +216,13 @@ class MariaDBController:
 
         logger.info("Arrancando servidor MariaDB Portable en puerto 3306...")
         try:
-            # Asegurar que no hay un mysqld.exe zombie colgando del puerto 3306
-            subprocess.run(["taskkill", "/F", "/IM", "mysqld.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self._stop_own_zombies(mysqld_exe)
 
-            # Iniciamos mysqld apuntando a nuestro datadir
+            err_file = self._find_err_file(data_dir)
+            err_offset = os.path.getsize(err_file) if err_file and os.path.exists(err_file) else 0
+
             # Evitamos que se abra una ventana de comandos en Windows usando CREATE_NO_WINDOW
             creationflags = 0x08000000  # CREATE_NO_WINDOW
-
-            # Firewall real (con UAC) — el netsh sin admin fallaba en silencio
-            self._ensure_firewall()
 
             self._process = subprocess.Popen(
                 [
@@ -155,12 +231,12 @@ class MariaDBController:
                     "--port=3306",
                     "--bind-address=0.0.0.0",
                     "--skip-networking=OFF",
-                    "--skip-name-resolve"
+                    "--skip-name-resolve",
                 ],
                 cwd=os.path.dirname(mysqld_exe),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                creationflags=creationflags
+                creationflags=creationflags,
             )
 
             # Verificar si el proceso murió inmediatamente
@@ -169,91 +245,51 @@ class MariaDBController:
                 return False
 
             # Esperar a que el puerto 3306 este listo usando un polling inteligente
-            import time
-            import socket
-
-            max_retries = 40 # 20 segundos máximo para evitar bloqueos (en PCs lentas MariaDB tarda en iniciar)
+            max_retries = 40  # 20 segundos máximo
             connected = False
             for i in range(max_retries):
-                try:
-                    # Mantenemos viva la animación (el event loop corre en main)
-                    pass
-
-                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    s.settimeout(0.5)
-                    result = s.connect_ex(("127.0.0.1", 3306))
-                    s.close()
-                    if result == 0:
-                        logger.info(f"MariaDB listo despues de {i*0.5} segundos.")
-                        connected = True
-                        break
-                except:
-                    pass
+                if self._process.poll() is not None:
+                    logger.error("mysqld.exe terminó antes de abrir el puerto 3306.")
+                    break
+                if self._is_port_open(3306, timeout=0.5):
+                    logger.info(f"MariaDB listo despues de {i * 0.5} segundos.")
+                    connected = True
+                    break
                 time.sleep(0.5)
 
             if not connected:
                 logger.error("MariaDB no abrio el puerto a tiempo. Abortando inicializacion.")
-                # Autoreparación por corrupción de InnoDB / Tablespace
-                err_file = None
-                if os.path.exists(data_dir):
-                    for f in os.listdir(data_dir):
-                        if f.endswith(".err"):
-                            err_file = os.path.join(data_dir, f)
-                            break
+                err_file = err_file or self._find_err_file(data_dir)
                 if err_file and os.path.exists(err_file):
                     try:
+                        size_now = os.path.getsize(err_file)
+                        read_from = err_offset if size_now >= err_offset else 0
                         with open(err_file, "r", errors="ignore") as f:
-                            content = f.read()
-                        if "Tablespace" in content or "Plugin 'InnoDB'" in content or "Unknown/unsupported storage engine" in content:
-                            logger.warning("🚨 Corrupción detectada en InnoDB (Tablespace perdido/dañado). Aplicando auto-reparación...")
-                            self.stop_server()
-                            import shutil
-                            import stat
-                            def remove_readonly(func, path, excinfo):
-                                try:
-                                    os.chmod(path, stat.S_IWRITE)
-                                    func(path)
-                                except:
-                                    pass
-
-                            # Forzar kill de mysqld para liberar locks antes de borrar
-                            subprocess.run(["taskkill", "/F", "/IM", "mysqld.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                            time.sleep(1.5)
-
-                            for item in ["ibdata1", "ib_logfile0", "ib_logfile1", "punpro_db"]:
-                                p = os.path.join(data_dir, item)
-                                if os.path.exists(p):
-                                    try:
-                                        if os.path.isdir(p):
-                                            shutil.rmtree(p, onerror=remove_readonly)
-                                        else:
-                                            try:
-                                                os.chmod(p, stat.S_IWRITE)
-                                            except:
-                                                pass
-                                            os.remove(p)
-                                        logger.info(f"Eliminado archivo/carpeta corrupto: {item}")
-                                    except Exception as e:
-                                        logger.error(f"No se pudo eliminar {item}: {e}")
-                            try:
-                                with open(err_file, "w") as f:
-                                    f.write("")
-                            except:
-                                pass
-                            logger.info("Reintentando iniciar MariaDB después de auto-reparación...")
-                            if _repair_attempt > 2:
+                            f.seek(read_from)
+                            new_content = f.read()
+                        if (
+                            "Tablespace" in new_content
+                            or "Plugin 'InnoDB'" in new_content
+                            or "Unknown/unsupported storage engine" in new_content
+                        ):
+                            logger.warning(
+                                "🚨 Corrupción nueva detectada en InnoDB durante este arranque. "
+                                "Moviendo archivos a respaldo de cuarentena..."
+                            )
+                            self._stop_own_zombies(mysqld_exe)
+                            time.sleep(1.0)
+                            self._quarantine_corrupt_files(server_dir, data_dir)
+                            logger.info("Reintentando iniciar MariaDB después de cuarentena segura...")
+                            if _repair_attempt >= 2:
                                 logger.error("No se pudo reparar la base de datos de manera automatica.")
                                 return False
-                            return self.start_server(_repair_attempt + 1)
+                            return self._start_server_locked(_repair_attempt + 1)
                     except Exception as ex:
                         logger.error(f"Error durante auto-reparacion de base de datos: {ex}")
                 return False
 
             self._initialized = True
-
-            # Aqui creamos la base de datos 'punpro_db' si no existe, a través de mysql.exe
             self._create_punpro_db()
-
             return True
 
         except Exception as e:
@@ -274,7 +310,7 @@ class MariaDBController:
                 user="root",
                 password="1234",
                 database="punpro_db",
-                connect_timeout=0.5
+                connect_timeout=0.5,
             )
             conn.close()
             logger.info("Base de datos punpro_db ya está garantizada en MariaDB local (conexión rápida OK).")
@@ -299,7 +335,6 @@ class MariaDBController:
         creationflags = 0x08000000
 
         def _wait_responsive(proc, timeout_sec):
-            import time
             start = time.time()
             while proc.poll() is None:
                 if time.time() - start > timeout_sec:
@@ -315,7 +350,7 @@ class MariaDBController:
                 cwd=os.path.dirname(mysql_exe),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                creationflags=creationflags
+                creationflags=creationflags,
             )
             success = _wait_responsive(process, 15)
             if success:
@@ -331,7 +366,7 @@ class MariaDBController:
                 cwd=os.path.dirname(mysql_exe),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                creationflags=creationflags
+                creationflags=creationflags,
             )
             success = _wait_responsive(process, 15)
             if success:
@@ -377,5 +412,6 @@ class MariaDBController:
                     pass
         self._process = None
         self._initialized = False
+
 
 mariadb_controller = MariaDBController()

@@ -464,6 +464,10 @@ if __name__ == "__main__":
         help="Proceso Servidor de Tienda (MariaDB + LAN + presencia)",
     )
     parser.add_argument(
+        "--background", action="store_true",
+        help="Inicia --server silencioso en la bandeja del sistema sin robar foco",
+    )
+    parser.add_argument(
         "--updater", action="store_true",
         help="Proceso actualizador autÃ³nomo (solo descarga/stage; no UI de venta)",
     )
@@ -535,7 +539,7 @@ if __name__ == "__main__":
             app._network_engine_shutdown_hook = True
 
         # El tema claro del día pinta QWidget y las tablas de blanco. Esta ventana trae su hoja.
-        code = run_store_server_app(app)
+        code = run_store_server_app(app, background=bool(getattr(parsed_args, 'background', False)))
         app_exit_event.set()
         sys.exit(code if code is not None else 0)
 

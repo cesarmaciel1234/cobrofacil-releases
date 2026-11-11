@@ -4,6 +4,7 @@ import socket
 import os
 import hashlib
 import uuid
+import time
 from decimal import Decimal
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from src.logger import logger
@@ -61,6 +62,7 @@ def _payload_reporte():
 
 
 API_PORT = 8000
+_SERVER_START_TIME = time.time()
 UDP_PORT = 37020
 
 lan_exit_event = threading.Event()
@@ -262,7 +264,26 @@ class LANRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if manejar_get(self, self.path):
             return
-        if self.path == '/api/ping':
+        if self.path in ('/health', '/api/health'):
+            mode = 'MAESTRA' if getattr(db_manager, 'is_master', True) else 'ESCLAVA'
+            eng = str(getattr(db_manager, 'db_engine_type', 'sqlite') or 'sqlite').lower()
+            db_ok = True
+            if mode == 'MAESTRA':
+                try:
+                    from src.central_red_global.servidor.puerto import mariadb_port_open, needs_mariadb
+                    db_ok = (not needs_mariadb()) or mariadb_port_open(timeout=0.4)
+                except Exception:
+                    db_ok = eng == 'mariadb'
+            status_code = 200 if db_ok else 503
+            self._send_response(status_code, {
+                'status': 'ok' if db_ok else 'degraded',
+                'mode': mode,
+                'engine': eng,
+                'db_ok': db_ok,
+                'http_ok': True,
+                'uptime_sec': round(time.time() - _SERVER_START_TIME, 1),
+            })
+        elif self.path == '/api/ping':
             mode = "MAESTRA" if getattr(db_manager, "is_master", True) else "ESCLAVA"
             self._send_response(200, {"status": "ok", "mode": mode, "hostname": socket.gethostname()})
         elif self.path == '/api/live_scan':

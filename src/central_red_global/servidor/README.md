@@ -2,26 +2,21 @@
 
 ## Qué hace
 
-`src/central_red_global/lan_server.py` publica la API HTTP para las cajas y el descubrimiento UDP para encontrar la maestra. Esta carpeta organiza el arranque, el rol (maestra/esclava), la presencia y la ventana del proceso `--server`.
+`src/central_red_global/lan_server.py` publica la API HTTP para las cajas (`/health`, `/api/ping`, sync) y el descubrimiento UDP para encontrar la maestra. Esta carpeta organiza el arranque, el rol (maestra/esclava), la presencia, el autoarranque en Windows (`autostart/windows.py`) y la ventana del proceso `--server`.
 
 ## Funciones principales
 
-- `init_lan_server()`: inicia una sola supervisión para HTTP y UDP.
-- `start_http_server()`: atiende peticiones API en paralelo, con un máximo de 32 solicitudes activas. Al fallar el enlace o el servicio, informa y reintenta cada cinco segundos.
-- `start_udp_discovery_server()`: responde a descubrimientos de la tienda y vuelve a enlazar el puerto si el servicio se interrumpe.
-- `stop_lan_server()`: solicita un apagado ordenado.
-- `servidor/oficio/`: decide qué tareas corresponden a la maestra o a la esclava.
-- `servidor/arranque/`: inicia servicios y proceso; `servidor/ventana/` solo los muestra y permite controlarlos.
+- `init_lan_server()`: inicia una sola supervisión para HTTP (`8000`) y UDP (`37020`).
+- `GET /health` y `/api/health`: endpoint de readiness que verifica HTTP + estado de MariaDB local (devuelve `200 ok` o `503 degraded`).
+- `is_os_autostart_enabled()` / `set_os_autostart(True)`: verifica ruta exacta del acceso directo en `Startup\CobroFacil_ServidorTienda.lnk` y registra la Tarea Programada `CobroFacil_ServidorTienda` (`ONLOGON`, reinicio automático ante fallo, sin límite de tiempo).
+- `servidor/oficio/agente.py`: mantiene `esclava_heartbeat.txt` en cada vuelta del espejo.
 
 ## Cómo funciona
 
-La maestra expone su API en TCP 8000 y escucha descubrimientos en UDP 37020. Las solicitudes HTTP se sirven con hilos limitados para que una conexión lenta no bloquee a todas las cajas y para no crear un número ilimitado de hilos. Si no puede abrir un puerto o el bucle del servidor se detiene, el supervisor conserva el proceso y reintenta. Una IP configurada que pertenece a esta misma PC no cuenta como maestra remota. La esclava no debe iniciar estos servicios como si fuera titular; la conversión explícita a MAESTRA valida MariaDB local, normaliza el host y relanza el proceso con el oficio correcto.
-
-El límite de concurrencia no reemplaza MariaDB ni una prueba de carga. Antes de una actualización de producción, probar con varias cajas y con MariaDB real.
+La maestra expone su API en TCP 8000 y escucha descubrimientos en UDP 37020. Al iniciar desde Windows o desde el watchdog del Lanzador, el proceso `--server --background` corre silencioso en la bandeja del sistema. Incluso en PCs esclavas, `auto_heal` conserva `auto_start_store_server` habilitado para mantener vivo el espejo.
 
 ## Qué no debe cambiarse
 
 - No anunciar como maestra un puesto esclavo ni una base SQLite.
-- No borrar colas offline al detener o reiniciar el servidor.
-- No convertir un error de servicio en una respuesta exitosa.
-- Mantener acotada la concurrencia del servidor HTTP.
+- No borrar colas offline ni carpetas de datos (`punpro_db`) automáticamente ante un fallo de arranque.
+- Mantener acotada la concurrencia del servidor HTTP (`_HTTP_WORKERS = 32`).
