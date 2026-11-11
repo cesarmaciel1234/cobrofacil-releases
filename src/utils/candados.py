@@ -160,7 +160,8 @@ def _is_our_process(pid: int) -> bool:
             PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
             h = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, int(pid))
             if not h:
-                return False
+                svc_pid = _windows_service_pid()
+                return bool(svc_pid and int(pid) == int(svc_pid))
             try:
                 buf = ctypes.create_unicode_buffer(260)
                 size = wintypes.DWORD(260)
@@ -250,6 +251,21 @@ def release_master_launcher_lock():
 _NOMBRES_SERVIDOR = ("cobrofacil_pos.exe", "python.exe", "pythonw.exe")
 
 
+def _windows_service_pid() -> int | None:
+    """PID del servicio Windows Session 0 si está corriendo en SCM (funciona sin Admin)."""
+    if sys.platform != "win32":
+        return None
+    try:
+        from src.central_red_global.servidor.servicio_windows.gestor import estado_servicio_windows
+
+        est = estado_servicio_windows()
+        if est.get("en_ejecucion") and est.get("pid"):
+            return int(est["pid"])
+    except Exception:
+        pass
+    return None
+
+
 def _pid_es_proceso_servidor(pid: int) -> bool | None:
     """True si es python/PunPro y la línea trae --server.
 
@@ -273,6 +289,9 @@ def _pid_es_proceso_servidor(pid: int) -> bool | None:
 
 def get_store_server_pid() -> int | None:
     """PID del proceso Servidor de Tienda, o None si no hay instancia viva."""
+    svc_pid = _windows_service_pid()
+    if svc_pid is not None and svc_pid != os.getpid():
+        return svc_pid
     if not os.path.exists(STORE_SERVER_LOCK_PATH):
         return None
     try:
@@ -329,6 +348,9 @@ def list_store_server_pids() -> list[int]:
                 continue
     except Exception:
         pass
+    svc_pid = _windows_service_pid()
+    if svc_pid is not None and svc_pid != os.getpid() and svc_pid not in found:
+        found.insert(0, svc_pid)
     return found
 
 

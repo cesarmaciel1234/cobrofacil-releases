@@ -201,7 +201,16 @@ def set_windows_startup(enabled: bool) -> bool:
     path = startup_shortcut_path()
     launcher_path = launcher_startup_shortcut_path()
     try:
+        from src.central_red_global.servidor.servicio_windows.gestor import (
+            desinstalar_servicio_windows,
+            es_administrador,
+            instalar_servicio_windows,
+            servicio_instalado,
+        )
+
         if not enabled:
+            if servicio_instalado() and es_administrador():
+                desinstalar_servicio_windows()
             for p in (path, launcher_path):
                 if os.path.exists(p):
                     os.remove(p)
@@ -223,14 +232,27 @@ def set_windows_startup(enabled: bool) -> bool:
         args = subprocess.list2cmdline(cmd[1:])
         workdir = get_base_path()
 
-        ok = _create_shortcut_fast_or_ps(path, target, args, workdir, "Cobro Facil Servidor de Tienda")
-        if ok:
-            try:
-                with open(_startup_stamp_path(), "w", encoding="utf-8") as f:
-                    f.write(_expected_startup_signature(cmd))
-            except OSError:
-                pass
-            _set_scheduled_task(True, target, args, workdir)
+        svc_ok = False
+        if es_administrador():
+            svc_ok, _ = instalar_servicio_windows(workdir, iniciar=True)
+
+        if svc_ok:
+            if os.path.exists(path):
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+            _set_scheduled_task(False)
+            ok = True
+        else:
+            ok = _create_shortcut_fast_or_ps(path, target, args, workdir, "Cobro Facil Servidor de Tienda")
+            if ok:
+                try:
+                    with open(_startup_stamp_path(), "w", encoding="utf-8") as f:
+                        f.write(_expected_startup_signature(cmd))
+                except OSError:
+                    pass
+                _set_scheduled_task(True, target, args, workdir)
 
         l_cmd = build_launcher_command(background=True)
         l_target = l_cmd[0]
@@ -349,9 +371,17 @@ _LNK_CACHE: dict[str, tuple[float, str, bool]] = {}
 
 
 def is_windows_startup_enabled() -> bool:
-    """Verifica existencia y que el TargetPath/Arguments del .lnk correspondan a la instalación actual."""
+    """Verifica Servicio Windows Session 0 (auto) o acceso directo Startup + firma actual."""
     if sys.platform != "win32":
         return False
+    try:
+        from src.central_red_global.servidor.servicio_windows.gestor import estado_servicio_windows
+
+        est = estado_servicio_windows()
+        if est.get("instalado") and est.get("auto_inicio"):
+            return True
+    except Exception:
+        pass
     path = startup_shortcut_path()
     try:
         mtime = os.path.getmtime(path)

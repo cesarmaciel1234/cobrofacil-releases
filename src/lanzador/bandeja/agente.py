@@ -46,9 +46,14 @@ class ControladorBandejaLanzador:
             )
             act_open = QAction("Abrir Lanzador", win)
             act_open.triggered.connect(self.mostrar)
+            self._act_service = QAction("Activar Servicio Windows (Session 0)", win)
+            self._act_service.triggered.connect(self._activar_servicio_windows)
             act_quit = QAction("Salir del Lanzador", win)
             act_quit.triggered.connect(self.salir)
             menu.addAction(act_open)
+            if os.name == "nt":
+                menu.addAction(self._act_service)
+                menu.aboutToShow.connect(self._refrescar_item_servicio)
             menu.addSeparator()
             menu.addAction(act_quit)
             tray.setContextMenu(menu)
@@ -71,6 +76,47 @@ class ControladorBandejaLanzador:
 
     def saliendo(self) -> bool:
         return self._salio
+
+    def _refrescar_item_servicio(self) -> None:
+        act = getattr(self, "_act_service", None)
+        if act is None:
+            return
+        try:
+            from src.central_red_global.servidor.servicio_windows.gestor import estado_servicio_windows
+
+            est = estado_servicio_windows()
+            if est.get("en_ejecucion"):
+                act.setText(f"Servicio Session 0: Activo (PID {est.get('pid') or '-'})")
+                act.setEnabled(False)
+            elif est.get("instalado"):
+                act.setText("Iniciar Servicio Windows (Session 0)")
+                act.setEnabled(True)
+            else:
+                act.setText("Activar Servicio Windows (Session 0)")
+                act.setEnabled(True)
+        except Exception:
+            pass
+
+    def _activar_servicio_windows(self) -> None:
+        import threading
+
+        def _worker():
+            from src.central_red_global.servidor.servicio_windows.gestor import (
+                iniciar_servicio_windows,
+                instalar_servicio_con_uac,
+                servicio_instalado,
+            )
+
+            ok = iniciar_servicio_windows() if servicio_instalado() else False
+            if not ok:
+                ok = instalar_servicio_con_uac()
+            if ok and hasattr(self._win, "_server_checked"):
+                try:
+                    self._win._server_checked.emit()
+                except Exception:
+                    pass
+
+        threading.Thread(target=_worker, name="tray-winservice-setup", daemon=True).start()
 
     def _al_activar_tray(self, reason) -> None:
         if reason in (

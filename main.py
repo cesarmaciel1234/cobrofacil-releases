@@ -5,6 +5,33 @@ import os
 # Añadir el directorio raíz al path de Python
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
+def _arg_cli_value(flag: str):
+    for i, arg in enumerate(sys.argv):
+        if arg == flag and i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+        if arg.startswith(flag + "="):
+            return arg.split("=", 1)[1]
+    return None
+
+
+if "--winservice" in sys.argv:
+    from src.central_red_global.servidor.servicio_windows.servicio import run_windows_service
+
+    sys.exit(run_windows_service(_arg_cli_value("--service-root")))
+
+if "--winservice-install" in sys.argv:
+    from src.central_red_global.servidor.servicio_windows.gestor import instalar_servicio_windows
+
+    ok, _msg = instalar_servicio_windows(_arg_cli_value("--service-root"), iniciar=True)
+    sys.exit(0 if ok else 1)
+
+if "--winservice-uninstall" in sys.argv:
+    from src.central_red_global.servidor.servicio_windows.gestor import desinstalar_servicio_windows
+
+    ok, _msg = desinstalar_servicio_windows()
+    sys.exit(0 if ok else 1)
+
 from src.utils.qt_dpi import configure_process_dpi, configure_qt_application_attributes
 from src.utils.qt_compat import set_share_opengl_contexts, prepare_frozen_qt_paths, qt_exec
 
@@ -470,6 +497,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--server", action="store_true",
         help="Proceso Servidor de Tienda (MariaDB + LAN + presencia)",
+    )
+    parser.add_argument(
+        "--winservice", action="store_true",
+        help="Ejecuta el servidor dentro del Servicio Nativo de Windows (Session 0)",
+    )
+    parser.add_argument(
+        "--service-root", type=str, default=None,
+        help="Directorio raíz de instalación para el Servicio Windows",
     )
     parser.add_argument(
         "--background", action="store_true",

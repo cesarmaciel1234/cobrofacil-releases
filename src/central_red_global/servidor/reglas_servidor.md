@@ -5,10 +5,13 @@ servidor/
   comando.py          cómo se lanza --server
   puerto.py           3306
   arranque/
-    proceso.py        el lanzador despierta el proceso
+    proceso.py        el lanzador despierta el proceso (o inicia Servicio Session 0)
     servicios.py      MariaDB + LAN + presencia
     bandeja.py        muestra la ventana y la bandeja
-    headless.py       Linux sin pantalla
+    headless.py       núcleo sin pantalla (Linux systemd + Windows Session 0)
+  servicio_windows/
+    gestor.py         registro SCM, recuperación auto y consulta sin Admin
+    servicio.py       ServiceFramework Session 0 (--server --winservice)
   ventana/
     lienzo.py         lo que se lee: Espejo o Servidor de Tienda
   oficio/

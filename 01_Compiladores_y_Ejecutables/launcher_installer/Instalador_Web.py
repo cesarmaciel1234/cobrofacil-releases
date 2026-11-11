@@ -102,8 +102,22 @@ LEGACY_INSTALL_DIR_NAMES = (
 )
 
 
+def _stop_windows_service_if_present():
+    try:
+        subprocess.run(
+            ["sc.exe", "stop", "CobroFacil_ServidorTienda"],
+            capture_output=True,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            timeout=6,
+        )
+        time.sleep(1.5)
+    except Exception:
+        pass
+
+
 def _kill_blocking_processes():
-    """Cierra POS y MariaDB portable para liberar archivos bloqueados."""
+    """Detiene Servicio Windows (si existe) y cierra POS/MariaDB para liberar archivos."""
+    _stop_windows_service_if_present()
     for exe in ("CobroFacil_POS.exe", "CobroFacilPOS_PRO.exe", "mysqld.exe"):
         subprocess.run(
             f"taskkill /f /im {exe}",
@@ -753,14 +767,29 @@ class InstallWorker(QThread):
                 except Exception:
                     pass
 
-            # Registrar Servidor fantasma y Supervisor del Lanzador en segundo plano al iniciar Windows
-            _register_windows_daemon(
-                "CobroFacil_ServidorTienda.lnk",
-                "CobroFacil_ServidorTienda",
-                "--server --background",
-                "Cobro Facil Servidor de Tienda",
-                999,
-            )
+            # Si hay permisos de Administrador, registrar Servicio Nativo Session 0; si no, respaldo usuario
+            svc_registered = False
+            try:
+                if bool(ctypes.windll.shell32.IsUserAnAdmin()):
+                    r_svc = subprocess.run(
+                        [target_exe, "--winservice-install", "--service-root", os.path.dirname(os.path.abspath(target_exe))],
+                        cwd=os.path.dirname(os.path.abspath(target_exe)),
+                        capture_output=True,
+                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                        timeout=25,
+                    )
+                    svc_registered = (r_svc.returncode == 0)
+            except Exception:
+                svc_registered = False
+
+            if not svc_registered:
+                _register_windows_daemon(
+                    "CobroFacil_ServidorTienda.lnk",
+                    "CobroFacil_ServidorTienda",
+                    "--server --background",
+                    "Cobro Facil Servidor de Tienda",
+                    999,
+                )
             _register_windows_daemon(
                 "CobroFacil_Lanzador.lnk",
                 "CobroFacil_Lanzador",
@@ -852,15 +881,28 @@ class InstallerWindow(QWidget):
     def _launch_installed_apps(target_exe):
         if not (target_exe and os.path.exists(target_exe)):
             return
+        svc_running = False
         try:
-            subprocess.Popen(
-                [target_exe, "--server", "--background"],
-                cwd=os.path.dirname(target_exe),
+            q = subprocess.run(
+                ["sc.exe", "query", "CobroFacil_ServidorTienda"],
+                capture_output=True,
+                text=True,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-                close_fds=True,
+                timeout=4,
             )
+            svc_running = ("RUNNING" in (q.stdout or "").upper())
         except Exception:
             pass
+        if not svc_running:
+            try:
+                subprocess.Popen(
+                    [target_exe, "--server", "--background"],
+                    cwd=os.path.dirname(target_exe),
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                    close_fds=True,
+                )
+            except Exception:
+                pass
         os.startfile(target_exe)
 
     def on_finished(self, success, msg, target_exe, shortcut_path):

@@ -65,6 +65,29 @@ def ensure_store_server_process(timeout_sec: float = 45.0, *, background: bool =
                 time.sleep(0.4)
             return is_store_server_running()
 
+        if sys.platform == "win32":
+            try:
+                from src.central_red_global.servidor.servicio_windows.gestor import (
+                    estado_servicio_windows,
+                    iniciar_servicio_windows,
+                )
+
+                est_svc = estado_servicio_windows()
+                if est_svc.get("instalado"):
+                    ok_svc = est_svc.get("en_ejecucion") or iniciar_servicio_windows(
+                        timeout_sec=min(timeout_sec, 18.0)
+                    )
+                    if ok_svc:
+                        deadline_svc = time.time() + min(timeout_sec, 20.0)
+                        while time.time() < deadline_svc:
+                            if not needs_mariadb() or (mariadb_port_open() and lan_port_open()):
+                                logger.info("Servidor de Tienda Session 0 ONLINE (Servicio Windows).")
+                                return True
+                            time.sleep(0.4)
+                        return is_store_server_running()
+            except Exception as e_svc:
+                logger.debug(f"Servicio Windows fallback a proceso usuario: {e_svc}")
+
         cmd = build_server_command(background=background)
         logger.info(f"Arrancando Servidor de Tienda: {cmd}")
         try:
