@@ -36,6 +36,16 @@ _MAX_LOG_LINES = 80
 
 _lock = threading.Lock()
 _flush_scheduled = False
+_auth_failed_token: str | None = None
+_no_token_warned = False
+
+
+def reset_auth_circuit_breaker() -> None:
+    """Reinicia el circuit-breaker de autenticación en pruebas o recarga manual."""
+    global _auth_failed_token, _no_token_warned
+    with _lock:
+        _auth_failed_token = None
+        _no_token_warned = False
 
 
 def _log_dir() -> str:
@@ -262,7 +272,7 @@ def _post_via_dispatch(token: str, repo: str, title: str, body: str, labels: lis
     if status in (204, 200):
         return True
     if status in (401, 403):
-        logging.getLogger("PunPro").warning(
+        logging.getLogger("PunPro").debug(
             "GitHub error report: dispatch HTTP %s (hace falta Contents:write o PAT classic repo)",
             status,
         )
@@ -300,7 +310,7 @@ def _post_issue(token: str, repo: str, title: str, body: str, labels: list[str])
             [lb for lb in labels if lb in ("auto-report", "client-error")],
         )
     if status in (401, 403):
-        logging.getLogger("PunPro").warning(
+        logging.getLogger("PunPro").debug(
             "GitHub error report: issues HTTP %s — probando repository_dispatch",
             status,
         )
@@ -401,33 +411,48 @@ def queue_error_report(
     }
     _enqueue(entry)
 
+    global _no_token_warned
     if token:
-        _schedule_flush()
+        with _lock:
+            auth_tripped = _auth_failed_token == token
+        if not auth_tripped:
+            _schedule_flush()
     else:
-        # Cola crece pero nunca sale: sin error_report.json / secret en el .exe
-        logging.getLogger("PunPro").warning(
-            "GitHub error report: error encolado pero NO hay token "
-            "(falta error_report.json o secret COBROFACIL_ERROR_REPORT_TOKEN en el release)."
-        )
+        with _lock:
+            already_warned = _no_token_warned
+            _no_token_warned = True
+        if not already_warned:
+            # Cola crece pero nunca sale: sin error_report.json / secret en el .exe
+            logging.getLogger("PunPro").info(
+                "GitHub error report: errores quedan en cola local (sin token configurado)."
+            )
 
 
 def flush_pending_reports() -> int:
     """Envía la cola pendiente. Devuelve cantidad enviada."""
+    global _auth_failed_token, _no_token_warned
     enabled, token, repo = _report_settings()
     if not enabled:
         return 0
     if not token:
-        try:
-            queue = _load_json(_queue_path(), [])
-            n = len(queue) if isinstance(queue, list) else 0
-        except Exception:
-            n = 0
-        if n:
-            logging.getLogger("PunPro").warning(
-                "GitHub error report: %s errores en cola local sin token — no llegan a GitHub.",
-                n,
-            )
+        with _lock:
+            already_warned = _no_token_warned
+            _no_token_warned = True
+        if not already_warned:
+            try:
+                queue = _load_json(_queue_path(), [])
+                n = len(queue) if isinstance(queue, list) else 0
+            except Exception:
+                n = 0
+            if n:
+                logging.getLogger("PunPro").info(
+                    "GitHub error report: %s errores en cola local sin token — omitiendo envío remoto.",
+                    n,
+                )
         return 0
+    with _lock:
+        if _auth_failed_token == token:
+            return 0
 
     with _lock:
         queue = _load_json(_queue_path(), [])
@@ -451,7 +476,14 @@ def flush_pending_reports() -> int:
             _mark_sent(fp)
             sent += 1
         elif result == "auth":
-            # Token sin permisos: no martillar la API con toda la cola
+            # Token sin permisos/expirado: abrir circuit-breaker por sesión para no martillar la API
+            with _lock:
+                first_trip = _auth_failed_token != token
+                _auth_failed_token = token
+            if first_trip:
+                logging.getLogger("PunPro").info(
+                    "GitHub error report desactivado para esta sesión (HTTP 401/403); los errores siguen en cola local."
+                )
             remaining.append(entry)
             remaining.extend(
                 e for e in queue[queue.index(entry) + 1 :] if isinstance(e, dict)

@@ -61,16 +61,25 @@ if len(sys.argv) > 1 and sys.argv[1] == "--chatbot":
 # ------------------------------------------
 
 
-def _rol_sin_chromium():
+def _rol_usa_chromium():
     args = sys.argv
+    role = None
     for i, arg in enumerate(args):
         if arg in ("--role", "--profile") and i + 1 < len(args):
-            return args[i + 1].strip().lower() in ("cajero", "jefe")
+            role = args[i + 1].strip().lower()
+            break
         if arg.startswith("--role=") or arg.startswith("--profile="):
-            return arg.split("=", 1)[1].strip().lower() in ("cajero", "jefe")
-    return False
+            role = arg.split("=", 1)[1].strip().lower()
+            break
+    # Solo terminales con visor web/editor embebido necesitan Chromium; Hub/Server/Cajero/Jefe no.
+    return role in ("admin", "carteleria", "contabilidad")
 
-if not _rol_sin_chromium():
+
+def _rol_sin_chromium():
+    return not _rol_usa_chromium()
+
+
+if _rol_usa_chromium():
     sys.argv.append("--disable-gpu")
     sys.argv.append("--disable-software-rasterizer")
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --disable-software-rasterizer"
@@ -82,10 +91,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtGui import QIcon
 
 import argparse
-from src.utils.candados import PerfilLocker, acquire_master_launcher_lock
-from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
-from src.base_de_datos.motor_flash_transacciones import motor_flash
-from src.inicio_y_perfiles.perfil_pantalla import PerfilPantalla
+from src.utils.candados import acquire_master_launcher_lock
 
 def global_excepthook(exc_type, exc_value, exc_traceback):
     try:
@@ -135,19 +141,20 @@ sys.excepthook = global_excepthook
 main_window = None
 app_exit_event = threading.Event()
 
-def launch_app(direct_role=None, background=False):
+def launch_app(direct_role=None, background=False, reload_config=False, check_pending_update=False):
     global main_window
 
-    try:
-        from src.updater.silent_auto_updater import apply_pending_update_on_startup
+    if check_pending_update:
         try:
-            from src.updater.ui.dialogs import ApplyUpdateDialogDelegate
-            delegate = ApplyUpdateDialogDelegate()
-        except ImportError:
-            delegate = None
-        apply_pending_update_on_startup(delegate)
-    except Exception:
-        pass
+            from src.updater.silent_auto_updater import apply_pending_update_on_startup
+            try:
+                from src.updater.ui.dialogs import ApplyUpdateDialogDelegate
+                delegate = ApplyUpdateDialogDelegate()
+            except ImportError:
+                delegate = None
+            apply_pending_update_on_startup(delegate)
+        except Exception:
+            pass
 
     app = QApplication.instance()
     if not app:
@@ -216,7 +223,8 @@ def launch_app(direct_role=None, background=False):
 
     # 1. Recargar configuraciÃ³n desde el disco (vital tras reinicio 888)
     from src.config import config
-    config._load_config()
+    if reload_config:
+        config._load_config()
     config.current_user = None # Limpiar sesiÃ³n anterior si reinicia en el mismo proceso
 
     # 2. BD en hilo: el import dispara _init_db; no bloquear el splash en el hilo UI
@@ -251,23 +259,24 @@ def launch_app(direct_role=None, background=False):
         from src.cerebro_global.carteleria_cerebro.sincronizador_carteleria import sincronizador_carteleria
         sincronizador_carteleria.start()
 
-    try:
-        from src.motor_cobros_digitales import arrancar as arrancar_cobros_digitales
-        arrancar_cobros_digitales()
-    except Exception:
-        pass
+    if is_direct:
+        try:
+            from src.motor_cobros_digitales import arrancar as arrancar_cobros_digitales
+            arrancar_cobros_digitales()
+        except Exception:
+            pass
 
-    try:
-        from src.motor_auditoria_digital import arrancar as arrancar_auditoria_digital
-        arrancar_auditoria_digital()
-    except Exception:
-        pass
+        try:
+            from src.motor_auditoria_digital import arrancar as arrancar_auditoria_digital
+            arrancar_auditoria_digital()
+        except Exception:
+            pass
 
-    try:
-        from src.clientes_fiado.oficina.huella import arrancar as arrancar_huella_clientes
-        arrancar_huella_clientes()
-    except Exception:
-        pass
+        try:
+            from src.clientes_fiado.oficina.huella import arrancar as arrancar_huella_clientes
+            arrancar_huella_clientes()
+        except Exception:
+            pass
 
     try:
         from src.jefe.nodo_portable import espejo
@@ -289,28 +298,16 @@ def launch_app(direct_role=None, background=False):
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
 
-    # --- PASO 2: CARGAR HARDWARE ---
-    update_status("Conectando perifÃ©ricos industriales...", 45)
-    from src.hardware.printer import printer_manager
-    ok = True
-    msg = ""
-    if not is_direct:
-        ok_ref = [False]
-        msg_ref = [""]
-        def _check_printer():
-            o, m = printer_manager.verificar_estado()
-            ok_ref[0] = o
-            msg_ref[0] = m
-        run_heavy_task_fluid(_check_printer, timeout_sec=3)
-        ok, msg = ok_ref[0], msg_ref[0]
-    else:
+    # --- PASO 2: CARGAR HARDWARE (solo terminales directas; el Hub no imprime) ---
+    if is_direct:
+        update_status("Conectando periféricos industriales...", 45)
+        from src.hardware.printer import printer_manager
         threading.Thread(target=printer_manager.verificar_estado, daemon=True).start()
 
     # --- PASO 3: LICENCIA Y SEGURIDAD ---
     update_status("Verificando licencia de seguridad...", 60)
-    from src.inicio_y_perfiles.licencia_pantalla import LicenciaPantalla, check_license_active
-
     if not is_direct:
+        from src.inicio_y_perfiles.licencia_pantalla import LicenciaPantalla, check_license_active
         lic_active = [False]
         run_heavy_task_fluid(lambda: lic_active.__setitem__(0, check_license_active()), timeout_sec=5)
 
@@ -320,43 +317,39 @@ def launch_app(direct_role=None, background=False):
             if not qt_exec(lic): sys.exit()
             if splash: splash.show()
 
-    # --- PASO 4: CARGAR MÃ“DULOS DE USUARIO ---
+    # --- PASO 4: CARGAR MÓDULOS DE USUARIO ---
     update_status("Cargando perfiles de acceso...", 80)
-    from src.inicio_y_perfiles.logica.auth_controller import AuthController
-    AuthController().ensure_default_jefe()
-    AuthController().ensure_default_contabilidad()
+    LoginPantalla = None
+    AperturaCajaPantalla = None
+    verificar_y_realizar_autocierre = None
+    if is_direct:
+        from src.inicio_y_perfiles.logica.auth_controller import AuthController
+        AuthController().ensure_default_jefe()
+        AuthController().ensure_default_contabilidad()
 
-    from src.inicio_y_perfiles.perfil_pantalla import PerfilPantalla
-    from src.inicio_y_perfiles.login_pantalla import LoginPantalla
-    from src.inicio_y_perfiles.apertura_pantalla import AperturaCajaPantalla
-    from src.services.caja_service import verificar_y_realizar_autocierre
+        from src.inicio_y_perfiles.login_pantalla import LoginPantalla
+        from src.inicio_y_perfiles.apertura_pantalla import AperturaCajaPantalla
+        from src.services.caja_service import verificar_y_realizar_autocierre
 
-    update_status("Inicializando sistema (Lazy Loading)...", 100)
-    from src.main_window import MainWindow
+        update_status("Inicializando sistema (Lazy Loading)...", 100)
+        from src.main_window import MainWindow
+        main_window = MainWindow()
 
-    # Â¡Gracias al verdadero Lazy Loading, esto es instantÃ¡neo!
-    main_window = MainWindow()
-
-    # Partículas numpy: solo caja. En admin/jefe el exe se queda 2 s en negro.
-    if direct_role == "cajero":
-        try:
-            from src.ui_components.welcome_transition import WelcomeOverlay
-            main_window._welcome_overlay = WelcomeOverlay(main_window)
-            main_window._welcome_overlay.hide()
-        except Exception as e:
-            print("Error precargando WelcomeOverlay:", e)
+        # Partículas numpy: solo caja. En admin/jefe el exe se queda 2 s en negro.
+        if direct_role == "cajero":
+            try:
+                from src.ui_components.welcome_transition import WelcomeOverlay
+                main_window._welcome_overlay = WelcomeOverlay(main_window)
+                main_window._welcome_overlay.hide()
+            except Exception as e:
+                print("Error precargando WelcomeOverlay:", e)
+    else:
+        update_status("Listo.", 100)
+        main_window = None
 
     # Cerramos Splash si existe y empezamos el flujo
     if splash:
         splash.finish(None)
-
-    if not is_direct and not ok:
-        QMessageBox.warning(None, "âš ï¸ AVISO DE HARDWARE",
-            f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
-            "El sistema funcionarÃ¡ en modo simulaciÃ³n.")
-        QMessageBox.warning(None, "âš ï¸ AVISO DE HARDWARE",
-            f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
-            "El sistema funcionarÃ¡ en modo simulaciÃ³n.")
 
     # --- HILO EN SEGUNDO PLANO PARA REPORTES SEMANALES ---
     def check_and_send_weekly_report():
@@ -391,11 +384,14 @@ def launch_app(direct_role=None, background=False):
         step = 1
         role_selected = None
 
-    perfil_dlg = PerfilPantalla(is_master_launcher=True, start_in_background=bool(background and not direct_role))
-    def capture_role(role):
-        nonlocal role_selected
-        role_selected = role
-    perfil_dlg.perfil_seleccionado.connect(capture_role)
+    perfil_dlg = None
+    if not is_direct:
+        from src.inicio_y_perfiles.perfil_pantalla import PerfilPantalla
+        perfil_dlg = PerfilPantalla(is_master_launcher=True, start_in_background=bool(background))
+        def capture_role(role):
+            nonlocal role_selected
+            role_selected = role
+        perfil_dlg.perfil_seleccionado.connect(capture_role)
 
     while True:
         if step == 1:
@@ -419,7 +415,8 @@ def launch_app(direct_role=None, background=False):
                 # Lanzar la CartelerÃ­a en el mismo proceso (clave para el ejecutable).
                 # Propagar el cÃ³digo de qt_exec: 888/99 deben reiniciar el loop externo.
                 from src.carteleria.carteleria import lanzar_app
-                perfil_dlg.hide()
+                if perfil_dlg is not None:
+                    perfil_dlg.hide()
                 return lanzar_app(app)
 
             login_dlg = LoginPantalla(role_selected)
@@ -521,6 +518,14 @@ if __name__ == "__main__":
     is_background = bool(getattr(parsed_args, "background", False))
     is_terminal_role = bool(target_role)
 
+    # Fast-path corporativo: si ya existe el Hub maestro, despertarlo al instante sin levantar Qt/updater/BD.
+    if not is_terminal_role and not is_store_server and not is_updater_daemon:
+        try:
+            if not acquire_master_launcher_lock(show_if_running=not is_background):
+                sys.exit(0)
+        except Exception as e:
+            print(f"Aviso al verificar candado maestro: {e}")
+
     # Antes que nada: si un update a medias dejÃ³ el EXE/.lock rotos, reparar
     try:
         from src.updater.silent_auto_updater import heal_install_after_update
@@ -618,12 +623,7 @@ if __name__ == "__main__":
         except Exception:
             pass
 
-    if not is_terminal_role:
-        try:
-            if not acquire_master_launcher_lock(show_if_running=not is_background):
-                sys.exit(0)
-        except Exception as e:
-            print(f"Aviso al verificar candado maestro: {e}")
+
 
     # Actualizador autÃ³nomo en proceso aparte (despuÃ©s del apply; no tumba el hub)
     try:
@@ -701,9 +701,16 @@ if __name__ == "__main__":
                         print(f"Fallback presencia local: {e2}")
 
     loop_background = is_background
+    needs_config_reload = False
     while True:
-        exit_code = launch_app(direct_role=target_role, background=loop_background)
+        exit_code = launch_app(
+            direct_role=target_role,
+            background=loop_background,
+            reload_config=needs_config_reload,
+            check_pending_update=False,
+        )
         loop_background = False
+        needs_config_reload = True
         # 889 = aplicar update (cierra todo + relaunch oculto)
         # 888 = reinicio suave del hub (logout / medianoche / LAN) â€” sin CMD ni matar mysqld
         if exit_code == 889:
