@@ -10,9 +10,10 @@ from src.logger import logger
 from src.central_red_global.servidor.comando import build_server_command
 
 _TASK_NAME = "CobroFacil_ServidorTienda"
+_LAUNCHER_TASK_NAME = "CobroFacil_Lanzador"
 
 
-def startup_shortcut_path() -> str:
+def _startup_lnk(filename: str) -> str:
     appdata = os.environ.get("APPDATA", "")
     return os.path.join(
         appdata,
@@ -21,8 +22,16 @@ def startup_shortcut_path() -> str:
         "Start Menu",
         "Programs",
         "Startup",
-        "CobroFacil_ServidorTienda.lnk",
+        filename,
     )
+
+
+def startup_shortcut_path() -> str:
+    return _startup_lnk("CobroFacil_ServidorTienda.lnk")
+
+
+def launcher_startup_shortcut_path() -> str:
+    return _startup_lnk("CobroFacil_Lanzador.lnk")
 
 
 def _startup_stamp_path() -> str:
@@ -122,14 +131,23 @@ def _create_shortcut_fast_or_ps(path: str, target: str, args: str, workdir: str,
     return os.path.exists(path)
 
 
-def _set_scheduled_task(enabled: bool, target: str = "", args: str = "", workdir: str = "") -> None:
-    """Best-effort: registra/elimina Tarea Programada ONLOGON con reinicio automático ante fallos."""
+def _set_scheduled_task_item(
+    task_name: str,
+    enabled: bool,
+    target: str = "",
+    args: str = "",
+    workdir: str = "",
+    description: str = "Cobro Facil Servidor de Tienda (Segundo Plano)",
+    restart_count: int = 999,
+) -> None:
+    """Best-effort: registra o quita una Tarea Programada ONLOGON independiente."""
     if sys.platform != "win32":
         return
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     try:
+        tn_ps = task_name.replace("'", "''")
         if not enabled:
-            ps = f"Unregister-ScheduledTask -TaskName '{_TASK_NAME}' -Confirm:$false -ErrorAction SilentlyContinue"
+            ps = f"Unregister-ScheduledTask -TaskName '{tn_ps}' -Confirm:$false -ErrorAction SilentlyContinue"
             subprocess.run(
                 ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps],
                 capture_output=True,
@@ -141,6 +159,7 @@ def _set_scheduled_task(enabled: bool, target: str = "", args: str = "", workdir
         t_ps = target.replace("'", "''")
         a_ps = args.replace("'", "''")
         w_ps = workdir.replace("'", "''")
+        d_ps = description.replace("'", "''")
         ps = (
             "$u = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name; "
             f"$action = New-ScheduledTaskAction -Execute '{t_ps}' -Argument '{a_ps}' -WorkingDirectory '{w_ps}'; "
@@ -149,10 +168,10 @@ def _set_scheduled_task(enabled: bool, target: str = "", args: str = "", workdir
             "$settings = New-ScheduledTaskSettingsSet "
             "-AllowStartIfOnBatteries -DontStopIfGoingOnBatteries "
             "-ExecutionTimeLimit (New-TimeSpan -Days 0) "
-            "-RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) "
+            f"-RestartCount {int(restart_count)} -RestartInterval (New-TimeSpan -Minutes 1) "
             "-MultipleInstances IgnoreNew; "
-            f"Register-ScheduledTask -TaskName '{_TASK_NAME}' -Action $action -Trigger $triggerLogon "
-            "-Principal $principal -Settings $settings -Description 'Cobro Facil Servidor de Tienda (Segundo Plano)' -Force | Out-Null"
+            f"Register-ScheduledTask -TaskName '{tn_ps}' -Action $action -Trigger $triggerLogon "
+            f"-Principal $principal -Settings $settings -Description '{d_ps}' -Force | Out-Null"
         )
         subprocess.run(
             ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps],
@@ -161,17 +180,31 @@ def _set_scheduled_task(enabled: bool, target: str = "", args: str = "", workdir
             timeout=15,
         )
     except Exception as e:
-        logger.debug(f"Tarea programada autostart (best-effort): {e}")
+        logger.debug(f"Tarea programada {task_name} (best-effort): {e}")
+
+
+def _set_scheduled_task(enabled: bool, target: str = "", args: str = "", workdir: str = "") -> None:
+    _set_scheduled_task_item(
+        _TASK_NAME,
+        enabled,
+        target=target,
+        args=args,
+        workdir=workdir,
+        description="Cobro Facil Servidor de Tienda (Segundo Plano)",
+        restart_count=999,
+    )
 
 
 def set_windows_startup(enabled: bool) -> bool:
     if sys.platform != "win32":
         return False
     path = startup_shortcut_path()
+    launcher_path = launcher_startup_shortcut_path()
     try:
         if not enabled:
-            if os.path.exists(path):
-                os.remove(path)
+            for p in (path, launcher_path):
+                if os.path.exists(p):
+                    os.remove(p)
             stamp = _startup_stamp_path()
             if os.path.exists(stamp):
                 try:
@@ -179,9 +212,11 @@ def set_windows_startup(enabled: bool) -> bool:
                 except OSError:
                     pass
             _set_scheduled_task(False)
+            _set_scheduled_task_item(_LAUNCHER_TASK_NAME, False)
             return True
 
         from src.utils.paths import get_base_path
+        from src.lanzador.cerebro.watchdog_perfiles import build_launcher_command
 
         cmd = build_server_command(background=True)
         target = cmd[0]
@@ -196,6 +231,22 @@ def set_windows_startup(enabled: bool) -> bool:
             except OSError:
                 pass
             _set_scheduled_task(True, target, args, workdir)
+
+        l_cmd = build_launcher_command(background=True)
+        l_target = l_cmd[0]
+        l_args = subprocess.list2cmdline(l_cmd[1:])
+        if _create_shortcut_fast_or_ps(
+            launcher_path, l_target, l_args, workdir, "Cobro Facil Lanzador Supervisor (Bandeja)"
+        ):
+            _set_scheduled_task_item(
+                _LAUNCHER_TASK_NAME,
+                True,
+                target=l_target,
+                args=l_args,
+                workdir=workdir,
+                description="Cobro Facil Lanzador Supervisor en Bandeja",
+                restart_count=3,
+            )
         return ok
     except Exception as e:
         logger.error(f"Autostart Windows: {e}")

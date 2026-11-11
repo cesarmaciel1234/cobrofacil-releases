@@ -108,7 +108,7 @@ sys.excepthook = global_excepthook
 main_window = None
 app_exit_event = threading.Event()
 
-def launch_app(direct_role=None):
+def launch_app(direct_role=None, background=False):
     global main_window
 
     try:
@@ -161,7 +161,7 @@ def launch_app(direct_role=None):
     is_direct = bool(direct_role)
 
     # --- SPLASH SCREEN MODERNA (DISEÃ‘O 2026) ---
-    if not is_direct:
+    if not is_direct and not background:
         from src.inicio_y_perfiles.pantallaentrada import CobroFacilSplash
         splash = CobroFacilSplash()
         splash.show()
@@ -364,7 +364,7 @@ def launch_app(direct_role=None):
         step = 1
         role_selected = None
 
-    perfil_dlg = PerfilPantalla(is_master_launcher=True)
+    perfil_dlg = PerfilPantalla(is_master_launcher=True, start_in_background=bool(background and not direct_role))
     def capture_role(role):
         nonlocal role_selected
         role_selected = role
@@ -372,7 +372,15 @@ def launch_app(direct_role=None):
 
     while True:
         if step == 1:
-            if qt_exec(perfil_dlg):
+            if not direct_role:
+                app.setQuitOnLastWindowClosed(False)
+            if background and not direct_role and perfil_dlg.soporta_bandeja():
+                exit_dlg = perfil_dlg.ejecutar_en_bandeja(app)
+            else:
+                exit_dlg = qt_exec(perfil_dlg)
+            if exit_dlg in (888, 889, 99):
+                return exit_dlg
+            if exit_dlg:
                 # En modo Lanzador Maestro, PerfilPantalla gestiona los subprocesos autÃ³nomos
                 return 0
             else:
@@ -475,6 +483,7 @@ if __name__ == "__main__":
     target_role = parsed_args.role
     is_store_server = bool(parsed_args.server)
     is_updater_daemon = bool(getattr(parsed_args, "updater", False))
+    is_background = bool(getattr(parsed_args, "background", False))
     is_terminal_role = bool(target_role)
 
     # Antes que nada: si un update a medias dejÃ³ el EXE/.lock rotos, reparar
@@ -613,7 +622,7 @@ if __name__ == "__main__":
     else:
         # Lanzador: asegura proceso Servidor (MariaDB + red), no los posee
         try:
-            if not acquire_master_launcher_lock():
+            if not acquire_master_launcher_lock(show_if_running=not is_background):
                 sys.exit(0)
         except Exception as e:
             print(f"Aviso al verificar candado maestro: {e}")
@@ -655,8 +664,10 @@ if __name__ == "__main__":
                     except Exception as e2:
                         print(f"Fallback presencia local: {e2}")
 
+    loop_background = is_background
     while True:
-        exit_code = launch_app(direct_role=target_role)
+        exit_code = launch_app(direct_role=target_role, background=loop_background)
+        loop_background = False
         # 889 = aplicar update (cierra todo + relaunch oculto)
         # 888 = reinicio suave del hub (logout / medianoche / LAN) â€” sin CMD ni matar mysqld
         if exit_code == 889:

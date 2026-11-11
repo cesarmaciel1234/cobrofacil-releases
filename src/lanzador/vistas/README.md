@@ -1,9 +1,9 @@
 # Hub del lanzador
 
-Qué hace: `PerfilPantalla` en `hub_main.py`. Cinco tarjetas. Cajero, admin, jefe y contabilidad: un PID por PC; el clic trae la ventana. Si el usuario cierra, no se reabre solo. Cartelería sigue con reintento automático; el lanzador de TVs no se toca acá.
+Qué hace: `PerfilPantalla` en `hub_main.py`. Cinco tarjetas (`cajero`, `admin`, `jefe`, `carteleria`, `contabilidad`) en subprocesos `--role <rol>` aislados y un icono en bandeja (`ControladorBandejaLanzador`). Al cerrar con `✕` se oculta en bandeja sin cerrar perfiles ni detener el Servidor fantasma (`--server`); «Salir del Lanzador» en el menú de bandeja cierra solo el Lanzador. Con `--background` arranca directo en bandeja sin splash.
 
-El renglón de arriba sale de `es_pc_maestra_local()`. En esta notebook dice «LANZADOR ESCLAVA — ESPEJO DE LA TIENDA». En la PC de la tienda sigue «LANZADOR MAESTRO». La ventana del espejo no se pinta acá: la abre el proceso `--server`, carpeta `src/central_red_global/servidor/ventana/`. El clic en «Espejo: activo» le pide al servidor que se muestre y después lo trae delante. Cada 10 segundos `_auto_ensure_server_if_offline` (watchdog asíncrono en hilo daemon + señal `_server_checked`) testea el estado del servidor sin bloquear la interfaz y vuelve a levantarlo en segundo plano (`--background`) si el proceso se cayó o no responde.
+El renglón de arriba sale de `es_pc_maestra_local()`. En PCs esclavas dice «LANZADOR ESCLAVA — ESPEJO DE LA TIENDA»; en la PC maestra dice «LANZADOR MAESTRO». Cada 10 segundos `_auto_ensure_server_if_offline` (hilo daemon + señal `_server_checked`) verifica que el proceso `--server` siga activo en segundo plano y lo relanza si cayó.
 
-Qué función: `_elegir`, `_lanzar_proceso_autonomo`, `_apply_locked_profiles_ui`.
+Qué función: `_elegir`, `_lanzar_proceso_autonomo`, `_apply_locked_profiles_ui`, `ocultar_en_bandeja`, `ejecutar_en_bandeja`, `_salir_definitivo`.
 
-Cómo funciona: `UN_SOLO_POR_PC` en `cerebro/process_spawner.py`. El candado es `perfil_{rol}.lock`.
+Cómo funciona: `UN_SOLO_POR_PC` en `cerebro/process_spawner.py` y `decidir_accion_perfil_terminado` en `cerebro/watchdog_perfiles.py`. Si el usuario cierra un perfil limpiamente (`exit_code` `0`, `888`, `889`), pasa a reposo y no vuelve a abrirse (sin comportamiento tipo virus). Si un subproceso cae con error real (`exit_code != 0`) y no hay actualización activa (`is_apply_guard_active()`), reabre `--role <rol>` hasta Login con Circuit Breaker de máximo 3 caídas en 60 segundos; al hacer clic manual se reinicia el contador.

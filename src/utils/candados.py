@@ -10,6 +10,8 @@ from src.utils.paths import get_base_path
 
 _LOCK_DIR = os.path.join(get_base_path(), "locks")
 MASTER_LOCK_PATH = os.path.join(_LOCK_DIR, "lanzador_maestro.lock")
+MASTER_SHOW_PATH = os.path.join(_LOCK_DIR, "lanzador_maestro.mostrar")
+MASTER_TRAY_STATE_PATH = os.path.join(_LOCK_DIR, "lanzador_maestro.tray")
 STORE_SERVER_LOCK_PATH = os.path.join(_LOCK_DIR, "servidor_tienda.lock")
 STORE_SERVER_SPAWN_PATH = os.path.join(_LOCK_DIR, "servidor_tienda.spawning")
 STORE_SERVER_SHOW_PATH = os.path.join(_LOCK_DIR, "servidor_tienda.mostrar")
@@ -67,8 +69,67 @@ def _purge_stale_lock(path: str, other_pid: int) -> None:
         pass
 
 
+def _crear_flag_vacio(path: str) -> None:
+    try:
+        os.makedirs(_LOCK_DIR, exist_ok=True)
+        fd = os.open(path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+        os.close(fd)
+    except OSError:
+        pass
+
+
+def pedir_mostrar_lanzador() -> None:
+    """Solicita al Lanzador Maestro en bandeja restaurar su ventana desde su hilo Qt."""
+    _crear_flag_vacio(MASTER_SHOW_PATH)
+
+
+def registrar_lanzador_en_bandeja(en_bandeja: bool) -> None:
+    """Marca/limpia el estado residente en bandeja del Lanzador Maestro actual."""
+    try:
+        if en_bandeja:
+            os.makedirs(_LOCK_DIR, exist_ok=True)
+            with open(MASTER_TRAY_STATE_PATH, "w", encoding="utf-8") as f:
+                f.write(str(os.getpid()))
+        elif os.path.exists(MASTER_TRAY_STATE_PATH):
+            with open(MASTER_TRAY_STATE_PATH, "r", encoding="utf-8") as f:
+                owner = f.read().strip()
+            if owner in ("", str(os.getpid())):
+                os.remove(MASTER_TRAY_STATE_PATH)
+    except OSError:
+        pass
+
+
+def is_master_launcher_in_tray(expected_pid: int | None = None) -> bool:
+    """True si el Lanzador Maestro activo está registrado como residente en bandeja."""
+    try:
+        if not os.path.isfile(MASTER_TRAY_STATE_PATH):
+            return False
+        with open(MASTER_TRAY_STATE_PATH, "r", encoding="utf-8") as f:
+            pid = int((f.read() or "0").strip() or "0")
+    except Exception:
+        return False
+    if pid <= 0 or not _pid_alive(pid):
+        return False
+    if expected_pid is not None and pid != int(expected_pid):
+        return False
+    return True
+
+
+def _master_window_exists() -> bool:
+    if sys.platform != "win32":
+        return False
+    try:
+        import ctypes
+        return bool(ctypes.windll.user32.FindWindowW(None, MASTER_WINDOW_TITLE))
+    except Exception:
+        return False
+
+
 def focus_existing_master_launcher() -> bool:
     """Encuentra y trae al frente la ventana del Lanzador Maestro ya activo."""
+    if is_master_launcher_in_tray():
+        pedir_mostrar_lanzador()
+        return True
     if sys.platform == "win32":
         try:
             import ctypes
@@ -116,11 +177,11 @@ def _is_our_process(pid: int) -> bool:
     return _pid_alive(pid)
 
 
-def acquire_master_launcher_lock() -> bool:
+def acquire_master_launcher_lock(show_if_running: bool = True) -> bool:
     """
     Garantiza que SOLO exista 1 instancia del Lanzador Maestro.
-    Si se hace clic 10 veces en el ejecutable, trae al frente el Lanzador existente
-    y devuelve False para que el duplicado termine inmediatamente sin consumir memoria.
+    Si ya está vivo (visible o residente en bandeja), respeta la instancia existente
+    y opcionalmente la trae al frente sin matarla ni duplicar procesos.
     """
     os.makedirs(_LOCK_DIR, exist_ok=True)
     if os.path.exists(MASTER_LOCK_PATH):
@@ -131,9 +192,17 @@ def acquire_master_launcher_lock() -> bool:
             other_pid = 0
 
         if other_pid > 0 and other_pid != os.getpid() and _pid_alive(other_pid) and _is_our_process(other_pid):
-            if focus_existing_master_launcher():
-                return False
-            # PID vivo pero sin ventana del lanzador → proceso fantasma (cierre a medias / hang DB).
+            in_tray = is_master_launcher_in_tray(other_pid)
+            if not show_if_running:
+                if in_tray or _master_window_exists():
+                    return False
+            else:
+                if in_tray:
+                    pedir_mostrar_lanzador()
+                    return False
+                if focus_existing_master_launcher():
+                    return False
+            # PID vivo pero sin bandeja ni ventana del lanzador → proceso fantasma (cierre a medias / hang DB).
             # Liberamos el candado matando ese PID para que pueda reabrirse.
             if sys.platform == "win32":
                 try:
@@ -168,6 +237,7 @@ def acquire_master_launcher_lock() -> bool:
 
 
 def release_master_launcher_lock():
+    registrar_lanzador_en_bandeja(False)
     try:
         if os.path.exists(MASTER_LOCK_PATH):
             with open(MASTER_LOCK_PATH, "r", encoding="utf-8") as f:
@@ -431,12 +501,7 @@ def focus_pid_window(pid: int) -> bool:
 
 def pedir_mostrar_servidor() -> None:
     """Aviso para que el propio servidor se muestre. Mostrarlo desde afuera lo deja blanco."""
-    try:
-        os.makedirs(_LOCK_DIR, exist_ok=True)
-        fd = os.open(STORE_SERVER_SHOW_PATH, os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
-        os.close(fd)
-    except OSError:
-        pass
+    _crear_flag_vacio(STORE_SERVER_SHOW_PATH)
 
 
 def _hwnd_servidor():

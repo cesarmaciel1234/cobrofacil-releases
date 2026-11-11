@@ -10,7 +10,7 @@ import os
 import sys
 import subprocess
 import threading
-from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
+from PyQt6.QtWidgets import (QApplication, QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                               QFrame, QPushButton, QMessageBox)
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint, QEvent, QTimer
 from PyQt6.QtGui import QKeyEvent
@@ -244,14 +244,20 @@ class PerfilPantalla(QDialog):
 
     _ROLES = ["cajero", "admin", "jefe", "carteleria", "contabilidad"]
 
-    def __init__(self, is_master_launcher=True, parent=None):
+    def __init__(self, is_master_launcher=True, start_in_background=False, parent=None):
         super().__init__(parent)
         self.is_master_launcher = is_master_launcher
+        self._start_in_background = bool(start_in_background)
         self._subprocesos = {} # { "cajero": subprocess.Popen, ... }
-        self._reintentos = { "cajero": 0, "admin": 0, "jefe": 0, "carteleria": 0, "contabilidad": 0 }
+        self._reintentos = {rol: 0 for rol in self._ROLES}
+        self._caidas_historia = {rol: [] for rol in self._ROLES}
         self._max_reintentos = 3
         self.selected_index = 0
         self._roles_bloqueados = set()
+        self._cerrando_definitivamente = False
+        self._bandeja = None
+        self._loop_bandeja = None
+        self._resultado_loop_bandeja = 0
         self._server_ensure_lock = threading.Lock()
         self._server_checked.connect(self._refresh_server_badge)
 
@@ -268,6 +274,14 @@ class PerfilPantalla(QDialog):
 
         self._setup_ui()
         self.update_selection_ui()
+
+        if self.is_master_launcher:
+            try:
+                from src.lanzador.bandeja import instalar_bandeja_lanzador
+
+                self._bandeja = instalar_bandeja_lanzador(self, self._salir_definitivo)
+            except Exception:
+                self._bandeja = None
 
         # En modo Lanzador Maestro, monitorear activamente el estado de los subprocesos
         if self.is_master_launcher:
@@ -353,7 +367,7 @@ class PerfilPantalla(QDialog):
         btn_close = QPushButton("✕")
         btn_close.setFixedSize(28, 28)
         btn_close.setCursor(Qt.PointingHandCursor)
-        btn_close.setToolTip("Cerrar Lanzador Maestro")
+        btn_close.setToolTip("Ocultar Lanzador en bandeja (el servidor sigue activo)")
         btn_close.setStyleSheet("""
             QPushButton {
                 background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5;
@@ -528,6 +542,7 @@ class PerfilPantalla(QDialog):
                     color: #15803D; background: #DCFCE7;
                     border: none; border-radius: 6px; padding: 2px 8px;
                 """)
+                btn.lbl_title.setText(btn._original_title)
                 btn.lbl_title.setStyleSheet("font-size: 13px; font-weight: 900; color: #15803D; background: transparent; border: none;")
                 if rol in UN_SOLO_POR_PC:
                     btn.lbl_desc.setText(f"🟢 ACTIVO (PID {pid})\nClic para traer al frente")
@@ -535,28 +550,45 @@ class PerfilPantalla(QDialog):
                     btn.lbl_desc.setText(f"🟢 ACTIVO (PID {pid})\nClic para administrar / reiniciar")
                 btn.lbl_desc.setStyleSheet("font-size: 10px; font-weight: 700; color: #16A34A; background: transparent; border: none;")
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            else:
-                # Cajero/admin/jefe/contabilidad: si el usuario cerró, no reabrir solo.
-                if proc is not None and proc.poll() is not None and rol in UN_SOLO_POR_PC:
-                    self._subprocesos.pop(rol, None)
+            elif proc is not None and proc.poll() is not None:
+                from src.lanzador.cerebro.watchdog_perfiles import decidir_accion_perfil_terminado
+
+                try:
+                    from src.updater.silent_auto_updater import is_apply_guard_active
+                    hay_update = is_apply_guard_active()
+                except Exception:
+                    hay_update = False
+
+                codigo = proc.poll()
+                self._subprocesos.pop(rol, None)
+                accion, nueva_hist = decidir_accion_perfil_terminado(
+                    codigo,
+                    self._caidas_historia.get(rol, []),
+                    apply_guard=hay_update,
+                    max_reintentos=self._max_reintentos,
+                )
+                self._caidas_historia[rol] = nueva_hist
+
+                if accion == "relanzar":
+                    intento = len(nueva_hist)
+                    self._reintentos[rol] = intento
+                    btn.set_retry_state(intento, self._max_reintentos)
+                    QTimer.singleShot(1000, lambda r=rol: self._lanzar_proceso_autonomo(r))
+                elif accion == "pausado":
+                    self._reintentos[rol] = self._max_reintentos
+                    btn.set_failed_state()
+                else:
+                    # Cierre limpio (0 / 888 / 889) o update en curso -> no volver a abrir como virus
                     self._reintentos[rol] = 0
                     btn._set_idle_style()
                     btn.setCursor(Qt.CursorShape.PointingHandCursor)
-                    continue
-                # Cartelería (y el resto): reintento si el subproceso cayó.
-                if proc is not None and proc.poll() is not None:
-                    retry_count = self._reintentos.get(rol, 0)
-                    if retry_count < self._max_reintentos:
-                        self._reintentos[rol] = retry_count + 1
-                        btn.set_retry_state(self._reintentos[rol], self._max_reintentos)
-                        QTimer.singleShot(1000, lambda r=rol: self._lanzar_proceso_autonomo(r))
-                    else:
-                        btn.set_failed_state()
+            elif proc is not None and proc.poll() is None:
+                continue
+            else:
+                if self._reintentos.get(rol, 0) >= self._max_reintentos:
+                    btn.set_failed_state()
                 else:
-                    if self._reintentos.get(rol, 0) >= self._max_reintentos:
-                        btn.set_failed_state()
-                    else:
-                        btn._set_idle_style()
+                    btn._set_idle_style()
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right):
@@ -577,8 +609,9 @@ class PerfilPantalla(QDialog):
         pid = PerfilLocker.get_locked_pid(rol)
         is_locked = PerfilLocker.check_is_locked(rol)
 
-        # Al hacer clic manual, resetear el contador de reintentos
+        # Al hacer clic manual, resetear el contador de reintentos y circuit breaker
         self._reintentos[rol] = 0
+        self._caidas_historia[rol] = []
 
         vivo = self._subprocesos.get(rol)
         if vivo is not None and vivo.poll() is None:
@@ -678,3 +711,73 @@ class PerfilPantalla(QDialog):
     def mouseReleaseEvent(self, event):
         self._drag_pos = None
         super().mouseReleaseEvent(event)
+
+    def soporta_bandeja(self) -> bool:
+        return self._bandeja is not None and self._bandeja.disponible()
+
+    def ocultar_en_bandeja(self, silencioso: bool = False) -> None:
+        if self.soporta_bandeja():
+            self._bandeja.ocultar(silencioso=silencioso)
+
+    def ejecutar_en_bandeja(self, app) -> int:
+        from PyQt6.QtCore import QEventLoop
+        from src.utils.qt_compat import qt_exec
+
+        self._loop_bandeja = QEventLoop(self)
+        self._resultado_loop_bandeja = 0
+        self.ocultar_en_bandeja(silencioso=True)
+        app.aboutToQuit.connect(self._loop_bandeja.quit)
+        qt_exec(self._loop_bandeja)
+        return int(self._resultado_loop_bandeja)
+
+    def _salir_definitivo(self) -> None:
+        self._cerrando_definitivamente = True
+        app = QApplication.instance()
+        if app is not None:
+            try:
+                app.setQuitOnLastWindowClosed(True)
+            except Exception:
+                pass
+        if self._bandeja is not None:
+            self._bandeja.cerrar_limpio()
+        loop = getattr(self, "_loop_bandeja", None)
+        if loop is not None and loop.isRunning():
+            self._resultado_loop_bandeja = 0
+            loop.quit()
+            return
+        QDialog.done(self, QDialog.DialogCode.Rejected)
+
+    def closeEvent(self, event):
+        if not self._cerrando_definitivamente and self.is_master_launcher and self.soporta_bandeja():
+            event.ignore()
+            self.ocultar_en_bandeja()
+            return
+        if self._bandeja is not None:
+            self._bandeja.cerrar_limpio()
+        super().closeEvent(event)
+
+    def reject(self):
+        if not self._cerrando_definitivamente and self.is_master_launcher and self.soporta_bandeja():
+            self.ocultar_en_bandeja()
+            return
+        if self._bandeja is not None:
+            self._bandeja.cerrar_limpio()
+        super().reject()
+
+    def done(self, result: int):
+        if result in (888, 889) or self._cerrando_definitivamente:
+            if self._bandeja is not None:
+                self._bandeja.cerrar_limpio()
+            loop = getattr(self, "_loop_bandeja", None)
+            if loop is not None and loop.isRunning():
+                self._resultado_loop_bandeja = int(result)
+                loop.quit()
+                return
+            super().done(result)
+            return
+        if result == QDialog.DialogCode.Rejected and self.is_master_launcher and self.soporta_bandeja():
+            self.ocultar_en_bandeja()
+            return
+        if self._bandeja is not None:
+            self._bandeja.cerrar_limpio()
+        super().done(result)

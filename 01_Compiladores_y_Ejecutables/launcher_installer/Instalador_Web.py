@@ -719,37 +719,55 @@ class InstallWorker(QThread):
             )
             _create_lnk(start_menu_shortcut, target_exe)
 
-            # Registrar Servidor de Tienda en segundo plano al iniciar Windows
-            startup_lnk = os.path.join(
-                appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup",
+            def _register_windows_daemon(lnk_name, task_name, cli_args, desc, restart_count):
+                startup_lnk = os.path.join(
+                    appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup",
+                    lnk_name,
+                )
+                _create_lnk(
+                    startup_lnk,
+                    target_exe,
+                    args=cli_args,
+                    window_style=7,
+                    desc=desc,
+                )
+                try:
+                    t_ps = _ps_escape(os.path.abspath(target_exe))
+                    w_ps = _ps_escape(os.path.dirname(os.path.abspath(target_exe)))
+                    a_ps = _ps_escape(cli_args)
+                    tn_ps = _ps_escape(task_name)
+                    ps_task = (
+                        "$u = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name; "
+                        f"$action = New-ScheduledTaskAction -Execute '{t_ps}' -Argument '{a_ps}' -WorkingDirectory '{w_ps}'; "
+                        "$trigger = New-ScheduledTaskTrigger -AtLogOn -User $u; "
+                        "$principal = New-ScheduledTaskPrincipal -UserId $u -LogonType Interactive; "
+                        f"$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Days 0) -RestartCount {restart_count} -RestartInterval (New-TimeSpan -Minutes 1) -MultipleInstances IgnoreNew; "
+                        f"Register-ScheduledTask -TaskName '{tn_ps}' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null"
+                    )
+                    subprocess.run(
+                        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_task],
+                        capture_output=True,
+                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                        timeout=15,
+                    )
+                except Exception:
+                    pass
+
+            # Registrar Servidor fantasma y Supervisor del Lanzador en segundo plano al iniciar Windows
+            _register_windows_daemon(
                 "CobroFacil_ServidorTienda.lnk",
+                "CobroFacil_ServidorTienda",
+                "--server --background",
+                "Cobro Facil Servidor de Tienda",
+                999,
             )
-            _create_lnk(
-                startup_lnk,
-                target_exe,
-                args="--server --background",
-                window_style=7,
-                desc="Cobro Facil Servidor de Tienda",
+            _register_windows_daemon(
+                "CobroFacil_Lanzador.lnk",
+                "CobroFacil_Lanzador",
+                "--background",
+                "Cobro Facil Lanzador Supervisor (Bandeja)",
+                3,
             )
-            try:
-                t_ps = _ps_escape(os.path.abspath(target_exe))
-                w_ps = _ps_escape(os.path.dirname(os.path.abspath(target_exe)))
-                ps_task = (
-                    "$u = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name; "
-                    f"$action = New-ScheduledTaskAction -Execute '{t_ps}' -Argument '--server --background' -WorkingDirectory '{w_ps}'; "
-                    "$trigger = New-ScheduledTaskTrigger -AtLogOn -User $u; "
-                    "$principal = New-ScheduledTaskPrincipal -UserId $u -LogonType Interactive; "
-                    "$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Days 0) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -MultipleInstances IgnoreNew; "
-                    "Register-ScheduledTask -TaskName 'CobroFacil_ServidorTienda' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null"
-                )
-                subprocess.run(
-                    ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_task],
-                    capture_output=True,
-                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-                    timeout=15,
-                )
-            except Exception:
-                pass
 
             if not desktop_shortcut:
                 _log_installer_error(
@@ -830,6 +848,21 @@ class InstallerWindow(QWidget):
         js_code = f"window.actualizar_interfaz({val}, '{safe}');"
         self.browser.page().runJavaScript(js_code)
 
+    @staticmethod
+    def _launch_installed_apps(target_exe):
+        if not (target_exe and os.path.exists(target_exe)):
+            return
+        try:
+            subprocess.Popen(
+                [target_exe, "--server", "--background"],
+                cwd=os.path.dirname(target_exe),
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                close_fds=True,
+            )
+        except Exception:
+            pass
+        os.startfile(target_exe)
+
     def on_finished(self, success, msg, target_exe, shortcut_path):
         if success:
             shortcut_hint = (
@@ -844,18 +877,6 @@ class InstallerWindow(QWidget):
                     + shortcut_hint
                     + "\n\nCobro Fácil POS se iniciará ahora.",
                 )
-                if target_exe and os.path.exists(target_exe):
-                    try:
-                        subprocess.Popen(
-                            [target_exe, "--server", "--background"],
-                            cwd=os.path.dirname(target_exe),
-                            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-                            close_fds=True,
-                        )
-                    except Exception:
-                        pass
-                    os.startfile(target_exe)
-                self.close()
             else:
                 QMessageBox.information(
                     self,
@@ -864,18 +885,8 @@ class InstallerWindow(QWidget):
                     + shortcut_hint
                     + "\n\nIniciando Cobro Fácil POS...",
                 )
-                if target_exe and os.path.exists(target_exe):
-                    try:
-                        subprocess.Popen(
-                            [target_exe, "--server", "--background"],
-                            cwd=os.path.dirname(target_exe),
-                            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-                            close_fds=True,
-                        )
-                    except Exception:
-                        pass
-                    os.startfile(target_exe)
-                self.close()
+            self._launch_installed_apps(target_exe)
+            self.close()
         else:
             _report_installer_failure_to_github(msg)
             QMessageBox.critical(self, "Error de Instalación", f"No se pudo completar el proceso:\n{msg}")
