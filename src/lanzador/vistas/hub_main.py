@@ -28,6 +28,7 @@ if hasattr(Qt, 'WindowType'):
     Qt.Dialog = Qt.WindowType.Dialog
 if hasattr(Qt, 'WidgetAttribute'):
     Qt.WA_TranslucentBackground = Qt.WidgetAttribute.WA_TranslucentBackground
+    Qt.WA_StyledBackground = Qt.WidgetAttribute.WA_StyledBackground
 if hasattr(Qt, 'MouseButton'):
     Qt.LeftButton = Qt.MouseButton.LeftButton
 if hasattr(Qt, 'Key'):
@@ -251,6 +252,7 @@ class PerfilPantalla(QDialog):
         self._subprocesos = {} # { "cajero": subprocess.Popen, ... }
         self._reintentos = {rol: 0 for rol in self._ROLES}
         self._caidas_historia = {rol: [] for rol in self._ROLES}
+        self._reintento_pendiente = set()
         self._max_reintentos = 3
         self.selected_index = 0
         self._roles_bloqueados = set()
@@ -572,6 +574,7 @@ class PerfilPantalla(QDialog):
                 if accion == "relanzar":
                     intento = len(nueva_hist)
                     self._reintentos[rol] = intento
+                    self._reintento_pendiente.add(rol)
                     btn.set_retry_state(intento, self._max_reintentos)
                     QTimer.singleShot(1000, lambda r=rol: self._lanzar_proceso_autonomo(r))
                 elif accion == "pausado":
@@ -582,7 +585,7 @@ class PerfilPantalla(QDialog):
                     self._reintentos[rol] = 0
                     btn._set_idle_style()
                     btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            elif proc is not None and proc.poll() is None:
+            elif (proc is not None and proc.poll() is None) or (rol in self._reintento_pendiente):
                 continue
             else:
                 if self._reintentos.get(rol, 0) >= self._max_reintentos:
@@ -612,6 +615,7 @@ class PerfilPantalla(QDialog):
         # Al hacer clic manual, resetear el contador de reintentos y circuit breaker
         self._reintentos[rol] = 0
         self._caidas_historia[rol] = []
+        self._reintento_pendiente.discard(rol)
 
         vivo = self._subprocesos.get(rol)
         if vivo is not None and vivo.poll() is None:
@@ -664,6 +668,7 @@ class PerfilPantalla(QDialog):
         self._lanzar_proceso_autonomo(rol)
 
     def _lanzar_proceso_autonomo(self, rol):
+        self._reintento_pendiente.discard(rol)
         from PyQt6.QtWidgets import QApplication
         from src.lanzador.cerebro.process_spawner import spawn_role_process
 

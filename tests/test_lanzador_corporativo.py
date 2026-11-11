@@ -124,3 +124,30 @@ def test_windows_startup_registra_servidor_y_lanzador_separados(tmp_path, monkey
     assert not os.path.exists(hub_lnk)
     assert ("CobroFacil_ServidorTienda", False, "", 999) in tasks
     assert ("CobroFacil_Lanzador", False, "", 999) in tasks
+
+
+def test_lock_maestro_respeta_arranque_inicial_sin_matar(tmp_path, monkeypatch):
+    lock_dir = str(tmp_path)
+    lock_file = os.path.join(lock_dir, "lanzador_maestro.lock")
+    show_file = os.path.join(lock_dir, "lanzador_maestro.mostrar")
+    tray_file = os.path.join(lock_dir, "lanzador_maestro.tray")
+
+    monkeypatch.setattr(candados, "_LOCK_DIR", lock_dir)
+    monkeypatch.setattr(candados, "MASTER_LOCK_PATH", lock_file)
+    monkeypatch.setattr(candados, "MASTER_SHOW_PATH", show_file)
+    monkeypatch.setattr(candados, "MASTER_TRAY_STATE_PATH", tray_file)
+
+    other_pid = os.getpid() + 44444
+    with open(lock_file, "w", encoding="utf-8") as f:
+        f.write(str(other_pid))
+
+    monkeypatch.setattr(candados, "_pid_alive", lambda pid: pid == other_pid)
+    monkeypatch.setattr(candados, "_is_our_process", lambda pid: pid == other_pid)
+    monkeypatch.setattr(candados, "_master_window_exists", lambda: False)
+    kill_mock = MagicMock()
+    monkeypatch.setattr(candados.subprocess, "run", kill_mock)
+
+    # Lock recién creado (<25s) mientras inicializa DB/Qt -> pide mostrar pero NO mata el PID
+    assert candados.acquire_master_launcher_lock(show_if_running=True) is False
+    assert os.path.isfile(show_file)
+    assert not kill_mock.called

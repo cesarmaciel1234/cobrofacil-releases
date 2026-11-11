@@ -618,6 +618,13 @@ if __name__ == "__main__":
         except Exception:
             pass
 
+    if not is_terminal_role:
+        try:
+            if not acquire_master_launcher_lock(show_if_running=not is_background):
+                sys.exit(0)
+        except Exception as e:
+            print(f"Aviso al verificar candado maestro: {e}")
+
     # Actualizador autÃ³nomo en proceso aparte (despuÃ©s del apply; no tumba el hub)
     try:
         from src.lanzador.entry import bootstrap_master_services
@@ -656,12 +663,6 @@ if __name__ == "__main__":
                 pass
     else:
         # Lanzador: asegura proceso Servidor (MariaDB + red), no los posee
-        try:
-            if not acquire_master_launcher_lock(show_if_running=not is_background):
-                sys.exit(0)
-        except Exception as e:
-            print(f"Aviso al verificar candado maestro: {e}")
-
         from src.config import config
         from src.central_red_global.master_presence import es_pc_maestra_local
 

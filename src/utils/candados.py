@@ -203,6 +203,15 @@ def acquire_master_launcher_lock(show_if_running: bool = True) -> bool:
                     return False
                 if focus_existing_master_launcher():
                     return False
+            try:
+                edad_lock = time.time() - os.path.getmtime(MASTER_LOCK_PATH)
+            except OSError:
+                edad_lock = 999.0
+            if edad_lock < 25.0:
+                # Instancia arrancando DB/Qt aún; no matar mientras inicializa bandeja/ventana.
+                if show_if_running:
+                    pedir_mostrar_lanzador()
+                return False
             # PID vivo pero sin bandeja ni ventana del lanzador → proceso fantasma (cierre a medias / hang DB).
             # Liberamos el candado matando ese PID para que pueda reabrirse.
             if sys.platform == "win32":
