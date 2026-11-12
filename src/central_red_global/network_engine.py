@@ -180,7 +180,10 @@ class NetworkEngine(QObject):
 def init_network_engine(role: str):
     global _engine
     if _engine is not None and _cpp_alive(_engine):
-        return _engine
+        if _engine.role != role and _engine.role == "cajero" and role in ("admin", "jefe", "carteleria", "contabilidad"):
+            shutdown_network_engine()
+        else:
+            return _engine
     _engine = NetworkEngine(role)
     _engine.start()
     return _engine

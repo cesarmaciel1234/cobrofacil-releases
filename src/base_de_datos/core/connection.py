@@ -18,7 +18,9 @@ class ConnectionMixin:
             # Si la maestra cae, nos quedamos en SQLite local hasta reconectar_mariadb()
             cls._instance._forced_local_offline = False
             cls._instance._red_reconnect_lock = threading.Lock()
+            cls._instance._init_completed = False
             cls._instance._init_db()
+            cls._instance._init_completed = True
         return cls._instance
 
     def _attach_local_store_client(self) -> None:

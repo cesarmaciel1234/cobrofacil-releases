@@ -100,3 +100,58 @@ def test_github_reporter_no_token_warns_only_once(tmp_path, monkeypatch, caplog)
     msgs = [r.message for r in caplog.records if "GitHub error report" in r.message]
     assert len(msgs) == 1
     ger.reset_auth_circuit_breaker()
+
+
+def test_network_engine_reemplaza_fallback_cajero_por_rol_explicito(monkeypatch):
+    from src.central_red_global import network_engine as ne
+
+    creados = []
+
+    class DummyEngine:
+        def __init__(self, role):
+            self.role = role
+            self.stopped = False
+
+        def start(self):
+            creados.append(self.role)
+
+        def stop(self):
+            self.stopped = True
+
+    monkeypatch.setattr(ne, "NetworkEngine", DummyEngine)
+    monkeypatch.setattr(ne, "_cpp_alive", lambda obj: obj is not None)
+    monkeypatch.setattr(ne, "_engine", None)
+
+    e1 = ne.init_network_engine("cajero")
+    assert e1.role == "cajero"
+    e2 = ne.init_network_engine("admin")
+    assert e1.stopped is True
+    assert e2.role == "admin"
+    # Un segundo llamado con 'cajero' ya no pisa al rol explícito 'admin'
+    e3 = ne.init_network_engine("cajero")
+    assert e3.role == "admin"
+    assert creados == ["cajero", "admin"]
+    ne._engine = None
+
+
+def test_motor_proveedor_texto_compra_usa_flecha_ascii():
+    from src.proveedor_global.backend.motor_proveedor import MotorProveedor
+
+    desc, resumido = MotorProveedor._texto_compra(
+        "Proveedor Demo",
+        "123",
+        {("Pollo", 1500.0): [("Pollo", 10.0, 2.0)]},
+        "Contado (Pago Inmediato)",
+    )
+    assert "\u21b3" not in desc
+    assert "  -> Total kg:" in desc
+    assert len(resumido) == 1
+
+
+def test_main_pre_mainwindow_role_y_una_sola_init_db():
+    src = Path(main.__file__).read_text(encoding="utf-8")
+    pos_init_net = src.index("init_network_engine(direct_role)")
+    pos_main_win = src.index("main_window = MainWindow()")
+    assert pos_init_net < pos_main_win
+    assert 'if reload_config or not getattr(db_manager, "_init_completed", False):' in src
+    assert "if is_terminal_role:\n        from src.hardware.cash_drawer import reset_drawer_manager" in src.replace("\r\n", "\n")

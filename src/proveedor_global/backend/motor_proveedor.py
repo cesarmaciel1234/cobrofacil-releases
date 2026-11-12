@@ -295,9 +295,9 @@ class MotorProveedor:
             if len(lineas) > 20:
                 detalle += f" ... (y {len(lineas) - 20} más)"
             desc += f"• {merc} ({len(items)} ítems):\n"
-            desc += f"  ↳ {detalle}\n"
+            desc += f"  -> {detalle}\n"
             desc += (
-                f"  ↳ Total kg: {total_kilos:.2f} | Precio/kg: "
+                f"  -> Total kg: {total_kilos:.2f} | Precio/kg: "
                 f"{_plata(precio)} | Subtotal: {_plata(monto_grupo)}\n\n"
             )
             resumido.append((merc, precio, items, total_kilos, monto_grupo))

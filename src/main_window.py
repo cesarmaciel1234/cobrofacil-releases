@@ -128,12 +128,22 @@ class MainWindow(QMainWindow):
             from src.central_red_global.network_engine import get_network_engine, init_network_engine
             from src.config import config
 
-            # Determinar rol para Network Engine
-            user = config.current_user or {}
-            role = (user.get("role") or user.get("rol") or "cajero").lower()
-
-            # Inicializar Network Engine con rol especÃ­fico
-            engine = init_network_engine(role)
+            # Si ya fue inicializado con el --role del proceso (admin/jefe/carteleria/contabilidad), reutilizarlo.
+            engine = get_network_engine()
+            if engine is None:
+                user = config.current_user or {}
+                cli_role = None
+                for i, arg in enumerate(sys.argv):
+                    if arg in ("--role", "--profile") and i + 1 < len(sys.argv):
+                        cli_role = sys.argv[i + 1].strip().lower()
+                        break
+                    if arg.startswith("--role=") or arg.startswith("--profile="):
+                        cli_role = arg.split("=", 1)[1].strip().lower()
+                        break
+                role = (user.get("role") or user.get("rol") or cli_role or "cajero").lower()
+                engine = init_network_engine(role)
+            else:
+                role = engine.role
             if engine:
                 engine.message_received.connect(self._on_udp_message_received)
                 try:

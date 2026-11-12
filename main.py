@@ -241,7 +241,9 @@ def launch_app(direct_role=None, background=False, reload_config=False, check_pe
 
     def _boot_db():
         from src.base_de_datos.database import db_manager
-        db_manager._init_db()
+        if reload_config or not getattr(db_manager, "_init_completed", False):
+            db_manager._init_db()
+            db_manager._init_completed = True
         db_manager.asegurar_lectura_tienda()
 
     if is_direct:
@@ -317,6 +319,22 @@ def launch_app(direct_role=None, background=False, reload_config=False, check_pe
             if not qt_exec(lic): sys.exit()
             if splash: splash.show()
 
+    # --- CANDADO Y RED ANTES DE CONSTRUIR MAINWINDOW (evita instancias duplicadas y rol cajero por defecto) ---
+    if direct_role:
+        from src.utils.candados import PerfilLocker
+        if not PerfilLocker.lock_profile(direct_role):
+            pid = PerfilLocker.get_locked_pid(direct_role)
+            from src.utils.candados import focus_pid_window
+            if not (pid and focus_pid_window(pid)):
+                QMessageBox.warning(
+                    None,
+                    "Error",
+                    f"El perfil '{direct_role}' ya está en uso.",
+                )
+            return 0
+        from src.central_red_global.network_engine import init_network_engine
+        init_network_engine(direct_role)
+
     # --- PASO 4: CARGAR MÓDULOS DE USUARIO ---
     update_status("Cargando perfiles de acceso...", 80)
     LoginPantalla = None
@@ -365,19 +383,6 @@ def launch_app(direct_role=None, background=False, reload_config=False, check_pe
 
     # --- MODO EJECUCIÃ“N DIRECTA DE PERFIL ---
     if direct_role:
-        from src.utils.candados import PerfilLocker
-        if not PerfilLocker.lock_profile(direct_role):
-            pid = PerfilLocker.get_locked_pid(direct_role)
-            from src.utils.candados import focus_pid_window
-            if not (pid and focus_pid_window(pid)):
-                QMessageBox.warning(
-                    None,
-                    "Error",
-                    f"El perfil '{direct_role}' ya está en uso.",
-                )
-            return 0
-        from src.central_red_global.network_engine import init_network_engine
-        init_network_engine(direct_role)
         role_selected = direct_role
         step = 2
     else:
@@ -648,8 +653,9 @@ if __name__ == "__main__":
     from src.ui_components.touch_feedback import TouchFeedbackManager
     touch_manager = TouchFeedbackManager(app)
 
-    from src.hardware.cash_drawer import reset_drawer_manager
-    reset_drawer_manager()
+    if is_terminal_role:
+        from src.hardware.cash_drawer import reset_drawer_manager
+        reset_drawer_manager()
 
     from src.utils.candados import is_store_server_running
 
