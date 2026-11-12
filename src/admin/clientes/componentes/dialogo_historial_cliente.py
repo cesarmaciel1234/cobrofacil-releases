@@ -13,7 +13,7 @@ from src.admin.clientes.componentes.dialogo_ticket import (
     PanelDetalleTicket,
     descripcion_cargo_visible,
 )
-from src.utils.letra import vestir_id, vestir_nombre, vestir_numero
+from src.utils.letra import fuente_numero, vestir_id, vestir_nombre, vestir_numero
 
 
 from src.admin.clientes.theme import _CLI
@@ -399,12 +399,11 @@ class DialogoHistorialCliente(QDialog):
         dl.setSpacing(12)
 
         lbl_head = QLabel(f"CARGO MANUAL · {nombre}")
-        vestir_nombre(lbl_head, tam=15)
-        lbl_head.setStyleSheet(f"color: {_CLI['text']}; font-weight: 900; border: none;")
+        lbl_head.setStyleSheet(f"color: {_CLI['text']}; font-family: 'Segoe UI'; font-size: 15px; font-weight: 900; border: none;")
         dl.addWidget(lbl_head)
 
         lbl_deuda = QLabel(f"Deuda actual: ${deuda:,.2f}")
-        vestir_numero(lbl_deuda, tam=13)
+        lbl_deuda.setFont(fuente_numero(13))
         lbl_deuda.setStyleSheet(f"color: {_CLI['text_sec']}; border: none;")
         dl.addWidget(lbl_deuda)
 

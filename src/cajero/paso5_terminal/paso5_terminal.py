@@ -273,7 +273,8 @@ class Paso5Terminal(QWidget):
                 hizo_cierre, monto = verificar_y_realizar_autocierre()
                 if hizo_cierre:
                     logger.info(f"Cierre automático ejecutado exitosamente a las {hora_actual}.")
-                    self._agregar_al_ticket("> [SISTEMA] CIERRE AUTOMÁTICO EFECTUADO.", 0, 0, color="#10B981")
+                    self.flash_feedback(True)
+                    self.refresh_status_bar()
         except Exception as e:
             logger.error(f"Autoclose error: {e}")
 

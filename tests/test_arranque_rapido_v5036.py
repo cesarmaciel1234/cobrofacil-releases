@@ -155,3 +155,51 @@ def test_main_pre_mainwindow_role_y_una_sola_init_db():
     assert pos_init_net < pos_main_win
     assert 'if reload_config or not getattr(db_manager, "_init_completed", False):' in src
     assert "if is_terminal_role:\n        from src.hardware.cash_drawer import reset_drawer_manager" in src.replace("\r\n", "\n")
+
+
+def test_dialogo_cargar_saldo_no_rompe_con_letra_tam(monkeypatch):
+    from PyQt6.QtWidgets import QApplication, QDialog
+    from src.admin.clientes.componentes import dialogo_historial_cliente as dhc
+
+    app = QApplication.instance() or QApplication([])
+    dummy = type("DummyDlg", (), {"cliente": {"nombre": "Cliente Test", "deuda_actual": 1250.5}})()
+    # Inyectar QDialog.__init__ sin construir ventana padre real: usar QDialog parent=None
+    real_parent = QDialog()
+    real_parent.cliente = dummy.cliente
+    real_parent.cliente_id = 1
+    monkeypatch.setattr(QDialog, "exec", lambda self: 0)
+
+    # Ejecutar método real _cargar_saldo (antes explotaba en vestir_nombre(lbl_head, tam=15))
+    dhc.DialogoHistorialCliente._cargar_saldo(real_parent)
+    real_parent.close()
+
+
+def test_paso5_verificar_autocierre_sin_agregar_al_ticket_roto(monkeypatch):
+    from datetime import datetime
+    from src.cajero.paso5_terminal import paso5_terminal as p5
+    from src.config import config
+    from src.services import caja_service
+
+    class FakeTerminal:
+        flashed = []
+        refreshed = 0
+
+        def flash_feedback(self, success=True):
+            self.flashed.append(success)
+
+        def refresh_status_bar(self):
+            self.refreshed += 1
+
+    fake = FakeTerminal()
+    ahora_str = datetime.now().strftime("%H:%M")
+    orig_get = config.get
+    monkeypatch.setattr(
+        config,
+        "get",
+        lambda k, d=None: ahora_str if k == "cierre_auto_hora" else orig_get(k, d),
+    )
+    monkeypatch.setattr(caja_service, "verificar_y_realizar_autocierre", lambda: (True, 5000.0))
+
+    p5.Paso5Terminal.verificar_autocierre(fake)
+    assert fake.flashed == [True]
+    assert fake.refreshed == 1
