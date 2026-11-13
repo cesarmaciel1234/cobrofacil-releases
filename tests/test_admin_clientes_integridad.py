@@ -112,7 +112,7 @@ def test_fallo_al_guardar_abono_revierte_el_saldo(cuenta_db):
     assert _leer(cuenta_db, "SELECT COUNT(*) FROM cuenta_corriente") == [(0,)]
 
 
-def test_abono_reduce_saldo_capital_directo_sin_interes_artificial(cuenta_db):
+def test_abono_asienta_interes_por_ticket_en_la_misma_transaccion(cuenta_db):
     from src.clientes_fiado.oficina.cuenta.motor import MotorCuenta
 
     ahora = datetime.now().replace(microsecond=0)
@@ -131,15 +131,16 @@ def test_abono_reduce_saldo_capital_directo_sin_interes_artificial(cuenta_db):
 
     resultado = MotorCuenta().abonar(1, 10, "prueba")
 
-    # El abono entra directo al capital (100 - 10 = 90) sin renglones sorpresa de interés
-    assert resultado == (True, 90.0, "Ana")
+    assert resultado == (True, 93.0, "Ana")
     filas = _leer(
         cuenta_db,
         "SELECT tipo, monto, descripcion FROM cuenta_corriente ORDER BY id",
     )
-    assert len(filas) == 2
-    assert filas[1][0] == "ABONO"
-    assert filas[1][1] == 10
+    assert filas[1][0] == "CARGO"
+    assert filas[1][1] == 3
+    assert filas[1][2].startswith("INTERÉS MENSUAL · 3%")
+    assert filas[2][0] == "ABONO"
+    assert filas[2][1] == 10
 
 
 def test_borrar_ticket_reversa_interes_y_devuelve_abonos_previos(cuenta_db, monkeypatch):
@@ -170,7 +171,8 @@ def test_borrar_ticket_reversa_interes_y_devuelve_abonos_previos(cuenta_db, monk
         cuenta_db,
         "SELECT monto, descripcion FROM cuenta_corriente WHERE tipo = 'ANULACION'",
     )[0]
-    assert anulacion[0] == 100
+    assert anulacion[0] == 103
+    assert "TPV_INTERES_REVERSO_V1" in anulacion[1]
 
 
 def test_cancelar_ticket_f3_revierte_el_interes_asentado(cuenta_db):
@@ -202,7 +204,8 @@ def test_cancelar_ticket_f3_revierte_el_interes_asentado(cuenta_db):
         cuenta_db,
         "SELECT monto, descripcion FROM cuenta_corriente WHERE tipo = 'ANULACION'",
     )[0]
-    assert anulacion[0] == 100
+    assert anulacion[0] == 103
+    assert "TPV_INTERES_REVERSO_V1" in anulacion[1]
 
 
 def test_interes_consolidado_no_se_puede_borrar_como_cargo_manual(cuenta_db):

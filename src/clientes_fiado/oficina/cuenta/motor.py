@@ -596,9 +596,61 @@ class MotorCuenta:
                 nombre = ficha.get("nombre", "") if isinstance(ficha, dict) else ""
             nombre = nombre or ""
 
-            # El abono resta directo al saldo capital sin asentar recargos artificiales de interés mensual.
-            # El saldo remanente arranca su conteo diario desde la fecha de este pago.
-            nuevo_saldo = deuda_actual - float(monto or 0)
+            interes_por_ticket = {}
+            try:
+                ahora = fecha_db_cursor(cursor)
+                movimientos = movimientos_cursor(cursor, cliente_id)
+                activacion = fecha_activacion_cursor(cursor, ahora=ahora, crear=True)
+                proyeccion = proyectar_interes(movimientos, activacion, ahora=ahora)
+                interes_por_ticket = {
+                    ticket: Decimal(str(dato["interes_acumulado"]))
+                    .quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                    for ticket, dato in proyeccion["tickets"].items()
+                    if Decimal(str(dato["interes_acumulado"])) >= Decimal("0.01")
+                }
+            except Exception:
+                logger.exception("[Abono] Falló el cálculo de interés proyectado; continuando abono sin recargo adicional.")
+                interes_por_ticket = {}
+            interes_total = sum(interes_por_ticket.values(), Decimal("0"))
+            saldo_antes_abono = deuda_actual
+            if interes_total > 0 and deuda_actual > 0:
+                monto_interes = float(interes_total)
+                saldo_antes_abono += monto_interes
+                descripcion_interes_cargo = descripcion_interes(interes_por_ticket)
+                cursor.execute(
+                    "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
+                    (saldo_antes_abono, cliente_id),
+                )
+                cursor.execute(
+                    "INSERT INTO cuenta_corriente "
+                    "(cliente_id, tipo, monto, saldo_resultante, descripcion) "
+                    "VALUES (?, 'CARGO', ?, ?, ?)",
+                    (
+                        cliente_id,
+                        monto_interes,
+                        saldo_antes_abono,
+                        descripcion_interes_cargo,
+                    ),
+                )
+                interes_id = _id_insertado(cursor)
+                movimiento_en(
+                    cursor,
+                    "CARGO",
+                    cliente_id,
+                    monto_interes,
+                    descripcion_interes_cargo,
+                    extra={
+                        "cargo_id": interes_id,
+                        "interes_tickets": {
+                            ticket: float(monto)
+                            for ticket, monto in interes_por_ticket.items()
+                        },
+                    },
+                )
+
+            nuevo_saldo = round(saldo_antes_abono - float(monto or 0), 2)
+            if abs(nuevo_saldo) < 0.005:
+                nuevo_saldo = 0.0
             cursor.execute(
                 "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
                 (nuevo_saldo, cliente_id),
