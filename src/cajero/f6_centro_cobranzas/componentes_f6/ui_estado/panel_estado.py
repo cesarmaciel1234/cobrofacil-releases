@@ -46,18 +46,6 @@ class PanelEstadoCredito(QWidget):
         
         lay_botones_accion = QHBoxLayout()
         lay_botones_accion.setSpacing(15)
-        
-        self.btn_volver_buscador = QPushButton("← Volver")
-        self.btn_volver_buscador.setToolTip("Volver al buscador de clientes (o Escape)")
-        self.btn_volver_buscador.setFixedHeight(50)
-        self.btn_volver_buscador.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_volver_buscador.setStyleSheet(
-            "QPushButton { background: #FFFFFF; color: #475569; font-size: 16px; font-weight: 800; "
-            "border-radius: 12px; border: 2px solid #CBD5E1; padding: 0 16px; } "
-            "QPushButton:hover { background: #F1F5F9; color: #0F172A; border: 2px solid #94A3B8; }"
-        )
-        self.btn_volver_buscador.hide()
-        lay_botones_accion.addWidget(self.btn_volver_buscador)
 
         self.btn_imprimir_resumen = QPushButton("Ver / Imprimir")
         self.btn_imprimir_resumen.setToolTip("Historial: ver movimientos e imprimir")
@@ -83,22 +71,7 @@ class PanelEstadoCredito(QWidget):
         lay.addLayout(lay_botones_accion)
         
         # Spacer
-        lay.addSpacing(16)
-
-        lay_top_pago = QHBoxLayout()
-        self.btn_volver_de_pago = QPushButton("← Volver a la Ficha")
-        self.btn_volver_de_pago.setToolTip("Volver a la ficha del cliente (o Escape)")
-        self.btn_volver_de_pago.setFixedHeight(40)
-        self.btn_volver_de_pago.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_volver_de_pago.setStyleSheet(
-            "QPushButton { background: #F1F5F9; color: #475569; font-size: 14px; font-weight: 800; "
-            "border-radius: 8px; border: 1px solid #CBD5E1; padding: 0 14px; } "
-            "QPushButton:hover { background: #E2E8F0; color: #0F172A; }"
-        )
-        self.btn_volver_de_pago.hide()
-        lay_top_pago.addWidget(self.btn_volver_de_pago)
-        lay_top_pago.addStretch()
-        lay.addLayout(lay_top_pago)
+        lay.addSpacing(20)
 
         self.lbl_pregunta_monto = QLabel("1. ¿Cuánto paga a la cuenta?")
         self.lbl_pregunta_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)

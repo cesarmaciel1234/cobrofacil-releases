@@ -1,7 +1,7 @@
 {
-  "app_version": "v50.41",
+  "app_version": "v50.42",
   "channel": "stable",
-  "build_date": "2026-11-13 09:06:11",
+  "build_date": "2026-11-13 09:32:58",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -1626,9 +1626,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "c98294ce68efb4a813c067b4b652d62a",
+      "checksum": "f0ce3f13445d90e423ad226a3e5993e9",
       "channel": "stable",
-      "size": 1258746
+      "size": 1258926
     },
     "_bump_v5019.py": {
       "version": "1.0.0",
@@ -6168,9 +6168,9 @@
     },
     "src/cajero/f6_centro_cobranzas/panel.py": {
       "version": "1.0.0",
-      "checksum": "d08d66aaab3f2ee06f1a2b08b041d734",
+      "checksum": "13a9f0a0282f7bed4ab68440df217a70",
       "channel": "stable",
-      "size": 27132
+      "size": 27926
     },
     "src/cajero/f6_centro_cobranzas/plano.md": {
       "version": "1.0.0",
@@ -6180,15 +6180,15 @@
     },
     "src/cajero/f6_centro_cobranzas/punta del piramide.md": {
       "version": "1.0.0",
-      "checksum": "0442d0777d29d46a160aa18ade01c0b1",
+      "checksum": "03a2811d78d8acbadc2c913c84c3fcc8",
       "channel": "stable",
-      "size": 2900
+      "size": 2940
     },
     "src/cajero/f6_centro_cobranzas/README.md": {
       "version": "1.0.0",
-      "checksum": "41d446daf5c4d1a6db62f22d5266fb15",
+      "checksum": "c53ab3591fc577d0b016e037db9e5a2d",
       "channel": "stable",
-      "size": 2481
+      "size": 2512
     },
     "src/cajero/f6_centro_cobranzas/__init__.py": {
       "version": "1.0.0",
@@ -6216,9 +6216,9 @@
     },
     "src/cajero/f6_centro_cobranzas/componentes_f6/ui_estado/panel_estado.py": {
       "version": "1.0.0",
-      "checksum": "b99d6898f12f73255c02c1a550a14db4",
+      "checksum": "76adbc5dd0847e12ca4c812cede41f4e",
       "channel": "stable",
-      "size": 7096
+      "size": 5535
     },
     "src/cajero/f6_centro_cobranzas/componentes_f6/ui_estado/README.md": {
       "version": "1.0.0",
@@ -15432,9 +15432,9 @@
     },
     "tests/test_f6_enter_y_volver.py": {
       "version": "1.0.0",
-      "checksum": "09fab02376ce8e6a60668bfa641fee69",
+      "checksum": "c205b7ff31d257459932ea3f17471daf",
       "channel": "stable",
-      "size": 3599
+      "size": 3773
     },
     "tests/test_ficha_proveedor.py": {
       "version": "1.0.0",

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QStackedWidget
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QStackedWidget, QPushButton
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 
@@ -84,7 +84,31 @@ class CentroCobranzasPanel(QWidget):
             "color: #1E3A8A; font-size: 14px; font-weight: 900; "
             "letter-spacing: 2px; border: none; background: transparent;"
         )
-        lay.addWidget(tit)
+
+        lay_techo = QHBoxLayout()
+        lay_techo.setContentsMargins(0, 0, 0, 0)
+
+        # Placeholder izquierdo para centrar el título perfectamente
+        btn_placeholder = QWidget()
+        btn_placeholder.setFixedSize(90, 34)
+        lay_techo.addWidget(btn_placeholder)
+
+        lay_techo.addWidget(tit, 1)
+
+        # Botón Volver / Salir táctil arriba a la derecha (top techo)
+        self.btn_volver_techo = QPushButton("✕ Salir")
+        self.btn_volver_techo.setToolTip("Volver / Salir (Escape)")
+        self.btn_volver_techo.setFixedSize(90, 34)
+        self.btn_volver_techo.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_volver_techo.setStyleSheet(
+            "QPushButton { background: #FFFFFF; color: #475569; font-size: 13px; font-weight: 800; "
+            "border-radius: 8px; border: 1px solid #CBD5E1; } "
+            "QPushButton:hover { background: #F1F5F9; color: #0F172A; border-color: #94A3B8; }"
+        )
+        self.btn_volver_techo.clicked.connect(self._al_tocar_volver_techo)
+        lay_techo.addWidget(self.btn_volver_techo)
+
+        lay.addLayout(lay_techo)
 
         self.stack = QStackedWidget()
         lay.addWidget(self.stack)
@@ -124,12 +148,6 @@ class CentroCobranzasPanel(QWidget):
         self.btn_iniciar_pago = self.panel_estado.btn_iniciar_pago
         self.btn_iniciar_pago.clicked.connect(self._mostrar_controles_pago)
         self.btn_imprimir_resumen.clicked.connect(self._abrir_historial_cliente)
-        self.btn_volver_buscador = getattr(self.panel_estado, "btn_volver_buscador", None)
-        if self.btn_volver_buscador:
-            self.btn_volver_buscador.clicked.connect(self._volver_al_buscador)
-        self.btn_volver_de_pago = getattr(self.panel_estado, "btn_volver_de_pago", None)
-        if self.btn_volver_de_pago:
-            self.btn_volver_de_pago.clicked.connect(self._cancelar_preparacion_pago)
         self.instruccion = self.panel_estado.instruccion
         self.cont_botones = self.panel_selector.cont_botones
         self.cont_lienzos = self.panel_selector.cont_lienzos
@@ -263,15 +281,13 @@ class CentroCobranzasPanel(QWidget):
         self.cont_botones.hide()
         if getattr(self.panel_estado, "lbl_pregunta_monto", None):
             self.panel_estado.lbl_pregunta_monto.hide()
-        if getattr(self, "btn_volver_de_pago", None):
-            self.btn_volver_de_pago.hide()
         self._cerrar_lienzos()
         
         # Mostrar botones de accion iniciales
-        if getattr(self, "btn_volver_buscador", None):
-            self.btn_volver_buscador.show()
         self.btn_imprimir_resumen.show()
         self.btn_iniciar_pago.show()
+        if hasattr(self, "btn_volver_techo"):
+            self.btn_volver_techo.setText("← Volver")
         
         self.stack.setCurrentWidget(self.vista_cobranza)
         if getattr(self, "_ir_a_pago", False):
@@ -320,14 +336,12 @@ class CentroCobranzasPanel(QWidget):
 
     def _mostrar_controles_pago(self):
         self._modo = "preparando_pago"
-        if getattr(self, "btn_volver_buscador", None):
-            self.btn_volver_buscador.hide()
         self.btn_iniciar_pago.hide()
         self.btn_imprimir_resumen.hide()
         if getattr(self.panel_estado, "lbl_historial", None):
             self.panel_estado.lbl_historial.hide()
-        if getattr(self, "btn_volver_de_pago", None):
-            self.btn_volver_de_pago.show()
+        if hasattr(self, "btn_volver_techo"):
+            self.btn_volver_techo.setText("← Volver")
         
         monto_sugerido = (
             self._deuda_actual
@@ -455,11 +469,6 @@ class CentroCobranzasPanel(QWidget):
             if self._modo == "vista_cliente":
                 if k in (Qt.Key.Key_Right, Qt.Key.Key_Down):
                     self.btn_iniciar_pago.setFocus()
-                elif k == Qt.Key.Key_Left:
-                    if getattr(self, "btn_volver_buscador", None):
-                        self.btn_volver_buscador.setFocus()
-                    else:
-                        self.btn_imprimir_resumen.setFocus()
                 else:
                     self.btn_imprimir_resumen.setFocus()
             return True
@@ -486,26 +495,40 @@ class CentroCobranzasPanel(QWidget):
             return
         super().keyPressEvent(event)
         
+    def _al_tocar_volver_techo(self):
+        """Acción táctil del botón Volver/Salir en el top techo arriba a la derecha."""
+        if self._modo == "buscando":
+            self.ocultar()
+            self.cancelado.emit()
+        elif self._modo == "vista_cliente":
+            self._volver_al_buscador()
+        elif self._modo == "preparando_pago":
+            self._cancelar_preparacion_pago()
+        elif self._modo == "cobrando_lienzo":
+            self._volver_de_lienzo()
+        else:
+            self._volver_al_buscador()
+
     def _volver_al_buscador(self):
         self._modo = "buscando"
         self._cliente_id = None
+        if hasattr(self, "btn_volver_techo"):
+            self.btn_volver_techo.setText("✕ Salir")
         self.stack.setCurrentWidget(self.panel_buscador)
         self.panel_buscador.caja_busqueda.setText("")
         self.panel_buscador.caja_busqueda.setFocus()
         
     def _cancelar_preparacion_pago(self):
         self._modo = "vista_cliente"
+        if hasattr(self, "btn_volver_techo"):
+            self.btn_volver_techo.setText("← Volver")
         self.txt_monto_abono.hide()
         self.btn_abono_libre.hide()
         self.instruccion.hide()
         self.cont_botones.hide()
         if getattr(self.panel_estado, "lbl_pregunta_monto", None):
             self.panel_estado.lbl_pregunta_monto.hide()
-        if getattr(self, "btn_volver_de_pago", None):
-            self.btn_volver_de_pago.hide()
         self.detalle.show()
-        if getattr(self, "btn_volver_buscador", None):
-            self.btn_volver_buscador.show()
         self.btn_iniciar_pago.show()
         self.btn_imprimir_resumen.show()
         self.btn_iniciar_pago.setFocus()
@@ -522,12 +545,12 @@ class CentroCobranzasPanel(QWidget):
         self._cola_digital = None
         self._mixto_detalle = None
         self._modo = "preparando_pago"
+        if hasattr(self, "btn_volver_techo"):
+            self.btn_volver_techo.setText("← Volver")
         self._cerrar_lienzos()
         self.detalle.show()
         if getattr(self.panel_estado, "lbl_pregunta_monto", None):
             self.panel_estado.lbl_pregunta_monto.show()
-        if getattr(self, "btn_volver_de_pago", None):
-            self.btn_volver_de_pago.show()
         self.txt_monto_abono.show()
         self.btn_abono_libre.hide()
         self.instruccion.show()
@@ -598,13 +621,13 @@ class CentroCobranzasPanel(QWidget):
             focused = self.focusWidget()
             if focused == self.btn_imprimir_resumen:
                 self._abrir_historial_cliente()
-            elif getattr(self, "btn_volver_buscador", None) and focused == self.btn_volver_buscador:
+            elif hasattr(self, "btn_volver_techo") and focused == self.btn_volver_techo:
                 self._volver_al_buscador()
             else:
                 self._mostrar_controles_pago()
         elif self._modo in ("preparando_pago", "cobranza") and getattr(self, "_cliente_id", None):
             focused = self.focusWidget()
-            if getattr(self, "btn_volver_de_pago", None) and focused == self.btn_volver_de_pago:
+            if hasattr(self, "btn_volver_techo") and focused == self.btn_volver_techo:
                 self._cancelar_preparacion_pago()
             else:
                 self._iniciar_cobranza("Efectivo")

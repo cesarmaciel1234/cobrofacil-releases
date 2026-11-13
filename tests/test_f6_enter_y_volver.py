@@ -27,6 +27,7 @@ def test_f6_primer_enter_se_frena_en_ficha_y_segundo_enter_pasa_a_pago(app):
 
         # Estado inicial: buscando
         assert panel._modo == "buscando"
+        assert panel.btn_volver_techo.text() == "✕ Salir"
 
         # Simular sugerencias con 1 cliente
         cliente_test = {"id": 101, "nombre": "RUBEN GOMEZ", "dni": "34123456", "deuda_actual": 5000.0}
@@ -40,7 +41,7 @@ def test_f6_primer_enter_se_frena_en_ficha_y_segundo_enter_pasa_a_pago(app):
         assert panel._modo == "vista_cliente"
         assert panel._cliente_id == 101
         assert not panel.btn_iniciar_pago.isHidden()
-        assert not panel.btn_volver_buscador.isHidden()
+        assert panel.btn_volver_techo.text() == "← Volver"
         assert panel.txt_monto_abono.isHidden()  # Aún NO pasó a medios de pago
 
         # 2. Simular SEGUNDO ENTER en la Ficha del Cliente
@@ -50,7 +51,7 @@ def test_f6_primer_enter_se_frena_en_ficha_y_segundo_enter_pasa_a_pago(app):
         # El segundo Enter recién ahora pasa al Paso 3 (preparando pago / montos y medios)
         assert panel._modo == "preparando_pago"
         assert not panel.txt_monto_abono.isHidden()
-        assert not panel.btn_volver_de_pago.isHidden()
+        assert panel.btn_volver_techo.text() == "← Volver"
 
 
 def test_f6_botones_volver_tactiles(app):
@@ -66,14 +67,15 @@ def test_f6_botones_volver_tactiles(app):
 
         # En la Ficha del Cliente (Paso 2):
         assert panel._modo == "vista_cliente"
-        assert not panel.btn_volver_buscador.isHidden()
+        assert panel.btn_volver_techo.text() == "← Volver"
 
-        # Clic táctil en "← Volver"
-        panel.btn_volver_buscador.click()
+        # Clic táctil en el botón Volver del techo arriba a la derecha
+        panel.btn_volver_techo.click()
 
         # Vuelve al buscador de clientes
         assert panel._modo == "buscando"
         assert panel._cliente_id is None
+        assert panel.btn_volver_techo.text() == "✕ Salir"
         assert panel.panel_buscador.caja_busqueda.text() == ""
 
         # Nuevamente vamos a la Ficha y luego a Pago
@@ -82,10 +84,10 @@ def test_f6_botones_volver_tactiles(app):
 
         # En pantalla de pago (Paso 3):
         assert panel._modo == "preparando_pago"
-        assert not panel.btn_volver_de_pago.isHidden()
+        assert panel.btn_volver_techo.text() == "← Volver"
 
-        # Clic táctil en "← Volver a la Ficha"
-        panel.btn_volver_de_pago.click()
+        # Clic táctil en el botón Volver del techo
+        panel.btn_volver_techo.click()
 
         # Regresa limpiamente a la Ficha del Cliente
         assert panel._modo == "vista_cliente"
