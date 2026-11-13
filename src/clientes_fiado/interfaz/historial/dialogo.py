@@ -13,6 +13,103 @@ from src.repositories.cliente_repository import FIADO_EXPRESS_LIMITE_DEFAULT
 from src.utils.letra import vestir_id, vestir_nombre, vestir_numero
 
 
+class DialogoAlcanceImpresionCuenta(QDialog):
+    """
+    Diálogo espacioso para seleccionar el alcance del comprobante de cuenta corriente:
+    Solo deuda actual vs Historial completo. Elimina el recorte de textos de QMessageBox.
+    """
+
+    def __init__(self, parent, info, nombre_cliente=""):
+        super().__init__(parent)
+        self.setWindowTitle("Imprimir estado de cuenta")
+        self.setFixedWidth(520)
+        self.setStyleSheet("background-color: white; font-family: 'Segoe UI', sans-serif;")
+        self.resultado = None  # True: solo deuda actual, False: completo, None: cancelado
+
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(24, 20, 24, 20)
+        lay.setSpacing(14)
+
+        # Cabecera
+        h_head = QHBoxLayout()
+        lbl_icon = QLabel("🖨")
+        lbl_icon.setStyleSheet("font-size: 26px; border: none; background: transparent;")
+        h_head.addWidget(lbl_icon)
+
+        v_tit = QVBoxLayout()
+        v_tit.setSpacing(2)
+        lbl_tit = QLabel("¿Qué movimientos querés imprimir?")
+        lbl_tit.setStyleSheet("font-size: 16px; font-weight: 900; color: #0F172A; border: none; background: transparent;")
+        nom_txt = f"Cliente: {nombre_cliente.upper()}" if nombre_cliente else "Seleccione el alcance del comprobante"
+        lbl_sub = QLabel(nom_txt)
+        lbl_sub.setStyleSheet("font-size: 12px; color: #64748B; font-weight: 600; border: none; background: transparent;")
+        v_tit.addWidget(lbl_tit)
+        v_tit.addWidget(lbl_sub)
+        h_head.addLayout(v_tit)
+        h_head.addStretch()
+        lay.addLayout(h_head)
+
+        # Caja de detalle explicativa
+        caja_info = QFrame()
+        caja_info.setStyleSheet("background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px;")
+        lay_info = QVBoxLayout(caja_info)
+        lay_info.setContentsMargins(14, 12, 14, 12)
+        lay_info.setSpacing(6)
+
+        cant_act = info.get("cant_actual", 0)
+        cant_tot = info.get("cant_total", 0)
+        lbl_desc1 = QLabel(f"• <b>Solo deuda actual:</b> últimos <b>{cant_act}</b> movimientos desde el último saldo $0.00.")
+        lbl_desc1.setStyleSheet("font-size: 12px; color: #334155; border: none; background: transparent;")
+        lbl_desc2 = QLabel(f"• <b>Historial completo:</b> <b>{cant_tot}</b> movimientos registrados en total.")
+        lbl_desc2.setStyleSheet("font-size: 12px; color: #64748B; border: none; background: transparent;")
+        lay_info.addWidget(lbl_desc1)
+        lay_info.addWidget(lbl_desc2)
+        lay.addWidget(caja_info)
+
+        # Botones de acción verticales amplios (nunca recortan texto)
+        btn_actual = QPushButton(f"📄 Imprimir Solo Deuda Actual ({cant_act} movimientos)")
+        btn_actual.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_actual.setStyleSheet(
+            "QPushButton { background: #2563EB; color: white; font-weight: 900; font-size: 13px; "
+            "padding: 12px 16px; border-radius: 8px; border: none; } "
+            "QPushButton:hover { background: #1D4ED8; }"
+        )
+        btn_actual.clicked.connect(self._elegir_actual)
+        lay.addWidget(btn_actual)
+
+        btn_completo = QPushButton(f"📚 Imprimir Historial Completo ({cant_tot} movimientos)")
+        btn_completo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_completo.setStyleSheet(
+            "QPushButton { background: white; color: #0F172A; font-weight: 900; font-size: 13px; "
+            "padding: 11px 16px; border-radius: 8px; border: 1px solid #CBD5E1; } "
+            "QPushButton:hover { background: #F1F5F9; border-color: #94A3B8; }"
+        )
+        btn_completo.clicked.connect(self._elegir_completo)
+        lay.addWidget(btn_completo)
+
+        # Pie con Cancelar
+        h_foot = QHBoxLayout()
+        h_foot.addStretch()
+        btn_cancelar = QPushButton("Cancelar")
+        btn_cancelar.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_cancelar.setStyleSheet(
+            "QPushButton { background: transparent; color: #64748B; font-weight: 600; font-size: 12px; "
+            "padding: 6px 14px; border: none; } "
+            "QPushButton:hover { color: #0F172A; text-decoration: underline; }"
+        )
+        btn_cancelar.clicked.connect(self.reject)
+        h_foot.addWidget(btn_cancelar)
+        lay.addLayout(h_foot)
+
+    def _elegir_actual(self):
+        self.resultado = True
+        self.accept()
+
+    def _elegir_completo(self):
+        self.resultado = False
+        self.accept()
+
+
 def imprimir_historial_dialogo(parent, cliente, movimientos, totales):
     """Elige alcance (solo deuda actual vs completo) si hay corte saldado e imprime."""
     if not movimientos:
@@ -29,29 +126,11 @@ def imprimir_historial_dialogo(parent, cliente, movimientos, totales):
         info = resumen_corte_cuenta(movimientos, deuda)
         solo_deuda = False
         if info["tiene_corte"]:
-            caja = QMessageBox(parent)
-            caja.setWindowTitle("Imprimir estado de cuenta")
-            caja.setIcon(QMessageBox.Icon.Question)
-            caja.setText("¿Qué movimientos querés imprimir?")
-            caja.setInformativeText(
-                f"Solo deuda actual: últimos {info['cant_actual']} movimientos desde el último saldo $0.00.\n"
-                f"Historial completo: {info['cant_total']} movimientos en total."
-            )
-            btn_actual = caja.addButton(
-                f"Solo deuda actual ({info['cant_actual']})",
-                QMessageBox.ButtonRole.AcceptRole,
-            )
-            caja.addButton(
-                f"Historial completo ({info['cant_total']})",
-                QMessageBox.ButtonRole.ActionRole,
-            )
-            btn_cancelar = caja.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
-            caja.setDefaultButton(btn_actual)
-            qt_exec(caja)
-            elegido = caja.clickedButton()
-            if elegido in (None, btn_cancelar):
+            nom = str(dict(cliente or {}).get("nombre") or "")
+            dlg_alcance = DialogoAlcanceImpresionCuenta(parent, info, nombre_cliente=nom)
+            if qt_exec(dlg_alcance) != QDialog.DialogCode.Accepted or dlg_alcance.resultado is None:
                 return
-            solo_deuda = elegido == btn_actual
+            solo_deuda = dlg_alcance.resultado
 
         ok = printer_manager.imprimir_historial_cuenta(
             cliente,

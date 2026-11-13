@@ -1,7 +1,7 @@
 {
-  "app_version": "v50.39",
+  "app_version": "v50.40",
   "channel": "stable",
-  "build_date": "2026-11-12 21:29:35",
+  "build_date": "2026-11-13 08:35:05",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -30,7 +30,7 @@
     },
     "carteleria_datos.sello": {
       "version": "1.0.0",
-      "checksum": "3b90375a6e0dc2cbb8ec42a82225b2d2",
+      "checksum": "60a6ae03b801d7407271777611e8b79e",
       "channel": "stable",
       "size": 19
     },
@@ -1360,12 +1360,6 @@
       "channel": "stable",
       "size": 8554
     },
-    "punpro.db-journal": {
-      "version": "1.0.0",
-      "checksum": "04fbac083e6c64e3adbfe18664f2233c",
-      "channel": "stable",
-      "size": 25136
-    },
     "README.md": {
       "version": "1.0.0",
       "checksum": "5a365aa6888336cc7b94aef6cadaaaf2",
@@ -1632,9 +1626,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "b0e24ea28496483a7a53b336d1102fd7",
+      "checksum": "b52dfff71a896af4e452aef183a46519",
       "channel": "stable",
-      "size": 1177880
+      "size": 1258724
     },
     "_bump_v5019.py": {
       "version": "1.0.0",
@@ -5838,9 +5832,9 @@
     },
     "src/base_de_datos/offline_sync.py": {
       "version": "1.0.0",
-      "checksum": "2bbb5679ecbde22d090a2d5aa096161c",
+      "checksum": "7f1ee7673f1b60f21e8280596ee42ff5",
       "channel": "stable",
-      "size": 35287
+      "size": 37482
     },
     "src/base_de_datos/plano.md": {
       "version": "1.0.0",
@@ -11400,9 +11394,9 @@
     },
     "src/clientes_fiado/interfaz/historial/dialogo.py": {
       "version": "1.0.0",
-      "checksum": "b88358c4b459aa05f7acd5ede4574a43",
+      "checksum": "3d7838b5572f51e74cdf982afb362bec",
       "channel": "stable",
-      "size": 27638
+      "size": 31365
     },
     "src/clientes_fiado/interfaz/historial/hilo.py": {
       "version": "1.0.0",
@@ -11418,9 +11412,9 @@
     },
     "src/clientes_fiado/interfaz/historial/README.md": {
       "version": "1.0.0",
-      "checksum": "f584efb756fe95cdc9117fbad9ee3bfb",
+      "checksum": "c51e01b9fe8f31b4f77b42339cb56159",
       "channel": "stable",
-      "size": 812
+      "size": 1040
     },
     "src/clientes_fiado/interfaz/historial/tema.py": {
       "version": "1.0.0",
@@ -14868,9 +14862,9 @@
     },
     "src/ui_global/inventario_ui/moleculas/dialogo_codigos_adicionales.py": {
       "version": "1.0.0",
-      "checksum": "1b321078b5dc892e0c8d1a62e16a78a0",
+      "checksum": "9ffb72ea5b9c268d1bcd7c8aba845e80",
       "channel": "stable",
-      "size": 12276
+      "size": 12335
     },
     "src/ui_global/inventario_ui/moleculas/dialogo_galeria_iconos.py": {
       "version": "1.0.0",
@@ -15387,6 +15381,12 @@
       "checksum": "c03d3af5374d34ccdf57b3443f657d35",
       "channel": "stable",
       "size": 967
+    },
+    "tests/test_dialogo_alcance_impresion.py": {
+      "version": "1.0.0",
+      "checksum": "12266af4a43606d17b4fe6090bafd0bc",
+      "channel": "stable",
+      "size": 2373
     },
     "tests/test_dialogo_producto_enter_tab.py": {
       "version": "1.0.0",
