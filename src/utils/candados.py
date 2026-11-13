@@ -605,8 +605,6 @@ def focus_existing_store_server() -> bool:
             if user32.IsWindowVisible(hwnd):
                 break
             time.sleep(0.05)
-        if not user32.IsWindowVisible(hwnd):
-            return bool(get_store_server_pid())
         user32.ShowWindow(hwnd, 9)
         user32.SetForegroundWindow(hwnd)
         return True

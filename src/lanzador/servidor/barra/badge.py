@@ -91,7 +91,7 @@ def _launch_server_async(lbl: QLabel) -> None:
 
             reset_watchdog_backoff()
             end_apply_guard()
-            ensure_store_server_process(timeout_sec=40.0)
+            ensure_store_server_process(timeout_sec=40.0, background=False)
         finally:
             lbl._starting_async = False
             sig = getattr(lbl, "_badge_signal", None)
@@ -161,8 +161,12 @@ def al_clic_badge(parent, lbl: QLabel) -> None:
             if est_svc.get("en_ejecucion"):
                 _mostrar_monitor_servicio(parent, lbl, est_svc, False)
             else:
-                focus_existing_store_server()
-                pintar_badge(lbl)
+                ok = focus_existing_store_server()
+                if not ok:
+                    lbl.setText("Espejo: arrancando…")
+                    _launch_server_async(lbl)
+                else:
+                    pintar_badge(lbl)
         else:
             lbl.setText("Espejo: arrancando…")
             _launch_server_async(lbl)
@@ -172,8 +176,12 @@ def al_clic_badge(parent, lbl: QLabel) -> None:
         if est_svc.get("en_ejecucion"):
             _mostrar_monitor_servicio(parent, lbl, est_svc, True)
         else:
-            focus_existing_store_server()
-            pintar_badge(lbl)
+            ok = focus_existing_store_server()
+            if not ok:
+                lbl.setText("Servidor: arrancando…")
+                _launch_server_async(lbl)
+            else:
+                pintar_badge(lbl)
     else:
         lbl.setText("Servidor: arrancando…")
         _launch_server_async(lbl)
