@@ -124,6 +124,12 @@ class CentroCobranzasPanel(QWidget):
         self.btn_iniciar_pago = self.panel_estado.btn_iniciar_pago
         self.btn_iniciar_pago.clicked.connect(self._mostrar_controles_pago)
         self.btn_imprimir_resumen.clicked.connect(self._abrir_historial_cliente)
+        self.btn_volver_buscador = getattr(self.panel_estado, "btn_volver_buscador", None)
+        if self.btn_volver_buscador:
+            self.btn_volver_buscador.clicked.connect(self._volver_al_buscador)
+        self.btn_volver_de_pago = getattr(self.panel_estado, "btn_volver_de_pago", None)
+        if self.btn_volver_de_pago:
+            self.btn_volver_de_pago.clicked.connect(self._cancelar_preparacion_pago)
         self.instruccion = self.panel_estado.instruccion
         self.cont_botones = self.panel_selector.cont_botones
         self.cont_lienzos = self.panel_selector.cont_lienzos
@@ -257,9 +263,13 @@ class CentroCobranzasPanel(QWidget):
         self.cont_botones.hide()
         if getattr(self.panel_estado, "lbl_pregunta_monto", None):
             self.panel_estado.lbl_pregunta_monto.hide()
+        if getattr(self, "btn_volver_de_pago", None):
+            self.btn_volver_de_pago.hide()
         self._cerrar_lienzos()
         
         # Mostrar botones de accion iniciales
+        if getattr(self, "btn_volver_buscador", None):
+            self.btn_volver_buscador.show()
         self.btn_imprimir_resumen.show()
         self.btn_iniciar_pago.show()
         
@@ -310,10 +320,14 @@ class CentroCobranzasPanel(QWidget):
 
     def _mostrar_controles_pago(self):
         self._modo = "preparando_pago"
+        if getattr(self, "btn_volver_buscador", None):
+            self.btn_volver_buscador.hide()
         self.btn_iniciar_pago.hide()
         self.btn_imprimir_resumen.hide()
         if getattr(self.panel_estado, "lbl_historial", None):
             self.panel_estado.lbl_historial.hide()
+        if getattr(self, "btn_volver_de_pago", None):
+            self.btn_volver_de_pago.show()
         
         monto_sugerido = (
             self._deuda_actual
@@ -371,6 +385,8 @@ class CentroCobranzasPanel(QWidget):
         self._monto_a_cobrar = monto
         
         self._modo = "cobrando_lienzo"
+        if getattr(self, "btn_volver_de_pago", None):
+            self.btn_volver_de_pago.hide()
         self.txt_monto_abono.hide()
         self.btn_abono_libre.hide()
         self.cont_botones.hide()
@@ -439,6 +455,11 @@ class CentroCobranzasPanel(QWidget):
             if self._modo == "vista_cliente":
                 if k in (Qt.Key.Key_Right, Qt.Key.Key_Down):
                     self.btn_iniciar_pago.setFocus()
+                elif k == Qt.Key.Key_Left:
+                    if getattr(self, "btn_volver_buscador", None):
+                        self.btn_volver_buscador.setFocus()
+                    else:
+                        self.btn_imprimir_resumen.setFocus()
                 else:
                     self.btn_imprimir_resumen.setFocus()
             return True
@@ -480,10 +501,14 @@ class CentroCobranzasPanel(QWidget):
         self.cont_botones.hide()
         if getattr(self.panel_estado, "lbl_pregunta_monto", None):
             self.panel_estado.lbl_pregunta_monto.hide()
+        if getattr(self, "btn_volver_de_pago", None):
+            self.btn_volver_de_pago.hide()
         self.detalle.show()
+        if getattr(self, "btn_volver_buscador", None):
+            self.btn_volver_buscador.show()
         self.btn_iniciar_pago.show()
         self.btn_imprimir_resumen.show()
-        self.setFocus()
+        self.btn_iniciar_pago.setFocus()
 
     def _al_fallar_cobranza(self, error):
         self._volver_de_lienzo()
@@ -501,6 +526,8 @@ class CentroCobranzasPanel(QWidget):
         self.detalle.show()
         if getattr(self.panel_estado, "lbl_pregunta_monto", None):
             self.panel_estado.lbl_pregunta_monto.show()
+        if getattr(self, "btn_volver_de_pago", None):
+            self.btn_volver_de_pago.show()
         self.txt_monto_abono.show()
         self.btn_abono_libre.hide()
         self.instruccion.show()
@@ -558,19 +585,29 @@ class CentroCobranzasPanel(QWidget):
             elif event.key() == Qt.Key.Key_Down:
                 self.panel_buscador.navegar("abajo")
                 return True
+            elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                self.panel_buscador.aceptar_actual()
+                return True
         return super().eventFilter(obj, event)
 
     def procesar_enter(self):
         if self._modo == "buscando":
             self.panel_buscador.aceptar_actual()
+            return
         elif self._modo == "vista_cliente":
             focused = self.focusWidget()
             if focused == self.btn_imprimir_resumen:
                 self._abrir_historial_cliente()
+            elif getattr(self, "btn_volver_buscador", None) and focused == self.btn_volver_buscador:
+                self._volver_al_buscador()
             else:
                 self._mostrar_controles_pago()
         elif self._modo in ("preparando_pago", "cobranza") and getattr(self, "_cliente_id", None):
-            self._iniciar_cobranza("Efectivo")
+            focused = self.focusWidget()
+            if getattr(self, "btn_volver_de_pago", None) and focused == self.btn_volver_de_pago:
+                self._cancelar_preparacion_pago()
+            else:
+                self._iniciar_cobranza("Efectivo")
         elif self._modo == "cobrando_lienzo":
             actual = self.cont_lienzos.currentWidget()
             if hasattr(actual, "tecla"):

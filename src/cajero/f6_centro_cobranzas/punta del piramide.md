@@ -20,7 +20,7 @@ f6_centro_cobranzas/
 
 ## Frente
 
-Buscador por DNI o nombre (tope 5). Ficha: hola, deuda total estimada o a favor, o al día. PAGAR / ABONAR aunque no haya deuda: el excedente queda a favor, sin cartel. Paso 1 monto a la cuenta (prellenado con el total estimado). Paso 2 medio. Efectivo pregunta los billetes; si falta no cobra.
+Buscador por DNI o nombre (tope 5). Al dar Enter en la búsqueda, frena en la Ficha del Cliente (primer Enter selecciona; segundo Enter o botón táctil PAGAR/ABONAR avanza a cobrar). Botones táctiles `[ ← Volver ]` en ficha y `[ ← Volver a la Ficha ]` en cobro para pantallas táctiles sin teclado físico. Ficha: hola, deuda total estimada o a favor, o al día. PAGAR / ABONAR aunque no haya deuda: el excedente queda a favor, sin cartel. Paso 1 monto a la cuenta (prellenado con el total estimado). Paso 2 medio. Efectivo pregunta los billetes; si falta no cobra.
 
 Con deuda, la ficha presenta de forma directa e instantánea el Total Estimado como Deuda Actual. Interfaz limpia: sin recuadros ni listas de tickets que ensucien la pantalla de cobranza. Si el cliente o cajero requiere revisar el detalle, `[ Ver / Imprimir ]` abre el historial completo.
 

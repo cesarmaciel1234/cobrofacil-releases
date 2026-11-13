@@ -13,6 +13,6 @@ Al elegir cliente, F6 calcula de forma instantánea el total estimado (<5ms) sin
 
 La ficha presenta de inmediato el Total Estimado como Deuda Actual (o saldo a favor), prellenando el importe exacto a cobrar. Para una interfaz limpia, ágil y sin distracciones, no se muestran recuadros intermedios ni listados de tickets; el desglose completo de tickets y cargos se consulta a demanda en `Ver / Imprimir`. El cálculo es simple (3% mensual, 0,1% diario sobre capital pendiente), no genera movimientos diarios ni interés sobre interés. El abono vuelve a calcular dentro de la transacción de forma blindada.
 
-`Ver / Imprimir` abre el historial del cliente (ver movimientos, ticket/cobro e imprimir ahí). Al volver al paso 5 o a Admin, el mensajero es el del abono asentado. PIN de cobranza apagado.
+`Ver / Imprimir` abre el historial del cliente (ver movimientos, ticket/cobro e imprimir ahí). Al volver al paso 5 o a Admin, el mensajero es el del abono asentado. PIN de cobranza apagado. Botones táctiles `← Volver` permiten regresar de la ficha al buscador y del cobro a la ficha en pantallas táctiles sin teclado. El primer Enter selecciona y frena en la ficha; el segundo Enter pasa al cobro.
 
 Mixto de F6 = abono. Mixto del paso 6 = venta. Admin Abonar usa F6, no el paso 6.
