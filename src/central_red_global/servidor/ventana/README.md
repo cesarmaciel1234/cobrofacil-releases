@@ -12,6 +12,7 @@ Arma la ventana y el icono de la bandeja. `bandeja.py` la muestra, la vigila y l
 * `vigia.py`: `filas_tickets`, `filas_cambios`, `filas_auditoria`, `catalogo`, `canal`, `acortar`, `linea_consola`. Un timeout o una TV sin caché no se pinta como ERROR. `catalogo` no abre MariaDB. `filas_auditoria` lee `auditorias_inventario` en `punpro.db` y en la réplica. Un conteo offline se guarda en `offline_cambios.json`, la esclava lo sube con un `sync_id` idempotente y el espejo lo recibe en su siguiente copia. La ventana solo observa; no reenvía ni modifica las colas.
 * `presencia.py`: `arrancar` y `foto`. La pastilla dice si la maestra está en línea o desconectada (puerto 3306, sin abrir la base). Al lado, el nombre de cada PC que avisa por UDP 37021, con el rol `maestra`, `reserva` o `esclava`. El puerto se comparte con Nexus. Esta PC no se lista a sí misma. Si el aviso es `DATOS` y trae `server_ip`, la esclava sigue esa IP. Después sube la cola, baja el espejo y refresca la tele, y no lo reenvía.
 * `pedir_clave(parent, aviso)` en `clave.py`: apagar pide la clave. `pin_servidor()` lee `servidor_clave` en la config, y si no está usa `1234`. El diálogo no muestra esa clave. Si la ventana está oculta, primero se muestra: un diálogo hijo de una ventana oculta no aparece y el proceso queda trabado.
+* «Empresa del CRM» guarda el nombre de la empresa y la sucursal. No manda la cartera desde la ventana. Eso lo hace `crm_salida.vigilante`, un hilo aparte que cada dos minutos abre otro proceso. Por ahora también envía la esclava, con los datos que trajo de la maestra. `SOLO_MAESTRA = True` deja el envío solo en la maestra. Si el proceso o el CRM fallan, el servidor sigue. La clave va por el entorno, no por la línea de comando ni por la bitácora.
 * `icono_bandeja(esclava)`: cuadrado azul con E, o verde con S, si no hay `pos_icon.png`. El aviso de Windows usa `src/assets/servidor.ico`, la misma ruta que el ejecutable empaqueta. No se copia a AppData.
 * `hoja_menu()`: el clic derecho de la bandeja. El tema del día pinta `QWidget` de azul y el menú quedaba como un enlace. Esta hoja lo deja en el mismo tono que la consola. En esclava dice «Mostrar espejo» y «Apagar espejo».
 
@@ -20,7 +21,8 @@ Arma la ventana y el icono de la bandeja. `bandeja.py` la muestra, la vigila y l
 2. La ventana se muestra en los dos puestos. No se esconde sola. El cuadrado de la barra la estira a toda la pantalla y la devuelve.
 3. Cerrar o «Ocultar en bandeja» la esconde. El cierre no corre `hide()` en el mismo evento: eso dejaba el cliente en blanco. No pide clave y no espera el conteo de la base: ese conteo va en el hilo `ventana-base`. El proceso sigue. Al volver a mostrarla, `reanudar()` retoma las tablas.
 4. «Apagar servidor» abre `pedir_clave`. Sin la clave el proceso sigue. Con la clave, `bandeja.py` lo apaga.
-5. Cada vuelta del espejo y de la cartelería escribe una línea (`espejo  …`, `carteleria  …`). Si la maestra no contesta o la TV usa caché, la línea es INFO. Un fallo de verdad sigue en amarillo o rojo.
+5. «Empresa del CRM» pide el nombre de la empresa y la sucursal, y los guarda. El módulo aparte envía la cartera. Por ahora lo hace también la esclava.
+6. Cada vuelta del espejo y de la cartelería escribe una línea (`espejo  …`, `carteleria  …`). Si la maestra no contesta o la TV usa caché, la línea es INFO. Un fallo de verdad sigue en amarillo o rojo.
 
 ## Qué devuelve cuando falla
 Si no hay icono en disco, pinta el cuadrado. No lanza.

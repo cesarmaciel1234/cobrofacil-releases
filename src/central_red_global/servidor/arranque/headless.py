@@ -84,10 +84,24 @@ def run_store_server_core(
             cumplir_esclava()
             logger.info("Servidor esclava HEADLESS: espejo activo.")
 
+        try:
+            from src.central_red_global.servidor.crm_salida.vigilante import prender
+
+            prender()
+        except Exception as e_crm:
+            logger.warning("CRM  no se pudo prender el módulo: %s", e_crm)
+
         while not stop.wait(10.0):
             if vigila_mariadb() and (not mariadb_iniciado or not mariadb_port_open()):
                 mariadb_iniciado = True
                 encender_servicios_tienda(arrancar_mysqld=True)
+
+        try:
+            from src.central_red_global.servidor.crm_salida.vigilante import apagar
+
+            apagar()
+        except Exception:
+            pass
 
         try:
             from src.central_red_global.lan_server import stop_lan_server

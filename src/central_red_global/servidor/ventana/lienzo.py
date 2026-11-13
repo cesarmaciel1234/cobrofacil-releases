@@ -43,6 +43,12 @@ QPushButton#BtnApagar {
     padding: 8px 14px; border-radius: 8px; border: 1px solid #B91C1C;
 }
 QPushButton#BtnApagar:hover { background: #991B1B; }
+QPushButton#BtnCrm {
+    background: #1D4ED8; color: #EFF6FF; font-weight: 700;
+    padding: 8px 14px; border-radius: 8px; border: 1px solid #2563EB;
+}
+QPushButton#BtnCrm:hover { background: #1E40AF; }
+QPushButton#BtnCrm:disabled { background: #1E293B; color: #94A3B8; }
 """
 
 _TONO = {
@@ -181,10 +187,14 @@ def armar_lienzo(esclava: bool) -> dict:
     btn_hide = QPushButton("Ocultar en bandeja")
     btn_hide.setObjectName("BtnOcultar")
     btn_hide.setCursor(Qt.CursorShape.PointingHandCursor)
+    btn_crm = QPushButton("Empresa del CRM")
+    btn_crm.setObjectName("BtnCrm")
+    btn_crm.setCursor(Qt.CursorShape.PointingHandCursor)
     btn_stop = QPushButton("Apagar servidor")
     btn_stop.setObjectName("BtnApagar")
     btn_stop.setCursor(Qt.CursorShape.PointingHandCursor)
     row.addWidget(btn_hide)
+    row.addWidget(btn_crm)
     row.addStretch()
     row.addWidget(btn_stop)
     cuerpo.addLayout(row)
@@ -204,5 +214,6 @@ def armar_lienzo(esclava: bool) -> dict:
         "consola": consola,
         "poner_estado": poner_estado,
         "btn_hide": btn_hide,
+        "btn_crm": btn_crm,
         "btn_stop": btn_stop,
     }

@@ -68,6 +68,7 @@ def run_store_server_app(app, background: bool = False) -> int:
     poner_estado = partes["poner_estado"]
     consola = partes["consola"]
     btn_hide = partes["btn_hide"]
+    btn_crm = partes["btn_crm"]
     btn_stop = partes["btn_stop"]
     consola.enganchar()
     consola.escribir(
@@ -286,6 +287,9 @@ def run_store_server_app(app, background: bool = False) -> int:
     reloj_frente.start(200)
     btn_hide.clicked.connect(_ocultar)
     btn_stop.clicked.connect(_shutdown_store)
+    from src.central_red_global.servidor.ventana.crm import conectar as conectar_crm
+
+    conectar_crm(win, consola, btn_crm)
     if getattr(win, "_tray_quit_action", None) is not None:
         win._tray_quit_action.triggered.connect(_shutdown_store)
 
@@ -341,4 +345,10 @@ def run_store_server_app(app, background: bool = False) -> int:
             logger.warning(f"No se pudo repartir el espejo: {e_re}")
 
     logger.info("Servidor de Tienda en ejecución (proceso dedicado).")
+    try:
+        from src.central_red_global.servidor.crm_salida.vigilante import prender
+
+        prender()
+    except Exception as e_crm:
+        logger.warning(f"CRM  no se pudo prender el módulo: {e_crm}")
     return qt_exec(app)
