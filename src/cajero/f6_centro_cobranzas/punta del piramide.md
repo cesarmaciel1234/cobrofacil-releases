@@ -22,7 +22,7 @@ f6_centro_cobranzas/
 
 Buscador por DNI o nombre (tope 5). Al dar Enter en la búsqueda, frena en la Ficha del Cliente (primer Enter selecciona; segundo Enter o botón táctil PAGAR/ABONAR avanza a cobrar). Botón táctil `[ ← Volver / ✕ Salir ]` ubicado en el top techo arriba a la derecha para no ensuciar el área de trabajo central ni molestar los botones de acción. Ficha: hola, deuda total estimada o a favor, o al día. PAGAR / ABONAR aunque no haya deuda: el excedente queda a favor, sin cartel. Paso 1 monto a la cuenta (prellenado con el total estimado). Paso 2 medio. Efectivo pregunta los billetes; si falta no cobra.
 
-Con deuda, la ficha presenta de forma directa e instantánea el Total Estimado como Deuda Actual. Interfaz limpia: sin recuadros ni listas de tickets que ensucien la pantalla de cobranza. Si el cliente o cajero requiere revisar el detalle, `[ Ver / Imprimir ]` abre el historial completo.
+Con deuda, la ficha presenta de forma directa e instantánea el Total Estimado como Deuda Actual. Interfaz limpia y bien distribuida (800x540 px): sin dobles marcos ni áreas vacías sobredimensionadas. En búsqueda incorpora tarjeta guía interactiva; en ficha del cliente incorpora tarjeta ejecutiva con avatar, estado financiero destacado y botones touch amplios. Si el cliente o cajero requiere revisar el detalle, `[ Ver / Imprimir ]` abre el historial completo.
 
 Admin Abonar abre el mismo diálogo con `perfil=Admin`, va directo al monto y al medio con el total estimado precargado, PIN apagado. El cobro se asienta una sola vez.
 

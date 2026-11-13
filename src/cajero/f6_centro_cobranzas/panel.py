@@ -64,19 +64,15 @@ class CentroCobranzasPanel(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
 
-        row_center = QHBoxLayout()
-        row_center.addStretch(1)
         self.card = QFrame()
-        self.card.setMinimumWidth(850)
-        self.card.setMaximumWidth(950)
         self.card.setObjectName("PanelFiadoCobro")
         self.card.setStyleSheet(
-            "QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }"
+            "QFrame#PanelFiadoCobro { background: transparent; border: none; }"
         )
 
         lay = QVBoxLayout(self.card)
-        lay.setContentsMargins(36, 28, 36, 24)
-        lay.setSpacing(10)
+        lay.setContentsMargins(18, 10, 18, 10)
+        lay.setSpacing(8)
 
         tit = QLabel("CENTRO DE COBRANZAS")
         tit.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -188,9 +184,7 @@ class CentroCobranzasPanel(QWidget):
         self.lienzo_mixto.listo.connect(self._armar_cola_mixto)
         self.lienzo_mixto.volver.connect(self._volver_de_lienzo)
 
-        row_center.addWidget(self.card)
-        row_center.addStretch(1)
-        outer.addLayout(row_center)
+        outer.addWidget(self.card)
 
     def _on_texto_busqueda(self, texto):
         self._q = (texto or "").strip()
@@ -245,18 +239,44 @@ class CentroCobranzasPanel(QWidget):
         self._mostrar_ficha()
 
     def _mostrar_ficha(self):
-        self.card.setStyleSheet("QFrame#PanelFiadoCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }")
-        self.estado.setText(f"Hola {self._cliente_nombre}")
+        self.card.setStyleSheet("QFrame#PanelFiadoCobro { background: transparent; border: none; }")
+        self.estado.setText(f"{self._cliente_nombre}")
         
         if self._deuda_actual < -0.009:
             self.detalle.setText(f"Saldo a favor: ${abs(self._deuda_actual):,.2f}")
-            self.detalle.setStyleSheet("color: #10B981; font-size: 36px; font-weight: 900; background: transparent; border: none;")
+            if hasattr(self.panel_estado, "caja_saldo"):
+                self.panel_estado.caja_saldo.setStyleSheet(
+                    "QFrame#CajaSaldo { background: #ECFDF5; border: 2px solid #10B981; border-radius: 12px; }"
+                )
+            self.detalle.setStyleSheet("color: #047857; font-size: 30px; font-weight: 900; background: transparent; border: none;")
+            if hasattr(self.panel_estado, "lbl_subdetalle"):
+                self.panel_estado.lbl_subdetalle.setText("Cuenta al día · El cliente dispone de crédito a su favor")
+                self.panel_estado.lbl_subdetalle.setStyleSheet("color: #065F46; font-size: 13px; font-weight: 700; background: transparent; border: none;")
         elif self._deuda_actual > 0.009:
             self.detalle.setText(f"Deuda actual: ${self._deuda_actual:,.2f}")
-            self.detalle.setStyleSheet("color: #B91C1C; font-size: 36px; font-weight: 900; background: transparent; border: none;")
+            if hasattr(self.panel_estado, "caja_saldo"):
+                self.panel_estado.caja_saldo.setStyleSheet(
+                    "QFrame#CajaSaldo { background: #FEF2F2; border: 2px solid #EF4444; border-radius: 12px; }"
+                )
+            self.detalle.setStyleSheet("color: #B91C1C; font-size: 30px; font-weight: 900; background: transparent; border: none;")
+            if hasattr(self.panel_estado, "lbl_subdetalle"):
+                if self._interes_estimado > 0.009:
+                    self.panel_estado.lbl_subdetalle.setText(
+                        f"Capital: ${self._capital_base:,.2f}  +  Interés/Mantenimiento: ${self._interes_estimado:,.2f}"
+                    )
+                else:
+                    self.panel_estado.lbl_subdetalle.setText("Saldo pendiente acumulado")
+                self.panel_estado.lbl_subdetalle.setStyleSheet("color: #991B1B; font-size: 13px; font-weight: 700; background: transparent; border: none;")
         else:
-            self.detalle.setText("Al día · se puede cobrar y deja saldo a favor")
-            self.detalle.setStyleSheet("color: #047857; font-size: 22px; font-weight: 900; background: transparent; border: none;")
+            self.detalle.setText("Al día ($0.00)")
+            if hasattr(self.panel_estado, "caja_saldo"):
+                self.panel_estado.caja_saldo.setStyleSheet(
+                    "QFrame#CajaSaldo { background: #F0FDF4; border: 2px solid #22C55E; border-radius: 12px; }"
+                )
+            self.detalle.setStyleSheet("color: #15803D; font-size: 30px; font-weight: 900; background: transparent; border: none;")
+            if hasattr(self.panel_estado, "lbl_subdetalle"):
+                self.panel_estado.lbl_subdetalle.setText("Sin deuda registrada · Podés cobrar para dejar saldo a favor")
+                self.panel_estado.lbl_subdetalle.setStyleSheet("color: #166534; font-size: 13px; font-weight: 700; background: transparent; border: none;")
             
         if self._deuda_actual > 0.009 and self._interes_estimado > 0.009:
             self.detalle.setToolTip(
@@ -272,8 +292,11 @@ class CentroCobranzasPanel(QWidget):
         if lbl_hist:
             lbl_hist.hide()
 
-        self.icono.hide()
-        
+        if hasattr(self.panel_estado, "caja_ficha"):
+            self.panel_estado.caja_ficha.show()
+        if hasattr(self.panel_estado, "lbl_guia_atajos"):
+            self.panel_estado.lbl_guia_atajos.show()
+
         # Ocultar botones de pago por defecto
         self.txt_monto_abono.hide()
         self.btn_abono_libre.hide()
@@ -338,6 +361,10 @@ class CentroCobranzasPanel(QWidget):
         self._modo = "preparando_pago"
         self.btn_iniciar_pago.hide()
         self.btn_imprimir_resumen.hide()
+        if hasattr(self.panel_estado, "caja_ficha"):
+            self.panel_estado.caja_ficha.hide()
+        if hasattr(self.panel_estado, "lbl_guia_atajos"):
+            self.panel_estado.lbl_guia_atajos.hide()
         if getattr(self.panel_estado, "lbl_historial", None):
             self.panel_estado.lbl_historial.hide()
         if hasattr(self, "btn_volver_techo"):
@@ -356,6 +383,8 @@ class CentroCobranzasPanel(QWidget):
             self._monto_sugerido_base = None
             self.txt_monto_abono.setPlaceholderText("Ejemplo: 100 (queda a favor)")
         if getattr(self.panel_estado, "lbl_pregunta_monto", None):
+            nom_cli = f" a {self._cliente_nombre}" if self._cliente_nombre else ""
+            self.panel_estado.lbl_pregunta_monto.setText(f"1. ¿Cuánto abona{nom_cli}?")
             self.panel_estado.lbl_pregunta_monto.show()
         self.txt_monto_abono.show()
         self.btn_abono_libre.hide()
@@ -528,6 +557,10 @@ class CentroCobranzasPanel(QWidget):
         self.cont_botones.hide()
         if getattr(self.panel_estado, "lbl_pregunta_monto", None):
             self.panel_estado.lbl_pregunta_monto.hide()
+        if hasattr(self.panel_estado, "caja_ficha"):
+            self.panel_estado.caja_ficha.show()
+        if hasattr(self.panel_estado, "lbl_guia_atajos"):
+            self.panel_estado.lbl_guia_atajos.show()
         self.detalle.show()
         self.btn_iniciar_pago.show()
         self.btn_imprimir_resumen.show()

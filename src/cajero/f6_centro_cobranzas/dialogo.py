@@ -56,8 +56,8 @@ class DialogoCentroCobranzas(QDialog):
         self.hoja = hoja
 
     def _ajustar_pagina(self):
-        ancho = max(400, min(1050, self.width() - 64))
-        alto = max(400, min(800, self.height() - 40))
+        ancho = max(600, min(800, self.width() - 48))
+        alto = max(460, min(540, self.height() - 40))
         self.hoja.setFixedSize(ancho, alto)
 
     def abrir_para_cliente(self, cliente, monto_sugerido=None, ir_a_pago=False):
