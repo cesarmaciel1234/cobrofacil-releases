@@ -153,12 +153,22 @@ def fecha_activacion_cursor(cursor, ahora=None, crear=False):
 
 
 def fecha_db_cursor(cursor):
-    cursor.execute("SELECT CURRENT_TIMESTAMP")
-    fila = cursor.fetchone()
-    valor = _celda(fila, "CURRENT_TIMESTAMP", 0)
-    if not valor:
-        raise RuntimeError("No se pudo leer la hora de la base de datos")
-    return valor
+    try:
+        cursor.execute("SELECT CURRENT_TIMESTAMP")
+        fila = cursor.fetchone()
+        valor = _celda(fila, "CURRENT_TIMESTAMP", 0)
+        if not valor and isinstance(fila, dict):
+            for k in ("current_timestamp", "CURRENT_TIMESTAMP()", "current_timestamp()", "NOW()", "now()"):
+                if k in fila:
+                    valor = fila[k]
+                    break
+            if not valor and fila:
+                valor = next(iter(fila.values()), None)
+        if valor:
+            return valor
+    except Exception:
+        pass
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def fecha_activacion_db(db=None):

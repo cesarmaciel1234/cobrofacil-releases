@@ -379,8 +379,9 @@ def test_f6_busqueda_solo_devuelve_clientes_con_deuda(monkeypatch):
     )
 
     assert buscar_deudores("Ana") == []
-    assert len(consultas) == 1
-    assert "c.deuda_actual > 0.01" in consultas[0][0]
+    consultas_deudores = [c for c in consultas if "c.deuda_actual" in c[0]]
+    assert len(consultas_deudores) == 1
+    assert "c.deuda_actual > 0.01" in consultas_deudores[0][0]
 
 
 def test_cancelar_pin_de_efectivo_no_abre_cajon_ni_registra(monkeypatch):

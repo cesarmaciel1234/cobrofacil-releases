@@ -615,7 +615,18 @@ class CentroCobranzasPanel(QWidget):
     def ocultar(self):
         self._modo = "oculto"
         self._cerrar_lienzos()
+        if getattr(self, "_hilo_int", None) is not None:
+            try:
+                if self._hilo_int.isRunning():
+                    self._hilo_int.quit()
+                    self._hilo_int.wait(300)
+            except Exception:
+                pass
         self.hide()
+
+    def closeEvent(self, event):
+        self.ocultar()
+        super().closeEvent(event)
 
     def eventFilter(self, obj, event):
         txt_monto = getattr(self, 'txt_monto_abono', None)
