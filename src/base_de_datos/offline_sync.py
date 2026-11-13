@@ -598,7 +598,12 @@ class OfflineSync:
         try:
             import sqlite3
             local_db_path = os.path.join(self.base_path, "punpro.db")
-            conn_loc = sqlite3.connect(local_db_path)
+            conn_loc = sqlite3.connect(local_db_path, timeout=30.0)
+            try:
+                conn_loc.execute("PRAGMA journal_mode=WAL")
+                conn_loc.execute("PRAGMA busy_timeout=10000")
+            except Exception:
+                pass
             c_loc = conn_loc.cursor()
 
             # 1. Catálogo de productos
@@ -651,6 +656,41 @@ class OfflineSync:
                         cant_oferta, precio_oferta, tipo_unidad_oferta, precio_oferta_relampago
                     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """, reg_prods)
+
+            # 1.1 Códigos adicionales (1 a N)
+            try:
+                codigos_adic = db_manager.execute_query("""
+                    SELECT id, producto_id, codigo, tipo, factor_unidades, descripcion, creado_el
+                    FROM productos_codigos_adicionales
+                """)
+                if codigos_adic is not None:
+                    c_loc.execute("""
+                        CREATE TABLE IF NOT EXISTS productos_codigos_adicionales (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            producto_id BIGINT NOT NULL,
+                            codigo TEXT NOT NULL,
+                            tipo TEXT DEFAULT 'EAN',
+                            factor_unidades REAL DEFAULT 1.0,
+                            descripcion TEXT,
+                            creado_el DATETIME DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """)
+                    c_loc.execute("CREATE INDEX IF NOT EXISTS idx_prod_cod_adic ON productos_codigos_adicionales (codigo)")
+                    c_loc.execute("DELETE FROM productos_codigos_adicionales")
+                    if codigos_adic:
+                        reg_ca = [
+                            (ca.get('id'), ca.get('producto_id'), str(ca.get('codigo') or ''),
+                             ca.get('tipo', 'EAN'), float(ca.get('factor_unidades') or 1.0),
+                             ca.get('descripcion', ''), ca.get('creado_el'))
+                            for ca in codigos_adic
+                        ]
+                        c_loc.executemany("""
+                            INSERT INTO productos_codigos_adicionales (
+                                id, producto_id, codigo, tipo, factor_unidades, descripcion, creado_el
+                            ) VALUES (?,?,?,?,?,?,?)
+                        """, reg_ca)
+            except Exception as e_ca:
+                logger.warning(f"Modo Offline: No se pudieron replicar códigos adicionales: {e_ca}")
 
             # 2. Departamentos e impuestos
             deptos = db_manager.execute_query("SELECT id, nombre, iva FROM departamentos")

@@ -29,8 +29,8 @@ class DialogoCodigosAdicionales(QDialog):
         self.producto_id = producto_id
         self.nombre_producto = nombre_producto or f"Producto #{producto_id}"
         self.setWindowTitle(f"🔗 Códigos Adicionales — ID #{self.producto_id}")
-        self.setMinimumSize(780, 530)
-        self.resize(780, 530)
+        self.setMinimumSize(840, 540)
+        self.resize(840, 540)
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI', sans-serif;")
         self._setup_ui()
         self.cargar_codigos()
@@ -42,7 +42,7 @@ class DialogoCodigosAdicionales(QDialog):
         container = QFrame(self)
         container.setObjectName("DialogoCodigosContainer")
         container.setStyleSheet(
-            "QFrame#DialogoCodigosContainer { background-color: white; border: 4px solid #3B82F6; border-radius: 16px; }"
+            "QFrame#DialogoCodigosContainer { background-color: white; border: 2px solid #3B82F6; border-radius: 12px; }"
         )
         dlg_lay.addWidget(container)
 
@@ -53,11 +53,12 @@ class DialogoCodigosAdicionales(QDialog):
         # Header
         h_lay = QHBoxLayout()
         v_titles = QVBoxLayout()
-        v_titles.setSpacing(2)
+        v_titles.setSpacing(3)
         lbl_tit = QLabel("🔗 Códigos de Escaneo Adicionales")
-        lbl_tit.setStyleSheet("font-size: 19px; font-weight: bold; color: #0F172A; border: none; background: transparent;")
-        lbl_sub = QLabel(f"{self.nombre_producto}")
-        lbl_sub.setStyleSheet("font-size: 13px; color: #64748B; font-weight: 600; border: none; background: transparent;")
+        lbl_tit.setStyleSheet("font-size: 19px; font-weight: 900; color: #0F172A; border: none; background: transparent;")
+        lbl_sub = QLabel(f"📦 {self.nombre_producto}")
+        lbl_sub.setFont(fuente_nombre(12))
+        lbl_sub.setStyleSheet("font-size: 13px; color: #334155; font-weight: bold; border: none; background: transparent;")
         v_titles.addWidget(lbl_tit)
         v_titles.addWidget(lbl_sub)
         h_lay.addLayout(v_titles)
@@ -79,7 +80,7 @@ class DialogoCodigosAdicionales(QDialog):
         # Tabla de códigos
         self.tabla = QTableWidget(self)
         self.tabla.setColumnCount(5)
-        self.tabla.setHorizontalHeaderLabels(["Código", "Tipo", "Factor", "Descripción / Nota", "Acción"])
+        self.tabla.setHorizontalHeaderLabels(["Código de Barras / DUN", "Tipo", "Factor Un.", "Descripción / Nota", "Acción"])
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.tabla.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -103,9 +104,9 @@ class DialogoCodigosAdicionales(QDialog):
         hh.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
         hh.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         hh.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-        self.tabla.setColumnWidth(0, 170)
-        self.tabla.setColumnWidth(1, 130)
-        self.tabla.setColumnWidth(2, 75)
+        self.tabla.setColumnWidth(0, 190)
+        self.tabla.setColumnWidth(1, 140)
+        self.tabla.setColumnWidth(2, 90)
         self.tabla.setColumnWidth(4, 75)
         lay.addWidget(self.tabla)
 
@@ -124,8 +125,8 @@ class DialogoCodigosAdicionales(QDialog):
         h_inputs.setSpacing(8)
 
         self.txt_nuevo_codigo = QLineEdit()
-        self.txt_nuevo_codigo.setPlaceholderText("Código de barras o DUN...")
-        self.txt_nuevo_codigo.setMinimumWidth(170)
+        self.txt_nuevo_codigo.setPlaceholderText("Código barras o DUN...")
+        self.txt_nuevo_codigo.setMinimumWidth(180)
         self.txt_nuevo_codigo.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; font-family: 'Consolas', monospace; font-size: 12px; font-weight: bold;")
         self.txt_nuevo_codigo.returnPressed.connect(self._agregar_codigo)
         h_inputs.addWidget(self.txt_nuevo_codigo, 3)
@@ -133,9 +134,9 @@ class DialogoCodigosAdicionales(QDialog):
         self.cmb_tipo = QComboBox()
         for label, val in self.TIPOS_CODIGO:
             self.cmb_tipo.addItem(label, val)
-        self.cmb_tipo.setMinimumWidth(160)
+        self.cmb_tipo.setMinimumWidth(150)
         self.cmb_tipo.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 8px; font-size: 11px;")
-        h_inputs.addWidget(self.cmb_tipo, 3)
+        h_inputs.addWidget(self.cmb_tipo, 2)
 
         self.txt_factor = QLineEdit("1.0")
         self.txt_factor.setToolTip("Unidades que descuenta al escanear (ej: 12 para caja de 12)")
@@ -146,8 +147,8 @@ class DialogoCodigosAdicionales(QDialog):
         h_inputs.addWidget(self.txt_factor, 1)
 
         self.txt_desc = QLineEdit()
-        self.txt_desc.setPlaceholderText("Nota (ej. Caja x12, Pack)...")
-        self.txt_desc.setMinimumWidth(160)
+        self.txt_desc.setPlaceholderText("Nota (ej. Caja x12)...")
+        self.txt_desc.setMinimumWidth(150)
         self.txt_desc.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; font-size: 11px;")
         self.txt_desc.returnPressed.connect(self._agregar_codigo)
         h_inputs.addWidget(self.txt_desc, 3)
