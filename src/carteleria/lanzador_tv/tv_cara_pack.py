@@ -1,4 +1,4 @@
-﻿"""Empaqueta la cara web de la TV en un blob opaco (no HTML/CSS/JS sueltos)."""
+"""Empaqueta la cara web de la TV en un blob opaco (no HTML/CSS/JS sueltos)."""
 
 from __future__ import annotations
 

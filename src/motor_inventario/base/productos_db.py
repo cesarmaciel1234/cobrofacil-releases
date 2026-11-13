@@ -51,6 +51,13 @@ def eliminar_producto_de_db(producto_id):
         pass
     try:
         ok = bool(db_manager.execute_non_query("DELETE FROM productos WHERE id = ?", (ident,)))
+        if ok:
+            try:
+                db_manager.execute_non_query(
+                    "DELETE FROM productos_codigos_adicionales WHERE producto_id = ?", (ident,)
+                )
+            except Exception:
+                pass
     except Exception as e:
         logger.error(f"Error al eliminar producto {ident}: {e}")
         ok = False

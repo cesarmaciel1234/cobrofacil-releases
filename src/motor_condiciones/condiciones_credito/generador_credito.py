@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 def generar_texto(subcontexto: str = "", saldo_anterior: float = 0.0, monto_actual: float = 0.0, cliente_nombre: str = "", **kwargs) -> str:
     nombre = cliente_nombre if cliente_nombre else "Cliente"
     if subcontexto == "abono":

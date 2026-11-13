@@ -13,6 +13,65 @@ from src.repositories.cliente_repository import FIADO_EXPRESS_LIMITE_DEFAULT
 from src.utils.letra import vestir_id, vestir_nombre, vestir_numero
 
 
+def imprimir_historial_dialogo(parent, cliente, movimientos, totales):
+    """Elige alcance (solo deuda actual vs completo) si hay corte saldado e imprime."""
+    if not movimientos:
+        QMessageBox.information(parent, "Imprimir", "No hay movimientos para imprimir.")
+        return
+    try:
+        from src.hardware.printer import printer_manager, resumen_corte_cuenta
+
+        try:
+            deuda = float(dict(cliente or {}).get("deuda_actual") or 0)
+        except (TypeError, ValueError):
+            deuda = 0.0
+
+        info = resumen_corte_cuenta(movimientos, deuda)
+        solo_deuda = False
+        if info["tiene_corte"]:
+            caja = QMessageBox(parent)
+            caja.setWindowTitle("Imprimir estado de cuenta")
+            caja.setIcon(QMessageBox.Icon.Question)
+            caja.setText("¿Qué movimientos querés imprimir?")
+            caja.setInformativeText(
+                f"Solo deuda actual: últimos {info['cant_actual']} movimientos desde el último saldo $0.00.\n"
+                f"Historial completo: {info['cant_total']} movimientos en total."
+            )
+            btn_actual = caja.addButton(
+                f"Solo deuda actual ({info['cant_actual']})",
+                QMessageBox.ButtonRole.AcceptRole,
+            )
+            caja.addButton(
+                f"Historial completo ({info['cant_total']})",
+                QMessageBox.ButtonRole.ActionRole,
+            )
+            btn_cancelar = caja.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
+            caja.setDefaultButton(btn_actual)
+            qt_exec(caja)
+            elegido = caja.clickedButton()
+            if elegido in (None, btn_cancelar):
+                return
+            solo_deuda = elegido == btn_actual
+
+        ok = printer_manager.imprimir_historial_cuenta(
+            cliente,
+            movimientos,
+            totales,
+            solo_deuda_actual=solo_deuda,
+        )
+    except Exception as error:
+        QMessageBox.warning(parent, "Imprimir", f"No se pudo imprimir el historial.\n{error}")
+        return
+    if ok:
+        QMessageBox.information(parent, "Imprimir", "Estado de cuenta enviado a la tiketera.")
+    else:
+        QMessageBox.warning(
+            parent,
+            "Imprimir",
+            "No se pudo enviar a la impresora. Revisá la tiketera en Configuración.",
+        )
+
+
 class DialogoHistorialCliente(QDialog):
     """Historial crudo completo (admin + cajero). Sin filtros de período."""
 
@@ -445,26 +504,7 @@ class DialogoHistorialCliente(QDialog):
         self._mostrar_detalle_fila(self._fila_elegida())
 
     def _imprimir_historial(self):
-        if not self._movimientos:
-            QMessageBox.information(self, "Imprimir", "No hay movimientos para imprimir.")
-            return
-        try:
-            from src.hardware.printer import printer_manager
-
-            ok = printer_manager.imprimir_historial_cuenta(
-                self.cliente, self._movimientos, self._totales
-            )
-        except Exception as error:
-            QMessageBox.warning(self, "Imprimir", f"No se pudo imprimir el historial.\n{error}")
-            return
-        if ok:
-            QMessageBox.information(self, "Imprimir", "Historial enviado a la tiketera.")
-        else:
-            QMessageBox.warning(
-                self,
-                "Imprimir",
-                "No se pudo enviar a la impresora. Revisá la tiketera en Configuración.",
-            )
+        imprimir_historial_dialogo(self, self.cliente, self._movimientos, self._totales)
 
     def _dato_fila(self, fila):
         if fila is None or fila < 0:

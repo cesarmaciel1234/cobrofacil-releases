@@ -238,7 +238,7 @@ class CatalogoProductos(QWidget):
         def get_val(col, default=0.0):
             return r.get(col) if r.get(col) is not None else default
 
-        codigo = str(r.get('codigo') or '').strip() or str(r.get('id') or '').strip()
+        codigo = str(r.get('codigo') or '').strip()
         datos = {
             'id': r.get('id'),
             'codigo': codigo,

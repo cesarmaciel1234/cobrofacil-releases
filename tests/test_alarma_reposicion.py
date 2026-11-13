@@ -53,10 +53,17 @@ def _memoria(monkeypatch, conn):
         conn.commit()
         return True
 
+    def execute_many(sql, params):
+        conn.executemany(sql, params)
+        conn.commit()
+        return True
+
     monkeypatch.setattr(consulta_alarma.db_manager, "execute_query", execute_query)
     monkeypatch.setattr(repo.db_manager, "execute_non_query", execute_non_query)
+    monkeypatch.setattr(repo.db_manager, "execute_many", execute_many)
     monkeypatch.setattr(repo.db_manager, "execute_query", execute_query)
     monkeypatch.setattr(repo, "_es_maria", lambda: False)
+    monkeypatch.setattr(repo, "_lista", False)
 
 
 def test_si_la_planilla_no_contesta_el_pedido_sigue(monkeypatch):

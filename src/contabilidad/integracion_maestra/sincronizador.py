@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 from datetime import date, datetime
 from src.base_de_datos.database import db_manager as db_maestra
 from src.contabilidad.database import Database

@@ -61,4 +61,4 @@ def asentar(cliente_id, monto, deuda, perfil, quien, resultado, imprimir_saldo=T
             "aviso": "",
         }
     except Exception:
-        return {"ok": False, "aviso": "No se pudo registrar el pago. La cuenta no se modificó."}
+        return {"ok": False, "aviso": "No se pudo registrar el pago. La cuenta no se modificó y la venta sigue."}

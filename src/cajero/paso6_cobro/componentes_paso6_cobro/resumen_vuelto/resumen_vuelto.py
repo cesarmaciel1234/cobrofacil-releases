@@ -17,7 +17,9 @@ class ResumenVuelto(QWidget):
         self.lbl_vuelto_tit.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         self.lbl_vuelto_val = QLabel("$0.00")
-        self.lbl_vuelto_val.setStyleSheet("color: #10B981; font-size: 36px; font-weight: 900;")
+        self.lbl_vuelto_val = QLabel("$0.00")
+        self.lbl_vuelto_val.setStyleSheet("color: #10B981; font-size: 40px; font-weight: 900;")
+        self._estado_color = "cambio"
 
         vuelto_lay.addStretch()
         vuelto_lay.addWidget(self.lbl_vuelto_tit)
@@ -29,8 +31,12 @@ class ResumenVuelto(QWidget):
         if vuelto < 0:
             self.lbl_vuelto_tit.setText("FALTA:")
             self.lbl_vuelto_val.setText(f"${abs(vuelto):,.2f}")
-            self.lbl_vuelto_val.setStyleSheet("color: #EF4444; font-size: 40px; font-weight: 900;")
+            if self._estado_color != "falta":
+                self.lbl_vuelto_val.setStyleSheet("color: #EF4444; font-size: 40px; font-weight: 900;")
+                self._estado_color = "falta"
         else:
             self.lbl_vuelto_tit.setText("SU CAMBIO:")
             self.lbl_vuelto_val.setText(f"${vuelto:,.2f}")
-            self.lbl_vuelto_val.setStyleSheet("color: #10B981; font-size: 40px; font-weight: 900;")
+            if self._estado_color != "cambio":
+                self.lbl_vuelto_val.setStyleSheet("color: #10B981; font-size: 40px; font-weight: 900;")
+                self._estado_color = "cambio"

@@ -1,4 +1,4 @@
-﻿"""
+"""
 integracion_iva.py â€” IntegraciÃ³n entre IVA de TPV y Contabilidad Enterprise
 TPV Pro 2026 Â· Cobro FÃ¡cil POS
 

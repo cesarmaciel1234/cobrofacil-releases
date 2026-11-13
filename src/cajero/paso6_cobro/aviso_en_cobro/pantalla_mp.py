@@ -1,4 +1,4 @@
-﻿from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QGraphicsOpacityEffect, QWidget, QPushButton
+from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QGraphicsOpacityEffect, QWidget, QPushButton
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QPalette
 
@@ -53,7 +53,7 @@ class PantallaMP(QFrame):
             self.resize(self.parent().size())
             self.move(0, 0)
 
-    def mostrar_aprobado(self, monto_str: str, on_finish=None, es_autonomo=False):
+    def mostrar_aprobado(self, monto_str: str, on_finish=None, es_autonomo=False, duracion_ms: int = 2000):
         if es_autonomo:
             self.lbl_footer.show()
         else:
@@ -78,12 +78,27 @@ class PantallaMP(QFrame):
         self.lbl_monto.setStyleSheet("color: white; font-size: 40px; font-weight: bold;")
         
         self.ubicar()
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.show()
         self.raise_()
+        self.setFocus()
         from PyQt6.QtWidgets import QApplication
         QApplication.processEvents()
         self.repaint()
-        self._timer.start(2000)  # Se oculta solo en 2.0 seg y dispara el cierre de venta
+        self._timer.start(duracion_ms)  # Tiempo de feedback visual antes de cerrar
+
+    def mousePressEvent(self, event):
+        self._cerrar_inmediato()
+        event.accept()
+
+    def keyPressEvent(self, event):
+        self._cerrar_inmediato()
+        event.accept()
+
+    def _cerrar_inmediato(self):
+        if self._timer.isActive():
+            self._timer.stop()
+        self._cerrar()
         
     def mostrar_rechazado(self, motivo: str = "Pago Rechazado", on_finish=None):
         self._callback = on_finish
@@ -103,8 +118,10 @@ class PantallaMP(QFrame):
         self.lbl_monto.setStyleSheet("color: white; font-size: 30px;")
         
         self.ubicar()
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.show()
         self.raise_()
+        self.setFocus()
         self._timer.start(3500)
         
     def _cerrar(self):

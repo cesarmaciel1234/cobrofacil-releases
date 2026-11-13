@@ -24,6 +24,8 @@ def obtener_productos_bajo_minimo():
         return []
 
     filas = list(filas or [])
+    if not filas:
+        return []
     plata = _plata(r.get("id") for r in filas)
     try:
         from src.base_de_datos.database import db_manager

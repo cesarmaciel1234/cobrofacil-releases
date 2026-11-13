@@ -1,4 +1,4 @@
-﻿from src.utils.qt_compat import qt_exec
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 
 import json

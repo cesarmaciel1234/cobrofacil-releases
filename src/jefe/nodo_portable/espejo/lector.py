@@ -30,7 +30,10 @@ class Lector:
                 conn.close()
         except sqlite3.Error as e:
             self.last_error = str(e)
-            logger.warning(f"Copia de la tienda: {e} | Q: {query[:200]}")
+            if "no such table" in self.last_error.lower():
+                logger.debug(f"Copia de la tienda: {e} | Q: {query[:200]}")
+            else:
+                logger.warning(f"Copia de la tienda: {e} | Q: {query[:200]}")
             return []
 
     def execute_scalar(self, query: str, params: tuple = ()):

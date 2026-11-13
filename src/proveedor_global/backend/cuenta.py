@@ -391,9 +391,10 @@ def _leer_pagos_locales() -> list:
 def _leer_pagos_lectura() -> list:
     try:
         from src.proveedor_global.backend.motor_proveedor import MotorProveedor
+        from src.proveedor_global.frontend.formula.motores.pregunta import tabla_disponible
 
         db, _modo = MotorProveedor._get_read_db("admin")
-        if not db:
+        if not db or not tabla_disponible(db, "pagos_proveedor", recordar=False):
             return []
         filas = db.execute_query(
             "SELECT gasto_id, monto, medio, fecha, nota, proveedor FROM pagos_proveedor "

@@ -59,9 +59,7 @@ class MotorProveedor:
 
     @staticmethod
     def tienda_disponible():
-        """True si la maestra sigue siendo el motor. No abre un socket nuevo."""
-        import time
-
+        """True only when the authoritative MariaDB answers, never for punpro.db."""
         db = MotorProveedor._get_db("admin")
         if (
             not db
@@ -69,9 +67,16 @@ class MotorProveedor:
             or getattr(db, "_forced_local_offline", False)
         ):
             return False
-        if time.monotonic() < float(getattr(db, "_maestra_muerta_hasta", 0) or 0):
+        try:
+            conn = db.get_connection(caer_si_maestra_caida=False)
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT 1 AS conectada")
+                    return bool(cursor.fetchone())
+            finally:
+                conn.close()
+        except Exception:
             return False
-        return True
 
     @staticmethod
     def _abrir_conexion_tienda(db):
@@ -95,6 +100,8 @@ class MotorProveedor:
 
     @staticmethod
     def _get_read_db(perfil, db_jefe=None):
+        if perfil == "jefe" and db_jefe is not None:
+            return db_jefe, "local"
         db = MotorProveedor._get_db("admin", None)
         if MotorProveedor.tienda_disponible():
             return db, "tienda"
@@ -184,6 +191,21 @@ class MotorProveedor:
     def _gastos_de(db) -> list:
         if not db:
             return []
+        if hasattr(db, "get_general_debts"):
+            try:
+                filas = []
+                for d in db.get_general_debts() or []:
+                    if len(d) >= 6 and (d[2] == "Proveedor" or "Mercader" in str(d[2])):
+                        filas.append({
+                            "id": d[0],
+                            "descripcion": d[1],
+                            "monto": d[3],
+                            "fecha": d[4],
+                            "status": d[5],
+                        })
+                return filas
+            except Exception:
+                return []
         try:
             return db.execute_query(
                 "SELECT id, fecha, descripcion, monto, status FROM gastos "
@@ -220,6 +242,8 @@ class MotorProveedor:
     def load_proveedores(perfil, db_jefe=None):
         """Contado y fiado. En casa se suman los remitos de esta PC a la copia del negocio."""
         db, _modo = MotorProveedor._get_read_db(perfil, db_jefe)
+        if not db:
+            return []
         parsed_rows = []
         vistas = set()
 
@@ -237,7 +261,8 @@ class MotorProveedor:
                 parsed_rows.append(fila)
 
         _sumar(MotorProveedor._gastos_de(db), "tienda")
-        _sumar(MotorProveedor._gastos_locales(), "casa")
+        if _modo not in ("local", "sin_copia") and perfil != "admin":
+            _sumar(MotorProveedor._gastos_locales(), "casa")
         parsed_rows.sort(key=lambda f: f.get("fecha") or "", reverse=True)
         try:
             from src.proveedor_global.backend.cuenta import cubrir
@@ -338,6 +363,8 @@ class MotorProveedor:
         ENTERPRISE: Genera asiento contable de compra de mercadería automáticamente.
         """
         if not MotorProveedor.tienda_disponible():
+            if perfil == "admin":
+                return False, "Solo consulta sin conexión. Para registrar compras, conecte la tienda."
             return MotorProveedor._guardar_compra_en_casa(
                 date, prov_name, tropa, grupos, payment, amount, perfil
             )

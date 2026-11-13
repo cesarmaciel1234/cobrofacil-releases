@@ -55,16 +55,21 @@ def test_api_lan_atiende_solicitudes_concurrentes_y_limita_hilos(monkeypatch):
         finally:
             conn.close()
 
-    clientes = [threading.Thread(target=solicitar) for _ in range(3)]
+    c1 = threading.Thread(target=solicitar)
+    c2 = threading.Thread(target=solicitar)
+    c3 = threading.Thread(target=solicitar)
     try:
-        for cliente in clientes:
-            cliente.start()
-        assert inicio.wait(1), "el servidor no atendió dos solicitudes en paralelo"
+        c1.start()
+        c2.start()
+        assert inicio.wait(2), "el servidor no atendió dos solicitudes en paralelo"
+        # Con ambos slots ocupados, la 3ra solicitud debe ser rechazada por límite
+        c3.start()
+        c3.join(2)
         liberar.set()
-        for cliente in clientes:
-            cliente.join(3)
+        c1.join(3)
+        c2.join(3)
 
-        assert all(not cliente.is_alive() for cliente in clientes)
+        assert not c1.is_alive() and not c2.is_alive() and not c3.is_alive()
         assert max_activos == 2
         assert resultados.count(200) == 2
         assert resultados.count(None) == 1
@@ -136,6 +141,9 @@ def test_supervisor_udp_reintenta_despues_de_falla_de_enlace(monkeypatch):
         def recvfrom(self, _size):
             salida.wait(0.01)
             raise socket.timeout()
+
+        def connect(self, *_args, **_kwargs):
+            raise OSError("simulacion offline")
 
         def close(self):
             pass

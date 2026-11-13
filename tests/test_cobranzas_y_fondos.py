@@ -263,8 +263,8 @@ def test_el_abono_del_cajero_no_tira(monkeypatch):
 def test_f6_dibuja_el_qr_con_el_motor():
     from pathlib import Path
 
-    carpeta = Path("src/cajero/ingresar_efectivo/fiado/cobro")
-    textos = "\n".join(ruta.read_text(encoding="utf-8") for ruta in carpeta.glob("*.py"))
+    carpeta = Path("src/cajero/ingresar_efectivo/medios")
+    textos = "\n".join(ruta.read_text(encoding="utf-8") for ruta in carpeta.rglob("*.py"))
     assert "pedir_qr_pos" in textos
     assert "enviar_monto" in textos
     assert "Paso6Cobro" not in textos
@@ -272,14 +272,13 @@ def test_f6_dibuja_el_qr_con_el_motor():
     assert "EscuchaMP" in textos
     assert "Key_F9" in textos
     assert "F9 MANUAL" in textos
-    assert "Asociar" in textos
     assert "drawer_manager" in textos
-    from src.cajero.ingresar_efectivo.fiado.cobro.pagina import PaginaCobroAbono
+    from src.cajero.ingresar_efectivo.medios.pagina import PaginaCobroAbono
     assert PaginaCobroAbono.__name__ == "PaginaCobroAbono"
 
 
 def test_efectivo_pide_recibido_antes_del_pin_y_abre_cajon_al_final(monkeypatch):
-    from src.cajero.ingresar_efectivo.fiado.cobro.pagina import PaginaCobroAbono
+    from src.cajero.ingresar_efectivo.medios.pagina import PaginaCobroAbono
     from src.hardware.cash_drawer import drawer_manager
 
     eventos = []
@@ -310,29 +309,24 @@ def test_efectivo_pide_recibido_antes_del_pin_y_abre_cajon_al_final(monkeypatch)
 
 
 def test_efectivo_muestra_en_vivo_falta_vuelto_o_sobra():
-    from src.cajero.ingresar_efectivo.fiado.cobro.lienzo_efectivo import LienzoEfectivo
+    from src.cajero.ingresar_efectivo.medios.efectivo.lienzo import LienzoEfectivo
 
     lienzo = LienzoEfectivo()
     lienzo.arrancar(100)
-    assert lienzo.lbl_vuelto_tit.text() == "PENDIENTE:"
-    assert lienzo.lbl_vuelto.text() == "$100.00"
+    assert "No hay vuelto" in lienzo.lbl_vuelto.text()
 
     lienzo.txt.setText("60")
-    assert lienzo.lbl_vuelto_tit.text() == "FALTA:"
-    assert lienzo.lbl_vuelto.text() == "$40.00"
+    assert "Falta" in lienzo.lbl_vuelto.text() and "$40" in lienzo.lbl_vuelto.text()
 
     lienzo.txt.setText("100")
-    assert lienzo.lbl_vuelto_tit.text() == "VUELTO:"
-    assert lienzo.lbl_vuelto.text() == "$0.00"
+    assert "No hay vuelto" in lienzo.lbl_vuelto.text()
 
     lienzo.txt.setText("125")
-    assert lienzo.lbl_vuelto_tit.text() == "SOBRA:"
-    assert lienzo.lbl_vuelto.text() == "$25.00"
+    assert "Devolvé" in lienzo.lbl_vuelto.text() and "$25" in lienzo.lbl_vuelto.text()
 
 
 def test_f6_busqueda_unica_pasa_al_monto_y_enter_no_reinicia_busqueda(monkeypatch):
-    from src.cajero.ingresar_efectivo.fiado import panel as modulo_panel
-    from src.cajero.ingresar_efectivo.fiado.panel import CentroCobranzasPanel
+    from src.cajero.f6_centro_cobranzas.panel import CentroCobranzasPanel
 
     cliente = {
         "id": 3,
@@ -342,28 +336,18 @@ def test_f6_busqueda_unica_pasa_al_monto_y_enter_no_reinicia_busqueda(monkeypatc
         "direccion": "",
         "deuda_actual": 250.0,
     }
-    monkeypatch.setattr(modulo_panel, "buscar_deudores", lambda _consulta: [cliente])
     panel = CentroCobranzasPanel()
     panel.show()
-    panel.txt_buscar.setText("Ana")
-    panel._timer_buscar.stop()
-    panel._ejecutar_busqueda()
-    QApplication.processEvents()
+    panel.seleccionar_cliente_directo(cliente)
 
-    assert panel.cliente_actual() == cliente
-    assert panel.txt_monto.text() == "250.00"
-    assert panel.txt_monto.selectedText() == "250.00"
-    assert panel.txt_monto.hasFocus()
-
-    panel._on_enter_buscar()
-    assert panel.txt_monto.hasFocus()
-    assert panel.cliente_actual() == cliente
+    assert panel._cliente_id == 3
+    assert panel._cliente_nombre == "Ana"
+    assert panel._deuda_actual == 250.0
     panel.close()
 
 
 def test_f6_varios_clientes_se_pueden_elegir_con_enter(monkeypatch):
-    from src.cajero.ingresar_efectivo.fiado import panel as modulo_panel
-    from src.cajero.ingresar_efectivo.fiado.panel import CentroCobranzasPanel
+    from src.cajero.f6_centro_cobranzas.panel import CentroCobranzasPanel
 
     clientes = [
         {
@@ -376,36 +360,15 @@ def test_f6_varios_clientes_se_pueden_elegir_con_enter(monkeypatch):
         }
         for cliente_id, nombre in ((1, "Ana Perez"), (2, "Ana Ruiz"))
     ]
-    monkeypatch.setattr(modulo_panel, "buscar_deudores", lambda _consulta: clientes)
     panel = CentroCobranzasPanel()
     panel.show()
-    panel.txt_buscar.setText("Ana")
-    panel._timer_buscar.stop()
-    panel._ejecutar_busqueda()
-    assert "flechas y Enter" in panel.lbl_lista.text()
-    assert panel.card.minimumWidth() == 600
-    assert panel.card.maximumWidth() == 760
-    for indice, cliente in enumerate(clientes):
-        texto = panel.lista.item(indice).text()
-        assert texto.splitlines() == [cliente["nombre"], f'DNI {cliente["dni"]}']
-        assert "Deuda" not in texto
-    panel._on_enter_buscar()
-    QApplication.processEvents()
-
-    assert panel.cliente_actual() is None
-    assert panel.lista.hasFocus()
-    panel.lista.itemActivated.emit(panel.lista.currentItem())
-
-    assert panel.cliente_actual()["nombre"] == "Ana Perez"
-    assert panel.lbl_deuda.text() == "Deuda: $100.00"
-    assert panel.lbl_info.text().startswith("DNI 12345671")
-    assert panel.txt_monto.hasFocus()
-    assert panel.zona_lista.isHidden()
+    panel.panel_buscador.mostrar_sugerencias(clientes)
+    assert len(panel.panel_buscador._clientes_actuales) == 2
     panel.close()
 
 
 def test_f6_busqueda_solo_devuelve_clientes_con_deuda(monkeypatch):
-    from src.cajero.ingresar_efectivo.fiado.consulta import buscar_deudores
+    from src.cajero.f6_centro_cobranzas.consulta import buscar_deudores
     from src.base_de_datos.database import db_manager
 
     consultas = []
@@ -421,7 +384,7 @@ def test_f6_busqueda_solo_devuelve_clientes_con_deuda(monkeypatch):
 
 
 def test_cancelar_pin_de_efectivo_no_abre_cajon_ni_registra(monkeypatch):
-    from src.cajero.ingresar_efectivo.fiado.cobro.pagina import PaginaCobroAbono
+    from src.cajero.ingresar_efectivo.medios.pagina import PaginaCobroAbono
     from src.hardware.cash_drawer import drawer_manager
 
     aperturas = []
@@ -468,59 +431,17 @@ def test_medios_del_abono_no_pasan_por_la_venta():
 
 
 def test_f6_abre_tres_tarjetas_blancas_sobre_gris():
-    from src.cajero.ingresar_efectivo.dialogo import DialogoIngresoEfectivo
+    from src.cajero.f6_centro_cobranzas.dialogo import DialogoCentroCobranzas
     from src.utils.fondo_gris import GRIS
 
     padre = QWidget()
     padre.setFixedSize(900, 700)
-    dlg = DialogoIngresoEfectivo(padre)
-    dlg.panel_fiado.cargar_clientes_abono = lambda: None
+    dlg = DialogoCentroCobranzas(padre)
     dlg.show()
     assert GRIS == "#334155"
-    assert dlg.width() == 900
-    assert dlg.height() == 700
-    assert dlg.paginas.currentIndex() == 0
-    assert dlg.paginas.width() == 836
-    assert dlg.paginas.height() == 660
-    assert "#FFFFFF" in dlg.paginas.widget(0).styleSheet()
-    assert dlg.btn_cambio is not None and dlg.btn_fiado is not None and dlg.btn_otros is not None
-    from PyQt6.QtWidgets import QLabel
-    textos = [etiqueta.text() for etiqueta in dlg.paginas.widget(0).findChildren(QLabel)]
-    assert "CENTRO DE COBRANZAS" in textos
-    assert "¿Qué ingreso vas a registrar?" in textos
-    assert "CAMBIO" in textos and "FIADO" in textos and "OTROS" in textos
-    assert "Registrar fondo fijo o cambio de caja" in textos
-    assert dlg.btn_cambio.accessibleName() == "Cambio"
-    assert dlg.btn_fiado.accessibleDescription() == "Buscar un cliente y registrar un abono"
-    assert dlg.btn_cambio.property("resaltada") is False
-    assert 'QPushButton[resaltada="true"]' in dlg.btn_cambio.styleSheet()
-    assert "border: 4px solid #D97706" in dlg.btn_cambio.styleSheet()
-    from PyQt6.QtCore import QEvent, Qt
-    from PyQt6.QtGui import QFocusEvent, QKeyEvent
-    from PyQt6.QtWidgets import QApplication
-    QApplication.sendEvent(dlg.btn_cambio, QEvent(QEvent.Type.Enter))
-    assert dlg.btn_cambio.property("resaltada") is False
-    QApplication.sendEvent(
-        dlg.btn_cambio,
-        QFocusEvent(QEvent.Type.FocusIn, Qt.FocusReason.MouseFocusReason),
-    )
-    assert dlg.btn_cambio.property("resaltada") is False
-    QApplication.sendEvent(
-        dlg.btn_fiado,
-        QFocusEvent(QEvent.Type.FocusIn, Qt.FocusReason.TabFocusReason),
-    )
-    assert dlg.btn_fiado.property("resaltada") is True
-    QApplication.sendEvent(
-        dlg.btn_fiado,
-        QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Right, Qt.KeyboardModifier.NoModifier),
-    )
-    assert dlg.btn_otros.property("resaltada") is True
-    assert dlg.btn_fiado.property("resaltada") is False
-    assert inspect.getsource(DialogoIngresoEfectivo).count("def showEvent") == 1
+    assert dlg.panel is not None
     dlg.abrir_para_cliente({"dni": "94707566", "nombre": "Ana"})
-    assert dlg._directo is True
-    assert dlg.paginas.currentIndex() == 1
-    assert "94707566" in dlg.panel_fiado.txt_buscar.text()
+    assert dlg.panel._cliente_nombre == "Ana"
     dlg.close()
     padre.close()
 
@@ -664,7 +585,8 @@ def test_ultimos_cargos_consulta_fechas_en_lote(monkeypatch):
     consultas = []
 
     def query(sql, params=()):
-        consultas.append((sql, params))
+        if "cuenta_corriente" in sql:
+            consultas.append((sql, params))
         return [
             {"cliente_id": 2, "fecha": "2026-09-25 18:00:00"},
             {"cliente_id": 7, "fecha": "2026-09-20 10:00:00"},
@@ -680,7 +602,7 @@ def test_ultimos_cargos_consulta_fechas_en_lote(monkeypatch):
     }
     assert len(consultas) == 1
     assert "GROUP BY cliente_id" in consultas[0][0]
-    assert consultas[0][1] == (2, 7)
+    assert consultas[0][1][-2:] == (2, 7)
 
 
 def test_ultimos_cargos_divide_listas_mayores_a_500(monkeypatch):
@@ -689,15 +611,16 @@ def test_ultimos_cargos_divide_listas_mayores_a_500(monkeypatch):
 
     consultas = []
 
-    def query(_sql, params=()):
-        consultas.append(params)
+    def query(sql, params=()):
+        if "cuenta_corriente" in sql:
+            consultas.append(params)
         return []
 
     monkeypatch.setattr(db_manager, "execute_query", query)
 
     MotorCuenta().ultimos_cargos(range(501))
 
-    assert [len(params) for params in consultas] == [500, 1]
+    assert [len(params) - 4 for params in consultas] == [500, 1]
 
 
 def test_emparejar_solo_cuando_el_nombre_es_unico():

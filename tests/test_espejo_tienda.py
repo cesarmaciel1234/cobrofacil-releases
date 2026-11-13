@@ -123,6 +123,21 @@ def tienda(tmp_path, monkeypatch):
 def _sin_red(monkeypatch):
     monkeypatch.setattr(lector, "_hay_tienda", lambda: False)
     monkeypatch.setattr(lector, "_ruta_lectura", lambda: copia.ruta())
+    from src.motor_auditoria_digital import empleado
+    monkeypatch.setattr(empleado, "_estado", {"clave": None, "cache": [], "listo": False, "pedido": None, "gen": 0})
+    from src.base_de_datos.database import db_manager
+
+    def _query_espejo(sql, params=()):
+        conn = sqlite3.connect(copia.ruta())
+        conn.row_factory = sqlite3.Row
+        try:
+            return [dict(r) for r in conn.execute(sql.replace("%s", "?"), params).fetchall()]
+        except Exception:
+            return []
+        finally:
+            conn.close()
+
+    monkeypatch.setattr(db_manager, "execute_query", _query_espejo)
 
 
 def test_copia_entera_y_lectura_sin_red(tienda, monkeypatch):

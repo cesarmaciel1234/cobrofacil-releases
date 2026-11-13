@@ -428,11 +428,14 @@ class Admin1Inventario(QWidget):
         nombres = []
         ids_a_borrar = []
         for row in filas_a_borrar:
-            item_id = self.catalogo.tabla.item(row, 1)
-            item_nom = self.catalogo.tabla.item(row, 2)
-            if item_id and item_nom:
-                ids_a_borrar.append(self.catalogo.tabla.id_de_fila(row) or item_id.text())
-                nombres.append(item_nom.text())
+            pid = self.catalogo.tabla.id_de_fila(row)
+            nom = getattr(self.catalogo.tabla, "nombre_de_fila", lambda r: "")(row)
+            if not nom:
+                item_nom = self.catalogo.tabla.item(row, 3) or self.catalogo.tabla.item(row, 2)
+                nom = item_nom.text() if item_nom else ""
+            if pid:
+                ids_a_borrar.append(pid)
+                nombres.append(nom)
 
         if not ids_a_borrar:
             return

@@ -383,6 +383,7 @@ class MigratorMixin:
                 "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
                 "CREATE INDEX IF NOT EXISTS idx_productos_codigo ON productos (codigo(50))",
                 "CREATE INDEX IF NOT EXISTS idx_productos_departamento ON productos (departamento(100))",
+                "CREATE INDEX IF NOT EXISTS idx_prod_cod_adic ON productos_codigos_adicionales (codigo(50))",
                 "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
                 "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
                 "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)"
@@ -392,6 +393,7 @@ class MigratorMixin:
                 "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre COLLATE NOCASE)",
                 "CREATE INDEX IF NOT EXISTS idx_productos_codigo ON productos (codigo)",
                 "CREATE INDEX IF NOT EXISTS idx_productos_departamento ON productos (departamento COLLATE NOCASE)",
+                "CREATE INDEX IF NOT EXISTS idx_prod_cod_adic ON productos_codigos_adicionales (codigo)",
                 "CREATE UNIQUE INDEX IF NOT EXISTS idx_departamentos_nombre ON departamentos (nombre COLLATE NOCASE)",
                 "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
                 "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
@@ -672,6 +674,19 @@ class MigratorMixin:
                     nombre TEXT NOT NULL,
                     precio_combo REAL NOT NULL,
                     productos_json TEXT NOT NULL
+                )
+            """)
+
+            # 16. PRODUCTOS CODIGOS ADICIONALES (Multi-código corporativo 1 a N)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS productos_codigos_adicionales (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    producto_id BIGINT NOT NULL,
+                    codigo TEXT NOT NULL,
+                    tipo TEXT DEFAULT 'EAN',
+                    factor_unidades REAL DEFAULT 1.0,
+                    descripcion TEXT,
+                    creado_el DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
 

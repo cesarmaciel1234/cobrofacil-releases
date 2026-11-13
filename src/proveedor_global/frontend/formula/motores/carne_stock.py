@@ -602,7 +602,10 @@ def _abrir_reloj(cursor, familia: str = "Carne") -> None:
 
 def _ultimo(db, familia: str = "Carne"):
     try:
-        _asegurar(db)
+        _asegurar_corte(db)
+        from src.proveedor_global.frontend.formula.motores.pregunta import tabla_disponible
+        if not tabla_disponible(db, _CORTE, recordar=False):
+            return None
         filas = db.execute_query(
             f"SELECT ultimo FROM {_CORTE} WHERE modulo = ? LIMIT 1",
             (familia,),
@@ -618,21 +621,34 @@ def _ultimo(db, familia: str = "Carne"):
         return None
 
 
+def _asegurar_tabla(db, tabla: str, ddl_maria: str, ddl_sqlite: str) -> None:
+    if tabla in _TABLAS or not hasattr(db, "execute_non_query"):
+        return
+    if db.execute_non_query(ddl_maria):
+        _TABLAS.add(tabla)
+        return
+    if db.execute_non_query(ddl_sqlite):
+        _TABLAS.add(tabla)
+
+
 def _asegurar(db) -> None:
-    if _TABLA in _TABLAS:
-        return
-    hecho = db.execute_non_query(
+    _asegurar_tabla(
+        db,
+        _TABLA,
         f"CREATE TABLE IF NOT EXISTS {_TABLA} ("
-        "modulo VARCHAR(40) PRIMARY KEY, kilos DOUBLE NOT NULL DEFAULT 0, ultima DOUBLE NOT NULL DEFAULT 0)"
+        "modulo VARCHAR(40) PRIMARY KEY, kilos DOUBLE NOT NULL DEFAULT 0, ultima DOUBLE NOT NULL DEFAULT 0)",
+        f"CREATE TABLE IF NOT EXISTS {_TABLA} ("
+        "modulo TEXT PRIMARY KEY, kilos REAL NOT NULL DEFAULT 0, ultima REAL NOT NULL DEFAULT 0)",
     )
-    if hecho:
-        _TABLAS.add(_TABLA)
-        return
-    if db.execute_non_query(
-        f"CREATE TABLE IF NOT EXISTS {_TABLA} ("
-        "modulo TEXT PRIMARY KEY, kilos REAL NOT NULL DEFAULT 0, ultima REAL NOT NULL DEFAULT 0)"
-    ):
-        _TABLAS.add(_TABLA)
+
+
+def _asegurar_corte(db) -> None:
+    _asegurar_tabla(
+        db,
+        _CORTE,
+        f"CREATE TABLE IF NOT EXISTS {_CORTE} (modulo VARCHAR(40) PRIMARY KEY, ultimo INT)",
+        f"CREATE TABLE IF NOT EXISTS {_CORTE} (modulo TEXT PRIMARY KEY, ultimo INTEGER)",
+    )
 
 
 def _asegurar_cursor(cursor) -> None:

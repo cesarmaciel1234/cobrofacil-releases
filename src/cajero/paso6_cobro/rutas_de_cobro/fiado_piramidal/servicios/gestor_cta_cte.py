@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Este gestor actúa como PUENTE.
 No hace queries de SQL directamente, sino que llama a las funciones globales de

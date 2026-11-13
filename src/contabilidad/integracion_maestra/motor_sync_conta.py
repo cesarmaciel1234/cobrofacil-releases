@@ -1,4 +1,4 @@
-﻿import sqlite3
+import sqlite3
 from typing import Optional
 from PyQt6.QtCore import QThread, pyqtSignal
 from src.base_de_datos.database import db_manager

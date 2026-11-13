@@ -942,10 +942,12 @@ class Paso6Cobro(QDialog):
             return
         self.resumen_vuelto.show()
         self.aviso_monto.hide()
-        self.txt_pago.setStyleSheet(
-            "font-size: 40px; font-weight: 900; border-radius: 12px; "
-            "border: 2px solid #CBD5E1; color: #0F172A; background: #FFFFFF;"
-        )
+        if getattr(self, "_txt_pago_con_alerta", False):
+            self.txt_pago.setStyleSheet(
+                "font-size: 40px; font-weight: 900; border-radius: 12px; "
+                "border: 2px solid #CBD5E1; color: #0F172A; background: #FFFFFF;"
+            )
+            self._txt_pago_con_alerta = False
         try:
             p1_t = str(parse_float_regional(self.txt_pago.text()))
             p2_t = str(parse_float_regional(self.txt_otro.text()))
@@ -1115,6 +1117,7 @@ class Paso6Cobro(QDialog):
                     "font-size: 40px; font-weight: 900; border-radius: 12px; "
                     "border: 3px solid #F59E0B; color: #0F172A; background: #FFFBEB;"
                 )
+                self._txt_pago_con_alerta = True
                 self.txt_pago.setFocus()
                 return None
         else:
@@ -1473,7 +1476,13 @@ class Paso6Cobro(QDialog):
                         monto = "¡Cobro Exitoso!"
                         
                     try:
-                        self.pantalla_mp.mostrar_aprobado(monto, on_finish=self.accept, es_autonomo=getattr(self, "_es_autonomo", False))
+                        duracion = 400 if str(getattr(self, "current_metodo", "")).lower() == "efectivo" else 2000
+                        self.pantalla_mp.mostrar_aprobado(
+                            monto,
+                            on_finish=self.accept,
+                            es_autonomo=getattr(self, "_es_autonomo", False),
+                            duracion_ms=duracion,
+                        )
                     except Exception as e:
                         import logging
                         logging.getLogger("PunPro").error(f"Fallo aislando Pantalla Verde: {e}")

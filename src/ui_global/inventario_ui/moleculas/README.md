@@ -9,7 +9,8 @@ Piezas de UI reutilizables del inventario: filtros, diálogos y paneles de depto
 | Archivo | Clase | Rol |
 |---------|--------|-----|
 | `filtros_inventario.py` | `FiltrosInventario` | Buscar, departamento y «No vender sin stock». Sin marcar, el stock sigue en -1, -2, -3 hasta la carga. |
-| `dialogo_producto.py` | `DialogoProducto` | Alta/edición. Al abrir un producto carga su código (o el id si el código está vacío), el nombre y los precios. No busca otro producto. En un alta, Enter en el código busca si ya existe. |
+| `dialogo_producto.py` | `DialogoProducto` | Alta/edición. Muestra el ID permanente (#ID) y carga el código de barras si existe (sin sobreescribirlo con el ID). No busca otro producto. En un alta, Enter en el código busca si ya existe. |
+| `dialogo_codigos_adicionales.py` | `DialogoCodigosAdicionales` | Gestión multi-código (1 a N). Asocia códigos de bulto cerrado (DUN-14), packs xN con factor multiplicador y códigos alternativos de proveedor al ID del producto. |
 | `panel_departamentos.py` | `PanelDepartamentos` | ABM departamentos |
 | `panel_categorias.py` | `PanelCategorias` | ABM categorías |
 | `dialogo_galeria_iconos.py` | `DialogoGaleriaIconos` / `DialogoCargarPng` | Iconos PNG de productos |

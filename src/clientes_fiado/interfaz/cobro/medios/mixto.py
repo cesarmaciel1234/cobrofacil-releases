@@ -9,8 +9,8 @@ def cobrar(monto, partes=None):
     datos = partes or {}
     limpios = {clave: redondear_dinero(datos.get(clave) or 0) for clave in CLAVES}
     activos = {clave: valor for clave, valor in limpios.items() if valor > 0.009}
-    if len(activos) < 1:
-        return ResultadoMedio(False, "Mixto", False, "Debe ingresar al menos un medio de pago.")
+    if len(activos) != 2:
+        return ResultadoMedio(False, "Mixto", False, "El pago mixto debe combinar exactamente dos medios.")
     total = redondear_dinero(monto)
     suma = redondear_dinero(sum(activos.values()))
     if abs(suma - total) > 0.02:

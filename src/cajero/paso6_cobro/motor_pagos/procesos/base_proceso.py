@@ -1,4 +1,4 @@
-﻿from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
 from typing import Tuple, Optional
 from src.cajero.paso6_cobro.motor_pagos.dtos.orden_cobro import OrdenCobroDTO
 

@@ -36,7 +36,7 @@ class TablaInventario(QTableWidget):
 
     # Oferta (lectura; se edita en Ofertas). Mayoreo (Inventario + Promedios jefe).
     HEADERS = [
-        "", "Código", "Producto", "Depto", "IVA %",
+        "", "ID", "Código", "Producto", "Depto", "IVA %",
         "Costo", "P. venta",
         "Cant. of.", "P. oferta", "Relámpago",
         "Cant. may.", "P. mayoreo",
@@ -67,7 +67,7 @@ class TablaInventario(QTableWidget):
         self.setFont(fuente)
         self.horizontalHeader().setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
 
-        col_widths = [36, 168, -1, 110, 64, 90, 100, 80, 96, 96, 80, 96, 70, 70, 80, 96]
+        col_widths = [36, 155, 140, -1, 110, 64, 90, 100, 80, 96, 96, 80, 96, 70, 70, 80, 96]
         hh = self.horizontalHeader()
         hh.setMinimumSectionSize(56)
         hh.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -168,13 +168,15 @@ class TablaInventario(QTableWidget):
 
                 codigo = str(r.get("codigo") or "").strip()
                 id_real = str(r.get("id") or "")
+                id_display = f"#{id_real}" if id_real else "—"
                 cant_of = _n(r.get("cant_oferta"))
                 precio_of = _n(r.get("precio_oferta"))
                 relampago = _n(r.get("precio_oferta_relampago"))
                 cant_may = _n(r.get("cant_mayoreo"))
                 precio_may = _n(r.get("precio_mayoreo"))
                 vals = [
-                    (codigo or id_real, Qt.AlignmentFlag.AlignLeft, f_id),
+                    (id_display, Qt.AlignmentFlag.AlignCenter, f_id),
+                    (codigo or "—", Qt.AlignmentFlag.AlignLeft, f_id),
                     (r.get("nombre") or "", Qt.AlignmentFlag.AlignLeft, f_nombre),
                     (dep, Qt.AlignmentFlag.AlignLeft, f_nombre),
                     (f"{depto_iva:.0f}%", Qt.AlignmentFlag.AlignCenter, f_numero),
@@ -198,10 +200,10 @@ class TablaInventario(QTableWidget):
                     it.setBackground(row_bg)
                     it.setForeground(color_normal_text)
 
-                    if j in (7, 8, 9) and v != "—":
+                    if j in (8, 9, 10) and v != "—":
                         it.setForeground(color_oferta)
 
-                    if j in (10, 11) and v != "—":
+                    if j in (11, 12) and v != "—":
                         it.setForeground(color_mayoreo)
 
                     if j == idx_stock:
@@ -219,8 +221,12 @@ class TablaInventario(QTableWidget):
 
                     if j == 1:
                         it.setData(Qt.ItemDataRole.UserRole, id_real)
-                        if codigo and codigo != id_real:
-                            it.setToolTip(f"Id {id_real}")
+                        it.setToolTip(f"ID único de producto: {id_real}")
+
+                    if j == 2:
+                        it.setData(Qt.ItemDataRole.UserRole, id_real)
+                        if codigo:
+                            it.setToolTip(f"Código de escaneo: {codigo}")
                     self.setItem(i, j, it)
 
             self.loaded_count = fin
@@ -239,14 +245,29 @@ class TablaInventario(QTableWidget):
         self.seleccion_cambiada.emit(sel)
 
     def id_de_fila(self, row):
-        """El id real. La celda muestra el código de barras."""
+        """El id real del producto. La celda 1 muestra #ID y la celda 2 el código de barras."""
         item = self.item(row, 1)
-        if not item:
-            return None
-        guardado = item.data(Qt.ItemDataRole.UserRole)
-        if guardado not in (None, ""):
-            return str(guardado)
-        return item.text() or None
+        if item:
+            guardado = item.data(Qt.ItemDataRole.UserRole)
+            if guardado not in (None, ""):
+                return str(guardado)
+            txt = (item.text() or "").strip()
+            if txt.startswith("#"):
+                txt = txt[1:].strip()
+            if txt and txt != "—":
+                return txt
+        item_cod = self.item(row, 2)
+        if item_cod:
+            guardado = item_cod.data(Qt.ItemDataRole.UserRole)
+            if guardado not in (None, ""):
+                return str(guardado)
+            return item_cod.text() or None
+        return None
+
+    def nombre_de_fila(self, row):
+        """Nombre del producto en la fila."""
+        item = self.item(row, 3)
+        return item.text() if item else ""
 
     def _on_double_click(self):
         row = self.currentRow()

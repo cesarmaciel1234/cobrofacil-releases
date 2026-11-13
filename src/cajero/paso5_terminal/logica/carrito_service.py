@@ -82,7 +82,26 @@ class CarritoService:
                 "es_pesable, unidad, departamento FROM productos WHERE codigo = ?",
                 (txt,),
             )
-        return res[0] if res else None
+        if res:
+            return res[0]
+
+        # 2b. Búsqueda en códigos de escaneo adicionales (1 a N: DUN-14, bulto, envase alternativo)
+        try:
+            res_adic = db_manager.execute_query(
+                "SELECT p.id, p.nombre, p.precio, p.stock, p.cant_oferta, p.precio_oferta, "
+                "p.cant_mayoreo, p.precio_mayoreo, p.precio_oferta_relampago, p.limite_oferta_relampago, "
+                "p.ventas_oferta_relampago, p.es_pesable, p.unidad, p.departamento, ca.factor_unidades "
+                "FROM productos_codigos_adicionales ca "
+                "JOIN productos p ON ca.producto_id = p.id "
+                "WHERE ca.codigo = ? LIMIT 1",
+                (txt,),
+            )
+            if res_adic:
+                return res_adic[0]
+        except Exception:
+            pass
+
+        return None
 
     def procesar_codigo_escaneado(self, txt_raw):
         """
@@ -103,7 +122,9 @@ class CarritoService:
         # 2. Búsqueda por ID exacto (Barcode completo) primero
         p_exacto = self.buscar_producto_exacto(txt)
         if p_exacto:
-            return True, p_exacto, cantidad_multiplicador, ""
+            factor = float(p_exacto.get("factor_unidades") or 1.0)
+            cant_final = cantidad_multiplicador * factor
+            return True, p_exacto, cant_final, ""
 
         # 3. Códigos de Balanza (Configuración Dinámica)
         if BarcodeParser.is_balanza_ean(txt):

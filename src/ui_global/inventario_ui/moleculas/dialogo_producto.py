@@ -28,14 +28,33 @@ class DialogoProducto(QDialog):
         self.setup_ui(datos)
 
     def setup_ui(self, datos):
-        main_lay = QVBoxLayout(self)
+        dlg_lay = QVBoxLayout(self)
+        dlg_lay.setContentsMargins(0, 0, 0, 0)
+
+        container = QFrame(self)
+        container.setObjectName("DialogoProductoContainer")
+        container.setStyleSheet("QFrame#DialogoProductoContainer { background-color: white; border: 4px solid #3B82F6; border-radius: 16px; }")
+        dlg_lay.addWidget(container)
+
+        main_lay = QVBoxLayout(container)
         main_lay.setContentsMargins(30, 30, 30, 30)
         main_lay.setSpacing(20)
 
         # --- HEADER ---
-        lbl_tit = QLabel("💎 Ficha de Producto 2026")
-        lbl_tit.setStyleSheet("font-size: 24px; font-weight: bold; ")
-        main_lay.addWidget(lbl_tit)
+        header_lay = QHBoxLayout()
+        lbl_tit = QLabel("💎 Ficha de Producto")
+        lbl_tit.setStyleSheet("font-size: 22px; font-weight: bold; color: #0F172A;")
+        header_lay.addWidget(lbl_tit)
+        header_lay.addStretch()
+
+        if self._id:
+            lbl_badge = QLabel(f"ID #{self._id} (PERMANENTE)")
+            lbl_badge.setStyleSheet(
+                "background: #EFF6FF; color: #1D4ED8; font-weight: 900; font-family: 'Consolas', monospace; "
+                "font-size: 13px; padding: 6px 14px; border-radius: 8px; border: 1px solid #BFDBFE;"
+            )
+            header_lay.addWidget(lbl_badge)
+        main_lay.addLayout(header_lay)
 
         # --- SECCIÓN: CÓDIGO DE BARRAS (ALTA VISIBILIDAD) ---
         barcode_frame = QFrame()
@@ -46,11 +65,9 @@ class DialogoProducto(QDialog):
         lbl_bc = QLabel("CÓDIGO DE BARRAS / PLU:")
         lbl_bc.setStyleSheet("font-weight: bold; font-size: 11px; border: none; color: #64748B;")
         codigo_inicial = str(dict(datos).get('codigo') or '').strip() if datos else ''
-        if datos and not codigo_inicial and dict(datos).get('id'):
-            codigo_inicial = str(dict(datos).get('id')).strip()
         self.txt_codigo = QLineEdit(codigo_inicial)
-        if not datos:
-            self.txt_codigo.setPlaceholderText("Escanea o escribe el código...")
+        if not codigo_inicial:
+            self.txt_codigo.setPlaceholderText("Código de barras o PLU (opcional si es venta al peso)...")
         self.txt_codigo.setStyleSheet("""
             QLineEdit {
                 background: #F8FAFC; border: 2px solid transparent; border-bottom: 2px solid #CBD5E1; border-radius: 8px;
@@ -65,8 +82,27 @@ class DialogoProducto(QDialog):
 
         self.txt_codigo.returnPressed.connect(self._verificar_codigo)
 
+        h_code_box = QHBoxLayout()
+        h_code_box.setSpacing(10)
+        h_code_box.addWidget(self.txt_codigo, 1)
+
+        if self._id:
+            self.btn_codigos_extra = QPushButton("🔗 Códigos Extra (Bultos)")
+            self.btn_codigos_extra.setAutoDefault(False)
+            self.btn_codigos_extra.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.btn_codigos_extra.setStyleSheet("""
+                QPushButton {
+                    background: #F8FAFC; color: #1E3A8A; font-weight: bold; font-size: 12px;
+                    border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px 14px;
+                }
+                QPushButton:hover { background: #E2E8F0; }
+            """)
+            self.btn_codigos_extra.setToolTip("Asociar códigos de bulto cerrado, DUN-14 o cajas x12 a este producto")
+            self.btn_codigos_extra.clicked.connect(self._abrir_codigos_adicionales)
+            h_code_box.addWidget(self.btn_codigos_extra)
+
         bar_lay.addWidget(lbl_bc)
-        bar_lay.addWidget(self.txt_codigo)
+        bar_lay.addLayout(h_code_box)
         main_lay.addWidget(barcode_frame)
 
         # --- CUERPO EN DOS COLUMNAS ---
@@ -433,6 +469,14 @@ class DialogoProducto(QDialog):
             return
         else:
             super().keyPressEvent(event)
+
+    def _abrir_codigos_adicionales(self):
+        if not self._id:
+            return
+        from src.ui_global.inventario_ui.moleculas.dialogo_codigos_adicionales import DialogoCodigosAdicionales
+        nom = self.txt_nombre.text().strip() or f"Producto #{self._id}"
+        dlg = DialogoCodigosAdicionales(self._id, nom, parent=self)
+        dlg.exec()
 
     def _ok(self):
         nom = self.txt_nombre.text().strip()

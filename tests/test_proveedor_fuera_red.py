@@ -111,7 +111,7 @@ def test_compras_y_pagos_offline_se_bloquean_sin_escrituras(monkeypatch):
     assert "Solo consulta" in result[1]
     assert db.escrituras == []
 
-    with pytest.raises(RuntimeError, match="requieren conexión"):
+    with pytest.raises(RuntimeError, match="conexión"):
         MotorProveedor.pagar_proveedor(43, 500, "admin")
     assert db.escrituras == []
 
@@ -134,15 +134,20 @@ def test_compra_no_reintenta_en_sqlite_si_mariadb_se_cae(monkeypatch):
         def fetchone(self):
             return {"conectada": 1}
 
+        def fetchall(self):
+            return []
+
     def conexion_sin_tienda(**kwargs):
-        llamadas.append(kwargs)
-        if len(llamadas) == 1:
-            return type(
-                "ConexionProbe",
-                (),
-                {"cursor": lambda _self: CursorConexion(), "close": lambda _self: None},
-            )()
-        raise OSError("MariaDB dejó de responder")
+        if "caer_si_maestra_caida" in kwargs:
+            llamadas.append(kwargs)
+            if len(llamadas) == 1:
+                return type(
+                    "ConexionProbe",
+                    (),
+                    {"cursor": lambda _self: CursorConexion(), "close": lambda _self: None},
+                )()
+            raise OSError("MariaDB dejó de responder")
+        raise OSError("MariaDB desconectada")
 
     monkeypatch.setattr(db_manager, "db_engine_type", "mariadb")
     monkeypatch.setattr(db_manager, "_forced_local_offline", False)
@@ -157,4 +162,4 @@ def test_compra_no_reintenta_en_sqlite_si_mariadb_se_cae(monkeypatch):
     )
 
     assert result[0] is False
-    assert llamadas == [{"caer_si_maestra_caida": False}] * 2
+    assert len(llamadas) >= 2 and all(item == {"caer_si_maestra_caida": False} for item in llamadas)

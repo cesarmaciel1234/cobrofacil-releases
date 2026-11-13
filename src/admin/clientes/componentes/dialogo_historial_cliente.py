@@ -274,7 +274,7 @@ class DialogoHistorialCliente(QDialog):
         self.btn_imprimir = QPushButton("🖨 IMPRIMIR")
         self.btn_imprimir.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_imprimir.setEnabled(False)
-        self.btn_imprimir.setToolTip("Imprime el historial completo en la tiketera")
+        self.btn_imprimir.setToolTip("Imprime el estado de cuenta (solo deuda actual o historial completo)")
         self.btn_imprimir.setStyleSheet(
             "QPushButton { background: white; color: #0F172A; font-weight: 900; "
             "padding: 10px 16px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 12px; }"
@@ -874,26 +874,13 @@ class DialogoHistorialCliente(QDialog):
         self._indice_pintado = 0
 
     def _imprimir_historial(self):
-        if not self._movimientos:
-            QMessageBox.information(self, "Imprimir", "No hay movimientos para imprimir.")
-            return
-        try:
-            from src.hardware.printer import printer_manager
+        from src.clientes_fiado.interfaz.historial.dialogo import imprimir_historial_dialogo
 
-            ok = printer_manager.imprimir_historial_cuenta(
-                self.cliente, self._movimientos, self._totales
-            )
-        except Exception as error:
-            QMessageBox.warning(self, "Imprimir", f"No se pudo imprimir el historial.\n{error}")
-            return
-        if ok:
-            QMessageBox.information(self, "Imprimir", "Historial enviado a la tiketera.")
-        else:
-            QMessageBox.warning(
-                self,
-                "Imprimir",
-                "No se pudo enviar a la impresora. Revisá la tiketera en Configuración.",
-            )
+        totales_ticket = dict(self._totales or {})
+        totales_ticket.setdefault(
+            "mantenimiento", float(getattr(self, "_mantenimiento_acumulado", 0.0) or 0.0)
+        )
+        imprimir_historial_dialogo(self, self.cliente, self._movimientos, totales_ticket)
 
     def _dato_fila(self, fila):
         if fila is None or fila < 0:

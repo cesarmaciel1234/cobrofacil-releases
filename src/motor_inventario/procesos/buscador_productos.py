@@ -54,12 +54,25 @@ def contar_productos_en_db(buscar="", depto=""):
     params = []
 
     if buscar:
-        if buscar.isdigit():
-            query += " AND (p.id = ? OR COALESCE(p.codigo,'') LIKE ? OR p.nombre LIKE ?)"
-            params += [int(buscar), f"%{buscar}%", f"%{buscar}%"]
+        termino = str(buscar).strip()
+        id_busqueda = None
+        if termino.startswith("#") and termino[1:].strip().isdigit():
+            id_busqueda = int(termino[1:].strip())
+        elif termino.isdigit():
+            id_busqueda = int(termino)
+
+        if id_busqueda is not None:
+            query += (
+                " AND (p.id = ? OR COALESCE(p.codigo,'') LIKE ? OR p.nombre LIKE ? "
+                "OR EXISTS (SELECT 1 FROM productos_codigos_adicionales ca WHERE ca.producto_id = p.id AND ca.codigo = ?))"
+            )
+            params += [id_busqueda, f"%{termino}%", f"%{termino}%", termino]
         else:
-            query += " AND (p.nombre LIKE ? OR COALESCE(p.codigo,'') LIKE ?)"
-            params += [f"%{buscar}%", f"%{buscar}%"]
+            query += (
+                " AND (p.nombre LIKE ? OR COALESCE(p.codigo,'') LIKE ? "
+                "OR EXISTS (SELECT 1 FROM productos_codigos_adicionales ca WHERE ca.producto_id = p.id AND ca.codigo = ?))"
+            )
+            params += [f"%{termino}%", f"%{termino}%", termino]
 
     if depto:
         if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite":
@@ -95,15 +108,25 @@ def buscar_productos_en_db(buscar="", depto="", limite=50, offset=0):
 
     # Filtro de busqueda de texto
     if buscar:
-        # Optimizacion: Si es solo numeros, buscamos por ID exacto, o coincidencias en codigo/nombre.
-        # Evitamos CAST(id AS CHAR) porque rompe los indices de la base de datos y fuerza un full scan, 
-        # lo que pone re lento el buscador por red.
-        if buscar.isdigit():
-            query += " AND (p.id = ? OR COALESCE(p.codigo,'') LIKE ? OR p.nombre LIKE ?)"
-            params += [int(buscar), f"%{buscar}%", f"%{buscar}%"]
+        termino = str(buscar).strip()
+        id_busqueda = None
+        if termino.startswith("#") and termino[1:].strip().isdigit():
+            id_busqueda = int(termino[1:].strip())
+        elif termino.isdigit():
+            id_busqueda = int(termino)
+
+        if id_busqueda is not None:
+            query += (
+                " AND (p.id = ? OR COALESCE(p.codigo,'') LIKE ? OR p.nombre LIKE ? "
+                "OR EXISTS (SELECT 1 FROM productos_codigos_adicionales ca WHERE ca.producto_id = p.id AND ca.codigo = ?))"
+            )
+            params += [id_busqueda, f"%{termino}%", f"%{termino}%", termino]
         else:
-            query += " AND (p.nombre LIKE ? OR COALESCE(p.codigo,'') LIKE ?)"
-            params += [f"%{buscar}%", f"%{buscar}%"]
+            query += (
+                " AND (p.nombre LIKE ? OR COALESCE(p.codigo,'') LIKE ? "
+                "OR EXISTS (SELECT 1 FROM productos_codigos_adicionales ca WHERE ca.producto_id = p.id AND ca.codigo = ?))"
+            )
+            params += [f"%{termino}%", f"%{termino}%", termino]
 
     # Filtro de departamento (usando índice NOCASE en SQLite)
     if depto:

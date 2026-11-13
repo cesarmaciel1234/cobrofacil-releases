@@ -1,4 +1,4 @@
-﻿class MotorCondicionesTicket:
+class MotorCondicionesTicket:
     @staticmethod
     def evaluar(metodo_pago, abono_cuenta, total_final, items_carrito):
         mensajes = []

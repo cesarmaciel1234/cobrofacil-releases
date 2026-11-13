@@ -40,6 +40,7 @@ def test_orden_abierta_no_cierra():
 
 
 def test_orden_sin_ref_cierra_si_el_monto_es_el_mismo():
+    # En producción, si la orden no trae external_reference, el importe solo NO cierra el ticket
     pago = pago_de_orden(
         {
             "order_status": "paid",
@@ -49,7 +50,7 @@ def test_orden_sin_ref_cierra_si_el_monto_es_el_mismo():
         "ref-1",
         1500,
     )
-    assert pago["id"] == 7
+    assert pago is None
 
 
 def test_orden_cerrada_sin_lista_usa_id():

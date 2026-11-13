@@ -41,6 +41,64 @@ def _impresora_cajero_activo():
         pass
     return config.get('ticket_printer', config.get('printer_name', ''))
 
+
+def _fecha_ord_movimiento(mov):
+    return str((mov or {}).get("fecha") or "").split(".")[0].strip()
+
+
+def _ordenar_movimientos_cronologico(movimientos):
+    """Ordena movimientos de cuenta del más antiguo al más reciente."""
+    movs = list(movimientos or [])
+    if len(movs) < 2:
+        return movs
+    orden_desc = _fecha_ord_movimiento(movs[0]) > _fecha_ord_movimiento(movs[-1])
+    return [
+        m
+        for _, m in sorted(
+            enumerate(movs),
+            key=lambda par: (_fecha_ord_movimiento(par[1]), -par[0] if orden_desc else par[0]),
+        )
+    ]
+
+
+def resumen_corte_cuenta(movimientos, deuda_actual):
+    """Calcula los cierres en $0.00 y el alcance de deuda actual sobre movimientos."""
+    movs = _ordenar_movimientos_cronologico(movimientos)
+    saldado_indices = set()
+    for idx, mov in enumerate(movs):
+        t_up = str(mov.get("etiqueta") or mov.get("tipo") or "").strip().upper()
+        if not (t_up.startswith("COBRO") or t_up.startswith("ABONO")):
+            continue
+        s_raw = mov.get("saldo_resultante")
+        if s_raw is None:
+            continue
+        try:
+            if abs(float(s_raw)) <= 0.01:
+                saldado_indices.add(idx)
+        except (TypeError, ValueError):
+            pass
+
+    ultimo_saldado_idx = None
+    try:
+        deuda_num = float(deuda_actual or 0)
+    except (TypeError, ValueError):
+        deuda_num = 0.0
+    if deuda_num > 0.009:
+        prev_zeros = [i for i in saldado_indices if i < len(movs) - 1]
+        if prev_zeros:
+            ultimo_saldado_idx = max(prev_zeros)
+
+    tiene_corte = ultimo_saldado_idx is not None
+    cant_actual = (len(movs) - ultimo_saldado_idx - 1) if tiene_corte else len(movs)
+    return {
+        "movs": movs,
+        "saldado_indices": saldado_indices,
+        "ultimo_saldado_idx": ultimo_saldado_idx,
+        "tiene_corte": tiene_corte,
+        "cant_actual": cant_actual,
+        "cant_total": len(movs),
+    }
+
 # Comandos estándar ESC/POS
 ESC = b'\x1B'
 GS = b'\x1D'
@@ -527,8 +585,9 @@ class PosPrinter:
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
         return result
 
-    def imprimir_historial_cuenta(self, cliente, movimientos, totales):
-        """Historial de cargos y abonos con totales. Lo usa Admin → ficha del cliente."""
+    def imprimir_historial_cuenta(self, cliente, movimientos, totales, solo_deuda_actual=False):
+        """Estado de cuenta térmico (completo o solo deuda vigente). Admin y Fiado."""
+        import re
         from src.config import config
 
         config._load_config()
@@ -536,7 +595,11 @@ class PosPrinter:
         columnas = 48 if ancho_mm == 80 else 32
         ficha = dict(cliente or {})
         nombre = str(ficha.get("nombre") or "Cliente").strip() or "Cliente"
-        dni = str(ficha.get("dni") or "").strip() or "—"
+        dni_raw = str(ficha.get("dni") or "").strip()
+        dni = "" if not dni_raw or dni_raw in ("—", "-") else dni_raw
+        telefono = str(ficha.get("telefono") or "").strip()
+        if telefono in ("—", "-"):
+            telefono = ""
         try:
             deuda = float(ficha.get("deuda_actual") or 0)
         except (TypeError, ValueError):
@@ -546,13 +609,57 @@ class PosPrinter:
         except (TypeError, ValueError):
             limite = 0.0
         tot = dict(totales or {})
+        corte_info = resumen_corte_cuenta(movimientos, deuda)
+        movs = corte_info["movs"]
+        saldado_indices = corte_info["saldado_indices"]
+        ultimo_saldado_idx = corte_info["ultimo_saldado_idx"]
 
-        def linea(etiqueta, valor):
-            monto = f"${float(valor or 0):,.2f}"
+        solo_periodo_corte = bool(solo_deuda_actual and ultimo_saldado_idx is not None)
+        if solo_periodo_corte:
+            movs_cuerpo = movs[ultimo_saldado_idx + 1 :]
+            offset_idx = ultimo_saldado_idx + 1
+        elif solo_deuda_actual and deuda <= 0.009 and saldado_indices:
+            ult_cero = max(saldado_indices)
+            movs_cuerpo = [movs[ult_cero]]
+            offset_idx = ult_cero
+        else:
+            movs_cuerpo = movs
+            offset_idx = 0
+
+        if "mantenimiento" in tot:
+            try:
+                mantenimiento = float(tot.get("mantenimiento") or 0)
+            except (TypeError, ValueError):
+                mantenimiento = 0.0
+        elif deuda > 0.009:
+            mantenimiento = sum(
+                float(m.get("interes_acumulado") or 0)
+                for m in movs
+                if str(m.get("tipo") or "").strip().upper() == "CARGO"
+                and not m.get("es_interes")
+                and not m.get("borrado")
+                and not m.get("cancelado")
+            )
+        else:
+            mantenimiento = 0.0
+        if deuda <= 0.009:
+            mantenimiento = 0.0
+        total_estimado = deuda + mantenimiento
+
+        def linea(etiqueta, valor, texto_val=None):
+            monto = texto_val if texto_val is not None else f"${float(valor or 0):,.2f}"
             hueco = columnas - len(etiqueta) - len(monto)
             if hueco < 1:
                 return f"{etiqueta}\n{monto}\n"
             return f"{etiqueta}{' ' * hueco}{monto}\n"
+
+        def centrado_marca(texto):
+            t = f" {texto.strip()} "
+            if len(t) >= columnas:
+                return t[:columnas] + "\n"
+            izq = (columnas - len(t)) // 2
+            der = columnas - len(t) - izq
+            return f"{'-' * izq}{t}{'-' * der}\n"
 
         def fecha_corta(fecha):
             f = str(fecha or "").split(".")[0]
@@ -560,34 +667,120 @@ class PosPrinter:
                 return f"{f[8:10]}/{f[5:7]} {f[11:16]}"
             return f[:16]
 
+        def fecha_dia_corta(fecha, con_anio=False):
+            f = str(fecha or "").split(".")[0].strip()
+            if len(f) >= 10 and f[4] == "-" and f[7] == "-":
+                base = f"{f[8:10]}/{f[5:7]}"
+                return f"{base}/{f[2:4]}" if con_anio else base
+            return ""
+
+        def rango_periodo(lista_movs):
+            fechas = [fecha_dia_corta(m.get("fecha"), con_anio=True) for m in lista_movs]
+            fechas = [f for f in fechas if f]
+            if not fechas:
+                return ""
+            if fechas[0] == fechas[-1]:
+                return fechas[0]
+            return f"{fechas[0]} al {fechas[-1]}"
+
         def recortar(texto, max_len):
             t = " ".join(str(texto or "").split())
             if len(t) <= max_len:
                 return t
             return t[: max(0, max_len - 1)] + "."
 
+        def nota_movimiento(mov, marca_tipo, es_ticket):
+            if es_ticket:
+                return ""
+            desc = " ".join(str(mov.get("descripcion") or "").split())
+            if not desc or desc in ("—", "-"):
+                return ""
+            low = desc.lower()
+            if marca_tipo == "COBRO":
+                m_met = re.search(r"\(([^)]+)\)", desc)
+                txt_abono = m_met.group(1).strip() if m_met else desc
+                txt_abono = re.sub(r":\s*F9\s*MANUAL", "", txt_abono, flags=re.IGNORECASE)
+                txt_abono = re.sub(r"F9\s*MANUAL", "Manual", txt_abono, flags=re.IGNORECASE).strip()
+                txt_abono = txt_abono.replace("\ufffd", "")
+                return "" if txt_abono.lower() in ("abono a cuenta", "cobro", "manual") else txt_abono
+            if marca_tipo.startswith("CARGO"):
+                if low.startswith("cargo manual"):
+                    return ""
+                return desc.replace("\ufffd", "")
+            return desc.replace("\ufffd", "")
+
+        def fmt_monto(monto_val, signo="", parentesis=False):
+            base = f"${abs(float(monto_val or 0)):,.2f}"
+            if parentesis:
+                return f"({base})"
+            return f"{signo}{base}" if signo else base
+
+        sep_simple = (b"-" * columnas) + b"\n"
+        sep_doble = (b"=" * columnas) + b"\n"
+        ahora = datetime.now()
+
         data = bytearray()
         data.extend(ESC + b"\x40")
         data.extend(ALIGN_CENTER)
         data.extend(BOLD_ON)
         data.extend(f"{self.header_empresa}\n".encode("cp850", errors="replace"))
-        data.extend(b"HISTORIAL DE CUENTA\n")
         data.extend(BOLD_OFF)
-        data.extend(f"{datetime.now().strftime('%d/%m/%Y %H:%M')}\n".encode("cp850", errors="replace"))
-        data.extend((b"-" * columnas) + b"\n")
-        data.extend(ALIGN_LEFT)
-        data.extend(f"Cliente: {recortar(nombre, columnas - 9)}\n".encode("cp850", errors="replace"))
-        data.extend(f"DNI: {dni}\n".encode("cp850", errors="replace"))
-        data.extend(linea("Limite", limite).encode("cp850", errors="replace"))
+        dir_txt = " ".join(str(self.header_dir or "").split())
+        if dir_txt and dir_txt.lower() != "direccion local":
+            data.extend(f"{recortar(dir_txt, columnas)}\n".encode("cp850", errors="replace"))
+        tel_txt = " ".join(str(self.header_tel or "").split())
+        if tel_txt:
+            data.extend(f"Tel: {recortar(tel_txt, columnas - 5)}\n".encode("cp850", errors="replace"))
         data.extend(BOLD_ON)
-        data.extend(linea("Deuda actual", deuda).encode("cp850", errors="replace"))
+        data.extend(b"ESTADO DE CUENTA\n")
         data.extend(BOLD_OFF)
-        data.extend((b"-" * columnas) + b"\n")
-        data.extend(b"FECHA      TIPO        MONTO\n")
-        data.extend((b"-" * columnas) + b"\n")
+        data.extend(b"DOCUMENTO NO FISCAL\n")
+        data.extend(f"{ahora.strftime('%d/%m/%Y %H:%M')}\n".encode("cp850", errors="replace"))
+        data.extend(sep_doble)
+        data.extend(ALIGN_LEFT)
+        data.extend(BOLD_ON)
+        data.extend(f"Cliente: {recortar(nombre, columnas - 9)}\n".encode("cp850", errors="replace"))
+        data.extend(BOLD_OFF)
+        if dni:
+            data.extend(f"DNI: {recortar(dni, columnas - 5)}\n".encode("cp850", errors="replace"))
+        if telefono:
+            data.extend(f"Tel: {recortar(telefono, columnas - 5)}\n".encode("cp850", errors="replace"))
+        if limite > 0.009:
+            data.extend(linea("Limite", limite).encode("cp850", errors="replace"))
+            disponible = max(0.0, limite - deuda)
+            data.extend(linea("Disponible", disponible).encode("cp850", errors="replace"))
+        periodo_txt = rango_periodo(movs_cuerpo)
+        if periodo_txt:
+            data.extend(f"Periodo: {recortar(periodo_txt, columnas - 9)}\n".encode("cp850", errors="replace"))
 
-        for mov in movimientos or []:
+        cant_ventas = cant_manuales = cant_cobros = 0
+        vig_cargos = vig_cobros = 0.0
+        vig_cant_cargos = vig_cant_cobros = 0
+
+        data.extend(sep_doble)
+        data.extend(BOLD_ON)
+        if solo_periodo_corte:
+            data.extend(f"DEUDA ACTUAL ({len(movs_cuerpo)})\n".encode("cp850", errors="replace"))
+        elif ultimo_saldado_idx is not None:
+            cant_saldado = ultimo_saldado_idx + 1
+            data.extend(f"HISTORIAL SALDADO ({cant_saldado})\n".encode("cp850", errors="replace"))
+        else:
+            data.extend(f"MOVIMIENTOS ({len(movs_cuerpo)})\n".encode("cp850", errors="replace"))
+        data.extend(BOLD_OFF)
+        data.extend(sep_simple)
+
+        fecha_corte_corta = (
+            fecha_dia_corta(movs[ultimo_saldado_idx].get("fecha"))
+            if ultimo_saldado_idx is not None
+            else ""
+        )
+
+        for pos, mov in enumerate(movs_cuerpo):
+            idx = offset_idx + pos
             tipo = str(mov.get("etiqueta") or mov.get("tipo") or "").strip().upper()
+            borrado = bool(mov.get("borrado"))
+            cancelado = bool(mov.get("cancelado"))
+            inactivo = borrado or cancelado
             if tipo.startswith("VENTA"):
                 marca = "VENTA"
             elif tipo.startswith("CARGO"):
@@ -597,31 +790,160 @@ class PosPrinter:
             elif "ANUL" in tipo:
                 marca = "ANULA"
             else:
-                marca = recortar(tipo, 5) or "MOV"
+                marca = recortar(tipo, 7) or "MOV"
+
             try:
                 monto = float(mov.get("monto") or 0)
             except (TypeError, ValueError):
                 monto = 0.0
+
+            raw_venta_id = str(mov.get("venta_id") or "").strip()
+            es_venta = bool(raw_venta_id and raw_venta_id not in ("0", "None"))
+            if not inactivo:
+                if marca == "COBRO":
+                    cant_cobros += 1
+                    if ultimo_saldado_idx is not None and idx > ultimo_saldado_idx:
+                        vig_cobros += monto
+                        vig_cant_cobros += 1
+                elif marca == "VENTA" or (marca == "CARGO" and es_venta):
+                    cant_ventas += 1
+                    if ultimo_saldado_idx is not None and idx > ultimo_saldado_idx:
+                        vig_cargos += monto
+                        vig_cant_cargos += 1
+                elif marca == "CARGO":
+                    cant_manuales += 1
+                    if ultimo_saldado_idx is not None and idx > ultimo_saldado_idx:
+                        vig_cargos += monto
+                        vig_cant_cargos += 1
+
+            if borrado:
+                marca_vis = f"{marca} [BORRADO]"
+            elif cancelado:
+                marca_vis = f"{marca} [ANULADA]"
+            else:
+                marca_vis = marca
+
             ref = str(mov.get("referencia") or mov.get("venta_id") or "").strip()
+            if ref in ("—", "-"):
+                ref = ""
             if ref and not ref.startswith("#") and not ref.upper().startswith("COB"):
                 ref = f"#{ref}"
-            linea1 = f"{fecha_corta(mov.get('fecha')):<11}{marca:<7}${monto:>10,.2f}"
-            data.extend((linea1[:columnas] + "\n").encode("cp850", errors="replace"))
-            if ref:
-                data.extend(f"  {recortar(ref, columnas - 2)}\n".encode("cp850", errors="replace"))
+            f_txt = fecha_corta(mov.get("fecha"))
+            es_ticket = es_venta or ref.startswith("#")
 
-        data.extend((b"-" * columnas) + b"\n")
+            nota = nota_movimiento(mov, marca, es_ticket)
+            if not ref and marca == "CARGO":
+                ref = nota or "Cargo a mano"
+                nota = ""
+
+            if ref:
+                ref_txt = recortar(ref, max(1, columnas - len(f_txt) - 2))
+                encabezado = f"{f_txt}  {ref_txt}"
+            else:
+                encabezado = f_txt[:columnas]
+
+            data.extend(BOLD_ON)
+            data.extend((encabezado + "\n").encode("cp850", errors="replace"))
+            data.extend(BOLD_OFF)
+
+            if inactivo:
+                monto_txt = fmt_monto(monto, parentesis=True)
+            elif marca in ("COBRO", "ANULA"):
+                monto_txt = fmt_monto(monto, signo="-")
+            else:
+                monto_txt = fmt_monto(monto, signo="+")
+            data.extend(linea(f"  {marca_vis}", monto, texto_val=monto_txt).encode("cp850", errors="replace"))
+
+            if nota:
+                data.extend(f"  {recortar(nota, columnas - 2)}\n".encode("cp850", errors="replace"))
+
+            if idx in saldado_indices:
+                data.extend(centrado_marca("Cuenta en $0.00").encode("cp850", errors="replace"))
+                if not solo_periodo_corte and ultimo_saldado_idx is not None and idx == ultimo_saldado_idx:
+                    cant_vig = len(movs) - idx - 1
+                    data.extend(sep_doble)
+                    data.extend(BOLD_ON)
+                    data.extend(f"DEUDA ACTUAL ({cant_vig})\n".encode("cp850", errors="replace"))
+                    data.extend(BOLD_OFF)
+                    data.extend(sep_simple)
+                elif pos < len(movs_cuerpo) - 1:
+                    data.extend(b"\n")
+            elif pos < len(movs_cuerpo) - 1:
+                data.extend(b"\n")
+
+        data.extend(sep_doble)
         data.extend(BOLD_ON)
-        data.extend(linea("Total fiado", tot.get("cargos", 0)).encode("cp850", errors="replace"))
-        data.extend(linea("Total abonado", tot.get("abonos", 0)).encode("cp850", errors="replace"))
-        if float(tot.get("borrados") or 0) > 0.009:
-            data.extend(linea("Borrados", tot.get("borrados", 0)).encode("cp850", errors="replace"))
-        if float(tot.get("cancelados") or 0) > 0.009:
-            data.extend(linea("Cancelados F3", tot.get("cancelados", 0)).encode("cp850", errors="replace"))
-        data.extend(linea("SALDO ACTUAL", deuda).encode("cp850", errors="replace"))
+        data.extend(b"RESUMEN DEL PERIODO\n" if solo_periodo_corte else b"RESUMEN DE CUENTA\n")
         data.extend(BOLD_OFF)
-        data.extend((b"-" * columnas) + b"\n")
+        data.extend(sep_simple)
+
+        if solo_periodo_corte:
+            etq_ant = f"Saldo ant. ({fecha_corte_corta})" if fecha_corte_corta else "Saldo anterior"
+            data.extend(linea(etq_ant, 0.0).encode("cp850", errors="replace"))
+            data.extend(linea(f"Cargos periodo ({vig_cant_cargos})", vig_cargos).encode("cp850", errors="replace"))
+            if vig_cobros > 0.009:
+                data.extend(
+                    linea(
+                        f"Cobros periodo ({vig_cant_cobros})",
+                        vig_cobros,
+                        texto_val=fmt_monto(vig_cobros, signo="-"),
+                    ).encode("cp850", errors="replace")
+                )
+        else:
+            ventas_tot = float(tot.get("ventas") or 0)
+            manuales_tot = float(tot.get("manuales") or 0)
+            abonos_tot = float(tot.get("abonos") if tot.get("abonos") is not None else (tot.get("cobros") or 0))
+            if ventas_tot > 0.009 or manuales_tot > 0.009:
+                if ventas_tot > 0.009:
+                    etq_v = f"Ventas ({cant_ventas})" if cant_ventas else "Ventas"
+                    data.extend(linea(etq_v, ventas_tot).encode("cp850", errors="replace"))
+                if manuales_tot > 0.009:
+                    etq_m = f"Cargos a mano ({cant_manuales})" if cant_manuales else "Cargos a mano"
+                    data.extend(linea(etq_m, manuales_tot).encode("cp850", errors="replace"))
+            else:
+                data.extend(linea("Total fiado", tot.get("cargos", 0)).encode("cp850", errors="replace"))
+            etq_a = f"Cobros ({cant_cobros})" if cant_cobros else "Total abonado"
+            abonos_txt = fmt_monto(abonos_tot, signo="-") if abonos_tot > 0.009 else "$0.00"
+            data.extend(linea(etq_a, abonos_tot, texto_val=abonos_txt).encode("cp850", errors="replace"))
+            if float(tot.get("borrados") or 0) > 0.009:
+                data.extend(linea("Borrados", tot.get("borrados", 0)).encode("cp850", errors="replace"))
+            if float(tot.get("cancelados") or 0) > 0.009:
+                data.extend(linea("Cancelados F3", tot.get("cancelados", 0)).encode("cp850", errors="replace"))
+            if ultimo_saldado_idx is not None and abs((vig_cargos - vig_cobros) - deuda) <= 0.05:
+                data.extend(sep_simple)
+                data.extend(linea("Saldo anterior", 0.0).encode("cp850", errors="replace"))
+                data.extend(linea(f"Cargos periodo ({vig_cant_cargos})", vig_cargos).encode("cp850", errors="replace"))
+                if vig_cobros > 0.009:
+                    data.extend(
+                        linea(
+                            f"Cobros periodo ({vig_cant_cobros})",
+                            vig_cobros,
+                            texto_val=fmt_monto(vig_cobros, signo="-"),
+                        ).encode("cp850", errors="replace")
+                    )
+
+        data.extend(sep_simple)
+        if mantenimiento > 0.009:
+            data.extend(linea("Capital actual", deuda).encode("cp850", errors="replace"))
+            data.extend(linea("Mantenimiento", 0, f"+${mantenimiento:,.2f}").encode("cp850", errors="replace"))
+            data.extend(BOLD_ON)
+            data.extend(DOUBLE_HEIGHT_ON)
+            data.extend(linea("TOTAL ESTIMADO", total_estimado).encode("cp850", errors="replace"))
+            data.extend(DOUBLE_HEIGHT_OFF)
+            data.extend(BOLD_OFF)
+        else:
+            data.extend(BOLD_ON)
+            data.extend(DOUBLE_HEIGHT_ON)
+            if deuda < -0.009:
+                data.extend(linea("SALDO A FAVOR", 0, f"+${abs(deuda):,.2f}").encode("cp850", errors="replace"))
+            else:
+                data.extend(linea("SALDO ACTUAL", deuda).encode("cp850", errors="replace"))
+            data.extend(DOUBLE_HEIGHT_OFF)
+            data.extend(BOLD_OFF)
+        data.extend(sep_doble)
         data.extend(ALIGN_CENTER)
+        if mantenimiento > 0.009:
+            data.extend(f"* Valido al {ahora.strftime('%d/%m/%Y')} *\n".encode("cp850", errors="replace"))
         data.extend(b"Gracias\n\n\n\n")
         data.extend(CUT_PAPER)
 

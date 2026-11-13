@@ -1,4 +1,4 @@
-﻿from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import pyqtSignal, Qt
 
 # Cache de colores para evitar recrear el dict en cada instancia

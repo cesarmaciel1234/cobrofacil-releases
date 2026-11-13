@@ -1,4 +1,4 @@
-﻿def apply_global_premium_css(app):
+def apply_global_premium_css(app):
     css = """
     QScrollBar:vertical {
         border: none;

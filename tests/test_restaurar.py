@@ -171,6 +171,7 @@ def test_copia_del_espejo_se_puede_restaurar(tmp_path, monkeypatch):
     monkeypatch.setattr(copia, "_salud", {"hasta": 0.0, "rota": ""})
     t = TiendaFalsa()
     t.db.execute("INSERT INTO ventas (id, fecha, total, estado) VALUES (1, ?, 10, 'COMPLETADA')", (HOY,))
+    t.db.execute("INSERT INTO detalles_ventas VALUES (1, 1, 'P1', 1, 10, 10)")
     t.db.execute("INSERT INTO usuarios VALUES (1, 'jefe', 'ADMIN')")
     t.db.commit()
     monkeypatch.setattr(copia, "_conectar_tienda", lambda: t)

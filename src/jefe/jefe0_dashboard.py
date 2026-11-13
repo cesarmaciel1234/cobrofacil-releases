@@ -1,4 +1,4 @@
-﻿"""
+"""
 jefe0_dashboard.py â€” Dashboard exclusivo del JEFE / DUEÃ‘O
 Paleta: Light Soft 2026 â€” blanco puro, acentos suaves, tarjetas con gradientes claros.
 """

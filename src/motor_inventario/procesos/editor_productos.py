@@ -26,6 +26,15 @@ def unificar_productos_duplicados():
 
             # Actualizamos stock del que nos quedamos
             db_manager.execute_non_query("UPDATE productos SET stock = ? WHERE id = ?", (total_stock, keep_id))
+            # Reasignamos códigos adicionales al producto conservado
+            try:
+                db_manager.execute_non_query(
+                    "UPDATE productos_codigos_adicionales SET producto_id = ? "
+                    "WHERE producto_id IN (SELECT id FROM productos WHERE codigo = ? AND id != ?)",
+                    (keep_id, codigo, keep_id)
+                )
+            except Exception:
+                pass
             # Borramos los demas con el mismo codigo
             db_manager.execute_non_query("DELETE FROM productos WHERE codigo = ? AND id != ?", (codigo, keep_id))
 

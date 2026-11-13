@@ -1,4 +1,4 @@
-﻿"""Fábricas lazy-load de pantallas para MainWindow.
+"""Fábricas lazy-load de pantallas para MainWindow.
 
 Tiene que listar los mismos índices que `MainWindow._screen_factories`.
 El stacked real se arma en main_window (28 slots, 0–27).

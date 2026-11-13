@@ -13,6 +13,17 @@ from src.motor_inventario.piso.hilo import HiloGuardarPiso
 from src.motor_inventario.planilla.orquestador import _cantidad, _motivo
 from src.proveedor_global.backend.moneda import texto
 from src.proveedor_global.frontend.pedido.vincular.dialogo import DialogoVincularProveedor
+from src.utils.letra import QSS_KPI, QSS_ROTULO, vestir_id, vestir_nombre, vestir_numero
+
+
+def _fmt_num(val) -> str:
+    if val is None or val == "":
+        return ""
+    try:
+        n = float(val)
+    except (TypeError, ValueError):
+        return str(val)
+    return str(int(n)) if n.is_integer() else f"{n:g}"
 
 
 def _cuenta_pedido(items) -> int:
@@ -178,12 +189,24 @@ class PanelPedidosAutomaticos(QWidget):
         self.tbl_items.setHorizontalHeaderLabels([
             "Código", "Producto", "Stock Actual", "Mínimo", "Máximo", "A Pedir", "Costo Unit.", "Subtotal"
         ])
-        self.tbl_items.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header = self.tbl_items.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        for col in range(2, 8):
+            header.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
+        header.setMinimumSectionSize(76)
+        self.tbl_items.setColumnWidth(0, 152)
+        self.tbl_items.verticalHeader().setDefaultSectionSize(34)
+        self.tbl_items.setAlternatingRowColors(True)
         self.tbl_items.cellChanged.connect(self._al_editar_celda)
         self.tbl_items.setStyleSheet("""
             QTableWidget {
-                background: #FFFFFF; border: 1px solid #F1F5F9; border-radius: 8px;
-                gridline-color: #F8FAFC; font-size: 12px;
+                background: #FFFFFF; alternate-background-color: #F8FAFC;
+                border: 1px solid #E2E8F0; border-radius: 8px;
+                gridline-color: #F1F5F9; font-size: 12px;
+            }
+            QTableWidget::item {
+                padding: 4px 8px;
             }
             QHeaderView::section {
                 background: #F8FAFC; color: #475569; font-weight: 800;
@@ -238,7 +261,7 @@ class PanelPedidosAutomaticos(QWidget):
     def _create_kpi_card(self, title, val, color, sub):
         card = QFrame()
         card.setObjectName("Card")
-        card.setFixedHeight(84)
+        card.setMinimumHeight(98)
         card.setStyleSheet(f"""
             QFrame#Card {{
                 background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px;
@@ -246,17 +269,17 @@ class PanelPedidosAutomaticos(QWidget):
             }}
         """)
         lay = QVBoxLayout(card)
-        lay.setContentsMargins(14, 10, 14, 10)
-        lay.setSpacing(2)
+        lay.setContentsMargins(16, 12, 16, 12)
+        lay.setSpacing(4)
 
         t_lbl = QLabel(title.upper())
-        t_lbl.setStyleSheet("font-size: 10px; font-weight: 800; color: #64748B; letter-spacing: 0.5px;")
+        t_lbl.setStyleSheet(QSS_ROTULO + " color: #64748B; font-size: 10px;")
         v_lbl = QLabel(val)
         v_lbl.setObjectName("Val")
-        v_lbl.setStyleSheet(f"font-size: 20px; font-weight: 900; color: {color};")
+        v_lbl.setStyleSheet(QSS_KPI + f" font-size: 22px; color: {color};")
         s_lbl = QLabel(sub)
         s_lbl.setObjectName("Sub")
-        s_lbl.setStyleSheet("font-size: 10px; color: #94A3B8;")
+        s_lbl.setStyleSheet("font-size: 11px; color: #64748B;")
 
         lay.addWidget(t_lbl)
         lay.addWidget(v_lbl)
@@ -271,6 +294,8 @@ class PanelPedidosAutomaticos(QWidget):
     def _elegir_modo(self, modo: str):
         self._modo = modo
         self._pintar_modos()
+        if self._datos_resumen:
+            self._llenar_combo_proveedores(preservar=self.cb_proveedor.currentData())
         self._on_proveedor_selected()
 
     def _pintar_modos(self):
@@ -325,34 +350,39 @@ class PanelPedidosAutomaticos(QWidget):
         try:
             self._datos_resumen = resumen or {}
             self._aplicar_stock()
-            articulos = self._datos_resumen.get("total_articulos_faltantes", 0)
-
-            # Llenar Combo de proveedores
-            self.cb_proveedor.blockSignals(True)
-            self.cb_proveedor.clear()
-            pedidos = self._datos_resumen.get("pedidos", {})
-
-            if not pedidos:
-                self.cb_proveedor.addItem("Sin faltantes detectados")
+            self._llenar_combo_proveedores()
+            if not (self._datos_resumen.get("pedidos") or {}):
                 self.tbl_items.setRowCount(0)
                 self.txt_whatsapp.setText("✅ El inventario no marca alarma de reposición.")
-            else:
-                self.cb_proveedor.addItem(f"Todos ({articulos})", "__todos__")
-                for prov_nom, info in pedidos.items():
-                    cant = info.get("total_items", 0)
-                    codigo = info.get("codigo") or ""
-                    if str(codigo).upper() == "EN CASA":
-                        codigo = ""
-                    etiqueta = f"{codigo} · {prov_nom}" if codigo else prov_nom
-                    detalle = f"{cant} ítems" if cant else "sin faltantes"
-                    self.cb_proveedor.addItem(f"{etiqueta} ({detalle})", prov_nom)
-                self.cb_proveedor.setCurrentIndex(0)
-
-            self.cb_proveedor.blockSignals(False)
             self._on_proveedor_selected()
 
         except Exception as e:
             QMessageBox.warning(self, "Aviso de Motor", f"No se pudo consultar el motor de abastecimiento: {e}")
+
+    def _llenar_combo_proveedores(self, preservar=None):
+        pedidos = self._datos_resumen.get("pedidos") or {}
+        modo = getattr(self, "_modo", "autonomo")
+        self.cb_proveedor.blockSignals(True)
+        self.cb_proveedor.clear()
+        if not pedidos:
+            self.cb_proveedor.addItem("Sin faltantes detectados")
+        else:
+            total_modo = sum(
+                _cuenta_pedido(_del_modo(info.get("items"), modo))
+                for info in pedidos.values()
+            )
+            self.cb_proveedor.addItem(f"Todos ({total_modo})", "__todos__")
+            for prov_nom, info in pedidos.items():
+                cant = _cuenta_pedido(_del_modo(info.get("items"), modo))
+                codigo = info.get("codigo") or ""
+                if str(codigo).upper() == "EN CASA":
+                    codigo = ""
+                etiqueta = f"{codigo} · {prov_nom}" if codigo else prov_nom
+                detalle = f"{cant} ítems" if cant else "sin faltantes"
+                self.cb_proveedor.addItem(f"{etiqueta} ({detalle})", prov_nom)
+            idx = self.cb_proveedor.findData(preservar) if preservar else -1
+            self.cb_proveedor.setCurrentIndex(idx if idx >= 0 else 0)
+        self.cb_proveedor.blockSignals(False)
 
     def _fila_reparto(self):
         self._caja_reparto = QWidget()
@@ -471,24 +501,21 @@ class PanelPedidosAutomaticos(QWidget):
             costo = it.get("valor_unitario", it.get("costo_unitario", 0.0))
             subt = it.get("presupuesto_linea", it.get("costo_estimado_total", 0.0))
 
-            c_item = QTableWidgetItem(str(it.get('codigo', '')))
-            n_item = QTableWidgetItem(str(it.get('nombre', '')))
-            s_item = QTableWidgetItem(str(it.get('stock_actual', 0)))
-            m_item = QTableWidgetItem(str(it.get('stock_minimo', 0)))
-            x_item = QTableWidgetItem(str(it.get('stock_maximo', 0)))
-            p_item = QTableWidgetItem(str(cant))
+            c_item = vestir_id(QTableWidgetItem(str(it.get('codigo', ''))))
+            n_item = vestir_nombre(QTableWidgetItem(str(it.get('nombre', ''))))
+            s_item = vestir_numero(QTableWidgetItem(_fmt_num(it.get('stock_actual', 0))))
+            m_item = vestir_numero(QTableWidgetItem(_fmt_num(it.get('stock_minimo', 0))))
+            x_item = vestir_numero(QTableWidgetItem(_fmt_num(it.get('stock_maximo', 0))))
+            p_item = vestir_numero(QTableWidgetItem(str(cant)))
             if it.get("en_formula"):
                 gris = QColor("#94A3B8")
                 for celda in (n_item, s_item, p_item):
                     celda.setForeground(gris)
             else:
                 p_item.setForeground(QColor("#DC2626"))
-                font_b = p_item.font()
-                font_b.setBold(True)
-                p_item.setFont(font_b)
 
-            cu_item = QTableWidgetItem(texto(costo))
-            sub_item = QTableWidgetItem(texto(subt))
+            cu_item = vestir_numero(QTableWidgetItem(texto(costo)))
+            sub_item = vestir_numero(QTableWidgetItem(texto(subt)))
             solo_leer = Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled
             editar = solo_leer | Qt.ItemFlag.ItemIsEditable
             for fijo in (c_item, n_item, s_item, cu_item, sub_item):
@@ -536,9 +563,11 @@ class PanelPedidosAutomaticos(QWidget):
             for info in pedidos.values():
                 items.extend(_del_modo(info.get("items"), getattr(self, "_modo", "autonomo")))
             articulos = _cuenta_pedido(items)
+            modo = getattr(self, "_modo", "autonomo")
             proveedores = sum(
                 1 for p in pedidos.values()
-                if str(p.get("proveedor") or "").strip().upper() != "SIN PROVEEDOR ASIGNADO"
+                if _del_modo(p.get("items"), modo)
+                and str(p.get("proveedor") or "").strip().upper() != "SIN PROVEEDOR ASIGNADO"
             )
             inversion = self._monto_items(items)
             pie = ""
@@ -607,12 +636,13 @@ class PanelPedidosAutomaticos(QWidget):
     def _items_visibles(self):
         prov_key = self.cb_proveedor.currentData()
         pedidos = self._datos_resumen.get("pedidos") or {}
+        modo = getattr(self, "_modo", "autonomo")
         if prov_key == "__todos__":
             items = []
             for info in pedidos.values():
-                items.extend(info.get("items") or [])
+                items.extend(_del_modo(info.get("items"), modo))
             return items
-        return (pedidos.get(prov_key) or {}).get("items") or []
+        return _del_modo((pedidos.get(prov_key) or {}).get("items"), modo)
 
     def _item_de_fila(self, fila):
         filas = getattr(self, "_filas", None) or self._items_visibles()
@@ -657,6 +687,8 @@ class PanelPedidosAutomaticos(QWidget):
         item["valor_unitario"] = base
         item["costo_estimado_total"] = round(cantidad * costo, 2)
         item["presupuesto_linea"] = round(cantidad * base, 2)
+        comercio = config.get("business_name", "Mi Comercio")
+        modo = getattr(self, "_modo", "autonomo")
         if info:
             info["costo_total_estimado"] = round(
                 sum(float(it.get("costo_estimado_total") or 0) for it in items), 2
@@ -664,18 +696,15 @@ class PanelPedidosAutomaticos(QWidget):
             info["presupuesto_estimado"] = round(
                 sum(float(it.get("presupuesto_linea") or 0) for it in items), 2
             )
-            info["texto_whatsapp"] = generar_texto_whatsapp(
-                info, config.get("business_name", "Mi Comercio")
-            )
+            info["texto_whatsapp"] = generar_texto_whatsapp(info, comercio)
         if self.cb_proveedor.currentData() == "__todos__":
             self.txt_whatsapp.setText(
-                mensaje_general(
-                    self._datos_resumen.get("pedidos") or {},
-                    config.get("business_name", "Mi Comercio"),
-                )
+                self._mensaje_modo(self._datos_resumen.get("pedidos") or {})
             )
         else:
-            self.txt_whatsapp.setText(info.get("texto_whatsapp") or "")
+            copia = dict(info)
+            copia["items"] = _del_modo(items, modo)
+            self.txt_whatsapp.setText(generar_texto_whatsapp(copia, comercio))
         self.tbl_items.blockSignals(True)
         sub = self.tbl_items.item(fila, 7)
         if sub is not None:
