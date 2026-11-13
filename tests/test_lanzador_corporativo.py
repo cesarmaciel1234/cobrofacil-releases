@@ -13,6 +13,29 @@ from src.utils import candados
 def test_decidir_accion_cierre_limpio_no_reabre_como_virus():
     for code in (0, 888, 889, None):
         accion, hist = decidir_accion_perfil_terminado(code, [100.0, 110.0], ahora=120.0)
+        assert accion == "reposo" if code != 889 else "ignorar"
+        assert hist == [] if code != 889 else [100.0, 110.0]
+
+
+def test_decidir_accion_cajero_modo_kiosco_relanza_cierre_limpio():
+    # En cajero, el cierre limpio (0, 888, None) se relanza de inmediato (Modo Kiosco empresarial)
+    for code in (0, 888, None):
+        accion, hist = decidir_accion_perfil_terminado(code, [100.0], rol="cajero", ahora=120.0)
+        assert accion == "relanzar"
+        assert hist == []
+
+    # Ante update (889 o apply_guard), NO relanza
+    accion, hist = decidir_accion_perfil_terminado(889, [100.0], rol="cajero", ahora=120.0)
+    assert accion == "ignorar"
+
+    accion_up, _ = decidir_accion_perfil_terminado(0, [], rol="cajero", apply_guard=True)
+    assert accion_up == "ignorar"
+
+
+def test_decidir_accion_administrativo_respeta_cierre():
+    # Admin y Jefe respetan el cierre voluntario del usuario
+    for rol_admin in ("admin", "jefe", "contabilidad"):
+        accion, hist = decidir_accion_perfil_terminado(0, [], rol=rol_admin, ahora=120.0)
         assert accion == "reposo"
         assert hist == []
 

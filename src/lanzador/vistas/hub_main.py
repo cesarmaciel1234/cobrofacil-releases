@@ -566,6 +566,7 @@ class PerfilPantalla(QDialog):
                 accion, nueva_hist = decidir_accion_perfil_terminado(
                     codigo,
                     self._caidas_historia.get(rol, []),
+                    rol=rol,
                     apply_guard=hay_update,
                     max_reintentos=self._max_reintentos,
                 )
@@ -575,13 +576,24 @@ class PerfilPantalla(QDialog):
                     intento = len(nueva_hist)
                     self._reintentos[rol] = intento
                     self._reintento_pendiente.add(rol)
-                    btn.set_retry_state(intento, self._max_reintentos)
+                    if intento > 0:
+                        btn.set_retry_state(intento, self._max_reintentos)
+                    else:
+                        # Relanzado limpio modo kiosco (ej. cajero cerrado o logout)
+                        btn.tag.setText("🔄 KIOSCO: REINICIANDO...")
+                        btn.tag.setStyleSheet("""
+                            font-size: 8px; font-weight: 900; letter-spacing: 1px;
+                            color: #1E40AF; background: #DBEAFE;
+                            border: none; border-radius: 6px; padding: 2px 8px;
+                        """)
+                        btn.lbl_desc.setText("Modo Kiosco empresarial activo\nReabriendo terminal...")
+                        btn.lbl_desc.setStyleSheet("font-size: 10px; font-weight: 700; color: #2563EB; background: transparent; border: none;")
                     QTimer.singleShot(1000, lambda r=rol: self._lanzar_proceso_autonomo(r))
                 elif accion == "pausado":
                     self._reintentos[rol] = self._max_reintentos
                     btn.set_failed_state()
                 else:
-                    # Cierre limpio (0 / 888 / 889) o update en curso -> no volver a abrir como virus
+                    # Cierre limpio en perfil administrativo o update en curso
                     self._reintentos[rol] = 0
                     btn._set_idle_style()
                     btn.setCursor(Qt.CursorShape.PointingHandCursor)
