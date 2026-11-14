@@ -266,7 +266,7 @@ def resolver_empresa(crm_url: str, api_key: str, nombre: str, timeout: int = 20)
     return empresa_id
 
 
-def entrar(crm_url: str, usuario: str, password: str, timeout: int = 20):
+def entrar(crm_url: str, usuario: str, password: str, timeout: int = 60):
     """Entra con la cuenta de la empresa y devuelve la sesión y su número."""
     jar = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
