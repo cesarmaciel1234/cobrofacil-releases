@@ -32,6 +32,11 @@ if "--winservice-uninstall" in sys.argv:
     ok, _msg = desinstalar_servicio_windows()
     sys.exit(0 if ok else 1)
 
+if "--crm-cartera" in sys.argv:
+    from src.central_red_global.servidor.crm_salida.motor import main as enviar_cartera
+
+    sys.exit(enviar_cartera())
+
 from src.utils.qt_dpi import configure_process_dpi, configure_qt_application_attributes
 from src.utils.qt_compat import set_share_opengl_contexts, prepare_frozen_qt_paths, qt_exec
 

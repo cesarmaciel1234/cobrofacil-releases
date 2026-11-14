@@ -122,3 +122,4 @@ extract_tmp/
 config.json
 github_update_token.txt
 *.sql
+crm_frigorifico.local.json
